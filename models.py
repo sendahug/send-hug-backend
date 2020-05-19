@@ -27,6 +27,7 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     text = db.Column(db.String(480), nullable=False)
+    date = db.Column(db.DateTime)
 
 
 # User Model
@@ -46,3 +47,4 @@ class Message(db.Model):
     from_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     for_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     text = db.Column(db.String(480), nullable=False)
+    date = db.Column(db.DateTime)
