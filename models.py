@@ -29,6 +29,16 @@ class Post(db.Model):
     text = db.Column(db.String(480), nullable=False)
     date = db.Column(db.DateTime)
 
+    # Format method
+    # Responsible for returning a JSON object
+    def format(self):
+        return {
+            'id': self.id,
+            'userId': self.user_id,
+            'text': self.text,
+            'date': self.date
+        }
+
 
 # User Model
 class User(db.Model):
@@ -39,6 +49,17 @@ class User(db.Model):
     given_hugs = db.Column(db.Integer, default=0)
     posts = db.relationship('Post', backref='user')
 
+    # Format method
+    # Responsible for returning a JSON object
+    def format(self):
+        return {
+            'id': self.id,
+            'auth0Id':  self.auth0_id,
+            'receivedH': self.received_hugs,
+            'givenH': self.given_hugs,
+            'postsNum': self.posts
+        }
+
 
 # Message Model
 class Message(db.Model):
@@ -48,3 +69,13 @@ class Message(db.Model):
     for_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     text = db.Column(db.String(480), nullable=False)
     date = db.Column(db.DateTime)
+
+    # Format method
+    # Responsible for returning a JSON object
+    def format(self):
+        return {
+            'id': self.id,
+            'fromId': self.from_id,
+            'forId': self.for_id,
+            'messageText': self.text
+        }
