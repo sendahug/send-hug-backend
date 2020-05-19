@@ -1,5 +1,6 @@
 import os
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 # Database configuration
 databate_username = os.environ.get('DBUSERNAME')
@@ -15,6 +16,7 @@ def create_db(app):
     app.config["SQLALCHEMY_DATABASE_URI"] = database_path
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.init_app(app)
+    migrate = Migrate(app, db)
 
 
 # Models
