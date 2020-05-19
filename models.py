@@ -28,6 +28,7 @@ class Post(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     text = db.Column(db.String(480), nullable=False)
     date = db.Column(db.DateTime)
+    given_hugs = db.Column(db.Integer, default=0)
 
     # Format method
     # Responsible for returning a JSON object
