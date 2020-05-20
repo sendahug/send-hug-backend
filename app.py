@@ -38,7 +38,7 @@ def create_app(test_config=None):
         suggested_posts = Post.query.order_by(Post.given_hugs).limit(10).all()
         formatted_suggested_posts = []
 
-        for post in suggestted_posts:
+        for post in suggested_posts:
             formatted_suggested_posts.append(post.format())
 
         return jsonify({
@@ -53,7 +53,12 @@ def create_app(test_config=None):
     # Parameters: None.
     @app.route('/users')
     def get_user_data():
-        user_id = request.args.get('userID')
+        user_id = request.args.get('userID', None)
+
+        # If there's no ID provided
+        if(user_id is None):
+            abort(404)
+
         user_data = User.query.filter(User.auth0_id == user_id).one_or_none()
 
         # If there's no user with that ID, abort
@@ -72,8 +77,14 @@ def create_app(test_config=None):
     # Parameters: None.
     @app.route('/messages')
     def get_user_messages():
+        # Gets the user's ID from the URL arguments
+        user_id = request.args.get('userID', None)
+
+        # If there's no user ID, abort
+        if(user_id is None):
+            abort(404)
+
         # Gets the user's messages
-        user_id = request.args.get('userID')
         user_messages = Message.query.filter(Message.for_id == user_id).\
             join(User.username.label('from'), User.id == Message.from_id).\
             join(User.username.label('for'), User.id == Message.for_id).all()
@@ -81,9 +92,9 @@ def create_app(test_config=None):
 
         # Formats the user's messages to JSON
         for message in user_messages:
-            formatted_message = message.format()
-            formatted_message['from'] = message.from
-            formatted_message['for'] = message.for
+            formatted_message = message[1].format()
+            formatted_message['from'] = message[2]
+            formatted_message['for'] = message[3]
             formatted_user_messages.append(formatted_message)
 
         return jsonify({
