@@ -83,6 +83,31 @@ def create_app(test_config=None):
         })
 
 
+    # Endpoint: DELETE /posts/<post_id>
+    # Description: Deletes a post from the database.
+    # Parameters: post_id - ID of the post to delete.
+    @app.route('/posts/<post_id>', methods=['DELETE'])
+    def delete_post(post_id):
+        # Gets the post to delete
+        post_data = Post.query.filter(Post.id == post_id).one_or_none()
+
+        # If this post doesn't exist, abort
+        if(post_data is None):
+            abort(404)
+
+        # Try to delete the post
+        try:
+            db_delete(post_data)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'deleted': post_id
+        })
+
+
     # Endpoint: GET /users
     # Description: Gets the user's data.
     # Parameters: None.
@@ -185,6 +210,30 @@ def create_app(test_config=None):
         return jsonify({
             'success': True,
             'message': sent_message
+        })
+
+    # Endpoint: DELETE /messages/<message_id>
+    # Description: Deletes a message from the database.
+    # Parameters: message_id - ID of the message to delete.
+    @app.route('/messages/<message_id>', methods=['DELETE'])
+    def delete_message(message_id):
+        # Get the message with that ID
+        message_data = Message.query.filter(Message.id == message_id).one_or_none()
+
+        # If there's no message with that ID, abort
+        if(message_data is None):
+            abort(404)
+
+        # Try to delete the message
+        try:
+            db_delete(message_data)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'deleted': message_id
         })
 
 
