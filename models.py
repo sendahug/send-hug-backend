@@ -45,6 +45,7 @@ class Post(db.Model):
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(), nullable=False)
     auth0_id = db.Column(db.String(), nullable=False)
     received_hugs = db.Column(db.Integer, default=0)
     given_hugs = db.Column(db.Integer, default=0)
