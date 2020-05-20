@@ -1,4 +1,5 @@
-import os, json
+import os
+import json
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
 
@@ -56,7 +57,6 @@ def create_app(test_config=None):
             'suggested': formatted_suggested_posts
         })
 
-
     # Endpoint: POST /posts
     # Description: Add a new post to the database.
     # Parameters: None.
@@ -82,7 +82,6 @@ def create_app(test_config=None):
             'posts': added_post
         })
 
-
     # Endpoint: DELETE /posts/<post_id>
     # Description: Deletes a post from the database.
     # Parameters: post_id - ID of the post to delete.
@@ -107,7 +106,6 @@ def create_app(test_config=None):
             'deleted': post_id
         })
 
-
     # Endpoint: GET /users
     # Description: Gets the user's data.
     # Parameters: None.
@@ -131,7 +129,6 @@ def create_app(test_config=None):
             'success': True,
             'user': formatted_user_data
         })
-
 
     # Endpoint: POST /users
     # Description: Adds a new user to the users table.
@@ -218,7 +215,8 @@ def create_app(test_config=None):
     @app.route('/messages/<message_id>', methods=['DELETE'])
     def delete_message(message_id):
         # Get the message with that ID
-        message_data = Message.query.filter(Message.id == message_id).one_or_none()
+        message_data = Message.query.filter(Message.id == message_id).\
+                                            one_or_none()
 
         # If there's no message with that ID, abort
         if(message_data is None):
@@ -235,7 +233,6 @@ def create_app(test_config=None):
             'success': True,
             'deleted': message_id
         })
-
 
     # Error Handlers
     # -----------------------------------------------------------------
@@ -276,6 +273,7 @@ def create_app(test_config=None):
         }), 500
 
     return app
+
 
 APP = create_app()
 
