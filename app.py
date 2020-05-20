@@ -47,6 +47,26 @@ def create_app(test_config=None):
             'suggested': formatted_suggested_posts
         })
 
+
+    # Endpoint: GET /users
+    # Description: Gets the user's data.
+    # Parameters: None.
+    @app.route('/users')
+    def get_user_data():
+        user_id = request.args.get('userID')
+        user_data = User.query.filter(User.auth0_id == user_id).one_or_none()
+
+        # If there's no user with that ID, abort
+        if(user_data is None):
+            abort(404)
+
+        formatted_user_data = user_data.format()
+
+        return jsonify({
+            'success': True,
+            'user': formatted_user_data
+        })
+
     return app
 
 APP = create_app()
