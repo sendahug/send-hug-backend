@@ -2,7 +2,16 @@ import os
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
 
-from models import create_db, Post, User, Message
+from models import {
+    create_db,
+    Post,
+    User,
+    Message,
+    add as db_add,
+    update as db_update,
+    delete_object as db_delete
+    }
+
 
 def create_app(test_config=None):
     # create and configure the app

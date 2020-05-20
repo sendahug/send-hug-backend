@@ -1,4 +1,5 @@
 import os
+from flask import abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -81,3 +82,75 @@ class Message(db.Model):
             'forId': self.for_id,
             'messageText': self.text
         }
+
+
+# Database management methods
+# -----------------------------------------------------------------
+# Method: Add
+# Description: Inserts a new record into the database.
+# Parameters: Object to insert (User, Post or Message).
+def add(obj):
+    return_object = {}
+
+    # Try to add the object to the database
+    try:
+        db.session.add(obj)
+        db.session.commit()
+        return_object = obj
+    # If there's an error, rollback
+    except Exception as e:
+        db.session.rollback()
+    # Close the connection once the attempt is complete
+    finally:
+        db.session.close()
+
+    return jsonify({
+        'success': True,
+        'added': return_object
+    })
+
+
+# Method: Update
+# Description: Updates an existing record.
+# Parameters: Updated object (User, Post or Message).
+def update(obj):
+    updated_object = {}
+
+    # Try to update the object in the database
+    try:
+        db.session.commit()
+        updated_object = obj
+    # If there's an error, rollback
+    except Exception as e:
+        db.session.rollback()
+    # Close the connection once the attempt is complete
+    finally:
+        db.session.close()
+
+    return jsonify({
+        'success': True,
+        'updated': updated_object
+    })
+
+
+# Method: Delete Object
+# Description: Deletes an existing record.
+# Parameters: Object (User, Post or Message) to delete.
+def delete_object(obj):
+    deleted = None
+
+    # Try to delete the record from the database
+    try:
+        db.session.delete(obj)
+        deleted = obj.id
+    # If there's an error, rollback
+    except Exception as e:
+        db.session.rollback()
+    # Close the connection once the attempt is complete
+    finally:
+        db.session.close()
+
+    return jsonify({
+        'success': True,
+        'deleted': deleted
+    })
