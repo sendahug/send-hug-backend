@@ -190,14 +190,41 @@ def create_app(test_config=None):
 
     # Error Handlers
     # -----------------------------------------------------------------
+    # Bad request error handler
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({
+            'success': False,
+            'code': 400,
+            'message': 'Bad request. Fix your request and try again.'
+        }), 400
+
     # Not found error handler
     @app.errorhandler(404)
-    def not_found(eror):
+    def not_found(error):
         return jsonify({
             'success': False,
             'code': 404,
             'message': 'The resource you were looking for wasn\'t found.'
         }), 404
+
+    # Unprocessable error handler
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return jsonify({
+            'success': True,
+            'code': 422,
+            'message': 'Unprocessable request.'
+        }), 422
+
+    # Internal server error handler
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        return jsonify({
+            'success': False,
+            'code': 500,
+            'message': 'An internal server error occurred.'
+        }), 500
 
     return app
 
