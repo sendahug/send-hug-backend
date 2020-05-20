@@ -102,6 +102,17 @@ def create_app(test_config=None):
             'messages': formatted_messages
         })
 
+    # Error Handlers
+    # -----------------------------------------------------------------
+    # Not found error handler
+    @app.errorhandler(404)
+    def not_found(eror):
+        return jsonify({
+            'success': False,
+            'code': 404,
+            'message': 'The resource you were looking for wasn\'t found.'
+        }), 404
+
     return app
 
 APP = create_app()
