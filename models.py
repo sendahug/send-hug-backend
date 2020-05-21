@@ -38,7 +38,8 @@ class Post(db.Model):
             'id': self.id,
             'userId': self.user_id,
             'text': self.text,
-            'date': self.date
+            'date': self.date,
+            'givenHugs': self.given_hugs
         }
 
 
@@ -80,7 +81,8 @@ class Message(db.Model):
             'id': self.id,
             'fromId': self.from_id,
             'forId': self.for_id,
-            'messageText': self.text
+            'messageText': self.text,
+            'date': self.date
         }
 
 
