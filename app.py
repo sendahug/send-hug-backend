@@ -188,6 +188,32 @@ def create_app(test_config=None):
             'user': added_user
         })
 
+    # Endpoint: PATCH /users/<user_id>
+    # Description: Updates a user in the database.
+    # Parameters: user_id - ID of the user to update.
+    @app.route('/users/<user_id>', methods=['PATCH'])
+    def edit_user(user_id):
+        updated_user = json.loads(request.data)
+        original_user = User.query.filter(User.id == user_id).one_or_none()
+
+        # Update user data
+        original_user.received_hugs = updated_user.receivedH
+        original_user.given_hugs = updated_user.givenH
+        original_user.posts = updated_user.posts
+
+        # Try to update it in the database
+        try:
+            db_update(original_user)
+            updated_user = original_user.format()
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'updated': updated_user
+        })
+
     # Endpoint: GET /messages
     # Description: Gets the user's messages.
     # Parameters: None.
