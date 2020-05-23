@@ -82,6 +82,40 @@ def create_app(test_config=None):
             'posts': added_post
         })
 
+    # Endpoint: PATCH /posts/<post_id>
+    # Description: Updates a post (either its text or its hugs) in the
+    #              database.
+    # Parameters: post_id - ID of the post to update.
+    @app.route('/posts/<post_id>', methods=['PATCH'])
+    def edit_post(post_id):
+        updated_post = json.loads(request.data)
+        original_post = Post.query.filter(Post.id == post_id).one_or_none()
+
+        # If there's no post with that ID
+        if(original_post is None):
+            abort(404)
+
+        # If a hug was added
+        if(original_post.given_hugs != updated_post.hugs):
+            original_post.given_hugs = updated_post.hugs
+
+        # If the text was changed
+        if(original_post.text != updated_post.text):
+            original_post.text = updated_post.text
+
+        # Try to update the database
+        try:
+            db_update(original_post)
+            db_updated_post = original_post
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'updated': db_updated_post
+        })
+
     # Endpoint: DELETE /posts/<post_id>
     # Description: Deletes a post from the database.
     # Parameters: post_id - ID of the post to delete.
