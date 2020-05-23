@@ -3,7 +3,7 @@ import json
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
 
-from models import {
+from models import (
     create_db,
     Post,
     User,
@@ -11,7 +11,7 @@ from models import {
     add as db_add,
     update as db_update,
     delete_object as db_delete
-    }
+    )
 
 
 def create_app(test_config=None):
@@ -106,7 +106,7 @@ def create_app(test_config=None):
         # Try to update the database
         try:
             db_update(original_post)
-            db_updated_post = original_post
+            db_updated_post = original_post.format()
         # If there's an error, abort
         except Exception as e:
             abort(500)
