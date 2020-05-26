@@ -97,3 +97,13 @@ def verify_jwt(token):
             }, 403)
 
     return payload
+
+
+# requires_auth decorator
+def requires_auth(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        token = get_auth_header()
+        payload = verify_jwt(token)
+        return func(payload, *args, **kwargs)
+    return wrapper
