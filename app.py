@@ -23,7 +23,7 @@ def create_app(test_config=None):
     # CORS Setup
     @app.after_request
     def after_request(response):
-        response.headers.add('Access-Control-Allow-Origin', 'localhost:5000')
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
         response.headers.add('Access-Control-Allow-Methods', 'GET, POST,\
                               PATCH, DELETE, OPTIONS')
         response.headers.add('Access-Control-Allow-Headers', 'Authorization')
