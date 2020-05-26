@@ -12,6 +12,7 @@ from models import (
     update as db_update,
     delete_object as db_delete
     )
+from auth import AuthError
 
 
 def create_app(test_config=None):
@@ -318,7 +319,7 @@ def create_app(test_config=None):
     @app.errorhandler(422)
     def unprocessable(error):
         return jsonify({
-            'success': True,
+            'success': False,
             'code': 422,
             'message': 'Unprocessable request.'
         }), 422
@@ -331,6 +332,15 @@ def create_app(test_config=None):
             'code': 500,
             'message': 'An internal server error occurred.'
         }), 500
+
+    # Authentication error handler
+    @app.errorhandler(AuthError)
+    def auth_error(error):
+        return jsonify({
+            'success': False,
+            'code': error.status_code,
+            'message': error.error
+        }), error.status_code
 
     return app
 
