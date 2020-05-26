@@ -12,7 +12,7 @@ from models import (
     update as db_update,
     delete_object as db_delete
     )
-from auth import AuthError
+from auth import AuthError, requires_auth
 
 
 def create_app(test_config=None):
@@ -62,6 +62,7 @@ def create_app(test_config=None):
     # Description: Add a new post to the database.
     # Parameters: None.
     @app.route('/posts', methods=['POST'])
+    @requires_auth
     def add_post():
         # Get the post data and create a new post object
         new_post_data = json.loads(request.data)
@@ -88,6 +89,7 @@ def create_app(test_config=None):
     #              database.
     # Parameters: post_id - ID of the post to update.
     @app.route('/posts/<post_id>', methods=['PATCH'])
+    @requires_auth
     def edit_post(post_id):
         updated_post = json.loads(request.data)
         original_post = Post.query.filter(Post.id == post_id).one_or_none()
@@ -121,6 +123,7 @@ def create_app(test_config=None):
     # Description: Deletes a post from the database.
     # Parameters: post_id - ID of the post to delete.
     @app.route('/posts/<post_id>', methods=['DELETE'])
+    @requires_auth
     def delete_post(post_id):
         # Gets the post to delete
         post_data = Post.query.filter(Post.id == post_id).one_or_none()
@@ -169,6 +172,7 @@ def create_app(test_config=None):
     # Description: Adds a new user to the users table.
     # Parameters: None.
     @app.route('/users', methods=['POST'])
+    @requires_auth
     def add_user():
         # Gets the user's data via the Auth0 post-registration hook
         user_data = json.loads(request.data)
@@ -193,6 +197,7 @@ def create_app(test_config=None):
     # Description: Updates a user in the database.
     # Parameters: user_id - ID of the user to update.
     @app.route('/users/<user_id>', methods=['PATCH'])
+    @requires_auth
     def edit_user(user_id):
         updated_user = json.loads(request.data)
         original_user = User.query.filter(User.id == user_id).one_or_none()
@@ -249,6 +254,7 @@ def create_app(test_config=None):
     # Description: Adds a new message to the messages table.
     # Parameters: None.
     @app.route('/messages', methods=['POST'])
+    @requires_auth
     def add_message():
         # Gets the new message's data
         message_data = json.loads(request.data)
@@ -274,6 +280,7 @@ def create_app(test_config=None):
     # Description: Deletes a message from the database.
     # Parameters: message_id - ID of the message to delete.
     @app.route('/messages/<message_id>', methods=['DELETE'])
+    @requires_auth
     def delete_message(message_id):
         # Get the message with that ID
         message_data = Message.query.filter(Message.id == message_id).\
