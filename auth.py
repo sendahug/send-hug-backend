@@ -38,3 +38,62 @@ def get_auth_header():
         }, 401)
 
     return split_auth_header[1]
+
+
+# Verifies the authenticity of the JWT
+def verify_jwt(token):
+    # Gets the JWKS from Auth0
+    auth_json = urlopen('https://' + AUTH0_DOMAIN + '/.well-known/jwks.json')
+    jwks = json.loads(auth_json.read())
+
+    # Gets the token header
+    token_header = jwt.get_unverified_header(token)
+    rsa_key = {}
+
+    # If the 'kid' key doesn't exist in the token header
+    for key in jwks['key']:
+        if(key['kid'] == token_header['kid']):
+            rsa_key = {
+                "kty": key["kty"],
+                "kid": key["kid"],
+                "use": key["use"],
+                "n": key["n"],
+                "e": key["e"]
+            }
+
+    # Try to decode and validate the token
+    if(rsa_key):
+        try:
+            payload = jwt.decode(
+                token,
+                rsa_key,
+                algorithms=ALGORITHMS,
+                audience=API_AUDIENCE,
+                issuer="https://" + AUTH0_DOMAIN + "/"
+            )
+        # If the signature is invalid
+        except jwt.JWTError:
+            raise AuthError({
+                'code': 403,
+                'description': 'Unauthorised. Your token is invalid.'
+            }, 403)
+        # If the token expired
+        except jwt.ExpiredSignatureError:
+            raise AuthError({
+                'code': 403,
+                'description': 'Unauthorised. Your token has expired.'
+            }, 403)
+        # If any claim in the token is invalid
+        except jwt.JWTClaimsError:
+            raise AuthError({
+                'code': 403,
+                'description': 'Unauthorised. Your token contains invalid claims.'
+            }, 403)
+        # If there's any other error
+        except Exception as e:
+            raise AuthError({
+                'code': 403,
+                'description': 'Unauthorised. Invalid token.'
+            }, 403)
+
+    return payload
