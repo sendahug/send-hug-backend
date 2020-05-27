@@ -177,8 +177,8 @@ def create_app(test_config=None):
     def add_user():
         # Gets the user's data via the Auth0 post-registration hook
         user_data = json.loads(request.data)
-        new_user = User(username=user_data['username'],
-                        auth0_id=user_data['id'], received_hugs=0,
+        new_user = User(auth0_id=user_data['id'],
+                        display_name=user_data['displayName'], received_hugs=0,
                         given_hugs=0, posts=0)
 
         # Try to add the post to the database
