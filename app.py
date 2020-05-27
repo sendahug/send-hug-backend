@@ -175,8 +175,15 @@ def create_app(test_config=None):
     @app.route('/users', methods=['POST'])
     @requires_auth
     def add_user():
-        # Gets the user's data via the Auth0 post-registration hook
+        # Gets the user's data
         user_data = json.loads(request.data)
+
+        # Checks whether a user with that Auth0 ID already exists
+        # If it is, aborts
+        database_user = User.query.filter(User.auth0_id == user_id).one_or_none()
+        if(database_user):
+            abort(409)
+
         new_user = User(auth0_id=user_data['id'],
                         display_name=user_data['displayName'], received_hugs=0,
                         given_hugs=0, posts=0)
@@ -322,6 +329,16 @@ def create_app(test_config=None):
             'code': 404,
             'message': 'The resource you were looking for wasn\'t found.'
         }), 404
+
+    # Conflict error handler
+    @app.errorhandler(409)
+    def conflict(error):
+        return jsonify({
+            'success': False,
+            'code': 409,
+            'message': 'Conflict. The resource you were trying to create \
+                        already exists.'
+        }), 409
 
     # Unprocessable error handler
     @app.errorhandler(422)
