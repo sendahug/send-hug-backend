@@ -148,6 +148,7 @@ def create_app(test_config=None):
     # Description: Gets the user's data.
     # Parameters: None.
     @app.route('/users')
+    @requires_auth
     def get_user_data():
         user_id = request.args.get('userID', None)
 
