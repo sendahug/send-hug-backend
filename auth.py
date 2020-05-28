@@ -74,27 +74,27 @@ def verify_jwt(token):
         # If the signature is invalid
         except jwt.JWTError:
             raise AuthError({
-                'code': 403,
+                'code': 401,
                 'description': 'Unauthorised. Your token is invalid.'
-            }, 403)
+            }, 401)
         # If the token expired
         except jwt.ExpiredSignatureError:
             raise AuthError({
-                'code': 403,
+                'code': 401,
                 'description': 'Unauthorised. Your token has expired.'
-            }, 403)
+            }, 401)
         # If any claim in the token is invalid
         except jwt.JWTClaimsError:
             raise AuthError({
-                'code': 403,
+                'code': 401,
                 'description': 'Unauthorised. Your token contains invalid claims.'
-            }, 403)
+            }, 401)
         # If there's any other error
         except Exception as e:
             raise AuthError({
-                'code': 403,
+                'code': 401,
                 'description': 'Unauthorised. Invalid token.'
-            }, 403)
+            }, 401)
 
     return payload
 
