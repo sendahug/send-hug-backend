@@ -98,13 +98,36 @@ def create_app(test_config=None):
         if(original_post is None):
             abort(404)
 
+        # If the user's permission is 'patch my' the user can only edit
+        # their own posts.
+        if('patch:my-post' in token_payload['permissions']):
+            # Gets the user's ID and compares it to the user_id of the post
+            current_user = User.query.filter(User.auth0_id = token_payload['sub'])
+            if(original_post.user_id != current_user.id):
+                # If the user attempted to edit the text of a post that doesn't
+                # belong to them, throws an auth error
+                if(original_post.text != updated_post.text):
+                    raise AuthError({
+                        'code': 403,
+                        'description': 'You do not have permission to edit this post.'
+                        }, 403)
+            # Otherwise, the user attempted to edit their own post, which
+            # is allowed
+            else:
+                # If the text was changed
+                if(original_post.text != updated_post.text):
+                    original_post.text = updated_post.text
+        # Otherwise, the user is allowed to edit any post, and thus text
+        # editing is allowed
+        else:
+            # If the text was changed
+            if(original_post.text != updated_post.text):
+                original_post.text = updated_post.text
+
         # If a hug was added
+        # Since anyone can give hugs, this doesn't require a permissions check
         if(original_post.given_hugs != updated_post.hugs):
             original_post.given_hugs = updated_post.hugs
-
-        # If the text was changed
-        if(original_post.text != updated_post.text):
-            original_post.text = updated_post.text
 
         # Try to update the database
         try:
@@ -132,6 +155,20 @@ def create_app(test_config=None):
         if(post_data is None):
             abort(404)
 
+        # If the user only has permission to delete their own posts
+        if('delete:my-post' in token_payload['permissions']):
+            # Gets the user's ID and compares it to the user_id of the post
+            current_user = User.query.filter(User.auth0_id == token_payload['sub'])
+            # If it's not the same user, they can't delete the post, so an
+            # auth error is raised
+            if(post_data.user_id != current_user.id):
+                raise AuthError({
+                    'code': 403,
+                    'description': 'You do not have permission to delete this post.'
+                }, 403)
+
+        # Otherwise, it's either their post or they're allowed to delete any
+        # post.
         # Try to delete the post
         try:
             db_delete(post_data)
