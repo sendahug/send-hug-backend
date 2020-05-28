@@ -102,7 +102,7 @@ def create_app(test_config=None):
         # their own posts.
         if('patch:my-post' in token_payload['permissions']):
             # Gets the user's ID and compares it to the user_id of the post
-            current_user = User.query.filter(User.auth0_id = token_payload['sub'])
+            current_user = User.query.filter(User.auth0_id == token_payload['sub'])
             if(original_post.user_id != current_user.id):
                 # If the user attempted to edit the text of a post that doesn't
                 # belong to them, throws an auth error
