@@ -62,8 +62,8 @@ def create_app(test_config=None):
     # Description: Add a new post to the database.
     # Parameters: None.
     @app.route('/posts', methods=['POST'])
-    @requires_auth
-    def add_post():
+    @requires_auth(['post:post'])
+    def add_post(token_payload):
         # Get the post data and create a new post object
         new_post_data = json.loads(request.data)
         new_post = Post(user_id=new_post_data['userId'],
@@ -89,8 +89,8 @@ def create_app(test_config=None):
     #              database.
     # Parameters: post_id - ID of the post to update.
     @app.route('/posts/<post_id>', methods=['PATCH'])
-    @requires_auth
-    def edit_post(post_id):
+    @requires_auth(['patch:my-post', 'patch:any-post'])
+    def edit_post(token_payload, post_id):
         updated_post = json.loads(request.data)
         original_post = Post.query.filter(Post.id == post_id).one_or_none()
 
@@ -123,8 +123,8 @@ def create_app(test_config=None):
     # Description: Deletes a post from the database.
     # Parameters: post_id - ID of the post to delete.
     @app.route('/posts/<post_id>', methods=['DELETE'])
-    @requires_auth
-    def delete_post(post_id):
+    @requires_auth(['delete:my-post', 'delete:any-post'])
+    def delete_post(token_payload, post_id):
         # Gets the post to delete
         post_data = Post.query.filter(Post.id == post_id).one_or_none()
 
@@ -148,8 +148,8 @@ def create_app(test_config=None):
     # Description: Gets the user's data.
     # Parameters: None.
     @app.route('/users')
-    @requires_auth
-    def get_user_data():
+    @requires_auth(['read:user'])
+    def get_user_data(token_payload):
         user_id = request.args.get('userID', None)
 
         # If there's no ID provided
@@ -173,8 +173,8 @@ def create_app(test_config=None):
     # Description: Adds a new user to the users table.
     # Parameters: None.
     @app.route('/users', methods=['POST'])
-    @requires_auth
-    def add_user():
+    @requires_auth(['post:user'])
+    def add_user(token_payload):
         # Gets the user's data
         user_data = json.loads(request.data)
 
@@ -205,8 +205,8 @@ def create_app(test_config=None):
     # Description: Updates a user in the database.
     # Parameters: user_id - ID of the user to update.
     @app.route('/users/<user_id>', methods=['PATCH'])
-    @requires_auth
-    def edit_user(user_id):
+    @requires_auth(['patch:user'])
+    def edit_user(token_payload, user_id):
         updated_user = json.loads(request.data)
         original_user = User.query.filter(User.id == user_id).one_or_none()
 
@@ -232,7 +232,8 @@ def create_app(test_config=None):
     # Description: Gets the user's messages.
     # Parameters: None.
     @app.route('/messages')
-    def get_user_messages():
+    @requires_auth(['read:messages'])
+    def get_user_messages(token_payload):
         # Gets the user's ID from the URL arguments
         user_id = request.args.get('userID', None)
 
@@ -262,8 +263,8 @@ def create_app(test_config=None):
     # Description: Adds a new message to the messages table.
     # Parameters: None.
     @app.route('/messages', methods=['POST'])
-    @requires_auth
-    def add_message():
+    @requires_auth(['post:message'])
+    def add_message(token_payload):
         # Gets the new message's data
         message_data = json.loads(request.data)
         new_message = Message(from_id=message_data['fromId'],
@@ -288,8 +289,8 @@ def create_app(test_config=None):
     # Description: Deletes a message from the database.
     # Parameters: message_id - ID of the message to delete.
     @app.route('/messages/<message_id>', methods=['DELETE'])
-    @requires_auth
-    def delete_message(message_id):
+    @requires_auth(['delete:messages'])
+    def delete_message(token_payload, message_id):
         # Get the message with that ID
         message_data = Message.query.filter(Message.id == message_id).\
                                             one_or_none()
