@@ -8,6 +8,7 @@ AUTH0_DOMAIN = 'dev-sbac.auth0.com'
 API_AUDIENCE = 'sendhug'
 ALGORITHMS = ['RS256']
 
+
 # Authentication Error
 class AuthError(Exception):
     def __init__(self, error, status_code):
@@ -31,7 +32,8 @@ def get_auth_header():
 
     # Checks that there are two parts to the header value and that the first
     # part is 'bearer'
-    if((split_auth_header[0].lower() != 'bearer') or (len(split_auth_header) != 2)):
+    if((split_auth_header[0].lower() != 'bearer') or
+       (len(split_auth_header) != 2)):
         raise AuthError({
             'code': 401,
             'description': 'Unauthorised. Malformed Authorization header.'
@@ -87,7 +89,8 @@ def verify_jwt(token):
         except jwt.JWTClaimsError:
             raise AuthError({
                 'code': 401,
-                'description': 'Unauthorised. Your token contains invalid claims.'
+                'description': 'Unauthorised. Your token contains invalid \
+                                claims.'
             }, 401)
         # If there's any other error
         except Exception as e:
@@ -98,20 +101,24 @@ def verify_jwt(token):
 
     return payload
 
-# Checks the user has permission to access an endpoint
+
+#  Checks the user has permission to access an endpoint
 def check_permissions(permission, payload):
     # Check whether permissions are included in the token payload
     if('permissions' not in payload):
         raise AuthError({
             'code': 403,
-            'description': 'Unauthorised. You do not have permission to perform this action.'
+            'description': 'Unauthorised. You do not have permission to \
+                            perform this action.'
         }, 403)
 
     # Check whether the user has that permission
-    if(permission[0] not in payload['permissions'] and permission[1] not in payload['permissions']):
+    if(permission[0] not in payload['permissions'] and
+       permission[1] not in payload['permissions']):
         raise AuthError({
             'code': 403,
-            'description': 'Unauthorised. You do not have permission to perform this action.'
+            'description': 'Unauthorised. You do not have permission to \
+                            perform this action.'
         }, 403)
 
     return True

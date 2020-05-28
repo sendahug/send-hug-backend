@@ -24,7 +24,8 @@ def create_app(test_config=None):
     # CORS Setup
     @app.after_request
     def after_request(response):
-        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Origin',
+                             'http://localhost:3000')
         response.headers.add('Access-Control-Allow-Methods', 'GET, POST,\
                               PATCH, DELETE, OPTIONS')
         response.headers.add('Access-Control-Allow-Headers', 'Authorization')
@@ -102,14 +103,16 @@ def create_app(test_config=None):
         # their own posts.
         if('patch:my-post' in token_payload['permissions']):
             # Gets the user's ID and compares it to the user_id of the post
-            current_user = User.query.filter(User.auth0_id == token_payload['sub'])
+            current_user = User.query.filter(User.auth0_id ==
+                                             token_payload['sub'])
             if(original_post.user_id != current_user.id):
                 # If the user attempted to edit the text of a post that doesn't
                 # belong to them, throws an auth error
                 if(original_post.text != updated_post.text):
                     raise AuthError({
                         'code': 403,
-                        'description': 'You do not have permission to edit this post.'
+                        'description': 'You do not have permission to edit \
+                                        this post.'
                         }, 403)
             # Otherwise, the user attempted to edit their own post, which
             # is allowed
@@ -158,13 +161,15 @@ def create_app(test_config=None):
         # If the user only has permission to delete their own posts
         if('delete:my-post' in token_payload['permissions']):
             # Gets the user's ID and compares it to the user_id of the post
-            current_user = User.query.filter(User.auth0_id == token_payload['sub'])
+            current_user = User.query.filter(User.auth0_id ==
+                                             token_payload['sub'])
             # If it's not the same user, they can't delete the post, so an
             # auth error is raised
             if(post_data.user_id != current_user.id):
                 raise AuthError({
                     'code': 403,
-                    'description': 'You do not have permission to delete this post.'
+                    'description': 'You do not have permission to delete \
+                                    this post.'
                 }, 403)
 
         # Otherwise, it's either their post or they're allowed to delete any
@@ -217,7 +222,8 @@ def create_app(test_config=None):
 
         # Checks whether a user with that Auth0 ID already exists
         # If it is, aborts
-        database_user = User.query.filter(User.auth0_id == user_id).one_or_none()
+        database_user = User.query.filter(User.auth0_id ==
+                                          user_id).one_or_none()
         if(database_user):
             abort(409)
 
