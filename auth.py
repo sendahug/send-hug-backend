@@ -108,7 +108,7 @@ def check_permissions(permission, payload):
         }, 403)
 
     # Check whether the user has that permission
-    if(permission not in payload['permissions']):
+    if(permission[0] not in payload['permissions'] and permission[1] not in payload['permissions']):
         raise AuthError({
             'code': 403,
             'description': 'Unauthorised. You do not have permission to perform this action.'
@@ -118,7 +118,7 @@ def check_permissions(permission, payload):
 
 
 # requires_auth decorator
-def requires_auth(permission=''):
+def requires_auth(permission=['']):
     def requires_auth_decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
