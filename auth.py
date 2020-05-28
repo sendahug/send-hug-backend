@@ -98,12 +98,34 @@ def verify_jwt(token):
 
     return payload
 
+# Checks the user has permission to access an endpoint
+def check_permissions(permission, payload):
+    # Check whether permissions are included in the token payload
+    if('permissions' not in payload):
+        raise AuthError({
+            'code': 403,
+            'description': 'Unauthorised. You do not have permission to perform this action.'
+        }, 403)
+
+    # Check whether the user has that permission
+    if(permission not in payload['permissions']):
+        raise AuthError({
+            'code': 403,
+            'description': 'Unauthorised. You do not have permission to perform this action.'
+        }, 403)
+
+    return True
+
 
 # requires_auth decorator
-def requires_auth(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        token = get_auth_header()
-        payload = verify_jwt(token)
-        return func(payload, *args, **kwargs)
-    return wrapper
+def requires_auth(permission=''):
+    def requires_auth_decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            token = get_token_auth_header()
+            payload = verify_decode_jwt(token)
+            check_permissions(permission, payload)
+            return f(payload, *args, **kwargs)
+
+        return wrapper
+    return requires_auth_decorator
