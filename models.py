@@ -51,6 +51,7 @@ class User(db.Model):
     auth0_id = db.Column(db.String(), nullable=False)
     received_hugs = db.Column(db.Integer, default=0)
     given_hugs = db.Column(db.Integer, default=0)
+    login_count = db.Column(db.Integer, default=1)
     posts = db.relationship('Post', backref='user')
 
     # Format method
@@ -62,7 +63,8 @@ class User(db.Model):
             'displayName': self.display_name,
             'receivedH': self.received_hugs,
             'givenH': self.given_hugs,
-            'postsNum': self.posts
+            'postsNum': self.posts,
+            'loginCount': self.login_count
         }
 
 
