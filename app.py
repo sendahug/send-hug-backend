@@ -214,6 +214,8 @@ def create_app(test_config=None):
             abort(404)
 
         formatted_user_data = user_data.format()
+        formatted_user_data['posts'] = len(Post.query.filter(Post.user_id ==
+                                           user_data.id).all())
 
         return jsonify({
             'success': True,

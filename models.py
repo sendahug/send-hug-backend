@@ -63,7 +63,6 @@ class User(db.Model):
             'displayName': self.display_name,
             'receivedH': self.received_hugs,
             'givenH': self.given_hugs,
-            'postsNum': self.posts,
             'loginCount': self.login_count
         }
 
