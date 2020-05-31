@@ -272,6 +272,34 @@ def create_app(test_config=None):
             'updated': updated_user
         })
 
+    # Endpoint: GET /users/<user_id>/posts
+    # Description: Gets a specific user's posts.
+    # Parameters: user_id - whose posts to fetch.
+    @app.route('/users/<user_id>/posts')
+    @requires_auth(['read:user'])
+    def get_user_posts(token_payload, user_id):
+        # if there's no user ID provided, abort with 'Bad Request'
+        if(user_id is None):
+            abort(400)
+
+        # Gets all posts written by the given user
+        user_posts = Post.query.filter(Post.user_id == user_id)
+        user_posts_array = []
+
+        # If there are no posts, returns an empty array
+        if(user_posts is None):
+            user_posts_array = []
+        # If the user has written posts, formats each post and adds it
+        # to the posts array
+        else:
+            for post in user_posts:
+                user_posts_array.append(post.format())
+
+        return jsonify({
+            'success': True,
+            'posts': user_posts_array
+        })
+
     # Endpoint: GET /messages
     # Description: Gets the user's messages.
     # Parameters: None.
