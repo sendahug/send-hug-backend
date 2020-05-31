@@ -224,13 +224,12 @@ def create_app(test_config=None):
         # Checks whether a user with that Auth0 ID already exists
         # If it is, aborts
         database_user = User.query.filter(User.auth0_id ==
-                                          user_id).one_or_none()
+                                          user_data['id']).one_or_none()
         if(database_user):
             abort(409)
 
         new_user = User(auth0_id=user_data['id'],
-                        display_name=user_data['displayName'], received_hugs=0,
-                        given_hugs=0, posts=0, login_count=1)
+                        display_name=user_data['displayName'])
 
         # Try to add the post to the database
         try:

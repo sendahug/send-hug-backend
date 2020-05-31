@@ -53,7 +53,7 @@ def verify_jwt(token):
     rsa_key = {}
 
     # If the 'kid' key doesn't exist in the token header
-    for key in jwks['key']:
+    for key in jwks['keys']:
         if(key['kid'] == token_header['kid']):
             rsa_key = {
                 "kty": key["kty"],
