@@ -93,6 +93,10 @@ def create_app(test_config=None):
     @app.route('/posts/<post_id>', methods=['PATCH'])
     @requires_auth(['patch:my-post', 'patch:any-post'])
     def edit_post(token_payload, post_id):
+        # If there's no ID provided
+        if(post_id is None):
+            abort(400)
+
         updated_post = json.loads(request.data)
         original_post = Post.query.filter(Post.id == post_id).one_or_none()
 
@@ -152,6 +156,10 @@ def create_app(test_config=None):
     @app.route('/posts/<post_id>', methods=['DELETE'])
     @requires_auth(['delete:my-post', 'delete:any-post'])
     def delete_post(token_payload, post_id):
+        # If there's no ID provided
+        if(post_id is None):
+            abort(400)
+
         # Gets the post to delete
         post_data = Post.query.filter(Post.id == post_id).one_or_none()
 
@@ -197,7 +205,7 @@ def create_app(test_config=None):
 
         # If there's no ID provided
         if(user_id is None):
-            abort(404)
+            abort(400)
 
         user_data = User.query.filter(User.auth0_id == user_id).one_or_none()
 
@@ -250,6 +258,10 @@ def create_app(test_config=None):
     @app.route('/users/<user_id>', methods=['PATCH'])
     @requires_auth(['patch:user'])
     def edit_user(token_payload, user_id):
+        # if there's no user ID provided, abort with 'Bad Request'
+        if(user_id is None):
+            abort(400)
+
         updated_user = json.loads(request.data)
         original_user = User.query.filter(User.id == user_id).one_or_none()
 
@@ -311,7 +323,7 @@ def create_app(test_config=None):
 
         # If there's no user ID, abort
         if(user_id is None):
-            abort(404)
+            abort(400)
 
         # Gets the user's messages
         user_messages = Message.query.filter(Message.for_id == user_id).\
@@ -363,6 +375,10 @@ def create_app(test_config=None):
     @app.route('/messages/<message_id>', methods=['DELETE'])
     @requires_auth(['delete:messages'])
     def delete_message(token_payload, message_id):
+        # If there's no message ID, abort
+        if(message_id is None):
+            abort(400)
+
         # Get the message with that ID
         message_data = Message.query.filter(Message.id == message_id).\
                                             one_or_none()
