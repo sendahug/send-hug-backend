@@ -254,10 +254,10 @@ def create_app(test_config=None):
         original_user = User.query.filter(User.id == user_id).one_or_none()
 
         # Update user data
-        original_user.received_hugs = updated_user.receivedH
-        original_user.given_hugs = updated_user.givenH
-        original_user.posts = updated_user.posts
-        original_user.login_count = updated_user.loginCount
+        original_user.received_hugs = updated_user['receivedH']
+        original_user.given_hugs = updated_user['givenH']
+        original_user.posts = updated_user['posts']
+        original_user.login_count = updated_user['loginCount']
 
         # Try to update it in the database
         try:
