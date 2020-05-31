@@ -327,18 +327,25 @@ def create_app(test_config=None):
         if(user_id is None):
             abort(400)
 
-        # Gets the user's messages
-        user_messages = Message.query.filter(Message.for_id == user_id).\
-            join(User.username.label('from'), User.id == Message.from_id).\
-            join(User.username.label('for'), User.id == Message.for_id).all()
-        formatted_user_messages = []
+        message = Message.query.filter(Message.for_id == user_id).all()
 
-        # Formats the user's messages to JSON
-        for message in user_messages:
-            formatted_message = message[1].format()
-            formatted_message['from'] = message[2]
-            formatted_message['for'] = message[3]
-            formatted_user_messages.append(formatted_message)
+        # If there are no messages for the user, return an empty array
+        if(not message):
+            formatted_messages = []
+        # If there are messages, get the user's messages and format them
+        else:
+            # Gets the user's messages
+            user_messages = Message.query.filter(Message.for_id == user_id).\
+                join(User.display_name.label('from'), User.id == Message.from_id).\
+                join(User.display_name.label('for'), User.id == Message.for_id).all()
+            formatted_messages = []
+
+            # Formats the user's messages to JSON
+            for message in user_messages:
+                formatted_message = message[1].format()
+                formatted_message['from'] = message[2]
+                formatted_message['for'] = message[3]
+                formatted_messages.append(formatted_message)
 
         return jsonify({
             'success': True,
