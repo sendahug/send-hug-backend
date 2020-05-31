@@ -4,7 +4,7 @@
 
 Version 1 (currently in development).
 
-For full API documentation, check the [`API Docs`](./backend/api_docs.md)
+For full API documentation, check the [`API Docs`](./api_docs.md)
 
 ## Requirements
 
