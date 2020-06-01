@@ -10,7 +10,8 @@ from models import (
     Message,
     add as db_add,
     update as db_update,
-    delete_object as db_delete
+    delete_object as db_delete,
+    joined_query
     )
 from auth import AuthError, requires_auth
 
@@ -41,23 +42,15 @@ def create_app(test_config=None):
     @app.route('/')
     def index():
         # Gets the ten most recent posts
-        recent_posts = Post.query.order_by(Post.date).limit(10).all()
-        formatted_recent_posts = []
-
-        for post in recent_posts:
-            formatted_recent_posts.append(post.format())
+        recent_posts = joined_query('main new')['return']
 
         # Gets the ten posts with the least hugs
-        suggested_posts = Post.query.order_by(Post.given_hugs).limit(10).all()
-        formatted_suggested_posts = []
-
-        for post in suggested_posts:
-            formatted_suggested_posts.append(post.format())
+        suggested_posts = joined_query('main suggested')['return']
 
         return jsonify({
             'success': True,
-            'recent': formatted_recent_posts,
-            'suggested': formatted_suggested_posts
+            'recent': recent_posts,
+            'suggested': suggested_posts
         })
 
     # Endpoint: POST /posts
@@ -331,25 +324,16 @@ def create_app(test_config=None):
 
         # If there are no messages for the user, return an empty array
         if(not message):
-            formatted_messages = []
+            user_messages = []
         # If there are messages, get the user's messages and format them
         else:
             # Gets the user's messages
-            user_messages = Message.query.filter(Message.for_id == user_id).\
-                join(User.display_name.label('from'), User.id == Message.from_id).\
-                join(User.display_name.label('for'), User.id == Message.for_id).all()
-            formatted_messages = []
-
-            # Formats the user's messages to JSON
-            for message in user_messages:
-                formatted_message = message[1].format()
-                formatted_message['from'] = message[2]
-                formatted_message['for'] = message[3]
-                formatted_messages.append(formatted_message)
+            user_messages = joined_query('messages',
+                                         {'user_id': user_id})['return']
 
         return jsonify({
             'success': True,
-            'messages': formatted_messages
+            'messages': user_messages
         })
 
     # Endpoint: POST /messages

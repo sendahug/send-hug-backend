@@ -90,6 +90,71 @@ class Message(db.Model):
 
 # Database management methods
 # -----------------------------------------------------------------
+# Method: Joined_Query
+# Description: Performs a joined query.
+# Parameters: target (string) - the target variable + endpoint (or just
+#             endpoint if they're the same).
+def joined_query(target, params={}):
+    return_obj = []
+
+    # if the target is the recent_posts array in the main page endpoint
+    if(target.lower() == 'main new'):
+        new_posts = db.session.query(Post, User.display_name).join(User).\
+                    order_by(Post.date).limit(10).all()
+
+        # formats each post in the list
+        for post in new_posts:
+            post = {
+                'id': post[0].id,
+                'userId': post[0].user_id,
+                'user': post[1],
+                'text': post[0].text,
+                'date': post[0].date,
+                'givenHugs': post[0].given_hugs
+            }
+            return_obj.append(post)
+    # if the target is the suggested_posts array in the main page endpoint
+    elif(target.lower() == 'main suggested'):
+        sug_posts = db.session.query(Post, User.display_name).join(User).\
+                    order_by(Post.given_hugs).limit(10).all()
+
+        # formats each post in the list
+        for post in sug_posts:
+            post = {
+                'id': post[0].id,
+                'userId': post[0].user_id,
+                'user': post[1],
+                'text': post[0].text,
+                'date': post[0].date,
+                'givenHugs': post[0].given_hugs
+            }
+            return_obj.append(post)
+    # if the target is the user's messages (get messages endpoint)
+    elif(target.lower() == 'messages'):
+        user_id = params['user_id']
+        user_messages = db.session.query(Message,
+                                         User.display_name.label('from'),
+                                         User.display_name.label('for')).\
+            join(User).filter(Message.for_id == user_id).all()
+
+        # formats each message in the list
+        for message in user_messages:
+            message = {
+                'id': message[0].id,
+                'from': message[1],
+                'fromId': message[0].from_id,
+                'for': message[2],
+                'forId': message[0].for_id,
+                'messageText': message[0].text,
+                'date': message[0].date
+            }
+            return_obj.append(message)
+
+    return {
+        'return': return_obj
+    }
+
+
 # Method: Add
 # Description: Inserts a new record into the database.
 # Parameters: Object to insert (User, Post or Message).
