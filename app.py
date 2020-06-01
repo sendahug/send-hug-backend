@@ -68,10 +68,10 @@ def create_app(test_config=None):
     def add_post(token_payload):
         # Get the post data and create a new post object
         new_post_data = json.loads(request.data)
-        new_post = Post(user_id=new_post_data['userId'],
+        new_post = Post(user_id=new_post_data['user_id'],
                         text=new_post_data['text'],
                         date=new_post_data['date'],
-                        given_hugs=new_post_data['hugs'])
+                        given_hugs=new_post_data['givenHugs'])
 
         # Try to add the post to the database
         try:
