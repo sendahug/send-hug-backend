@@ -100,7 +100,7 @@ def add(obj):
     try:
         db.session.add(obj)
         db.session.commit()
-        return_object = obj
+        return_object = obj.format()
     # If there's an error, rollback
     except Exception as e:
         db.session.rollback()
@@ -123,7 +123,7 @@ def update(obj):
     # Try to update the object in the database
     try:
         db.session.commit()
-        updated_object = obj
+        updated_object = obj.format()
     # If there's an error, rollback
     except Exception as e:
         db.session.rollback()
