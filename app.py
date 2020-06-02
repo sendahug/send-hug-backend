@@ -92,6 +92,10 @@ def create_app(test_config=None):
 
         updated_post = json.loads(request.data)
         original_post = Post.query.filter(Post.id == post_id).one_or_none()
+        # Gets the user's ID
+        current_user = User.query.filter(User.auth0_id ==
+                                         token_payload['sub']).one_or_none()
+        post_author = User.query.filter(User.id == original_post.user_id).one_or_none()
 
         # If there's no post with that ID
         if(original_post is None):
@@ -100,9 +104,7 @@ def create_app(test_config=None):
         # If the user's permission is 'patch my' the user can only edit
         # their own posts.
         if('patch:my-post' in token_payload['permissions']):
-            # Gets the user's ID and compares it to the user_id of the post
-            current_user = User.query.filter(User.auth0_id ==
-                                             token_payload['sub']).one_or_none()
+            # Compares the user's ID to the user_id of the post
             if(original_post.user_id != current_user.id):
                 # If the user attempted to edit the text of a post that doesn't
                 # belong to them, throws an auth error
@@ -127,12 +129,16 @@ def create_app(test_config=None):
 
         # If a hug was added
         # Since anyone can give hugs, this doesn't require a permissions check
-        if(original_post.given_hugs != updated_post['hugs']):
-            original_post.given_hugs = updated_post['hugs']
+        if(original_post.given_hugs != updated_post['givenHugs']):
+            original_post.given_hugs = updated_post['givenHugs']
+            current_user.given_hugs += 1
+            post_author.received_hugs += 1
 
         # Try to update the database
         try:
             db_update(original_post)
+            db_update(current_user)
+            db_update(post_author)
             db_updated_post = original_post.format()
         # If there's an error, abort
         except Exception as e:
