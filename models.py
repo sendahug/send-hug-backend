@@ -100,7 +100,7 @@ def joined_query(target, params={}):
     # if the target is the recent_posts array in the main page endpoint
     if(target.lower() == 'main new'):
         new_posts = db.session.query(Post, User.display_name).join(User).\
-                    order_by(Post.date).limit(10).all()
+                    order_by(db.desc(Post.date)).limit(10).all()
 
         # formats each post in the list
         for post in new_posts:
@@ -211,6 +211,7 @@ def delete_object(obj):
     # Try to delete the record from the database
     try:
         db.session.delete(obj)
+        db.session.commit()
         deleted = obj.id
     # If there's an error, rollback
     except Exception as e:

@@ -102,11 +102,11 @@ def create_app(test_config=None):
         if('patch:my-post' in token_payload['permissions']):
             # Gets the user's ID and compares it to the user_id of the post
             current_user = User.query.filter(User.auth0_id ==
-                                             token_payload['sub'])
+                                             token_payload['sub']).one_or_none()
             if(original_post.user_id != current_user.id):
                 # If the user attempted to edit the text of a post that doesn't
                 # belong to them, throws an auth error
-                if(original_post.text != updated_post.text):
+                if(original_post.text != updated_post['text']):
                     raise AuthError({
                         'code': 403,
                         'description': 'You do not have permission to edit \
@@ -116,19 +116,19 @@ def create_app(test_config=None):
             # is allowed
             else:
                 # If the text was changed
-                if(original_post.text != updated_post.text):
-                    original_post.text = updated_post.text
+                if(original_post.text != updated_post['text']):
+                    original_post.text = updated_post['text']
         # Otherwise, the user is allowed to edit any post, and thus text
         # editing is allowed
         else:
             # If the text was changed
-            if(original_post.text != updated_post.text):
-                original_post.text = updated_post.text
+            if(original_post.text != updated_post['text']):
+                original_post.text = updated_post['text']
 
         # If a hug was added
         # Since anyone can give hugs, this doesn't require a permissions check
-        if(original_post.given_hugs != updated_post.hugs):
-            original_post.given_hugs = updated_post.hugs
+        if(original_post.given_hugs != updated_post['hugs']):
+            original_post.given_hugs = updated_post['hugs']
 
         # Try to update the database
         try:
@@ -164,7 +164,7 @@ def create_app(test_config=None):
         if('delete:my-post' in token_payload['permissions']):
             # Gets the user's ID and compares it to the user_id of the post
             current_user = User.query.filter(User.auth0_id ==
-                                             token_payload['sub'])
+                                             token_payload['sub']).one_or_none()
             # If it's not the same user, they can't delete the post, so an
             # auth error is raised
             if(post_data.user_id != current_user.id):
@@ -289,7 +289,7 @@ def create_app(test_config=None):
             abort(400)
 
         # Gets all posts written by the given user
-        user_posts = Post.query.filter(Post.user_id == user_id)
+        user_posts = Post.query.filter(Post.user_id == user_id).all()
         user_posts_array = []
 
         # If there are no posts, returns an empty array
