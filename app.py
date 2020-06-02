@@ -351,7 +351,7 @@ def create_app(test_config=None):
         message_data = json.loads(request.data)
         new_message = Message(from_id=message_data['fromId'],
                               for_id=message_data['forId'],
-                              text=message_data['text'],
+                              text=message_data['messageText'],
                               date=message_data['date'])
 
         # Try to add the post to the database
