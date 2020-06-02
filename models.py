@@ -132,10 +132,10 @@ def joined_query(target, params={}):
     # if the target is the user's messages (get messages endpoint)
     elif(target.lower() == 'messages'):
         user_id = params['user_id']
-        user_messages = db.session.query(Message,
-                                         User.display_name.label('from'),
-                                         User.display_name.label('for')).\
-            join(User).filter(Message.for_id == user_id).all()
+
+        user_messages = db.session.query(Message, User.display_name.
+                                         label('from'),
+                                         User.display_name.label('for')).all()
 
         # formats each message in the list
         for message in user_messages:
