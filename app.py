@@ -412,6 +412,15 @@ def create_app(test_config=None):
             'message': 'The resource you were looking for wasn\'t found.'
         }), 404
 
+    # Method not allowed handler
+    @app.errorhandler(405)
+    def method_not_allowed(error):
+        return jsonify({
+            'success': False,
+            'code': 405,
+            'message': 'This HTTP method is not allowed at this endpoint.'
+        }), 405
+
     # Conflict error handler
     @app.errorhandler(409)
     def conflict(error):
