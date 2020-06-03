@@ -129,6 +129,38 @@ def joined_query(target, params={}):
                 'givenHugs': post[0].given_hugs
             }
             return_obj.append(post)
+    # If the target is the full list of new items
+    elif(target.lower() == 'full new'):
+        full_new_posts = db.session.query(Post, User.display_name).join(User).\
+                         order_by(db.desc(Post.date)).all()
+
+        # formats each post in the list
+        for post in full_new_posts:
+            post = {
+                'id': post[0].id,
+                'userId': post[0].user_id,
+                'user': post[1],
+                'text': post[0].text,
+                'date': post[0].date,
+                'givenHugs': post[0].given_hugs
+            }
+            return_obj.append(post)
+    # If the target is the full list of suggested items
+    elif(target.lower() == 'full sug'):
+        full_sug_posts = db.session.query(Post, User.display_name).join(User).\
+                    order_by(Post.given_hugs).all()
+
+        # formats each post in the list
+        for post in full_sug_posts:
+            post = {
+                'id': post[0].id,
+                'userId': post[0].user_id,
+                'user': post[1],
+                'text': post[0].text,
+                'date': post[0].date,
+                'givenHugs': post[0].given_hugs
+            }
+            return_obj.append(post)
     # if the target is the user's messages (get messages endpoint)
     elif(target.lower() == 'messages'):
         user_id = params['user_id']

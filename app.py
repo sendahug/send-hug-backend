@@ -203,6 +203,44 @@ def create_app(test_config=None):
             'deleted': post_id
         })
 
+    # Endpoint: GET /posts/new
+    # Description: Gets all new posts.
+    # Parameters: None.
+    @app.route('/posts/new')
+    def get_new_posts():
+        page = request.args.get('page', 1, type=int)
+
+        # Gets the recent posts and paginates them
+        recent_posts = joined_query('full new')['return']
+        paginated_data = paginate(recent_posts, page)
+        paginated_posts = paginated_data[0]
+        total_pages = paginated_data[1]
+
+        return jsonify({
+            'success': True,
+            'posts': paginated_posts,
+            'total_pages': total_pages
+        })
+
+    # Endpoint: GET /posts/suggested
+    # Description: Gets all suggested posts.
+    # Parameters: None.
+    @app.route('/posts/suggested')
+    def get_suggested_posts():
+        page = request.args.get('page', 1, type=int)
+
+        # Gets suggested posts and paginates them
+        sug_posts = joined_query('full sug')['return']
+        paginated_data = paginate(sug_posts, page)
+        paginated_posts = paginated_data[0]
+        total_pages = paginated_data[1]
+
+        return jsonify({
+            'success': True,
+            'posts': paginated_posts,
+            'total_pages': total_pages
+        })
+
     # Endpoint: GET /users
     # Description: Gets the user's data.
     # Parameters: None.
