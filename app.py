@@ -274,6 +274,7 @@ def create_app(test_config=None):
         original_user = User.query.filter(User.id == user_id).one_or_none()
 
         # Update user data
+        original_user.display_name = updated_user['displayName']
         original_user.received_hugs = updated_user['receivedH']
         original_user.given_hugs = updated_user['givenH']
         original_user.login_count = updated_user['loginCount']
