@@ -34,6 +34,15 @@ def create_app(test_config=None):
 
         return response
 
+    # Paginates posts / messages
+    def paginate(items, page):
+        items_per_page = 5;
+        start_index = (page - 1) * items_per_page
+        paginated_items = items[start_index:(start_index+4)]
+        total_pages = len(items) / 5
+
+        return [paginated_items, total_pages]
+
     # Routes
     # -----------------------------------------------------------------
     # Endpoint: GET /
@@ -288,6 +297,8 @@ def create_app(test_config=None):
     @app.route('/users/<user_id>/posts')
     @requires_auth(['read:user'])
     def get_user_posts(token_payload, user_id):
+        page = request.args.get('page', 1, type=int)
+
         # if there's no user ID provided, abort with 'Bad Request'
         if(user_id is None):
             abort(400)
@@ -305,9 +316,15 @@ def create_app(test_config=None):
             for post in user_posts:
                 user_posts_array.append(post.format())
 
+            paginated_data = paginate(user_posts_array, page)
+            paginated_posts = paginated_data[0]
+            total_pages = paginated_data[1]
+
         return jsonify({
             'success': True,
-            'posts': user_posts_array
+            'posts': paginated_posts,
+            'page': page,
+            'total_pages': total_pages
         })
 
     # Endpoint: GET /messages
@@ -316,6 +333,8 @@ def create_app(test_config=None):
     @app.route('/messages')
     @requires_auth(['read:messages'])
     def get_user_messages(token_payload):
+        page = request.args.get('page', 1, type=int)
+
         # Gets the user's ID from the URL arguments
         user_id = request.args.get('userID', None)
 
@@ -333,10 +352,15 @@ def create_app(test_config=None):
             # Gets the user's messages
             user_messages = joined_query('messages',
                                          {'user_id': user_id})['return']
+            paginated_data = paginate(user_messages, page)
+            paginated_messages = paginated_data[0]
+            total_pages = paginated_data[1]
 
         return jsonify({
             'success': True,
-            'messages': user_messages
+            'messages': paginated_messages,
+            'current_page': page,
+            'total_pages': total_pages
         })
 
     # Endpoint: POST /messages
