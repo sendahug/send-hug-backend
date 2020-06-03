@@ -197,11 +197,9 @@ def create_app(test_config=None):
     # Endpoint: GET /users
     # Description: Gets the user's data.
     # Parameters: None.
-    @app.route('/users')
+    @app.route('/users/<user_id>')
     @requires_auth(['read:user'])
-    def get_user_data(token_payload):
-        user_id = request.args.get('userID', None)
-
+    def get_user_data(token_payload, user_id):
         # If there's no ID provided
         if(user_id is None):
             abort(400)
