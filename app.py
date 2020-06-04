@@ -1,5 +1,6 @@
 import os
 import json
+import math
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
 
@@ -39,7 +40,7 @@ def create_app(test_config=None):
         items_per_page = 5;
         start_index = (page - 1) * items_per_page
         paginated_items = items[start_index:(start_index+4)]
-        total_pages = len(items) / 5
+        total_pages = math.ceil(len(items) / 5)
 
         return [paginated_items, total_pages]
 
