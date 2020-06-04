@@ -14,12 +14,15 @@ For full instructions check the [`backend README`](./backend/README.md)
 2. POST /posts
 3. PATCH /posts/<post_id>
 4. DELETE /posts/<post_id>
-5. GET /users
-6. POST /users
-7. PATCH /users/<user_id>
-8. GET /messages
-9. POST /messages
-10. DELETE /messages/<message_id>
+5. GET /posts/new
+6. GET /posts/suggested
+7. GET /users
+8. POST /users
+9. PATCH /users/<user_id>
+10. GET /users/<user_id>/posts
+11. GET /messages
+12. POST /messages
+13. DELETE /messages/<message_id>
 
 ### GET /
 **Description**: Home route. Gets the ten most recent items and the ten items with the least hugs.
@@ -29,6 +32,8 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Request Arguments**: None.
 
 **Required Data**: None.
+
+**Required Permission:** None.
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
@@ -54,10 +59,12 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Request Arguments**: None.
 
 **Required Data**: A JSON containing a new post's data, in the following format:
-  - userId (Number) - The ID of the user creating the post.
+  - user_id (Number) - The ID of the user creating the post.
   - text (String) - The post text.
   - date (DateTime) - The date in which the post was made.
-  - hugs (Number) - The post's given hugs.
+  - givenHugs (Number) - The post's given hugs.
+
+**Required Permission:** 'post:post'.
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
@@ -87,11 +94,14 @@ For full instructions check the [`backend README`](./backend/README.md)
   - text (String) - The updated post's text.
   - given_hugs (Number) - The updated hugs count.
 
+**Required Permission:** 'patch:my-post' or 'patch:any-post'.
+
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
   - updated (Dictionary) - the updated post.
 
 **Expected Errors**:
+  - 400 (Bad Request) - In case there was no ID supplied.
   - 404 (Not Found) - In case there's no post with that ID.
   - 500 (Internal Server Error) - In case there's an error updating the post's data in the database.
 
@@ -114,13 +124,72 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Required Data**: None.
 
+**Required Permission:** 'delete:my-post' or 'delete:any-post'.
+
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
   - deleted (Number) - The ID of the post deleted.
 
 **Expected Errors**:
+  - 400 (Bad Request) - In case no ID was supplied.
   - 404 (Not Found) - In case there's no post with that ID.
   - 500 (Internal Server Error) - In case there's an error deleting the post from the database.
+
+**CURL Request Sample**: `curl `
+
+**Response Example:**
+```
+{
+
+}
+```
+
+### GET /posts/new
+**Description**: Gets the new posts, by descending order (most recent to least recent).
+
+**Handler Function**: get_new_posts.
+
+**Request Arguments**:
+  - page (number) - Current page.
+
+**Required Data**: None.
+
+**Required Permission:** None.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - Posts (Array) - An array of paginated posts (5 per request).
+  - total_pages (Number) - The number of total pages.
+
+**Expected Errors**: None.
+
+**CURL Request Sample**: `curl `
+
+**Response Example:**
+```
+{
+
+}
+```
+
+### GET /posts/suggested
+**Description**: Gets the posts with the least hugs.
+
+**Handler Function**: get_suggested_posts.
+
+**Request Arguments**:
+  - page (number) - Current page.
+
+**Required Data**: None.
+
+**Required Permission:** None.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - Posts (Array) - An array of paginated posts (5 per request).
+  - total_pages (Number) - The number of total pages.
+
+**Expected Errors**: None.
 
 **CURL Request Sample**: `curl `
 
@@ -141,12 +210,15 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Required Data**: None.
 
+**Required Permission:** 'read:user'.
+
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
   - User (Dictionary) - A dictionary containing the user's data.
 
 **Expected Errors**:
-  - 404 (Not Found) - In case there's no ID supplied or there's no user with that ID.
+  - 400 (Bad Request) - In case no ID was supplied.
+  - 404 (Not Found) - In case there's no user with that ID.
 
 **CURL Request Sample**: `curl `
 
@@ -158,7 +230,34 @@ For full instructions check the [`backend README`](./backend/README.md)
 ```
 
 ### POST /users
-**Description**: Adds a new user to the database. This method is only exposed to Auth0.
+**Description**: Adds a new user to the database.
+
+**Handler Function**: add_user.
+
+**Request Arguments**: None.
+
+**Required Data**: A JSON containing the new user's data, in the following format:
+  - id (string) - The user's Auth0 ID (JWT sub).
+  - displayName (string) - The user's auto-generated display name.
+
+**Required Permission:** 'post:user'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - user (Dictionary) - The new user's data.
+
+**Expected Errors**:
+  - 409 (Conflict) - In case the user is attempting to create a user that already exists.
+  - 500 (Internal Server Error) - In case there's an error updating the user's data in the database.
+
+**CURL Request Sample**: `curl `
+
+**Response Example:**
+```
+{
+
+}
+```
 
 ### PATCH /users/<user_id>
 **Description**: Updates a user's data in the database.
@@ -173,12 +272,46 @@ For full instructions check the [`backend README`](./backend/README.md)
   - givenH (Number) - The user's given hugs.
   - posts (Number) - Number of posts the user made.
 
+**Required Permission:** 'patch:user'.
+
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
   - updated (Dictionary) - The updated user's data.
 
 **Expected Errors**:
+  - 400 (Bad Request) - In case no ID was supplied.
   - 500 (Internal Server Error) - In case there's an error updating the user's data in the database.
+
+**CURL Request Sample**: `curl `
+
+**Response Example:**
+```
+{
+
+}
+```
+
+### GET /users/<user_id>/posts
+**Description**: Gets the user's posts.
+
+**Handler Function**: get_user_posts.
+
+**Request Arguments**:
+  - userID - The ID of the user.
+  - page - A query parameters indicating the user's current page.
+
+**Required Data**: None.
+
+**Required Permission:** 'read:user'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - posts (List) - A paginated list of the user's posts (5 per request).
+  - page (number) - The user's current page.
+  - total_pages (number) - Total number of pages.
+
+**Expected Errors**:
+  - 400 (Bad Request) - In case there's no ID supplied.
 
 **CURL Request Sample**: `curl `
 
@@ -199,12 +332,16 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Required Data**: None.
 
+**Required Permission:** 'read:messages'.
+
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - messages (List) - A list containing the user's messages.
+  - messages (List) - A paginated list containing the user's messages.
+  - current_page (number) - The user's current page.
+  - total_pages (number) - The total number of pages.
 
 **Expected Errors**:
-  - 404 (Not Found) - In case there's no ID supplied.
+  - 400 (Bad Request) - In case no ID was supplied.
 
 **CURL Request Sample**: `curl `
 
@@ -227,6 +364,8 @@ For full instructions check the [`backend README`](./backend/README.md)
   - forId (Number) - ID of the user getting the message.
   - text (String) - The message text.
   - date (DateTime) - The date the message was sent.
+
+**Required Permission:** 'post:message'.
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
@@ -254,12 +393,16 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Required Data**: None.
 
+**Required Permission:** 'delete:message'.
+
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
   - deleted (Number) - the ID of the message that was deleted.
 
 **Expected Errors**:
+  - 400 (Bad Request) - In case no ID was supplied.
   - 404 (Not Found) - In case there's no message with that ID.
+  - 500 (Internal Server Error) - In case an error occurred while deleting the message from the database.
 
 **CURL Request Sample**: `curl `
 
@@ -275,8 +418,11 @@ For full instructions check the [`backend README`](./backend/README.md)
 The app contains the following error handlers:
 1. 400 - Bad Request
 2. 404 - Not Found
-3. 422 - Unprocessable Entity
-4. 500 - Internal Server Error
+3. 405 - Method Not Allowed
+4. 409 - Conflict
+5. 422 - Unprocessable Entity
+6. 500 - Internal Server Error
+7. AuthError (401 & 403) - Authentication errors.
 
 For all errors, the server returns the following object:
   - A success value ('success') - Boolean
