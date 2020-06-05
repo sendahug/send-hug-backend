@@ -53,6 +53,21 @@ The site uses several tools to maximise compatibility:
 
 5. **Python-Jose** - This application uses Python-Jose in order to decode and verify the authenticity of a given JWT (see Contents -> auth.py). You can read more on the [Python-Jose](https://python-jose.readthedocs.io/en/latest/) website.
 
+## Authentication
+
+The project uses Auth0 as a third-party authentication provider. Authentication is done by Auth0, which in turn returns a JSON Web Token containing the user's data and permissions.
+
+Decoding and verifying the token is done by [`auth.py`](./auth.py), in three stages:
+
+1. The server gets the Authorization header from the request and ensures that it exists and is in the right form. (Done by the `get_auth_header()` function.)
+
+2. The server uses Jose to decode and verify the token. (Done by the `verify_jwt()` function.)
+
+3. Once the JWT is decoded and verified, the user's permissions (taken from the token payload) are checked. Each endpoint that requires authorisation contains a string, which is then compared to the user's permissions. (Done by the `check_permissions()` function.)
+
+Endpoints that require authorisation are marked with the `@requires_auth` decorator. The function creating the decorator is written in full in [`auth.py`](./auth.py).
+
+In case the user's authorisation header is malformed, their JWT is invalid in any way, or they don't have the required permission, the server raises an AuthError. The error handler is defined in full with the rest of the error handlers, in [`app.py`](./app.py).
 
 ## Known Issues
 
