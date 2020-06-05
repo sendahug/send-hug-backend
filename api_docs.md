@@ -14,15 +14,14 @@ For full instructions check the [`backend README`](./backend/README.md)
 2. POST /posts
 3. PATCH /posts/<post_id>
 4. DELETE /posts/<post_id>
-5. GET /posts/new
-6. GET /posts/suggested
-7. GET /users
-8. POST /users
-9. PATCH /users/<user_id>
-10. GET /users/<user_id>/posts
-11. GET /messages
-12. POST /messages
-13. DELETE /messages/<message_id>
+5. GET /posts/<type>
+6. GET /users
+7. POST /users
+8. PATCH /users/<user_id>
+9. GET /users/<user_id>/posts
+10. GET /messages
+11. POST /messages
+12. DELETE /messages/<message_id>
 
 ### GET /
 **Description**: Home route. Gets the ten most recent items and the ten items with the least hugs.
@@ -144,40 +143,13 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### GET /posts/new
-**Description**: Gets the new posts, by descending order (most recent to least recent).
+### GET /posts/<type>
+**Description**: Gets the new/recent posts, depending on the type passed on. Recent posts are ordered by descending order (most recent to least recent).
 
 **Handler Function**: get_new_posts.
 
 **Request Arguments**:
-  - page (number) - Current page.
-
-**Required Data**: None.
-
-**Required Permission:** None.
-
-**Returns**: An object containing:
-  - Success (Boolean) - a success value.
-  - Posts (Array) - An array of paginated posts (5 per request).
-  - total_pages (Number) - The number of total pages.
-
-**Expected Errors**: None.
-
-**CURL Request Sample**: `curl `
-
-**Response Example:**
-```
-{
-
-}
-```
-
-### GET /posts/suggested
-**Description**: Gets the posts with the least hugs.
-
-**Handler Function**: get_suggested_posts.
-
-**Request Arguments**:
+  - type (string) - The type of posts to fetch.
   - page (number) - Current page.
 
 **Required Data**: None.

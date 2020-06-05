@@ -146,7 +146,7 @@ def joined_query(target, params={}):
             }
             return_obj.append(post)
     # If the target is the full list of suggested items
-    elif(target.lower() == 'full sug'):
+    elif(target.lower() == 'full suggested'):
         full_sug_posts = db.session.query(Post, User.display_name).join(User).\
                     order_by(Post.given_hugs).all()
 
