@@ -194,6 +194,84 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(post_text['text'], updated_post[23:32])
 
 
+    # Delete Post Route Tests ('/posts/<post_id>', DELETE)
+    # -------------------------------------------------------
+    # Attempt to delete a post with no authorisation header
+    def test_delete_post_no_auth(self):
+        response = self.client().delete('/posts/1')
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to delete a post with a malformed auth header
+    def test_delete_post_malformed_auth(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' }
+        response = self.client().delete('/posts/1', headers=req_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to delete the user's post (with same user's JWT)
+    def test_delete_own_post_as_user(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
+        response = self.client().delete('/posts/1', headers=req_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], 1)
+
+    # Attempt to delete another user's post (with same user's JWT)
+    def test_delete_other_users_post_as_user(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
+        response = self.client().delete('/posts/1', headers=req_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to delete the moderator's post (with same moderator's JWT)
+    def test_delete_own_post_as_mod(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
+        response = self.client().delete('/posts/1', headers=req_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], 1)
+
+    # Attempt to delete another user's post (with moderator's JWT)
+    def test_delete_other_users_post_as_mod(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
+        response = self.client().delete('/posts/1', headers=req_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to delete the admin's post (with same admin's JWT)
+    def test_delete_own_post_as_admin(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
+        response = self.client().delete('/posts/1', headers=req_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], 1)
+
+    # Attempt to delete another user's post (with admin's JWT)
+    def test_delete_other_users_post_as_admin(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
+        response = self.client().delete('/posts/1', headers=req_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], 1)
+
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
