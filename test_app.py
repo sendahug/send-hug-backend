@@ -23,6 +23,14 @@ updated_post = '{\
 "date": "Sun Jun 07 2020 15:57:45 GMT+0300",\
 "givenHugs": 0 }'
 
+updated_user = '{\
+"id": 1,\
+"auth0Id": "",\
+"displayName": "",\
+"receivedH": 0,\
+"givenH": 0,\
+"loginCount": 0 }'
+
 
 # App testing
 class TestHugApp(unittest.TestCase):
@@ -313,6 +321,59 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 10)
         self.assertEqual(response_data['total_pages'], 2)
+
+
+    # Get User Data Tests ('/users/<user_id>', GET)
+    # -------------------------------------------------------
+    # Attempt to get a user's data without auth header
+    def test_get_user_data_no_auth(self):
+        response = self.client().get('/users/1')
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get a user's data with malformed auth header
+    def test_get_user_data_malformed_auth(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' }
+        response = self.client().get('/users/1', headers=req_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get a user's data with a user's JWT
+    def test_get_user_data_as_user(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
+        response = self.client().get('/users/1', headers=req_header)
+        response_data = json.loads(response.data)
+        user_data = response_data['user']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(user_data['id'], 1)
+
+    # Attempt to get a user's data with a moderator's JWT
+    def test_get_user_data_as_mod(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
+        response = self.client().get('/users/1', headers=req_header)
+        response_data = json.loads(response.data)
+        user_data = response_data['user']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(user_data['id'], 1)
+
+    # Attempt to get a user's data with an admin's JWT
+    def test_get_user_data_as_admin(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
+        response = self.client().get('/users/1', headers=req_header)
+        response_data = json.loads(response.data)
+        user_data = response_data['user']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(user_data['id'], 1)
 
 
 # Make the tests conveniently executable
