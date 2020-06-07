@@ -272,6 +272,48 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response_data['deleted'], 1)
 
 
+    # Get Posts by Type Tests ('posts/<type>', GET)
+    # -------------------------------------------------------
+    # Attempt to get page 1 of full new posts
+    def test_get_full_new_posts(self):
+        response = self.client().get('/posts/new')
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response_data['posts']), 10)
+        self.assertEqual(response_data['total_pages'], 2)
+
+    # Attempt to get page 2 of full new posts
+    def test_get_full_new_posts_page_2(self):
+        response = self.client().get('/posts/new?page=2')
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response_data['posts']), 10)
+        self.assertEqual(response_data['total_pages'], 2)
+
+    # Attempt to get page 1 of full suggested posts
+    def test_get_full_suggested_posts(self):
+        response = self.client().get('/posts/suggested')
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response_data['posts']), 10)
+        self.assertEqual(response_data['total_pages'], 2)
+
+    # Attempt to get page 2 of full suggested posts
+    def test_get_full_suggested_posts_page_2(self):
+        response = self.client().get('/posts/suggested?page=2')
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response_data['posts']), 10)
+        self.assertEqual(response_data['total_pages'], 2)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
