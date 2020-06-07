@@ -69,6 +69,23 @@ Endpoints that require authorisation are marked with the `@requires_auth` decora
 
 In case the user's authorisation header is malformed, their JWT is invalid in any way, or they don't have the required permission, the server raises an AuthError. The error handler is defined in full with the rest of the error handlers, in [`app.py`](./app.py).
 
+## Testing
+
+This project utilises unittest for testing. In order to run project tests, run the following commands:
+
+```
+dropdb test-capstone && createdb test-capstone
+psql test-capstone < capstone_db.sql
+python test_app.py
+```
+
+Or, if using MacOS:
+```
+dropdb test-capstone && createdb test-capstone
+psql test-capstone < capstone_db.sql
+python3 test_app.py
+```
+
 ## Known Issues
 
 There are no current issues at the time.
