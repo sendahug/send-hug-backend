@@ -17,6 +17,12 @@ new_post = '{\
 "date": "Sun Jun 07 2020 15:57:45 GMT+0300",\
 "givenHugs": 0 }'
 
+updated_post = '{\
+"user_id": 1,\
+"text": "test post",\
+"date": "Sun Jun 07 2020 15:57:45 GMT+0300",\
+"givenHugs": 0 }'
+
 
 # App testing
 class TestHugApp(unittest.TestCase):
@@ -102,6 +108,91 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['posts'], new_post)
+
+
+    # Update Post Route Tests ('/posts/<post_id>', PATCH)
+    # -------------------------------------------------------
+    # Attempt to update a post with no authorisation header
+    def test_update_post_no_auth(self):
+        response = self.client().patch('/posts/1', data=updated_post)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to update a post with a malformed auth header
+    def test_update_post_malformed_auth(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' }
+        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to update the user's post (with same user's JWT)
+    def test_update_own_post_as_user(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
+        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response_data = json.loads(response.data)
+        post_text = response_data['updated']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(post_text['text'], updated_post[23:32])
+
+    # Attempt to update another user's post (with same user's JWT)
+    def test_update_other_users_post_as_user(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
+        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to update the moderator's post (with same moderator's JWT)
+    def test_update_own_post_as_mod(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
+        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response_data = json.loads(response.data)
+        post_text = response_data['updated']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(post_text['text'], updated_post[23:32])
+
+    # Attempt to update another user's post (with moderator's JWT)
+    def test_update_other_users_post_as_mod(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
+        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response_data = json.loads(response.data)
+        post_text = response_data['updated']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(post_text['text'], updated_post[23:32])
+
+    # Attempt to update the admin's post (with same admin's JWT)
+    def test_update_own_post_as_admin(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
+        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response_data = json.loads(response.data)
+        post_text = response_data['updated']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(post_text['text'], updated_post[23:32])
+
+    # Attempt to update another user's post (with admin's JWT)
+    def test_update_other_users_post_as_admin(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
+        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response_data = json.loads(response.data)
+        post_text = response_data['updated']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(post_text['text'], updated_post[23:32])
+
 
 
 # Make the tests conveniently executable
