@@ -5,6 +5,18 @@ from flask_sqlalchemy import SQLAlchemy
 from app import create_app
 from models import create_db, Post, User, Message
 
+# Tokens
+user_jwt = ''
+moderator_jwt = ''
+admin_jwt = ''
+
+# Item Samples
+new_post = '{\
+"user_id": 1,\
+"text": "test post",\
+"date": "Sun Jun 07 2020 15:57:45 GMT+0300",\
+"givenHugs": 0 }'
+
 
 # App testing
 class TestHugApp(unittest.TestCase):
@@ -41,6 +53,55 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(len(response_data['recent']), 10)
         self.assertEqual(len(response_data['suggested']), 10)
 
+
+    # Create Post Route Tests ('/posts', POST)
+    # -------------------------------------------------------
+    # Attempt to create a post with no authorisation header
+    def test_send_post_no_auth(self):
+        response = self.client().post('/posts', data=new_post)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to create a post with a malformed auth header
+    def test_send_post_malformed_auth(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' }
+        response = self.client().post('/posts', headers=req_header, data=new_post)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to create a post with a user's JWT
+    def test_send_post_as_user(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
+        response = self.client().post('/posts', headers=req_header, data=new_post)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['posts'], new_post)
+
+    # Attempt to create a post with a moderator's JWT
+    def test_send_post_as_mod(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
+        response = self.client().post('/posts', headers=req_header, data=new_post)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['posts'], new_post)
+
+    # Attempt to create a post with an admin's JWT
+    def test_send_post_as_admin(self):
+        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
+        response = self.client().post('/posts', headers=req_header, data=new_post)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['posts'], new_post)
 
 
 # Make the tests conveniently executable
