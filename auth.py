@@ -48,8 +48,16 @@ def verify_jwt(token):
     auth_json = urlopen('https://' + AUTH0_DOMAIN + '/.well-known/jwks.json')
     jwks = json.loads(auth_json.read())
 
-    # Gets the token header
-    token_header = jwt.get_unverified_header(token)
+    # Tries to get the token header
+    try:
+        token_header = jwt.get_unverified_header(token)
+    # If there's an error, raise an AuthError
+    except Exception as e:
+        raise AuthError({
+            'code': 401,
+            'description': 'Unauthorised. Malformed Authorization header.'
+        }, 401)
+
     rsa_key = {}
 
     # If the 'kid' key doesn't exist in the token header
