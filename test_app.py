@@ -28,6 +28,20 @@ class TestHugApp(unittest.TestCase):
     def tearDown(self):
         pass
 
+    # Index Route Tests ('/', GET)
+    # -------------------------------------------------------
+    def test_get_home_page(self):
+        response = self.client().get('/')
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['recent'])
+        self.assertTrue(response_data['suggested'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response_data['recent']), 10)
+        self.assertEqual(len(response_data['suggested']), 10)
+
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
