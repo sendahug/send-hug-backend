@@ -732,12 +732,8 @@ class TestHugApp(unittest.TestCase):
                                      headers=admin_header)
         response_data = json.loads(response.data)
 
-        self.assertTrue(response_data['success'])
-        self.assertTrue(esponse_data['messages'])
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['page'], 1)
-        self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 1)
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
 
     # Attempt to get a user's messages with no ID (with admin's JWT)
     def test_get_no_id_user_messages_as_admin(self):
@@ -896,9 +892,8 @@ class TestHugApp(unittest.TestCase):
         response = self.client().delete('/messages/1', headers=admin_header)
         response_data = json.loads(response.data)
 
-        self.assertTrue(response_data['success'])
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(message['deleted'], 1)
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
 
     # Attempt to delete a user's message with no ID (with admin's JWT)
     def test_delete_no_id_user_message_as_admin(self):
