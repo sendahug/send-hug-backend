@@ -30,8 +30,11 @@ admin_header = {
 
 # Sample users data
 sample_user_id = str(1)
+sample_user_auth0_id = 'auth0|5ed34765f0b8e60c8e87ca62'
 sample_moderator_id = str(5)
+sample_moderator_auth0_id = 'auth0|5ede3e7a0793080013259050'
 sample_admin_id = str(4)
+sample_admin_auth0_id = 'auth0|5ed8e3d0def75d0befbc7e50'
 
 # Item Samples
 new_post = {
@@ -436,34 +439,33 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get a user's data with a user's JWT
     def test_get_user_data_as_user(self):
-        response = self.client().get('/users/' + sample_user_id, headers=user_header)
+        response = self.client().get('/users/' + sample_user_auth0_id, headers=user_header)
         response_data = json.loads(response.data)
-        print(response_data)
-        #user_data = response_data['user']
+        user_data = response_data['user']
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        #self.assertEqual(user_data['id'], 1)
+        self.assertEqual(user_data['id'], int(sample_user_id))
 
     # Attempt to get a user's data with a moderator's JWT
     def test_get_user_data_as_mod(self):
-        response = self.client().get('/users/' + sample_moderator_id, headers=moderator_header)
+        response = self.client().get('/users/' + sample_moderator_auth0_id, headers=moderator_header)
         response_data = json.loads(response.data)
-        #user_data = response_data['user']
+        user_data = response_data['user']
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        #self.assertEqual(user_data['id'], sample_moderator_id)
+        self.assertEqual(user_data['id'], int(sample_moderator_id))
 
     # Attempt to get a user's data with an admin's JWT
     def test_get_user_data_as_admin(self):
-        response = self.client().get('/users/' + sample_admin_id, headers=admin_header)
+        response = self.client().get('/users/' + sample_admin_auth0_id, headers=admin_header)
         response_data = json.loads(response.data)
-        #user_data = response_data['user']
+        user_data = response_data['user']
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        #self.assertEqual(user_data['id'], sample_admin_id)
+        self.assertEqual(user_data['id'], int(sample_admin_id))
 
     # Attempt to get a user's data with no ID (with admin's JWT)
     def test_get_no_id_user_as_admin(self):
