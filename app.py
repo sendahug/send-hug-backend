@@ -375,6 +375,18 @@ def create_app(test_config=None):
         if(user_id is None):
             abort(400)
 
+        # The user making the request
+        requesting_user = User.query.filter(User.auth0_id ==
+                                            token_payload['sub'])
+
+        # If the user is attempting to read another user's messages
+        if(requesting_user.id != user_id):
+            raise AuthError({
+                'code': 403,
+                'description': 'You do not have permission to view another\
+                                user\'s messages.'
+            }, 403)
+
         message = Message.query.filter(Message.for_id == user_id).all()
 
         # If there are no messages for the user, return an empty array
@@ -439,6 +451,18 @@ def create_app(test_config=None):
         # If there's no message with that ID, abort
         if(message_data is None):
             abort(404)
+
+        # The user making the request
+        requesting_user = User.query.filter(User.auth0_id ==
+                                            token_payload['sub'])
+
+        # If the user is attempting to read another user's messages
+        if(requesting_user.id != message_data.from_id):
+            raise AuthError({
+                'code': 403,
+                'description': 'You do not have permission to delete another\
+                                user\'s messages.'
+            }, 403)
 
         # Try to delete the message
         try:
