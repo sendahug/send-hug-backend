@@ -374,7 +374,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['posts']), 10)
+        self.assertEqual(len(response_data['posts']), 4)
         self.assertEqual(response_data['total_pages'], 2)
 
     # Attempt to get page 1 of full suggested posts
@@ -394,7 +394,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['posts']), 10)
+        self.assertEqual(len(response_data['posts']), 4)
         self.assertEqual(response_data['total_pages'], 2)
 
     # Get User Data Tests ('/users/<user_id>', GET)
@@ -645,8 +645,8 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(esponse_data['posts'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['page'], 1)
-        self.assertEqual(response_data['total_pages'], 2)
-        self.assertEqual(len(response_data['posts']), 5)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['posts']), 2)
 
     # Attempt to get a user's posts with an admin's JWT
     def test_get_user_posts_as_admin(self):
@@ -657,8 +657,8 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(esponse_data['posts'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['page'], 1)
-        self.assertEqual(response_data['total_pages'], 2)
-        self.assertEqual(len(response_data['posts']), 5)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['posts']), 2)
 
     # Get User's Messages Tests ('/messages', GET)
     # -------------------------------------------------------
@@ -689,7 +689,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 1)
+        self.assertEqual(len(response_data['messages']), 3)
 
     # Attempt to get another user's messages with a user's JWT
     def test_get_another_users_messages_as_user(self):
@@ -710,7 +710,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 1)
+        self.assertEqual(len(response_data['messages']), 2)
 
     # Attempt to get another user's messages with a moderator's JWT
     def test_get_another_users_messages_as_mod(self):
@@ -732,7 +732,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 1)
+        self.assertEqual(len(response_data['messages']), 2)
 
     # Attempt to get another user's messages with an admin's JWT
     def test_get_another_users_messages_as_admin(self):
