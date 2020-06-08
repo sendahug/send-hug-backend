@@ -28,15 +28,20 @@ admin_header = {
                 'Authorization': 'Bearer ' + admin_jwt
                }
 
+# Sample users data
+sample_user_id = 1
+sample_moderator_id = 5
+sample_admin_id = 4
+
 # Item Samples
 new_post = '{\
-"user_id": 1,\
+"user_id": {},\
 "text": "test post",\
 "date": "Sun Jun 07 2020 15:57:45 GMT+0300",\
 "givenHugs": 0 }'
 
 updated_post = '{\
-"user_id": 1,\
+"user_id": {},\
 "text": "test post",\
 "date": "Sun Jun 07 2020 15:57:45 GMT+0300",\
 "givenHugs": 0 }'
@@ -49,36 +54,22 @@ new_user = '{\
 "loginCount": 0 }'
 
 updated_user = '{\
-"id": 1,\
-"auth0Id": "",\
+"id": {},\
 "displayName": "",\
 "receivedH": 0,\
 "givenH": 0,\
 "loginCount": 0 }'
 
 updated_display = '{\
-"id": 1,\
-"auth0Id": "",\
+"id": {},\
 "displayName": "meow",\
 "receivedH": 0,\
 "givenH": 0,\
 "loginCount": 0 }'
 
-new_message_user = '{\
-"fromId": 1,\
-"forId": 4,\
-"messageText": "meow",\
-"date": "Sun Jun 07 2020 15:57:45 GMT+0300" }'
-
-new_message_mod = '{\
-"fromId": 1,\
-"forId": 4,\
-"messageText": "meow",\
-"date": "Sun Jun 07 2020 15:57:45 GMT+0300" }'
-
-new_message_admin = '{\
-"fromId": 1,\
-"forId": 4,\
+new_message = '{\
+"fromId": {},\
+"forId": {},\
 "messageText": "meow",\
 "date": "Sun Jun 07 2020 15:57:45 GMT+0300" }'
 
@@ -138,8 +129,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a post with a user's JWT
     def test_send_post_as_user(self):
+        post = new_post.format(sample_user_id)
         response = self.client().post('/posts', headers=user_header,
-                                      data=new_post)
+                                      data=post)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -148,8 +140,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a post with a moderator's JWT
     def test_send_post_as_mod(self):
+        post = new_post.format(sample_moderator_id)
         response = self.client().post('/posts', headers=moderator_header,
-                                      data=new_post)
+                                      data=post)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -158,8 +151,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a post with an admin's JWT
     def test_send_post_as_admin(self):
+        post = new_post.format(sample_admin_id)
         response = self.client().post('/posts', headers=admin_header,
-                                      data=new_post)
+                                      data=post)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -187,8 +181,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update the user's post (with same user's JWT)
     def test_update_own_post_as_user(self):
+        post = updated_post.format(sample_user_id)
         response = self.client().patch('/posts/1', headers=user_header,
-                                       data=updated_post)
+                                       data=post)
         response_data = json.loads(response.data)
         post_text = response_data['updated']
 
@@ -198,8 +193,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update another user's post (with user's JWT)
     def test_update_other_users_post_as_user(self):
-        response = self.client().patch('/posts/1', headers=user_header,
-                                       data=updated_post)
+        post = updated_post.format(sample_moderator_id)
+        response = self.client().patch('/posts/12', headers=user_header,
+                                       data=post)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -207,8 +203,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update the moderator's post (with same moderator's JWT)
     def test_update_own_post_as_mod(self):
-        response = self.client().patch('/posts/1', headers=moderator_header,
-                                       data=updated_post)
+        post = updated_post.format(sample_moderator_id)
+        response = self.client().patch('/posts/12', headers=moderator_header,
+                                       data=post)
         response_data = json.loads(response.data)
         post_text = response_data['updated']
 
@@ -218,8 +215,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update another user's post (with moderator's JWT)
     def test_update_other_users_post_as_mod(self):
+        post = updated_post.format(sample_moderator_id)
         response = self.client().patch('/posts/1', headers=moderator_header,
-                                       data=updated_post)
+                                       data=post)
         response_data = json.loads(response.data)
         post_text = response_data['updated']
 
@@ -229,8 +227,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update the admin's post (with same admin's JWT)
     def test_update_own_post_as_admin(self):
-        response = self.client().patch('/posts/1', headers=admin_header,
-                                       data=updated_post)
+        post = updated_post.format(sample_admin_id)
+        response = self.client().patch('/posts/14', headers=admin_header,
+                                       data=post)
         response_data = json.loads(response.data)
         post_text = response_data['updated']
 
@@ -240,8 +239,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update another user's post (with admin's JWT)
     def test_update_other_users_post_as_admin(self):
+        post = updated_post.format(sample_admin_id)
         response = self.client().patch('/posts/1', headers=admin_header,
-                                       data=updated_post)
+                                       data=post)
         response_data = json.loads(response.data)
         post_text = response_data['updated']
 
@@ -251,8 +251,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update a post with no ID (with admin's JWT)
     def test_update_no_id_post_as_admin(self):
+        post = updated_post.format(sample_admin_id)
         response = self.client().patch('/posts/', headers=admin_header,
-                                       data=updated_post)
+                                       data=post)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -260,8 +261,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update a post that doesn't exist (with admin's JWT)
     def test_update_nonexistent_post_as_admin(self):
+        post = updated_post.format(sample_admin_id)
         response = self.client().patch('/posts/100', headers=admin_header,
-                                       data=updated_post)
+                                       data=post)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -296,7 +298,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete another user's post (with user's JWT)
     def test_delete_other_users_post_as_user(self):
-        response = self.client().delete('/posts/1', headers=user_header)
+        response = self.client().delete('/posts/12', headers=user_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -304,7 +306,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete the moderator's post (with same moderator's JWT)
     def test_delete_own_post_as_mod(self):
-        response = self.client().delete('/posts/1', headers=moderator_header)
+        response = self.client().delete('/posts/12', headers=moderator_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -321,7 +323,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete the admin's post (with same admin's JWT)
     def test_delete_own_post_as_admin(self):
-        response = self.client().delete('/posts/1', headers=admin_header)
+        response = self.client().delete('/posts/14', headers=admin_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -415,7 +417,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get a user's data with a user's JWT
     def test_get_user_data_as_user(self):
-        response = self.client().get('/users/1', headers=user_header)
+        response = self.client().get('/users/' + sample_user_id, headers=user_header)
         response_data = json.loads(response.data)
         user_data = response_data['user']
 
@@ -425,23 +427,23 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get a user's data with a moderator's JWT
     def test_get_user_data_as_mod(self):
-        response = self.client().get('/users/1', headers=moderator_header)
+        response = self.client().get('/users/' + sample_moderator_id, headers=moderator_header)
         response_data = json.loads(response.data)
         user_data = response_data['user']
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(user_data['id'], 1)
+        self.assertEqual(user_data['id'], sample_moderator_id)
 
     # Attempt to get a user's data with an admin's JWT
     def test_get_user_data_as_admin(self):
-        response = self.client().get('/users/1', headers=admin_header)
+        response = self.client().get('/users/' + sample_admin_id, headers=admin_header)
         response_data = json.loads(response.data)
         user_data = response_data['user']
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(user_data['id'], 1)
+        self.assertEqual(user_data['id'], sample_admin_id)
 
     # Attempt to get a user's data with no ID (with admin's JWT)
     def test_get_no_id_user_as_admin(self):
@@ -522,8 +524,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update a user's data with a user's JWT
     def test_update_user_as_user(self):
-        response = self.client().patch('/users/1', headers=user_header,
-                                       data=updated_user)
+        user = updated_user.format(sample_user_id)
+        response = self.client().patch('/users/' + sample_user_id, headers=user_header,
+                                       data=user)
         response_data = json.loads(response.data)
         updated = response_data['updated']
 
@@ -534,8 +537,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update another user's display name with a user's JWT
     def test_update_other_users_display_name_as_user(self):
-        response = self.client().patch('/users/1', headers=user_header,
-                                       data=updated_display)
+        user = updated_user.format(sample_moderator_id)
+        response = self.client().patch('/users/' + sample_moderator_id, headers=user_header,
+                                       data=user)
         response_data = json.loads(response.data)
         updated = response_data['updated']
 
@@ -544,8 +548,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update a user's data with a moderator's JWT
     def test_update_user_as_mod(self):
-        response = self.client().patch('/users/1', headers=moderator_header,
-                                       data=updated_user)
+        user = updated_user.format(sample_moderator_id)
+        response = self.client().patch('/users/' + sample_moderator_id, headers=moderator_header,
+                                       data=user)
         response_data = json.loads(response.data)
         updated = response_data['updated']
 
@@ -556,8 +561,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update another user's display name with a moderator's JWT
     def test_update_other_users_display_name_as_mod(self):
-        response = self.client().patch('/users/1', headers=moderator_header,
-                                       data=updated_display)
+        user = updated_user.format(sample_admin_id)
+        response = self.client().patch('/users/' + sample_admin_id, headers=moderator_header,
+                                       data=user)
         response_data = json.loads(response.data)
         updated = response_data['updated']
 
@@ -566,8 +572,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update a user's data with an admin's JWT
     def test_update_user_as_admin(self):
-        response = self.client().patch('/users/1', headers=admin_header,
-                                       data=updated_user)
+        user = updated_user.format(sample_admin_id)
+        response = self.client().patch('/users/' + sample_admin_id, headers=admin_header,
+                                       data=user)
         response_data = json.loads(response.data)
         updated = response_data['updated']
 
@@ -578,8 +585,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update another user's display name with an admin's JWT
     def test_update_user_as_admin(self):
-        response = self.client().patch('/users/1', headers=admin_header,
-                                       data=updated_display)
+        user = updated_user.format(sample_user_id)
+        response = self.client().patch('/users/' + sample_user_id, headers=admin_header,
+                                       data=user)
         response_data = json.loads(response.data)
         updated = response_data['updated']
 
@@ -629,7 +637,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get a user's posts with a moderator's JWT
     def test_get_user_posts_as_mod(self):
-        response = self.client().get('/users/1/posts',
+        response = self.client().get('/users/4/posts',
                                      headers=moderator_header)
         response_data = json.loads(response.data)
 
@@ -642,7 +650,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get a user's posts with an admin's JWT
     def test_get_user_posts_as_admin(self):
-        response = self.client().get('/users/1/posts', headers=admin_header)
+        response = self.client().get('/users/5/posts', headers=admin_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -673,7 +681,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get a user's messages with a user's JWT
     def test_get_user_messages_as_user(self):
-        response = self.client().get('/messages?userID=1', headers=user_header)
+        response = self.client().get('/messages?userID=' + sample_user_id, headers=user_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -685,7 +693,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get another user's messages with a user's JWT
     def test_get_another_users_messages_as_user(self):
-        response = self.client().get('/messages?userID=4', headers=user_header)
+        response = self.client().get('/messages?userID=' + sample_moderator_id, headers=user_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -693,7 +701,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get a user's messages with a moderator's JWT
     def test_get_user_messages_as_mod(self):
-        response = self.client().get('/messages?userID=4',
+        response = self.client().get('/messages?userID=' + sample_moderator_id,
                                      headers=moderator_header)
         response_data = json.loads(response.data)
 
@@ -706,7 +714,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get another user's messages with a moderator's JWT
     def test_get_another_users_messages_as_mod(self):
-        response = self.client().get('/messages?userID=1',
+        response = self.client().get('/messages?userID=' + sample_admin_id,
                                      headers=moderator_header)
         response_data = json.loads(response.data)
 
@@ -715,7 +723,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get a user's messages with an admin's JWT
     def test_get_user_messages_as_admin(self):
-        response = self.client().get('/messages?userID=1',
+        response = self.client().get('/messages?userID=' + sample_admin_id,
                                      headers=admin_header)
         response_data = json.loads(response.data)
 
@@ -728,7 +736,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get another user's messages with an admin's JWT
     def test_get_another_users_messages_as_admin(self):
-        response = self.client().get('/messages?userID=1',
+        response = self.client().get('/messages?userID=' + sample_user_id,
                                      headers=admin_header)
         response_data = json.loads(response.data)
 
@@ -764,8 +772,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a message with a user's JWT
     def test_send_message_as_user(self):
+        message = new_message.format(sample_user_id, sample_moderator_id)
         response = self.client().post('/messages', headers=user_header,
-                                      data=new_message_user)
+                                      data=message)
         response_data = json.loads(response.data)
         message = response_data['message']
 
@@ -776,8 +785,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a message from another user (with a user's JWT)
     def test_send_message_from_another_user_as_user(self):
+        message = new_message.format(sample_admin_id, sample_moderator_id)
         response = self.client().post('/messages', headers=user_header,
-                                      data=new_message_mod)
+                                      data=message)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -785,8 +795,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a message with a moderator's JWT
     def test_send_message_as_mod(self):
+        message = new_message.format(sample_moderator_id, sample_admin_id)
         response = self.client().post('/messages', headers=moderator_header,
-                                      data=new_message_mod)
+                                      data=message)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -796,8 +807,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a message from another user (with a moderator's JWT)
     def test_send_message_from_another_user_as_mod(self):
+        message = new_message.format(sample_admin_id, sample_user_id)
         response = self.client().post('/messages', headers=moderator_header,
-                                      data=new_message_admin)
+                                      data=message)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -805,8 +817,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a message with an admin's JWT
     def test_send_message_as_admin(self):
+        message = new_message.format(sample_admin_id, sample_moderator_id)
         response = self.client().post('/messages', headers=admin_header,
-                                      data=new_message_admin)
+                                      data=message)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -816,8 +829,9 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a message from another user (with an admin's JWT)
     def test_send_message_from_another_user_as_admin(self):
+        message = new_message.format(sample_user_id, sample_moderator_id)
         response = self.client().post('/messages', headers=admin_header,
-                                      data=new_message_user)
+                                      data=message)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -853,7 +867,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete another user's message (with a user's JWT)
     def test_delete_message_from_another_user_as_user(self):
-        response = self.client().delete('/messages/1', headers=user_header)
+        response = self.client().delete('/messages/5', headers=user_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -861,7 +875,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete a message with a moderator's JWT
     def test_delete_message_as_mod(self):
-        response = self.client().delete('/messages/1',
+        response = self.client().delete('/messages/5',
                                         headers=moderator_header)
         response_data = json.loads(response.data)
 
@@ -871,7 +885,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete another user's message (with a moderator's JWT)
     def test_delete_message_from_another_user_as_mod(self):
-        response = self.client().delete('/messages/1',
+        response = self.client().delete('/messages/6',
                                         headers=moderator_header)
         response_data = json.loads(response.data)
 
@@ -880,7 +894,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete a message with an admin's JWT
     def test_delete_message_as_admin(self):
-        response = self.client().delete('/messages/1', headers=admin_header)
+        response = self.client().delete('/messages/6', headers=admin_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -889,7 +903,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete another user's message (with an admin's JWT)
     def test_delete_message_from_another_user_as_admin(self):
-        response = self.client().delete('/messages/1', headers=admin_header)
+        response = self.client().delete('/messages/3', headers=admin_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
