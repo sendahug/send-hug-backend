@@ -222,6 +222,22 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(post_text['text'], updated_post[23:32])
 
+    # Attempt to update a post with no ID (with admin's JWT)
+    def test_update_no_id_post_as_admin(self):
+        response = self.client().patch('/posts/', headers=admin_header, data=updated_post)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 400)
+
+    # Attempt to update a post that doesn't exist (with admin's JWT)
+    def test_update_nonexistent_post_as_admin(self):
+        response = self.client().patch('/posts/100', headers=admin_header, data=updated_post)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 404)
+
 
     # Delete Post Route Tests ('/posts/<post_id>', DELETE)
     # -------------------------------------------------------
@@ -292,6 +308,22 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['deleted'], 1)
+
+    # Attempt to delete a post with no ID (with admin's JWT)
+    def test_delete_no_id_post_as_admin(self):
+        response = self.client().delete('/posts/', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 400)
+
+    # Attempt to delete a post that doesn't exist (with admin's JWT)
+    def test_delete_nonexistent_post_as_admin(self):
+        response = self.client().delete('/posts/100', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 404)
 
 
     # Get Posts by Type Tests ('posts/<type>', GET)
@@ -385,6 +417,22 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(user_data['id'], 1)
 
+    # Attempt to get a user's data with no ID (with admin's JWT)
+    def test_get_no_id_user_as_admin(self):
+        response = self.client().get('/users/', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 400)
+
+    # Attempt to get a nonexistent user's data (with admin's JWT)
+    def test_get_nonexistent_user_as_admin(self):
+        response = self.client().get('/users/100', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 404)
+
 
     # Edit User Data Tests ('/users/<user_id>', PATCH)
     # -------------------------------------------------------
@@ -464,6 +512,14 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(updated['receivedH'], updated_user[39:43])
+
+    # Attempt to update a user's data with no ID (with admin's JWT)
+    def test_update_no_id_user_as_admin(self):
+        response = self.client().patch('/users/', headers=admin_header, data=updated_user)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 400)
 
 
     # Get User's Posts Tests ('/users/<user_id>/posts', GET)
@@ -602,6 +658,14 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response_data['page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
         self.assertEqual(len(response_data['messages']), 1)
+
+    # Attempt to get a user's messages with no ID (with admin's JWT)
+    def test_get_no_id_user_messages_as_admin(self):
+        response = self.client().get('/messages', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 400)
 
 
     # Create Message Route Tests ('/message', POST)
@@ -747,6 +811,22 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(message['deleted'], 1)
+
+    # Attempt to delete a user's message with no ID (with admin's JWT)
+    def test_delete_no_id_user_message_as_admin(self):
+        response = self.client().delete('/messages', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 400)
+
+    # Attempt to delete a nonexistent user's message (with admin's JWT)
+    def test_delete_nonexistent_user_message_as_admin(self):
+        response = self.client().delete('/messages/100', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 404)
 
 
 
