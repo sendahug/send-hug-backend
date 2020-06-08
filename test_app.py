@@ -503,6 +503,89 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(len(response_data['posts']), 5)
 
 
+    # Get User's Messages Tests ('/messages', GET)
+    # -------------------------------------------------------
+    # Attempt to get a user's messages without auth header
+    def test_get_user_messages_no_auth(self):
+        response = self.client().get('/messages?userID=1')
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get a user's messages with malformed auth header
+    def test_get_user_messages_malformed_auth(self):
+        response = self.client().get('/messages?userID=1', headers=malformed_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get a user's messages with a user's JWT
+    def test_get_user_messages_as_user(self):
+        response = self.client().get('/messages?userID=1', headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(esponse_data['messages'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['page'], 1)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['messages']), 1)
+
+    # Attempt to get another user's messages with a user's JWT
+    def test_get_another_users_messages_as_user(self):
+        response = self.client().get('/messages?userID=4', headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to get a user's messages with a moderator's JWT
+    def test_get_user_messages_as_mod(self):
+        response = self.client().get('/messages?userID=4', headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(esponse_data['messages'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['page'], 1)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['messages']), 1)
+
+    # Attempt to get another user's messages with a moderator's JWT
+    def test_get_another_users_messages_as_mod(self):
+        response = self.client().get('/messages?userID=1', headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to get a user's messages with an admin's JWT
+    def test_get_user_messages_as_admin(self):
+        response = self.client().get('/messages?userID=1', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(esponse_data['messages'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['page'], 1)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['messages']), 1)
+
+    # Attempt to get another user's messages with an admin's JWT
+    def test_get_another_users_messages_as_admin(self):
+        response = self.client().get('/messages?userID=1', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(esponse_data['messages'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['page'], 1)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['messages']), 1)
+
+
 # Make the tests conveniently executable
 if __name__ == "__main__":
     unittest.main()
