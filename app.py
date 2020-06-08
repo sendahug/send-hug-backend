@@ -377,10 +377,10 @@ def create_app(test_config=None):
 
         # The user making the request
         requesting_user = User.query.filter(User.auth0_id ==
-                                            token_payload['sub'])
+                                            token_payload['sub']).one_or_none()
 
         # If the user is attempting to read another user's messages
-        if(requesting_user.id != user_id):
+        if(requesting_user.id != int(user_id)):
             raise AuthError({
                 'code': 403,
                 'description': 'You do not have permission to view another\
@@ -454,7 +454,7 @@ def create_app(test_config=None):
 
         # The user making the request
         requesting_user = User.query.filter(User.auth0_id ==
-                                            token_payload['sub'])
+                                            token_payload['sub']).one_or_none()
 
         # If the user is attempting to read another user's messages
         if(requesting_user.id != message_data.from_id):
