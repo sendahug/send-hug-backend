@@ -41,6 +41,13 @@ updated_post = '{\
 "date": "Sun Jun 07 2020 15:57:45 GMT+0300",\
 "givenHugs": 0 }'
 
+new_user = '{\
+"auth0Id": "",\
+"displayName": "",\
+"receivedH": 0,\
+"givenH": 0,\
+"loginCount": 0 }'
+
 updated_user = '{\
 "id": 1,\
 "auth0Id": "",\
@@ -451,6 +458,48 @@ class TestHugApp(unittest.TestCase):
 
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 404)
+
+    # Create User Tests ('/users', POST)
+    # -------------------------------------------------------
+    # Attempt to create a user without auth header
+    def test_create_user_no_auth(self):
+        response = self.client().post('/users', data=new_user)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to create a user with malformed auth header
+    def test_create_user_no_auth(self):
+        response = self.client().post('/users', headers=malformed_header, data=new_user)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to create a user with user's JWT
+    def test_create_user_no_auth(self):
+        response = self.client().post('/users', headers=user_header, data=new_user)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to create a user with moderator's JWT
+    def test_create_user_no_auth(self):
+        response = self.client().post('/users', headers=moderator_header, data=new_user)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to create a user with admin's JWT
+    def test_create_user_no_auth(self):
+        response = self.client().post('/users', headers=admin_header, data=new_user)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
 
     # Edit User Data Tests ('/users/<user_id>', PATCH)
     # -------------------------------------------------------
