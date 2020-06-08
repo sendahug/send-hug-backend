@@ -278,7 +278,7 @@ class TestHugApp(unittest.TestCase):
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
 
     # Attempt to update a post that doesn't exist (with admin's JWT)
     def test_update_nonexistent_post_as_admin(self):
@@ -311,12 +311,12 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete the user's post (with same user's JWT)
     def test_delete_own_post_as_user(self):
-        response = self.client().delete('/posts/1', headers=user_header)
+        response = self.client().delete('/posts/2', headers=user_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], '1')
+        self.assertEqual(response_data['deleted'], '2')
 
     # Attempt to delete another user's post (with user's JWT)
     def test_delete_other_users_post_as_user(self):
@@ -337,7 +337,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete another user's post (with moderator's JWT)
     def test_delete_other_users_post_as_mod(self):
-        response = self.client().delete('/posts/2', headers=moderator_header)
+        response = self.client().delete('/posts/3', headers=moderator_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -367,7 +367,7 @@ class TestHugApp(unittest.TestCase):
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
 
     # Attempt to delete a post that doesn't exist (with admin's JWT)
     def test_delete_nonexistent_post_as_admin(self):
@@ -387,7 +387,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 3)
+        self.assertEqual(response_data['total_pages'], 2)
 
     # Attempt to get page 2 of full new posts
     def test_get_full_new_posts_page_2(self):
@@ -397,7 +397,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 3)
+        self.assertEqual(response_data['total_pages'], 2)
 
     # Attempt to get page 1 of full suggested posts
     def test_get_full_suggested_posts(self):
@@ -407,7 +407,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 3)
+        self.assertEqual(response_data['total_pages'], 2)
 
     # Attempt to get page 2 of full suggested posts
     def test_get_full_suggested_posts_page_2(self):
@@ -417,7 +417,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 3)
+        self.assertEqual(response_data['total_pages'], 2)
 
     # Get User Data Tests ('/users/<user_id>', GET)
     # -------------------------------------------------------
@@ -473,7 +473,7 @@ class TestHugApp(unittest.TestCase):
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
 
     # Attempt to get a nonexistent user's data (with admin's JWT)
     def test_get_nonexistent_user_as_admin(self):
@@ -629,7 +629,7 @@ class TestHugApp(unittest.TestCase):
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
 
     # Get User's Posts Tests ('/users/<user_id>/posts', GET)
     # -------------------------------------------------------
@@ -716,7 +716,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 3)
+        self.assertEqual(len(response_data['messages']), 2)
 
     # Attempt to get another user's messages with a user's JWT
     def test_get_another_users_messages_as_user(self):
@@ -737,7 +737,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 2)
+        self.assertEqual(len(response_data['messages']), 1)
 
     # Attempt to get another user's messages with a moderator's JWT
     def test_get_another_users_messages_as_mod(self):
@@ -759,7 +759,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 2)
+        self.assertEqual(len(response_data['messages']), 1)
 
     # Attempt to get another user's messages with an admin's JWT
     def test_get_another_users_messages_as_admin(self):
@@ -800,7 +800,7 @@ class TestHugApp(unittest.TestCase):
     # Attempt to create a message with a user's JWT
     def test_send_message_as_user(self):
         message = new_message
-        message['fromId'] = sample_user_id
+        message['fromId'] = int(sample_user_id)
         message['forId'] = sample_moderator_id
         response = self.client().post('/messages', headers=user_header,
                                       data=json.dumps(message))
@@ -815,7 +815,7 @@ class TestHugApp(unittest.TestCase):
     # Attempt to create a message from another user (with a user's JWT)
     def test_send_message_from_another_user_as_user(self):
         message = new_message
-        message['fromId'] = sample_admin_id
+        message['fromId'] = int(sample_admin_id)
         message['forId'] = sample_moderator_id
         response = self.client().post('/messages', headers=user_header,
                                       data=json.dumps(message))
@@ -827,7 +827,7 @@ class TestHugApp(unittest.TestCase):
     # Attempt to create a message with a moderator's JWT
     def test_send_message_as_mod(self):
         message = new_message
-        message['fromId'] = sample_moderator_id
+        message['fromId'] = int(sample_moderator_id)
         message['forId'] = sample_admin_id
         response = self.client().post('/messages', headers=moderator_header,
                                       data=json.dumps(message))
@@ -842,7 +842,7 @@ class TestHugApp(unittest.TestCase):
     # Attempt to create a message from another user (with a moderator's JWT)
     def test_send_message_from_another_user_as_mod(self):
         message = new_message
-        message['fromId'] = sample_admin_id
+        message['fromId'] = int(sample_admin_id)
         message['forId'] = sample_user_id
         response = self.client().post('/messages', headers=moderator_header,
                                       data=json.dumps(message))
@@ -854,7 +854,7 @@ class TestHugApp(unittest.TestCase):
     # Attempt to create a message with an admin's JWT
     def test_send_message_as_admin(self):
         message = new_message
-        message['fromId'] = sample_admin_id
+        message['fromId'] = int(sample_admin_id)
         message['forId'] = sample_moderator_id
         response = self.client().post('/messages', headers=admin_header,
                                       data=json.dumps(message))
@@ -869,7 +869,7 @@ class TestHugApp(unittest.TestCase):
     # Attempt to create a message from another user (with an admin's JWT)
     def test_send_message_from_another_user_as_admin(self):
         message = new_message
-        message['fromId'] = sample_user_id
+        message['fromId'] = int(sample_user_id)
         message['forId'] = sample_moderator_id
         response = self.client().post('/messages', headers=admin_header,
                                       data=json.dumps(message))
@@ -952,11 +952,11 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete a user's message with no ID (with admin's JWT)
     def test_delete_no_id_user_message_as_admin(self):
-        response = self.client().delete('/messages', headers=admin_header)
+        response = self.client().delete('/messages/', headers=admin_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
 
     # Attempt to delete a nonexistent user's message (with admin's JWT)
     def test_delete_nonexistent_user_message_as_admin(self):
