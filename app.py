@@ -284,7 +284,7 @@ def create_app(test_config=None):
     # Description: Updates a user in the database.
     # Parameters: user_id - ID of the user to update.
     @app.route('/users/<user_id>', methods=['PATCH'])
-    @requires_auth(['patch:user'])
+    @requires_auth(['patch:user', 'patch:any-user'])
     def edit_user(token_payload, user_id):
         # if there's no user ID provided, abort with 'Bad Request'
         if(user_id is None):
@@ -294,10 +294,22 @@ def create_app(test_config=None):
         original_user = User.query.filter(User.id == user_id).one_or_none()
 
         # Update user data
-        original_user.display_name = updated_user['displayName']
         original_user.received_hugs = updated_user['receivedH']
         original_user.given_hugs = updated_user['givenH']
         original_user.login_count = updated_user['loginCount']
+
+        # if the user is only allowed to change their own name (user / mod)
+        if('patch:user' in token_payload):
+            if(token_payload['sub'] != original_user.auth0_id):
+                raise AuthError({
+                    'code': 403,
+                    'description': 'You do not have permission to edit \
+                                    this user\'s display name.'
+                }, 403)
+
+        # if the user can edit anyone or the user is trying to update their
+        # own name
+        original_user.display_name = updated_user['displayName']
 
         # Try to update it in the database
         try:
