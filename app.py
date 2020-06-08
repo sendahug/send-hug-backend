@@ -392,6 +392,8 @@ def create_app(test_config=None):
         # If there are no messages for the user, return an empty array
         if(not message):
             user_messages = []
+            paginated_messages = []
+            total_pages = 0
         # If there are messages, get the user's messages and format them
         else:
             # Gets the user's messages
