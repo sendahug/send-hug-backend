@@ -10,6 +10,12 @@ user_jwt = ''
 moderator_jwt = ''
 admin_jwt = ''
 
+# Headers
+malformed_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' }
+user_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
+moderator_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
+admin_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
+
 # Item Samples
 new_post = '{\
 "user_id": 1,\
@@ -80,8 +86,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a post with a malformed auth header
     def test_send_post_malformed_auth(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' }
-        response = self.client().post('/posts', headers=req_header, data=new_post)
+        response = self.client().post('/posts', headers=malformed_header, data=new_post)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -89,8 +94,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a post with a user's JWT
     def test_send_post_as_user(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
-        response = self.client().post('/posts', headers=req_header, data=new_post)
+        response = self.client().post('/posts', headers=user_header, data=new_post)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -99,8 +103,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a post with a moderator's JWT
     def test_send_post_as_mod(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
-        response = self.client().post('/posts', headers=req_header, data=new_post)
+        response = self.client().post('/posts', headers=moderator_header, data=new_post)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -109,8 +112,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to create a post with an admin's JWT
     def test_send_post_as_admin(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
-        response = self.client().post('/posts', headers=req_header, data=new_post)
+        response = self.client().post('/posts', headers=admin_header, data=new_post)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -130,8 +132,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update a post with a malformed auth header
     def test_update_post_malformed_auth(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' }
-        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response = self.client().patch('/posts/1', headers=malformed_header, data=updated_post)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -139,8 +140,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update the user's post (with same user's JWT)
     def test_update_own_post_as_user(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
-        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response = self.client().patch('/posts/1', headers=user_header, data=updated_post)
         response_data = json.loads(response.data)
         post_text = response_data['updated']
 
@@ -148,10 +148,9 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(post_text['text'], updated_post[23:32])
 
-    # Attempt to update another user's post (with same user's JWT)
+    # Attempt to update another user's post (with user's JWT)
     def test_update_other_users_post_as_user(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
-        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response = self.client().patch('/posts/1', headers=user_header, data=updated_post)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -159,8 +158,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update the moderator's post (with same moderator's JWT)
     def test_update_own_post_as_mod(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
-        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response = self.client().patch('/posts/1', headers=moderator_header, data=updated_post)
         response_data = json.loads(response.data)
         post_text = response_data['updated']
 
@@ -170,8 +168,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update another user's post (with moderator's JWT)
     def test_update_other_users_post_as_mod(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
-        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response = self.client().patch('/posts/1', headers=moderator_header, data=updated_post)
         response_data = json.loads(response.data)
         post_text = response_data['updated']
 
@@ -181,8 +178,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update the admin's post (with same admin's JWT)
     def test_update_own_post_as_admin(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
-        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response = self.client().patch('/posts/1', headers=admin_header, data=updated_post)
         response_data = json.loads(response.data)
         post_text = response_data['updated']
 
@@ -192,8 +188,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to update another user's post (with admin's JWT)
     def test_update_other_users_post_as_admin(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
-        response = self.client().patch('/posts/1', headers=req_header, data=updated_post)
+        response = self.client().patch('/posts/1', headers=admin_header, data=updated_post)
         response_data = json.loads(response.data)
         post_text = response_data['updated']
 
@@ -214,8 +209,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete a post with a malformed auth header
     def test_delete_post_malformed_auth(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' }
-        response = self.client().delete('/posts/1', headers=req_header)
+        response = self.client().delete('/posts/1', headers=malformed_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -223,18 +217,16 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete the user's post (with same user's JWT)
     def test_delete_own_post_as_user(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
-        response = self.client().delete('/posts/1', headers=req_header)
+        response = self.client().delete('/posts/1', headers=user_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['deleted'], 1)
 
-    # Attempt to delete another user's post (with same user's JWT)
+    # Attempt to delete another user's post (with user's JWT)
     def test_delete_other_users_post_as_user(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
-        response = self.client().delete('/posts/1', headers=req_header)
+        response = self.client().delete('/posts/1', headers=user_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -242,8 +234,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete the moderator's post (with same moderator's JWT)
     def test_delete_own_post_as_mod(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
-        response = self.client().delete('/posts/1', headers=req_header)
+        response = self.client().delete('/posts/1', headers=moderator_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -252,8 +243,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete another user's post (with moderator's JWT)
     def test_delete_other_users_post_as_mod(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
-        response = self.client().delete('/posts/1', headers=req_header)
+        response = self.client().delete('/posts/1', headers=moderator_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -261,8 +251,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete the admin's post (with same admin's JWT)
     def test_delete_own_post_as_admin(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
-        response = self.client().delete('/posts/1', headers=req_header)
+        response = self.client().delete('/posts/1', headers=admin_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -271,8 +260,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete another user's post (with admin's JWT)
     def test_delete_other_users_post_as_admin(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
-        response = self.client().delete('/posts/1', headers=req_header)
+        response = self.client().delete('/posts/1', headers=admin_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -335,8 +323,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get a user's data with malformed auth header
     def test_get_user_data_malformed_auth(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' }
-        response = self.client().get('/users/1', headers=req_header)
+        response = self.client().get('/users/1', headers=malformed_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -344,8 +331,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get a user's data with a user's JWT
     def test_get_user_data_as_user(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + user_jwt }
-        response = self.client().get('/users/1', headers=req_header)
+        response = self.client().get('/users/1', headers=user_header)
         response_data = json.loads(response.data)
         user_data = response_data['user']
 
@@ -355,8 +341,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get a user's data with a moderator's JWT
     def test_get_user_data_as_mod(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + moderator_jwt }
-        response = self.client().get('/users/1', headers=req_header)
+        response = self.client().get('/users/1', headers=moderator_header)
         response_data = json.loads(response.data)
         user_data = response_data['user']
 
@@ -366,8 +351,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to get a user's data with an admin's JWT
     def test_get_user_data_as_admin(self):
-        req_header = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + admin_jwt }
-        response = self.client().get('/users/1', headers=req_header)
+        response = self.client().get('/users/1', headers=admin_header)
         response_data = json.loads(response.data)
         user_data = response_data['user']
 
