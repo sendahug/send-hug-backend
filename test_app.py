@@ -448,6 +448,61 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(updated['receivedH'], updated_user[39:43])
 
 
+    # Get User's Posts Tests ('/users/<user_id>/posts', GET)
+    # -------------------------------------------------------
+    # Attempt to get a user's posts without auth header
+    def test_get_user_posts_no_auth(self):
+        response = self.client().get('/users/1/posts')
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get a user's posts with malformed auth header
+    def test_get_user_posts_malformed_auth(self):
+        response = self.client().get('/users/1/posts', headers=malformed_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get a user's posts with a user's JWT
+    def test_get_user_posts_as_user(self):
+        response = self.client().get('/users/1/posts', headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(esponse_data['posts'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['page'], 1)
+        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(len(response_data['posts']), 5)
+
+    # Attempt to get a user's posts with a moderator's JWT
+    def test_get_user_posts_as_mod(self):
+        response = self.client().get('/users/1/posts', headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(esponse_data['posts'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['page'], 1)
+        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(len(response_data['posts']), 5)
+
+    # Attempt to get a user's posts with an admin's JWT
+    def test_get_user_posts_as_admin(self):
+        response = self.client().get('/users/1/posts', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(esponse_data['posts'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['page'], 1)
+        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(len(response_data['posts']), 5)
+
+
 # Make the tests conveniently executable
 if __name__ == "__main__":
     unittest.main()
