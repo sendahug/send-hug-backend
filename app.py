@@ -98,7 +98,7 @@ def create_app(test_config=None):
     def edit_post(token_payload, post_id):
         # If there's no ID provided
         if(post_id is None):
-            abort(400)
+            abort(404)
 
         updated_post = json.loads(request.data)
         original_post = Post.query.filter(Post.id == post_id).one_or_none()
@@ -168,7 +168,7 @@ def create_app(test_config=None):
     def delete_post(token_payload, post_id):
         # If there's no ID provided
         if(post_id is None):
-            abort(400)
+            abort(404)
 
         # Gets the post to delete
         post_data = Post.query.filter(Post.id == post_id).one_or_none()
@@ -232,7 +232,7 @@ def create_app(test_config=None):
     def get_user_data(token_payload, user_id):
         # If there's no ID provided
         if(user_id is None):
-            abort(400)
+            abort(404)
 
         user_data = User.query.filter(User.auth0_id == user_id).one_or_none()
 
@@ -289,7 +289,7 @@ def create_app(test_config=None):
     def edit_user(token_payload, user_id):
         # if there's no user ID provided, abort with 'Bad Request'
         if(user_id is None):
-            abort(400)
+            abort(404)
 
         updated_user = json.loads(request.data)
         original_user = User.query.filter(User.id == user_id).one_or_none()
@@ -456,7 +456,7 @@ def create_app(test_config=None):
     def delete_message(token_payload, message_id):
         # If there's no message ID, abort
         if(message_id is None):
-            abort(400)
+            abort(404)
 
         # Get the message with that ID
         message_data = Message.query.filter(Message.id == message_id).\
