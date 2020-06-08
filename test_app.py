@@ -678,6 +678,77 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
 
 
+    # Delete Message Route Tests ('/message/<message_id>', DELETE)
+    # -------------------------------------------------------
+    # Attempt to delete a message with no authorisation header
+    def test_delete_message_no_auth(self):
+        response = self.client().delete('/messages/1')
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to delete a message with a malformed auth header
+    def test_delete_message_malformed_auth(self):
+        response = self.client().delete('/messages/1', headers=malformed_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to delete a message with a user's JWT
+    def test_delete_message_as_user(self):
+        response = self.client().delete('/messages/1', headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(message['deleted'], 1)
+
+    # Attempt to delete another user's message (with a user's JWT)
+    def test_delete_message_from_another_user_as_user(self):
+        response = self.client().delete('/messages/1', headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to delete a message with a moderator's JWT
+    def test_delete_message_as_mod(self):
+        response = self.client().delete('/messages/1', headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(message['deleted'], 1)
+
+    # Attempt to delete another user's message (with a moderator's JWT)
+    def test_delete_message_from_another_user_as_mod(self):
+        response = self.client().delete('/messages/1', headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to delete a message with an admin's JWT
+    def test_delete_message_as_admin(self):
+        response = self.client().delete('/messages/1', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(message['deleted'], 1)
+
+    # Attempt to delete another user's message (with an admin's JWT)
+    def test_delete_message_from_another_user_as_admin(self):
+        response = self.client().delete('/messages/1', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(message['deleted'], 1)
+
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
