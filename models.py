@@ -171,7 +171,8 @@ def joined_query(target, params={}):
         user_messages = db.session.query(Message, from_user.display_name,
                                          for_user.display_name).\
             join(from_user, from_user.id == Message.from_id).\
-            join(for_user, for_user.id == Message.for_id).all()
+            join(for_user, for_user.id == Message.for_id).\
+            filter(Message.for_id == user_id).all()
 
         # formats each message in the list
         for message in user_messages:
