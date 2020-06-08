@@ -45,6 +45,24 @@ updated_display = '{\
 "givenH": 0,\
 "loginCount": 0 }'
 
+new_message_user = '{\
+"fromId": 1,\
+"forId": 4,\
+"messageText": "meow",\
+"date": "Sun Jun 07 2020 15:57:45 GMT+0300" }'
+
+new_message_mod = '{\
+"fromId": 1,\
+"forId": 4,\
+"messageText": "meow",\
+"date": "Sun Jun 07 2020 15:57:45 GMT+0300" }'
+
+new_message_admin = '{\
+"fromId": 1,\
+"forId": 4,\
+"messageText": "meow",\
+"date": "Sun Jun 07 2020 15:57:45 GMT+0300" }'
+
 
 # App testing
 class TestHugApp(unittest.TestCase):
@@ -584,6 +602,81 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response_data['page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
         self.assertEqual(len(response_data['messages']), 1)
+
+
+    # Create Message Route Tests ('/message', POST)
+    # -------------------------------------------------------
+    # Attempt to create a message with no authorisation header
+    def test_send_message_no_auth(self):
+        response = self.client().post('/messages', data=new_message)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to create a message with a malformed auth header
+    def test_send_message_malformed_auth(self):
+        response = self.client().post('/messages', headers=malformed_header, data=new_message)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to create a message with a user's JWT
+    def test_send_message_as_user(self):
+        response = self.client().post('/messages', headers=user_header, data=new_message_user)
+        response_data = json.loads(response.data)
+        message = response_data['message']
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['message'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(message['messageText'], new_message_user[40:44])
+
+    # Attempt to create a message from another user (with a user's JWT)
+    def test_send_message_from_another_user_as_user(self):
+        response = self.client().post('/messages', headers=user_header, data=new_message_mod)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to create a message with a moderator's JWT
+    def test_send_message_as_mod(self):
+        response = self.client().post('/messages', headers=moderator_header, data=new_message_mod)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['message'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(message['messageText'], new_message_mod[40:44])
+
+    # Attempt to create a message from another user (with a moderator's JWT)
+    def test_send_message_from_another_user_as_mod(self):
+        response = self.client().post('/messages', headers=moderator_header, data=new_message_admin)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to create a message with an admin's JWT
+    def test_send_message_as_admin(self):
+        response = self.client().post('/messages', headers=admin_header, data=new_message_admin)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['message'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(message['messageText'], new_message_admin[40:44])
+
+    # Attempt to create a message from another user (with an admin's JWT)
+    def test_send_message_from_another_user_as_admin(self):
+        response = self.client().post('/messages', headers=admin_header, data=new_message_user)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
 
 
 # Make the tests conveniently executable
