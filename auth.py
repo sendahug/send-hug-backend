@@ -120,14 +120,25 @@ def check_permissions(permission, payload):
                             perform this action.'
         }, 403)
 
-    # Check whether the user has that permission
-    if(permission[0] not in payload['permissions'] and
-       permission[1] not in payload['permissions']):
-        raise AuthError({
+    # If there are two possibilities for permissions
+    if(len(permission) == 2):
+        # Check whether the user has that permission
+        if(permission[0] not in payload['permissions'] and
+           permission[1] not in payload['permissions']):
+           raise AuthError({
             'code': 403,
             'description': 'Unauthorised. You do not have permission to \
                             perform this action.'
-        }, 403)
+            }, 403)
+    # If there's only one possibility
+    else:
+        # Check whether the user has that permission
+        if(permission[0] not in payload['permissions']):
+           raise AuthError({
+            'code': 403,
+            'description': 'Unauthorised. You do not have permission to \
+                            perform this action.'
+            }, 403)
 
     return True
 
