@@ -37,6 +37,14 @@ updated_user = '{\
 "givenH": 0,\
 "loginCount": 0 }'
 
+updated_display = '{\
+"id": 1,\
+"auth0Id": "",\
+"displayName": "meow",\
+"receivedH": 0,\
+"givenH": 0,\
+"loginCount": 0 }'
+
 
 # App testing
 class TestHugApp(unittest.TestCase):
@@ -358,6 +366,86 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(user_data['id'], 1)
+
+
+    # Edit User Data Tests ('/users/<user_id>', PATCH)
+    # -------------------------------------------------------
+    # Attempt to update a user's data without auth header
+    def test_update_user_no_auth(self):
+        response = self.client().patch('/users/1', data=updated_user)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to update a user's data with malformed auth header
+    def test_update_user_malformed_auth(self):
+        response = self.client().patch('/users/1', headers=malformed_header, data=updated_user)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to update a user's data with a user's JWT
+    def test_update_user_as_user(self):
+        response = self.client().patch('/users/1', headers=user_header, data=updated_user)
+        response_data = json.loads(response.data)
+        updated = response_data['updated']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(updated['receivedH'], updated_user[54:55])
+        self.assertEqual(updated['givenH'], updated_user[66:67])
+
+    # Attempt to update another user's display name with a user's JWT
+    def test_update_other_users_display_name_as_user(self):
+        response = self.client().patch('/users/1', headers=user_header, data=updated_display)
+        response_data = json.loads(response.data)
+        updated = response_data['updated']
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to update a user's data with a moderator's JWT
+    def test_update_user_as_mod(self):
+        response = self.client().patch('/users/1', headers=moderator_header, data=updated_user)
+        response_data = json.loads(response.data)
+        updated = response_data['updated']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(updated['receivedH'], updated_user[54:55])
+        self.assertEqual(updated['givenH'], updated_user[66:67])
+
+    # Attempt to update another user's display name with a moderator's JWT
+    def test_update_other_users_display_name_as_mod(self):
+        response = self.client().patch('/users/1', headers=moderator_header, data=updated_display)
+        response_data = json.loads(response.data)
+        updated = response_data['updated']
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to update a user's data with an admin's JWT
+    def test_update_user_as_admin(self):
+        response = self.client().patch('/users/1', headers=admin_header, data=updated_user)
+        response_data = json.loads(response.data)
+        updated = response_data['updated']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(updated['receivedH'], updated_user[54:55])
+        self.assertEqual(updated['givenH'], updated_user[66:67])
+
+    # Attempt to update another user's display name with an admin's JWT
+    def test_update_user_as_admin(self):
+        response = self.client().patch('/users/1', headers=admin_header, data=updated_display)
+        response_data = json.loads(response.data)
+        updated = response_data['updated']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(updated['receivedH'], updated_user[39:43])
 
 
 # Make the tests conveniently executable
