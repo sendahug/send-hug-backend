@@ -226,7 +226,7 @@ def create_app(test_config=None):
 
     # Endpoint: GET /users
     # Description: Gets the user's data.
-    # Parameters: None.
+    # Parameters: user_id - The user's Auth0 ID.
     @app.route('/users/<user_id>')
     @requires_auth(['read:user'])
     def get_user_data(token_payload, user_id):
@@ -419,6 +419,17 @@ def create_app(test_config=None):
     def add_message(token_payload):
         # Gets the new message's data
         message_data = json.loads(request.data)
+
+        logged_user = User.query.filter(User.auth0_id == token_payload['sub']).one_or_none()
+
+        # Checks that the user isn't trying to send a message from someone else
+        if(logged_user.id != message_data['fromId']):
+            raise AuthError({
+                'code': 403,
+                'description': 'You do not have permission to send a message\
+                                on behalf of another user.'
+            }, 403)
+
         new_message = Message(from_id=message_data['fromId'],
                               for_id=message_data['forId'],
                               text=message_data['messageText'],
