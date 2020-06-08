@@ -39,7 +39,7 @@ def create_app(test_config=None):
     def paginate(items, page):
         items_per_page = 5;
         start_index = (page - 1) * items_per_page
-        paginated_items = items[start_index:(start_index+4)]
+        paginated_items = items[start_index:(start_index+5)]
         total_pages = math.ceil(len(items) / 5)
 
         return [paginated_items, total_pages]
@@ -105,11 +105,12 @@ def create_app(test_config=None):
         # Gets the user's ID
         current_user = User.query.filter(User.auth0_id ==
                                          token_payload['sub']).one_or_none()
-        post_author = User.query.filter(User.id == original_post.user_id).one_or_none()
 
         # If there's no post with that ID
         if(original_post is None):
             abort(404)
+
+        post_author = User.query.filter(User.id == original_post.user_id).one_or_none()
 
         # If the user's permission is 'patch my' the user can only edit
         # their own posts.
@@ -459,7 +460,7 @@ def create_app(test_config=None):
                                             token_payload['sub']).one_or_none()
 
         # If the user is attempting to read another user's messages
-        if(requesting_user.id != message_data.from_id):
+        if(requesting_user.id != message_data.for_id):
             raise AuthError({
                 'code': 403,
                 'description': 'You do not have permission to delete another\
