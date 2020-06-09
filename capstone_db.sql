@@ -115,7 +115,8 @@ CREATE TABLE public.users (
     received_hugs integer,
     given_hugs integer,
     display_name character varying NOT NULL,
-    login_count integer
+    login_count integer,
+    role character varying
 );
 
 
@@ -169,7 +170,7 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.alembic_version (version_num) FROM stdin;
-4822d58838df
+2a32dd21c76e
 \.
 
 
@@ -214,10 +215,10 @@ COPY public.posts (id, user_id, text, date, given_hugs) FROM stdin;
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: anncarters
 --
 
-COPY public.users (id, auth0_id, received_hugs, given_hugs, display_name, login_count) FROM stdin;
-4	auth0|5ed8e3d0def75d0befbc7e50	0	0	user14	3
-1	auth0|5ed34765f0b8e60c8e87ca62	2	2	shirb	57
-5	auth0|5ede3e7a0793080013259050	0	0	user52	3
+COPY public.users (id, auth0_id, received_hugs, given_hugs, display_name, login_count, role) FROM stdin;
+1	auth0|5ed34765f0b8e60c8e87ca62	2	2	shirb	58	user
+4	auth0|5ed8e3d0def75d0befbc7e50	0	0	user14	4	admin
+5	auth0|5ede3e7a0793080013259050	0	0	user52	3	moderator
 \.
 
 
