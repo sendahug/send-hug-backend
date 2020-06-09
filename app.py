@@ -49,6 +49,7 @@ def create_app(test_config=None):
     # Endpoint: GET /
     # Description: Gets recent and suggested posts.
     # Parameters: None.
+    # Authorization: None.
     @app.route('/')
     def index():
         # Gets the ten most recent posts
@@ -66,6 +67,7 @@ def create_app(test_config=None):
     # Endpoint: POST /posts
     # Description: Add a new post to the database.
     # Parameters: None.
+    # Authorization: post:post.
     @app.route('/posts', methods=['POST'])
     @requires_auth(['post:post'])
     def add_post(token_payload):
@@ -93,6 +95,7 @@ def create_app(test_config=None):
     # Description: Updates a post (either its text or its hugs) in the
     #              database.
     # Parameters: post_id - ID of the post to update.
+    # Authorization: patch:my-post or patch:any-post.
     @app.route('/posts/<post_id>', methods=['PATCH'])
     @requires_auth(['patch:my-post', 'patch:any-post'])
     def edit_post(token_payload, post_id):
@@ -164,6 +167,7 @@ def create_app(test_config=None):
     # Endpoint: DELETE /posts/<post_id>
     # Description: Deletes a post from the database.
     # Parameters: post_id - ID of the post to delete.
+    # Authorization: delete:my-post or delete:any-post.
     @app.route('/posts/<post_id>', methods=['DELETE'])
     @requires_auth(['delete:my-post', 'delete:any-post'])
     def delete_post(token_payload, post_id):
@@ -210,6 +214,7 @@ def create_app(test_config=None):
     # Endpoint: GET /posts/<type>
     # Description: Gets all new posts.
     # Parameters: type - Type of posts (new or suggested) to fetch.
+    # Authorization: None.
     @app.route('/posts/<type>')
     def get_new_posts(type):
         page = request.args.get('page', 1, type=int)
@@ -229,6 +234,7 @@ def create_app(test_config=None):
     # Endpoint: GET /users/<user_id>
     # Description: Gets the user's data.
     # Parameters: user_id - The user's Auth0 ID.
+    # Authorization: read:user.
     @app.route('/users/<user_id>')
     @requires_auth(['read:user'])
     def get_user_data(token_payload, user_id):
@@ -254,6 +260,7 @@ def create_app(test_config=None):
     # Endpoint: POST /users
     # Description: Adds a new user to the users table.
     # Parameters: None.
+    # Authorization: post:user.
     @app.route('/users', methods=['POST'])
     @requires_auth(['post:user'])
     def add_user(token_payload):
@@ -287,6 +294,7 @@ def create_app(test_config=None):
     # Endpoint: PATCH /users/<user_id>
     # Description: Updates a user in the database.
     # Parameters: user_id - ID of the user to update.
+    # Authorization: patch:user or patch:any-user.
     @app.route('/users/<user_id>', methods=['PATCH'])
     @requires_auth(['patch:user', 'patch:any-user'])
     def edit_user(token_payload, user_id):
@@ -353,6 +361,7 @@ def create_app(test_config=None):
     # Endpoint: GET /users/<user_id>/posts
     # Description: Gets a specific user's posts.
     # Parameters: user_id - whose posts to fetch.
+    # Authorization: read:user.
     @app.route('/users/<user_id>/posts')
     @requires_auth(['read:user'])
     def get_user_posts(token_payload, user_id):
@@ -389,6 +398,7 @@ def create_app(test_config=None):
     # Endpoint: GET /messages
     # Description: Gets the user's messages.
     # Parameters: None.
+    # Authorization: read:messages.
     @app.route('/messages')
     @requires_auth(['read:messages'])
     def get_user_messages(token_payload):
@@ -439,6 +449,7 @@ def create_app(test_config=None):
     # Endpoint: POST /messages
     # Description: Adds a new message to the messages table.
     # Parameters: None.
+    # Authorization: post:message.
     @app.route('/messages', methods=['POST'])
     @requires_auth(['post:message'])
     def add_message(token_payload):
@@ -477,6 +488,7 @@ def create_app(test_config=None):
     # Endpoint: DELETE /messages/<message_id>
     # Description: Deletes a message from the database.
     # Parameters: message_id - ID of the message to delete.
+    # Authorization: elete:messages.
     @app.route('/messages/<message_id>', methods=['DELETE'])
     @requires_auth(['delete:messages'])
     def delete_message(token_payload, message_id):
