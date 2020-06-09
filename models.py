@@ -52,6 +52,7 @@ class User(db.Model):
     received_hugs = db.Column(db.Integer, default=0)
     given_hugs = db.Column(db.Integer, default=0)
     login_count = db.Column(db.Integer, default=1)
+    role = db.Column(db.String(), default='user')
     posts = db.relationship('Post', backref='user')
 
     # Format method
@@ -63,7 +64,8 @@ class User(db.Model):
             'displayName': self.display_name,
             'receivedH': self.received_hugs,
             'givenH': self.given_hugs,
-            'loginCount': self.login_count
+            'loginCount': self.login_count,
+            'role': self.role
         }
 
 
