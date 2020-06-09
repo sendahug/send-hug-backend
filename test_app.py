@@ -548,6 +548,7 @@ class TestHugApp(unittest.TestCase):
     def test_update_user_as_user(self):
         user = updated_user
         user['id'] = sample_user_id
+        user['displayName'] = 'user'
         response = self.client().patch('/users/' + sample_user_id, headers=user_header,
                                        data=json.dumps(user))
         response_data = json.loads(response.data)
@@ -573,6 +574,7 @@ class TestHugApp(unittest.TestCase):
     def test_update_user_as_mod(self):
         user = updated_user
         user['id'] = sample_moderator_id
+        user['displayName'] = 'mod'
         response = self.client().patch('/users/' + sample_moderator_id, headers=moderator_header,
                                        data=json.dumps(user))
         response_data = json.loads(response.data)
@@ -590,7 +592,6 @@ class TestHugApp(unittest.TestCase):
         response = self.client().patch('/users/' + sample_admin_id, headers=moderator_header,
                                        data=json.dumps(user))
         response_data = json.loads(response.data)
-        updated = response_data['updated']
 
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 403)
@@ -599,6 +600,7 @@ class TestHugApp(unittest.TestCase):
     def test_update_user_as_admin(self):
         user = updated_user
         user['id'] = sample_admin_id
+        user['displayName'] = 'admin'
         response = self.client().patch('/users/' + sample_admin_id, headers=admin_header,
                                        data=json.dumps(user))
         response_data = json.loads(response.data)
