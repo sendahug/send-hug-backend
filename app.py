@@ -300,7 +300,7 @@ def create_app(test_config=None):
         original_user.login_count = updated_user['loginCount']
 
         # if the user is only allowed to change their own name (user / mod)
-        if('patch:user' in token_payload):
+        if('patch:user' in token_payload['permissions']):
             if(token_payload['sub'] != original_user.auth0_id):
                 raise AuthError({
                     'code': 403,
