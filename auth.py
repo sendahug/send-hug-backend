@@ -17,8 +17,13 @@ class AuthError(Exception):
         self.status_code = status_code
 
 
-# Gets the authorisation header from the request and checks that it's not
-# malformed.
+# Function: get_auth_header
+# Description: Gets the request's 'Authorization' header. Checks to see whether
+#              said header exists; whether the header is comprised of two
+#              parts; and whether the first part is 'bearer'. This serves as
+#              preliminary verification that the JWT is in the correct form.
+# Parameters: None
+# Returns: split_auth_header[1] - The JSON web token.
 def get_auth_header():
     # If there's no auth header, raise an error
     if('Authorization' not in request.headers):
@@ -43,7 +48,12 @@ def get_auth_header():
     return split_auth_header[1]
 
 
-# Verifies the authenticity of the JWT
+# Function: verify_jwt
+# Description: Gets the token and attempts to decode and verify it using the
+#              Auth0 JWKS (JSON Web Key Set) JSON. Ensures that the JWT is
+#              authentic, still valid and hasn't been tampered with.
+# Parameters: token - a JSON Web Token.
+# Returns: payload - The payload from the decoded token.
 def verify_jwt(token):
     # Gets the JWKS from Auth0
     auth_json = urlopen('https://' + AUTH0_DOMAIN + '/.well-known/jwks.json')
@@ -111,7 +121,16 @@ def verify_jwt(token):
     return payload
 
 
-#  Checks the user has permission to access an endpoint
+# Function: check_permissions
+# Description: Checks the payload from of the decoded, verified JWT for
+#              permissions. Then compares the user's permissions to the
+#              required permission to check whether the user is allowed to
+#              access the given resource.
+# Parameters: permission (list) - The resource's required permissions. Can
+#                                 contain either one or two allowed types
+#                                 of permissions.
+#             payload - The payload from the decoded, verified JWT.
+# Returns: True - Boolean confirming the user has the required permission.
 def check_permissions(permission, payload):
     # Check whether permissions are included in the token payload
     if('permissions' not in payload):
@@ -144,7 +163,11 @@ def check_permissions(permission, payload):
     return True
 
 
-# requires_auth decorator
+# @requires_auth() Decorator Definition
+# Description: Gets the Authorization header, verifies the JWT and checks
+#              the user has the required permissions using the functions above.
+# Parameters: permission (list) - The resource's required permission(s).
+# Returns: @requires_auth decorator.
 def requires_auth(permission=['']):
     def requires_auth_decorator(f):
         @wraps(f)
