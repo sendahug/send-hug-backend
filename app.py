@@ -37,7 +37,7 @@ def create_app(test_config=None):
 
     # Paginates posts / messages
     def paginate(items, page):
-        items_per_page = 5;
+        items_per_page = 5
         start_index = (page - 1) * items_per_page
         paginated_items = items[start_index:(start_index+5)]
         total_pages = math.ceil(len(items) / 5)
@@ -110,7 +110,8 @@ def create_app(test_config=None):
         if(original_post is None):
             abort(404)
 
-        post_author = User.query.filter(User.id == original_post.user_id).one_or_none()
+        post_author = User.query.filter(User.id ==
+                                        original_post.user_id).one_or_none()
 
         # If the user's permission is 'patch my' the user can only edit
         # their own posts.
@@ -181,7 +182,8 @@ def create_app(test_config=None):
         if('delete:my-post' in token_payload['permissions']):
             # Gets the user's ID and compares it to the user_id of the post
             current_user = User.query.filter(User.auth0_id ==
-                                             token_payload['sub']).one_or_none()
+                                             token_payload['sub']).\
+                                             one_or_none()
             # If it's not the same user, they can't delete the post, so an
             # auth error is raised
             if(post_data.user_id != current_user.id):
@@ -420,7 +422,8 @@ def create_app(test_config=None):
         # Gets the new message's data
         message_data = json.loads(request.data)
 
-        logged_user = User.query.filter(User.auth0_id == token_payload['sub']).one_or_none()
+        logged_user = User.query.filter(User.auth0_id ==
+                                        token_payload['sub']).one_or_none()
 
         # Checks that the user isn't trying to send a message from someone else
         if(logged_user.id != message_data['fromId']):
@@ -460,7 +463,7 @@ def create_app(test_config=None):
 
         # Get the message with that ID
         message_data = Message.query.filter(Message.id == message_id).\
-                                            one_or_none()
+            one_or_none()
 
         # If there's no message with that ID, abort
         if(message_data is None):

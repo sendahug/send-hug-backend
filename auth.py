@@ -4,6 +4,7 @@ from urllib.request import urlopen
 from functools import wraps
 from flask import request
 
+# Auth0 Configuration
 AUTH0_DOMAIN = 'dev-sbac.auth0.com'
 API_AUDIENCE = 'sendhug'
 ALGORITHMS = ['RS256']
@@ -125,19 +126,19 @@ def check_permissions(permission, payload):
         # Check whether the user has that permission
         if(permission[0] not in payload['permissions'] and
            permission[1] not in payload['permissions']):
-           raise AuthError({
-            'code': 403,
-            'description': 'Unauthorised. You do not have permission to \
-                            perform this action.'
+            raise AuthError({
+                'code': 403,
+                'description': 'Unauthorised. You do not have permission to \
+                                perform this action.'
             }, 403)
     # If there's only one possibility
     else:
         # Check whether the user has that permission
         if(permission[0] not in payload['permissions']):
-           raise AuthError({
-            'code': 403,
-            'description': 'Unauthorised. You do not have permission to \
-                            perform this action.'
+            raise AuthError({
+                'code': 403,
+                'description': 'Unauthorised. You do not have permission to \
+                                perform this action.'
             }, 403)
 
     return True
