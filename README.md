@@ -1,10 +1,12 @@
-# APP
+# Send A Hug
 
 ## Version
 
 Version 1 (currently in development).
 
-For full API documentation, check the [`API Docs`](./api_docs.md)
+For full API documentation, check the [`API Docs`](./api_docs.md).
+
+For full project information, check the [`main README file`](../readme.md).
 
 ## Requirements
 
@@ -19,12 +21,12 @@ For full API documentation, check the [`API Docs`](./api_docs.md)
 3. cd into backend.
 4. Run ```pip install -r requirements.txt``` to install dependencies.
 5. Update the database URI to match your system.
-  - The username is stored in an environment variable.
-6. Run flask with:
+6. Update Auth0 configuration variables if needed.
+7. Update your database using ```flask migrate upgrade```
+8. Run flask with:
   - ```export FLASK_APP=app.py```
   - ```export FLASK_ENV=development``` (Recommended)
   - ```flask run```
-7. Update your database using ```flask migrate upgrade```
 
 ### Users
 
