@@ -226,7 +226,7 @@ def create_app(test_config=None):
             'total_pages': total_pages
         })
 
-    # Endpoint: GET /users
+    # Endpoint: GET /users/<user_id>
     # Description: Gets the user's data.
     # Parameters: user_id - The user's Auth0 ID.
     @app.route('/users/<user_id>')
@@ -268,7 +268,8 @@ def create_app(test_config=None):
             abort(409)
 
         new_user = User(auth0_id=user_data['id'],
-                        display_name=user_data['displayName'])
+                        display_name=user_data['displayName'],
+                        role='user')
 
         # Try to add the post to the database
         try:
@@ -309,6 +310,28 @@ def create_app(test_config=None):
                     'description': 'You do not have permission to edit \
                                     this user\'s display name.'
                 }, 403)
+
+        # Checks if the user's role is updated based on the
+        # permissions in the JWT
+        # Checks whether the user has 'patch:any-post' permission, which
+        # if given to moderators and admins
+        if('patch:any-post' in token_payload['permissions']):
+            # Checks whether the user has 'delete:any-post' permission, which
+            # is given only to admins, and whether the user is already
+            # marked as an admin in the database; if the user isn't an admin
+            # in the database, changes their role to admin. If they are,
+            # there's no need to update their role.
+            if('delete:any-post' in token_payload['permissions'] and
+                original_user.role != 'admin'):
+                original_user.role = 'admin'
+            # If the user doesn't have that permission but they have the
+            # permission to edit any post, they're moderators. Checks whether
+            # the user is marked as a mod in the database; if the user isn't,
+            # changes their role to moderator. If they are, there's no need to
+            # update their role.
+            elif('delete:any-post' not in token_payload['permissions'] and
+                  original_user.role != 'moderator'):
+                original_user.role = 'moderator'
 
         # if the user can edit anyone or the user is trying to update their
         # own name
