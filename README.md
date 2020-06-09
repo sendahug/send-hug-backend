@@ -6,7 +6,7 @@ Version 1 (currently in development).
 
 For full API documentation, check the [`API Docs`](./api_docs.md).
 
-For full project information, check the [`main README file`](../readme.md).
+For full project information, check the [`main README file`](https://github.com/shirblc/FSND-capstone/blob/master/README.md).
 
 ## Requirements
 
