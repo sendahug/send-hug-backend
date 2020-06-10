@@ -15,13 +15,15 @@ For full instructions check the [`backend README`](./backend/README.md)
 3. PATCH /posts/<post_id>
 4. DELETE /posts/<post_id>
 5. GET /posts/<type>
-6. GET /users
+6. GET /users/<user_id>
 7. POST /users
 8. PATCH /users/<user_id>
 9. GET /users/<user_id>/posts
 10. GET /messages
 11. POST /messages
 12. DELETE /messages/<message_id>
+
+**NOTE**: All sample curl requests are done via user 4; for your own tests, change the user ID and the user's display name.
 
 ### GET /
 **Description**: Home route. Gets the ten most recent items and the ten items with the least hugs.
@@ -46,7 +48,91 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Response Example:**
 ```
 {
-
+  "recent": [
+    {
+      "date": "Mon, 08 Jun 2020 14:43:15 GMT",
+      "givenHugs": 0,
+      "id": 15,
+      "text": "testing user 3",
+      "user": "user14",
+      "userId": 4
+    },
+    {
+      "date": "Mon, 08 Jun 2020 14:43:05 GMT",
+      "givenHugs": 0,
+      "id": 14,
+      "text": "new here",
+      "user": "user14",
+      "userId": 4
+    },
+    {
+      "date": "Mon, 08 Jun 2020 14:30:58 GMT",
+      "givenHugs": 0,
+      "id": 13,
+      "text": "2nd post",
+      "user": "user52",
+      "userId": 5
+    },
+    {
+      "date": "Mon, 08 Jun 2020 14:07:25 GMT",
+      "givenHugs": 0,
+      "id": 12,
+      "text": "new user",
+      "user": "user52",
+      "userId": 5
+    },
+    {
+      "date": "Thu, 04 Jun 2020 08:15:50 GMT",
+      "givenHugs": 1,
+      "id": 11,
+      "text": "baby lee :))",
+      "user": "shirb",
+      "userId": 1
+    }
+  ],
+  "success": true,
+  "suggested": [
+    {
+      "date": "Mon, 08 Jun 2020 14:43:15 GMT",
+      "givenHugs": 0,
+      "id": 15,
+      "text": "testing user 3",
+      "user": "user14",
+      "userId": 4
+    },
+    {
+      "date": "Mon, 01 Jun 2020 15:18:37 GMT",
+      "givenHugs": 0,
+      "id": 5,
+      "text": "test",
+      "user": "shirb",
+      "userId": 1
+    },
+    {
+      "date": "Mon, 01 Jun 2020 15:19:41 GMT",
+      "givenHugs": 0,
+      "id": 6,
+      "text": "test",
+      "user": "shirb",
+      "userId": 1
+    },
+    {
+      "date": "Mon, 01 Jun 2020 15:20:11 GMT",
+      "givenHugs": 0,
+      "id": 7,
+      "text": "test",
+      "user": "shirb",
+      "userId": 1
+    },
+    {
+      "date": "Mon, 08 Jun 2020 14:30:58 GMT",
+      "givenHugs": 0,
+      "id": 13,
+      "text": "2nd post",
+      "user": "user52",
+      "userId": 5
+    }
+  ]
 }
 ```
 
@@ -72,12 +158,19 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Expected Errors**:
   - 500 (Internal Server Error) - In case there's an error adding the new post to the database.
 
-**CURL Request Sample**: `curl `
+**CURL Request Sample**: `  curl -X POST http://127.0.0.1:5000/posts -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"user_id":4, "user":"user14", "text":"test curl", "date":"Wed Jun 10 2020 10:30:05 GMT+0300", "givenHugs":0}'`
 
 **Response Example:**
 ```
 {
-
+  "posts": {
+    "date": "Wed Jun 10 2020 10:30:05 GMT+0300",
+    "givenHugs": 0,
+    "id": null,
+    "text": "test curl",
+    "userId": 4
+  },
+  "success": true
 }
 ```
 
@@ -104,12 +197,19 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 404 (Not Found) - In case there's no post with that ID.
   - 500 (Internal Server Error) - In case there's an error updating the post's data in the database.
 
-**CURL Request Sample**: `curl `
+**CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/posts/15 -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"user_id":4, "user":"user14", "text":"test curl", "date":"Wed Jun 10 2020 10:30:05 GMT+0300", "givenHugs":0}'`
 
 **Response Example:**
 ```
 {
-
+  "success": true,
+  "updated": {
+    "date": "Mon, 08 Jun 2020 14:43:15 GMT",
+    "givenHugs": 0,
+    "id": 15,
+    "text": "test curl",
+    "userId": 4
+  }
 }
 ```
 
@@ -134,12 +234,13 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 404 (Not Found) - In case there's no post with that ID.
   - 500 (Internal Server Error) - In case there's an error deleting the post from the database.
 
-**CURL Request Sample**: `curl `
+**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/posts/15 -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
 {
-
+  "deleted": "15",
+  "success": true
 }
 ```
 
@@ -163,22 +264,116 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Expected Errors**: None.
 
-**CURL Request Sample**: `curl `
+**CURL Request Sample**: `curl http://127.0.0.1:5000/posts/new` or `curl http://127.0.0.1:5000/posts/suggested`
 
 **Response Example:**
+1. For new posts:
 ```
 {
-
+  "posts": [
+    {
+      "date": "Mon, 08 Jun 2020 14:43:05 GMT",
+      "givenHugs": 0,
+      "id": 14,
+      "text": "new here",
+      "user": "user14",
+      "userId": 4
+    },
+    {
+      "date": "Mon, 08 Jun 2020 14:30:58 GMT",
+      "givenHugs": 0,
+      "id": 13,
+      "text": "2nd post",
+      "user": "user52",
+      "userId": 5
+    },
+    {
+      "date": "Mon, 08 Jun 2020 14:07:25 GMT",
+      "givenHugs": 0,
+      "id": 12,
+      "text": "new user",
+      "user": "user52",
+      "userId": 5
+    },
+    {
+      "date": "Thu, 04 Jun 2020 08:15:50 GMT",
+      "givenHugs": 1,
+      "id": 11,
+      "text": "baby lee :))",
+      "user": "shirb",
+      "userId": 1
+    },
+    {
+      "date": "Thu, 04 Jun 2020 07:56:09 GMT",
+      "givenHugs": 0,
+      "id": 10,
+      "text": "cutie baby lee",
+      "user": "shirb",
+      "userId": 1
+    }
+  ],
+  "success": true,
+  "total_pages": 3
 }
 ```
 
-### GET /users
+2. For suggested posts:
+```
+{
+  "posts": [
+    {
+      "date": "Mon, 08 Jun 2020 14:43:05 GMT",
+      "givenHugs": 0,
+      "id": 14,
+      "text": "new here",
+      "user": "user14",
+      "userId": 4
+    },
+    {
+      "date": "Mon, 01 Jun 2020 15:18:37 GMT",
+      "givenHugs": 0,
+      "id": 5,
+      "text": "test",
+      "user": "shirb",
+      "userId": 1
+    },
+    {
+      "date": "Mon, 01 Jun 2020 15:19:41 GMT",
+      "givenHugs": 0,
+      "id": 6,
+      "text": "test",
+      "user": "shirb",
+      "userId": 1
+    },
+    {
+      "date": "Mon, 01 Jun 2020 15:20:11 GMT",
+      "givenHugs": 0,
+      "id": 7,
+      "text": "test",
+      "user": "shirb",
+      "userId": 1
+    },
+    {
+      "date": "Mon, 08 Jun 2020 14:07:25 GMT",
+      "givenHugs": 0,
+      "id": 12,
+      "text": "new user",
+      "user": "user52",
+      "userId": 5
+    }
+  ],
+  "success": true,
+  "total_pages": 3
+}
+```
+
+### GET /users/<user_id>
 **Description**: Gets a user's data from the database.
 
 **Handler Function**: get_user_data.
 
 **Request Arguments**:
-  - userID - A query parameter indicating the User's Auth0 ID. This parameter comes directly from the user's JWT.
+  - user_id - A parameter indicating the User's Auth0 ID. This parameter comes directly from the user's JWT.
 
 **Required Data**: None.
 
@@ -192,17 +387,27 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 400 (Bad Request) - In case no ID was supplied.
   - 404 (Not Found) - In case there's no user with that ID.
 
-**CURL Request Sample**: `curl `
+**CURL Request Sample**: `curl http://127.0.0.1:5000/users/auth0%7C5ed8e3d0def75d0befbc7e50 -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
 {
-
+  "success": true,
+  "user": {
+    "auth0Id": "auth0|5ed8e3d0def75d0befbc7e50",
+    "displayName": "user14",
+    "givenH": 0,
+    "id": 4,
+    "loginCount": 5,
+    "posts": 1,
+    "receivedH": 0,
+    "role": "admin"
+  }
 }
 ```
 
 ### POST /users
-**Description**: Adds a new user to the database.
+**Description**: Adds a new user to the database. This method is only used during the first login - it's only exposed to users within that initial session.
 
 **Handler Function**: add_user.
 
@@ -221,15 +426,6 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Expected Errors**:
   - 409 (Conflict) - In case the user is attempting to create a user that already exists.
   - 500 (Internal Server Error) - In case there's an error updating the user's data in the database.
-
-**CURL Request Sample**: `curl `
-
-**Response Example:**
-```
-{
-
-}
-```
 
 ### PATCH /users/<user_id>
 **Description**: Updates a user's data in the database.
@@ -254,12 +450,21 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 400 (Bad Request) - In case no ID was supplied.
   - 500 (Internal Server Error) - In case there's an error updating the user's data in the database.
 
-**CURL Request Sample**: `curl `
+**CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/users/4 -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"displayName":"user_14", "receivedH":0, "givenH":0, "posts":2, "loginCount":2}'`
 
 **Response Example:**
 ```
 {
-
+  "success": true,
+  "updated": {
+    "auth0Id": "auth0|5ed8e3d0def75d0befbc7e50",
+    "displayName": "user_14",
+    "givenH": 0,
+    "id": 4,
+    "loginCount": 2,
+    "receivedH": 0,
+    "role": "admin"
+  }
 }
 ```
 
@@ -285,12 +490,23 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Expected Errors**:
   - 400 (Bad Request) - In case there's no ID supplied.
 
-**CURL Request Sample**: `curl `
+**CURL Request Sample**: `curl http://127.0.0.1:5000/users/4/posts -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
 {
-
+  "page": 1,
+  "posts": [
+    {
+      "date": "Mon, 08 Jun 2020 14:43:05 GMT",
+      "givenHugs": 0,
+      "id": 14,
+      "text": "new here",
+      "userId": 4
+    }
+  ],
+  "success": true,
+  "total_pages": 1
 }
 ```
 
@@ -315,12 +531,34 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Expected Errors**:
   - 400 (Bad Request) - In case no ID was supplied.
 
-**CURL Request Sample**: `curl `
+**CURL Request Sample**: `curl http://127.0.0.1:5000/messages?userID=4 -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
 {
-
+  "current_page": 1,
+  "messages": [
+    {
+      "date": "Mon, 08 Jun 2020 14:44:55 GMT",
+      "for": "user_14",
+      "forId": 4,
+      "from": "shirb",
+      "fromId": 1,
+      "id": 6,
+      "messageText": "hiiii"
+    },
+    {
+      "date": "Mon, 08 Jun 2020 14:50:19 GMT",
+      "for": "user_14",
+      "forId": 4,
+      "from": "user52",
+      "fromId": 5,
+      "id": 8,
+      "messageText": "hi there :)"
+    }
+  ],
+  "success": true,
+  "total_pages": 1
 }
 ```
 
@@ -346,12 +584,19 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Expected Errors**:
   - 500 (Internal Server Error) - In case there's an error adding the new message to the database.
 
-**CURL Request Sample**: `curl `
+**CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/messages -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"from":"user14", "fromId":4, "forId":1, "messageText":"hang in there", "date":"Mon, 08 Jun 2020 14:43:15 GMT"}'`
 
 **Response Example:**
 ```
 {
-
+  "message": {
+    "date": "Mon, 08 Jun 2020 14:43:15 GMT",
+    "forId": 1,
+    "fromId": 4,
+    "id": 9,
+    "messageText": "hang in there"
+  },
+  "success": true
 }
 ```
 
@@ -376,12 +621,13 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 404 (Not Found) - In case there's no message with that ID.
   - 500 (Internal Server Error) - In case an error occurred while deleting the message from the database.
 
-**CURL Request Sample**: `curl `
+**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/messages/6 -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
 {
-
+  "deleted": "6",
+  "success": true
 }
 ```
 
@@ -406,6 +652,18 @@ Example:
 {
   "error": 404,
   "message": "The resource you were looking for wasn\'t found.",
+  "success": false
+}
+```
+
+AuthError example:
+```
+{
+  "code": 401,
+  "message": {
+    "code": 401,
+    "description": "Unauthorised. Your token is invalid."
+  },
   "success": false
 }
 ```
