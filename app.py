@@ -403,6 +403,7 @@ def create_app(test_config=None):
     @requires_auth(['read:messages'])
     def get_user_messages(token_payload):
         page = request.args.get('page', 1, type=int)
+        type = request.args.get('type', 'inbox')
 
         # Gets the user's ID from the URL arguments
         user_id = request.args.get('userID', None)
@@ -423,7 +424,13 @@ def create_app(test_config=None):
                                 user\'s messages.'
             }, 403)
 
-        message = Message.query.filter(Message.for_id == user_id).all()
+        # Checks which mailbox the user is requesting
+        if(type == 'inbox'):
+            message = Message.query.filter(Message.for_id == user_id).all()
+        elif(type == 'outbox'):
+            message = Message.query.filter(Message.from_id == user_id).all()
+        else:
+            abort(404)
 
         # If there are no messages for the user, return an empty array
         if(not message):
@@ -434,7 +441,8 @@ def create_app(test_config=None):
         else:
             # Gets the user's messages
             user_messages = joined_query('messages',
-                                         {'user_id': user_id})['return']
+                                         {'user_id': user_id,
+                                          'type': type})['return']
             paginated_data = paginate(user_messages, page)
             paginated_messages = paginated_data[0]
             total_pages = paginated_data[1]

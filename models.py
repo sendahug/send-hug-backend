@@ -166,15 +166,26 @@ def joined_query(target, params={}):
     # if the target is the user's messages (get messages endpoint)
     elif(target.lower() == 'messages'):
         user_id = params['user_id']
+        type = params['type']
 
         from_user = db.aliased(User)
         for_user = db.aliased(User)
 
-        user_messages = db.session.query(Message, from_user.display_name,
-                                         for_user.display_name).\
-            join(from_user, from_user.id == Message.from_id).\
-            join(for_user, for_user.id == Message.for_id).\
-            filter(Message.for_id == user_id).all()
+        # Checks which mailbox the user is requesting
+        # For inbox, gets all incoming messages
+        if(type == 'inbox'):
+            user_messages = db.session.query(Message, from_user.display_name,
+                                            for_user.display_name).\
+                join(from_user, from_user.id == Message.from_id).\
+                join(for_user, for_user.id == Message.for_id).\
+                filter(Message.for_id == user_id).all()
+        # For outbox, gets all outgoing messages
+        elif(type == 'outbox'):
+            user_messages = db.session.query(Message, from_user.display_name,
+                                            for_user.display_name).\
+                join(from_user, from_user.id == Message.from_id).\
+                join(for_user, for_user.id == Message.for_id).\
+                filter(Message.from_id == user_id).all()
 
         # formats each message in the list
         for message in user_messages:
