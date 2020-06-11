@@ -1,12 +1,13 @@
 import json
+import os
 from jose import jwt
 from urllib.request import urlopen
 from functools import wraps
 from flask import request
 
 # Auth0 Configuration
-AUTH0_DOMAIN = 'dev-sbac.auth0.com'
-API_AUDIENCE = 'sendhug'
+AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN')
+API_AUDIENCE = os.environ.get('API_AUDIENCE')
 ALGORITHMS = ['RS256']
 
 
