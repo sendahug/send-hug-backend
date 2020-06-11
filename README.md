@@ -21,7 +21,12 @@ For full project information, check the [`main README file`](https://github.com/
 3. cd into backend.
 4. Run ```pip install -r requirements.txt``` to install dependencies.
 5. Update the database URI to match your system.
-6. Update Auth0 configuration variables if needed.
+  - The database URI comes from an environment variable named **DATABASE_URL**.
+6. Set Auth0 configuration variables:
+  - AUTH0_DOMAIN - environment variable containing your Auth0 domain.
+  - API_AUDIENCE - environment variable containing your Auth0 API audience.
+7. Set up your frontend URI.
+  - The frontend URI comes from an environment variable named **FRONTEND**.
 7. Update your database using ```flask migrate upgrade```
 8. Run flask with:
   - ```export FLASK_APP=app.py```
