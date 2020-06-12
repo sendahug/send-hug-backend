@@ -1,0 +1,16 @@
+# https://git-scm.com/docs/gitignore
+# https://help.github.com/articles/ignoring-files
+# Example.gitignore files : https://github.com/github/gitignore
+_notes/
+/bower_components/
+node_modules/
+__pycache__
+.env
+venv
+
+# local development files
+frontend/localdev/app
+frontend/localdev/css
+frontend/localdev/app.bundle.js
+frontend/localdev/app.bundle.js.map
+frontend/localdev/index.html
