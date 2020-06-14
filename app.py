@@ -513,7 +513,7 @@ def create_app(test_config=None):
     # Endpoint: DELETE /messages/<message_id>
     # Description: Deletes a message from the database.
     # Parameters: message_id - ID of the message to delete.
-    # Authorization: elete:messages.
+    # Authorization: delete:messages.
     @app.route('/messages/<message_id>', methods=['DELETE'])
     @requires_auth(['delete:messages'])
     def delete_message(token_payload, message_id):
@@ -552,6 +552,50 @@ def create_app(test_config=None):
             'success': True,
             'deleted': message_id
         })
+
+    # Endpoint: DELETE /messages/<message_id>
+    # Description: Deletes a message from the database.
+    # Parameters: message_id - ID of the message to delete.
+    # Authorization: delete:messages.
+    @app.route('/messages', methods=['DELETE'])
+    @requires_auth(['delete:messages'])
+    def delete_thread(token_payload):
+        thread_id = request.args.get('threadID', None)
+
+        # If there's no thread ID, abort
+        if(thread_id is None):
+            abort(405)
+
+        thread = Thread.query.filter(Thread.id == thread_id).one_or_none()
+
+        # If this thread doesn't exist, abort
+        if(thread is None):
+            abort(404)
+
+        request_user = User.query.filter(User.auth0_id ==
+                                         token_payload['sub']).all()
+
+        # If the user is attempting to delete another user's thread
+        if((request_user.id != thread.user_1_id) or
+           (request_user.id != thread.user_2_id)):
+            raise AuthError({
+              'code': 403,
+              'description': 'You do not have permission to delete another\
+                              user\'s messages.'
+              }, 403)
+
+        # Try to delete the thread
+        try:
+            db_delete(thread)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'deleted': thread_id
+        })
+
 
     # Error Handlers
     # -----------------------------------------------------------------
