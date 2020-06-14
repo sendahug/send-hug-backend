@@ -176,6 +176,7 @@ def joined_query(target, params={}):
     elif(target.lower() == 'messages'):
         user_id = params['user_id']
         type = params['type']
+        thread = params['thread_id']
 
         from_user = db.aliased(User)
         for_user = db.aliased(User)
@@ -221,9 +222,16 @@ def joined_query(target, params={}):
                 order_by(Message.thread).\
                 filter((Thread.user_1_id == user_id) |
                        (Thread.user_2_id == user_id)).all()
+        # Gets a specific thread's messages
+        elif(type == 'thread'):
+            user_messages = db.session.query(Message, from_user.display_name,
+                                             for_user.display_name).\
+                join(from_user, from_user.id == Message.from_id).\
+                join(for_user, for_user.id == Message.for_id).\
+                filter(Message.thread == thread).all()
 
         # If the mailbox type is outbox or inbox
-        if((type == 'outbox') or type == 'inbox'):
+        if((type == 'outbox') or (type == 'inbox') or (type == 'thread')):
             # formats each message in the list
             for message in user_messages:
                 message = {

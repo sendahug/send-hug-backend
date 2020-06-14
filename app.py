@@ -9,6 +9,7 @@ from models import (
     Post,
     User,
     Message,
+    Thread,
     add as db_add,
     update as db_update,
     delete_object as db_delete,
@@ -404,6 +405,7 @@ def create_app(test_config=None):
     def get_user_messages(token_payload):
         page = request.args.get('page', 1, type=int)
         type = request.args.get('type', 'inbox')
+        thread_id = request.args.get('threadID', None)
 
         # Gets the user's ID from the URL arguments
         user_id = request.args.get('userID', None)
@@ -432,6 +434,17 @@ def create_app(test_config=None):
         elif(type == 'threads'):
             message = Message.query.filter((Message.from_id == user_id) |
                                            (Message.for_id == user_id)).all()
+        elif(type == 'thread'):
+            message = Thread.query.filter(Thread.id == thread_id).one_or_none()
+            # If the user is trying to view a thread that belongs to other
+            # users, raise an AuthError
+            if((message.user_1_id != requesting_user.id) and
+               (message.user_2_id != requesting_user.id)):
+              raise AuthError({
+                'code': 403,
+                'description': 'You do not have permission to view another\
+                                user\'s messages.'
+                }, 403)
         else:
             abort(404)
 
@@ -445,7 +458,8 @@ def create_app(test_config=None):
             # Gets the user's messages
             user_messages = joined_query('messages',
                                          {'user_id': user_id,
-                                          'type': type})['return']
+                                          'type': type,
+                                          'thread_id': thread_id})['return']
             paginated_data = paginate(user_messages, page)
             paginated_messages = paginated_data[0]
             total_pages = paginated_data[1]
