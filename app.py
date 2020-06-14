@@ -9,6 +9,7 @@ from models import (
     Post,
     User,
     Message,
+    Thread,
     add as db_add,
     update as db_update,
     delete_object as db_delete,
@@ -330,7 +331,7 @@ def create_app(test_config=None):
             # in the database, changes their role to admin. If they are,
             # there's no need to update their role.
             if('delete:any-post' in token_payload['permissions'] and
-                original_user.role != 'admin'):
+               original_user.role != 'admin'):
                 original_user.role = 'admin'
             # If the user doesn't have that permission but they have the
             # permission to edit any post, they're moderators. Checks whether
@@ -338,7 +339,7 @@ def create_app(test_config=None):
             # changes their role to moderator. If they are, there's no need to
             # update their role.
             elif('delete:any-post' not in token_payload['permissions'] and
-                  original_user.role != 'moderator'):
+                 original_user.role != 'moderator'):
                 original_user.role = 'moderator'
 
         # if the user can edit anyone or the user is trying to update their
@@ -404,6 +405,7 @@ def create_app(test_config=None):
     def get_user_messages(token_payload):
         page = request.args.get('page', 1, type=int)
         type = request.args.get('type', 'inbox')
+        thread_id = request.args.get('threadID', None)
 
         # Gets the user's ID from the URL arguments
         user_id = request.args.get('userID', None)
@@ -429,6 +431,20 @@ def create_app(test_config=None):
             message = Message.query.filter(Message.for_id == user_id).all()
         elif(type == 'outbox'):
             message = Message.query.filter(Message.from_id == user_id).all()
+        elif(type == 'threads'):
+            message = Message.query.filter((Message.from_id == user_id) |
+                                           (Message.for_id == user_id)).all()
+        elif(type == 'thread'):
+            message = Thread.query.filter(Thread.id == thread_id).one_or_none()
+            # If the user is trying to view a thread that belongs to other
+            # users, raise an AuthError
+            if((message.user_1_id != requesting_user.id) and
+               (message.user_2_id != requesting_user.id)):
+              raise AuthError({
+                'code': 403,
+                'description': 'You do not have permission to view another\
+                                user\'s messages.'
+                }, 403)
         else:
             abort(404)
 
@@ -442,7 +458,8 @@ def create_app(test_config=None):
             # Gets the user's messages
             user_messages = joined_query('messages',
                                          {'user_id': user_id,
-                                          'type': type})['return']
+                                          'type': type,
+                                          'thread_id': thread_id})['return']
             paginated_data = paginate(user_messages, page)
             paginated_messages = paginated_data[0]
             total_pages = paginated_data[1]
@@ -475,12 +492,34 @@ def create_app(test_config=None):
                                 on behalf of another user.'
             }, 403)
 
+        # Checks if there's an existing thread between the users
+        thread = Thread.query.filter(((Thread.user_1_id ==
+                                       message_data['fromId']) and
+                                    (Thread.user_2_id ==
+                                     message_data['forId']))).one_or_none()
+
+        # If there's no thread between the users
+        if(thread is None):
+            new_thread = Thread(user_1_id=message_data['fromId'],
+                                user_2_id=message_data['forId'])
+            # Try to create the new thread
+            try:
+                db_add(new_thread)
+                thread_id = new_thread.id
+            # If there's an error, abort
+            except Exception as e:
+                abort(500)
+        # If there's a thread between the users
+        else:
+            thread_id = thread.id
+
         new_message = Message(from_id=message_data['fromId'],
                               for_id=message_data['forId'],
                               text=message_data['messageText'],
-                              date=message_data['date'])
+                              date=message_data['date'],
+                              thread=thread_id)
 
-        # Try to add the post to the database
+        # Try to add the message to the database
         try:
             db_add(new_message)
             sent_message = new_message.format()
@@ -496,7 +535,7 @@ def create_app(test_config=None):
     # Endpoint: DELETE /messages/<message_id>
     # Description: Deletes a message from the database.
     # Parameters: message_id - ID of the message to delete.
-    # Authorization: elete:messages.
+    # Authorization: delete:messages.
     @app.route('/messages/<message_id>', methods=['DELETE'])
     @requires_auth(['delete:messages'])
     def delete_message(token_payload, message_id):
@@ -535,6 +574,50 @@ def create_app(test_config=None):
             'success': True,
             'deleted': message_id
         })
+
+    # Endpoint: DELETE /messages
+    # Description: Deletes a thread from the database.
+    # Parameters: threadID - ID of the thread to delete.
+    # Authorization: delete:messages.
+    @app.route('/messages', methods=['DELETE'])
+    @requires_auth(['delete:messages'])
+    def delete_thread(token_payload):
+        thread_id = request.args.get('threadID', None)
+
+        # If there's no thread ID, abort
+        if(thread_id is None):
+            abort(405)
+
+        thread = Thread.query.filter(Thread.id == thread_id).one_or_none()
+
+        # If this thread doesn't exist, abort
+        if(thread is None):
+            abort(404)
+
+        request_user = User.query.filter(User.auth0_id ==
+                                         token_payload['sub']).one_or_none()
+
+        # If the user is attempting to delete another user's thread
+        if((request_user.id != thread.user_1_id) and
+           (request_user.id != thread.user_2_id)):
+            raise AuthError({
+              'code': 403,
+              'description': 'You do not have permission to delete another\
+                              user\'s messages.'
+              }, 403)
+
+        # Try to delete the thread
+        try:
+            db_delete(thread)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'deleted': thread_id
+        })
+
 
     # Error Handlers
     # -----------------------------------------------------------------
