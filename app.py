@@ -575,9 +575,9 @@ def create_app(test_config=None):
             'deleted': message_id
         })
 
-    # Endpoint: DELETE /messages/<message_id>
-    # Description: Deletes a message from the database.
-    # Parameters: message_id - ID of the message to delete.
+    # Endpoint: DELETE /messages
+    # Description: Deletes a thread from the database.
+    # Parameters: threadID - ID of the thread to delete.
     # Authorization: delete:messages.
     @app.route('/messages', methods=['DELETE'])
     @requires_auth(['delete:messages'])
@@ -595,10 +595,10 @@ def create_app(test_config=None):
             abort(404)
 
         request_user = User.query.filter(User.auth0_id ==
-                                         token_payload['sub']).all()
+                                         token_payload['sub']).one_or_none()
 
         # If the user is attempting to delete another user's thread
-        if((request_user.id != thread.user_1_id) or
+        if((request_user.id != thread.user_1_id) and
            (request_user.id != thread.user_2_id)):
             raise AuthError({
               'code': 403,

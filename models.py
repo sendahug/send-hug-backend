@@ -328,6 +328,11 @@ def delete_object(obj):
 
     # Try to delete the record from the database
     try:
+        # If the object to delete is a thread, delete all associated
+        # messages first
+        if(type(obj) is Thread):
+            db.session.query(Message).filter(Message.thread == obj.id).delete()
+
         db.session.delete(obj)
         db.session.commit()
         deleted = obj.id
