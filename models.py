@@ -87,12 +87,15 @@ class Message(db.Model):
             'date': self.date
         }
 
+
 # Thread Model
 class Thread(db.Model):
     __tablename__ = 'threads'
     id = db.Column(db.Integer, primary_key=True)
-    user_1_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    user_2_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_1_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+                          nullable=False)
+    user_2_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+                          nullable=False)
     messages = db.relationship('Message', backref='threads')
 
 
@@ -181,14 +184,14 @@ def joined_query(target, params={}):
         # For inbox, gets all incoming messages
         if(type == 'inbox'):
             user_messages = db.session.query(Message, from_user.display_name,
-                                            for_user.display_name).\
+                                             for_user.display_name).\
                 join(from_user, from_user.id == Message.from_id).\
                 join(for_user, for_user.id == Message.for_id).\
                 filter(Message.for_id == user_id).all()
         # For outbox, gets all outgoing messages
         elif(type == 'outbox'):
             user_messages = db.session.query(Message, from_user.display_name,
-                                            for_user.display_name).\
+                                             for_user.display_name).\
                 join(from_user, from_user.id == Message.from_id).\
                 join(for_user, for_user.id == Message.for_id).\
                 filter(Message.from_id == user_id).all()
@@ -215,8 +218,9 @@ def joined_query(target, params={}):
                                               Message.thread).\
                 join(Thread, Message.thread == Thread.id).\
                 group_by(Message.thread, Thread.user_1_id, Thread.user_2_id).\
-                order_by(Message.thread).filter((Thread.user_1_id == user_id) |
-                                                (Thread.user_2_id == user_id)).all()
+                order_by(Message.thread).\
+                filter((Thread.user_1_id == user_id) |
+                       (Thread.user_2_id == user_id)).all()
 
         # If the mailbox type is outbox or inbox
         if((type == 'outbox') or type == 'inbox'):

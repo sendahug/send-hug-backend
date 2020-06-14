@@ -330,7 +330,7 @@ def create_app(test_config=None):
             # in the database, changes their role to admin. If they are,
             # there's no need to update their role.
             if('delete:any-post' in token_payload['permissions'] and
-                original_user.role != 'admin'):
+               original_user.role != 'admin'):
                 original_user.role = 'admin'
             # If the user doesn't have that permission but they have the
             # permission to edit any post, they're moderators. Checks whether
@@ -338,7 +338,7 @@ def create_app(test_config=None):
             # changes their role to moderator. If they are, there's no need to
             # update their role.
             elif('delete:any-post' not in token_payload['permissions'] and
-                  original_user.role != 'moderator'):
+                 original_user.role != 'moderator'):
                 original_user.role = 'moderator'
 
         # if the user can edit anyone or the user is trying to update their
