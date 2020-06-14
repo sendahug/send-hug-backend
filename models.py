@@ -93,7 +93,7 @@ class Thread(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_1_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     user_2_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    messages = db.relationship('Message', backref='thread')
+    messages = db.relationship('Message', backref='threads')
 
 
 # Database management methods
@@ -192,23 +192,64 @@ def joined_query(target, params={}):
                 join(from_user, from_user.id == Message.from_id).\
                 join(for_user, for_user.id == Message.for_id).\
                 filter(Message.from_id == user_id).all()
+        # For threads, gets all threads' data
+        elif(type == 'threads'):
+            # Get the thread ID, messages count, and users' names and IDs
+            threads_messages = db.session.query(db.func.count(Message.id),
+                                                Message.thread,
+                                                from_user.display_name,
+                                                for_user.display_name,
+                                                Thread.user_1_id,
+                                                Thread.user_2_id).\
+                join(Thread, Message.thread == Thread.id).\
+                join(from_user, from_user.id == Thread.user_1_id).\
+                join(for_user, for_user.id == Thread.user_2_id).\
+                group_by(Message.thread, from_user.display_name,
+                         for_user.display_name, Thread.user_1_id,
+                         Thread.user_2_id, Thread.id).order_by(Thread.id).\
+                filter((Thread.user_1_id == user_id) |
+                       (Thread.user_2_id == user_id)).all()
 
-        # formats each message in the list
-        for message in user_messages:
-            message = {
-                'id': message[0].id,
-                'from': message[1],
-                'fromId': message[0].from_id,
-                'for': message[2],
-                'forId': message[0].for_id,
-                'messageText': message[0].text,
-                'date': message[0].date
-            }
-            return_obj.append(message)
+            # Get the date of the latest message in the thread
+            latest_message = db.session.query(db.func.max(Message.date),
+                                              Message.thread).\
+                join(Thread, Message.thread == Thread.id).\
+                group_by(Message.thread, Thread.user_1_id, Thread.user_2_id).\
+                order_by(Message.thread).filter((Thread.user_1_id == user_id) |
+                                                (Thread.user_2_id == user_id)).all()
+
+        # If the mailbox type is outbox or inbox
+        if((type == 'outbox') or type == 'inbox'):
+            # formats each message in the list
+            for message in user_messages:
+                message = {
+                    'id': message[0].id,
+                    'from': message[1],
+                    'fromId': message[0].from_id,
+                    'for': message[2],
+                    'forId': message[0].for_id,
+                    'messageText': message[0].text,
+                    'date': message[0].date
+                    }
+                return_obj.append(message)
+        # Otherwise the type is threads
+        else:
+            # Threads data formatting
+            for index, thread in enumerate(threads_messages):
+                thread = {
+                    'id': thread[1],
+                    'user1': thread[2],
+                    'user1Id': thread[4],
+                    'user2': thread[3],
+                    'user2Id': thread[5],
+                    'numMessages': thread[0],
+                    'latestMessage': latest_message[index][0]
+                    }
+                return_obj.append(thread)
 
     return {
         'return': return_obj
-    }
+        }
 
 
 # Method: Add

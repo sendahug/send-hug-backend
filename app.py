@@ -429,6 +429,9 @@ def create_app(test_config=None):
             message = Message.query.filter(Message.for_id == user_id).all()
         elif(type == 'outbox'):
             message = Message.query.filter(Message.from_id == user_id).all()
+        elif(type == 'threads'):
+            message = Message.query.filter((Message.from_id == user_id) |
+                                           (Message.for_id == user_id)).all()
         else:
             abort(404)
 
