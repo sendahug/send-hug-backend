@@ -98,6 +98,15 @@ class Thread(db.Model):
                           nullable=False)
     messages = db.relationship('Message', backref='threads')
 
+    # Format method
+    # Responsible for returning a JSON object
+    def format(self):
+        return {
+            'id': self.id,
+            'user1': self.user_1_id,
+            'user2': self.user_2_id
+        }
+
 
 # Database management methods
 # -----------------------------------------------------------------
