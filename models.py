@@ -74,6 +74,7 @@ class Message(db.Model):
     for_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     text = db.Column(db.String(480), nullable=False)
     date = db.Column(db.DateTime)
+    thread = db.Column(db.Integer, db.ForeignKey('threads.id'), nullable=False)
 
     # Format method
     # Responsible for returning a JSON object
@@ -85,6 +86,14 @@ class Message(db.Model):
             'messageText': self.text,
             'date': self.date
         }
+
+# Thread Model
+class Thread(db.Model):
+    __tablename__ = 'threads'
+    id = db.Column(db.Integer, primary_key=True)
+    user_1_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_2_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    messages = db.relationship('Message', backref='thread')
 
 
 # Database management methods
