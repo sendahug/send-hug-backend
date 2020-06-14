@@ -492,12 +492,34 @@ def create_app(test_config=None):
                                 on behalf of another user.'
             }, 403)
 
+        # Checks if there's an existing thread between the users
+        thread = Thread.query.filter(((Thread.user_1_id ==
+                                       message_data['fromId']) and
+                                    (Thread.user_2_id ==
+                                     message_data['forId']))).one_or_none()
+
+        # If there's no thread between the users
+        if(thread is None):
+            new_thread = Thread(user_1_id=message_data['fromId'],
+                                user_2_id=message_data['forId'])
+            # Try to create the new thread
+            try:
+                db_add(new_thread)
+                thread_id = new_thread.id
+            # If there's an error, abort
+            except Exception as e:
+                abort(500)
+        # If there's a thread between the users
+        else:
+            thread_id = thread.id
+
         new_message = Message(from_id=message_data['fromId'],
                               for_id=message_data['forId'],
                               text=message_data['messageText'],
-                              date=message_data['date'])
+                              date=message_data['date'],
+                              thread=thread_id)
 
-        # Try to add the post to the database
+        # Try to add the message to the database
         try:
             db_add(new_message)
             sent_message = new_message.format()
