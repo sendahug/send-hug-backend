@@ -245,9 +245,14 @@ def create_app(test_config=None):
 
         user_data = User.query.filter(User.auth0_id == user_id).one_or_none()
 
-        # If there's no user with that ID, abort
+        # If there's no user with that Auth0 ID, try to find a user with that
+        # ID; the user might be trying to view user profile
         if(user_data is None):
-            abort(404)
+            user_data = User.query.filter(User.id == user_id).one_or_none()
+
+            # If there's no user with that ID either, abort
+            if(user_data is None):
+                abort(404)
 
         formatted_user_data = user_data.format()
         formatted_user_data['posts'] = len(Post.query.filter(Post.user_id ==
