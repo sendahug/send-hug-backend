@@ -321,16 +321,27 @@ def create_app(test_config=None):
         # Update user data
         original_user.received_hugs = updated_user['receivedH']
         original_user.given_hugs = updated_user['givenH']
-        original_user.login_count = updated_user['loginCount']
 
-        # if the user is only allowed to change their own name (user / mod)
-        if('patch:user' in token_payload['permissions']):
-            if(token_payload['sub'] != original_user.auth0_id):
-                raise AuthError({
-                    'code': 403,
-                    'description': 'You do not have permission to edit \
-                                    this user\'s display name.'
-                }, 403)
+        # If there's a login count (meaning, the user is editing their own
+        # data), update it
+        if('loginCount' in updated_user):
+            original_user.login_count = updated_user['loginCount']
+
+        # If the user is attempting to change a user's display name, check
+        # their permissions
+        if(updated_user['displayName'] != original_user.display_name):
+            # if the user is only allowed to change their own name (user / mod)
+            if('patch:user' in token_payload['permissions']):
+                if(token_payload['sub'] != original_user.auth0_id):
+                    raise AuthError({
+                        'code': 403,
+                        'description': 'You do not have permission to edit \
+                                        this user\'s display name.'
+                        }, 403)
+            else:
+                # if the user can edit anyone or the user is trying to update
+                # their own name
+                original_user.display_name = updated_user['displayName']
 
         # Checks if the user's role is updated based on the
         # permissions in the JWT
@@ -353,10 +364,6 @@ def create_app(test_config=None):
             elif('delete:any-post' not in token_payload['permissions'] and
                  original_user.role != 'moderator'):
                 original_user.role = 'moderator'
-
-        # if the user can edit anyone or the user is trying to update their
-        # own name
-        original_user.display_name = updated_user['displayName']
 
         # Try to update it in the database
         try:
