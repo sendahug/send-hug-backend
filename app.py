@@ -310,6 +310,13 @@ def create_app(test_config=None):
 
         updated_user = json.loads(request.data)
         original_user = User.query.filter(User.id == user_id).one_or_none()
+        current_user = User.query.filter(User.auth0_id ==
+                                         token_payload['sub']).one_or_none()
+
+        # If the user being updated was given a hug, also update the current
+        # user's "given hugs" value, as they just gave a hug
+        if(original_user.received_hugs != updated_user['receivedH']):
+            current_user.given_hugs += 1;
 
         # Update user data
         original_user.received_hugs = updated_user['receivedH']
@@ -354,6 +361,7 @@ def create_app(test_config=None):
         # Try to update it in the database
         try:
             db_update(original_user)
+            db_update(current_user)
             updated_user = original_user.format()
         # If there's an error, abort
         except Exception as e:
