@@ -378,7 +378,7 @@ def delete_all(type, id):
         # If the type of objects to delete is posts, the ID is the
         # user ID whose posts need to be deleted
         if(type == 'posts'):
-            db.session.query(Posts).filter(Post.user_id == id).delete()
+            db.session.query(Post).filter(Post.user_id == id).delete()
         # If the type of objects to delete is inbox, delete all messages
         # for the user with that ID
         if(type == 'inbox'):
