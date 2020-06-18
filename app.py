@@ -13,6 +13,7 @@ from models import (
     add as db_add,
     update as db_update,
     delete_object as db_delete,
+    delete_all as db_delete_all,
     joined_query
     )
 from auth import AuthError, requires_auth
@@ -452,6 +453,50 @@ def create_app(test_config=None):
             'posts': paginated_posts,
             'page': page,
             'total_pages': total_pages
+        })
+
+    # Endpoint: DELETE /users/<user_id>/posts
+    # Description: Deletes a specific user's posts.
+    # Parameters: user_id - whose posts to delete.
+    # Authorization: delete:my-post or delete:any-post
+    @app.route('/users/<user_id>/posts', methods=['DELETE'])
+    @requires_auth(['delete:my-post', 'delete:any-post'])
+    def delete_user_posts(token_payload, user_id):
+        current_user = User.query.filter(User.auth0_id ==
+                                         token_payload['sub']).one_or_none()
+
+        # If the user making the request isn't the same as the user
+        # whose posts should be deleted
+        if(current_user.id != user_id):
+            # If the user can only delete their own posts, they're not
+            # allowed to delete others' posts, so raise an AuthError
+            if('delete:my-post' in token_payload['permissions']):
+                raise AuthError({
+                    'code': 403,
+                    'description': 'You do not have permission to delete \
+                                    another user\'s posts.'
+                }, 403)
+
+        # Otherwise, the user is either trying to delete their own posts or
+        # they're allowed to delete others' posts, so let them continue
+        posts = Post.query.filter(Post.user_id == user_id).all()
+        num_deleted = len(posts)
+
+        # If the user has no posts, abort
+        if(num_deleted == 0):
+            abort(404)
+
+        # Try to delete
+        try:
+            db_delete_all('posts', user_id)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'userID': user_id,
+            'deleted': num_deleted
         })
 
     # Endpoint: GET /messages
