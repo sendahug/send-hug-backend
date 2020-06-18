@@ -658,7 +658,7 @@ def create_app(test_config=None):
         requesting_user = User.query.filter(User.auth0_id ==
                                             token_payload['sub']).one_or_none()
 
-        # If the user is attempting to read another user's messages
+        # If the user is attempting to delete another user's messages
         if(requesting_user.id != message_data.for_id):
             raise AuthError({
                 'code': 403,
@@ -676,6 +676,68 @@ def create_app(test_config=None):
         return jsonify({
             'success': True,
             'deleted': message_id
+        })
+
+    #
+    @app.route('/messages/<mailbox_type>', methods=['DELETE'])
+    @requires_auth(['delete:messages'])
+    def clear_mailbox(token_payload, mailbox_type):
+        user_id = request.args.get('userID');
+
+        # If there's no specified mailbox, abort
+        if(mailbox_type is None):
+            abort(404)
+
+        # If there's no user ID, abort
+        if(user_id is None):
+            abort(400)
+
+        current_user = User.query.filter(User.auth0_id ==
+                                         token_payload['sub']).one_or_none()
+
+        # If the user is attempting to delete another user's messages
+        if(current_user.id != user_id):
+            raise AuthError({
+                'code': 403,
+                'description': 'You do not have permission to delete another\
+                                user\'s messages.'
+            }, 403)
+
+        # If the user is trying to clear their inbox
+        if(mailbox_type == 'inbox'):
+            num_messages = len(Message.query.filter(Message.for_id ==
+                                                    user_id).all())
+            # If there are no messages, abort
+            if(num_messages == 0):
+                abort(404)
+        # If the user is trying to clear their outbox
+        if(mailbox_type == 'outbox'):
+            num_messages = len(Message.query.filter(Message.from_id ==
+                                                    user_id).all())
+            # If there are no messages, abort
+            if(num_messages == 0):
+                abort(404)
+        # If the user is trying to clear their threads mailbox
+        if(mailbox_type == 'threads'):
+            num_messages = len(Thread.query.filter((Thread.user_1_id
+                                                   == user_id) or
+                                                   (Thread.user_2_id ==
+                                                    user_id)).all())
+            # If there are no messages, abort
+            if(num_messages == 0):
+                abort(404)
+
+        # Try to clear the mailbox
+        try:
+            db_delete_all(mailbox_type, user_id)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'userID': user_id,
+            'deleted': num_messages
         })
 
     # Endpoint: DELETE /messages
