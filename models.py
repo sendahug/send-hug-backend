@@ -379,6 +379,29 @@ def delete_all(type, id):
         # user ID whose posts need to be deleted
         if(type == 'posts'):
             db.session.query(Posts).filter(Post.user_id == id).delete()
+        # If the type of objects to delete is inbox, delete all messages
+        # for the user with that ID
+        if(type == 'inbox'):
+            db.session.query(Message).filter(Message.for_id == id).delete()
+        # If the type of objects to delete is outbox, delete all messages
+        # from the user with that ID
+        if(type == 'outbox'):
+            db.session.query(Message).filter(Message.from_id == id).delete()
+        # If the type of objects to delete is threads, delete all messages
+        # to and from the user with that ID
+        if(type == 'threads'):
+            # Get all threads in which the user is involved
+            Threads = db.session.query(Thread).filter((Thread.user_1_id == id)
+                                                      or (Thread.user_2_id ==
+                                                      id)).all()
+            # Delete the messages in each thread
+            for thread in Threads:
+                db.session.query(Message).filter(Message.thread ==
+                                                 thread.id).delete()
+
+            # Then try to delete the threads
+            db.session.query(Thread).filter((Thread.user_1_id == id) or
+                                            (Thread.user_2_id == id)).delete()
 
         db.session.commit()
     # If there's an error, rollback
