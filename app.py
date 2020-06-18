@@ -678,7 +678,10 @@ def create_app(test_config=None):
             'deleted': message_id
         })
 
-    #
+    # Endpoint: DELETE /messages/<mailbox_type>
+    # Description: Clears the selected mailbox (deleting all messages in it).
+    # Parameters: mailbox_type - Type of mailbox to clear.
+    # Authorization: delete:messages.
     @app.route('/messages/<mailbox_type>', methods=['DELETE'])
     @requires_auth(['delete:messages'])
     def clear_mailbox(token_payload, mailbox_type):
