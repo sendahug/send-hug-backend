@@ -650,11 +650,11 @@ def create_app(test_config=None):
         # If the mailbox type is inbox or outbox, search for a message
         # with that ID
         if(mailbox_type == 'inbox' or mailbox_type == 'outbox'):
-            delete_item = Message.query.filter(Message.id == message_id).\
+            delete_item = Message.query.filter(Message.id == item_id).\
                 one_or_none()
         # If the mailbox type is threads, search for a thread with that ID
         elif(mailbox_type == 'threads'):
-            delete_item = Thread.query.filter(Thread.id == thread_id).\
+            delete_item = Thread.query.filter(Thread.id == item_id).\
                 one_or_none()
 
         # If this message/thread doesn't exist, abort
@@ -667,7 +667,7 @@ def create_app(test_config=None):
         #
         if(mailbox_type == 'inbox'):
             # If the user is attempting to delete another user's messages
-            if(request_user.id != message_data.for_id):
+            if(request_user.id != delete_item.for_id):
                 raise AuthError({
                     'code': 403,
                     'description': 'You do not have permission to delete \
@@ -676,7 +676,7 @@ def create_app(test_config=None):
         #
         elif(mailbox_type == 'outbox'):
             # If the user is attempting to delete another user's messages
-            if(request_user.id != message_data.from_id):
+            if(request_user.id != delete_item.from_id):
                 raise AuthError({
                     'code': 403,
                     'description': 'You do not have permission to delete \
@@ -685,8 +685,8 @@ def create_app(test_config=None):
         #
         elif(mailbox_type == 'threads'):
             # If the user is attempting to delete another user's thread
-            if((request_user.id != thread.user_1_id) and
-               (request_user.id != thread.user_2_id)):
+            if((request_user.id != delete_item.user_1_id) and
+               (request_user.id != delete_item.user_2_id)):
                 raise AuthError({
                     'code': 403,
                     'description': 'You do not have permission to delete\
