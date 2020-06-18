@@ -366,3 +366,29 @@ def delete_object(obj):
         'success': True,
         'deleted': deleted
     })
+
+
+# Method: Delete All
+# Description: Deletes all records that match a condition.
+# Parameters: Type - type of item to delete (posts or messages)
+#             ID - ID of the user whose posts or messages need to be deleted.
+def delete_all(type, id):
+    # Try to delete the records
+    try:
+        # If the type of objects to delete is posts, the ID is the
+        # user ID whose posts need to be deleted
+        if(type == 'posts'):
+            db.session.query(Posts).filter(Post.user_id == id).delete()
+
+        db.session.commit()
+    # If there's an error, rollback
+    except Exception as e:
+        db.session.rollback()
+    # Close the connection once the attempt is complete
+    finally:
+        db.session.close()
+
+    return jsonify({
+        'success': True,
+        'deleted': type
+    })
