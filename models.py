@@ -271,9 +271,8 @@ def joined_query(target, params={}):
     elif(target.lower() == 'post search'):
         search_query = params['query']
         posts = db.session.query(Post, User.display_name).join(User).\
-                                 order_by(db.desc(Post.date)).\
-                                 filter(Post.text.like('%' +
-                                        search_query + '%')).all()
+            order_by(db.desc(Post.date)).filter(Post.text.like('%' +
+                                                search_query + '%')).all()
 
         # Formats the posts
         for post in posts:

@@ -78,7 +78,7 @@ def create_app(test_config=None):
         # Get the users with the search query in their display name
         users = User.query.filter(User.display_name.
                                   ilike('%' + search_query + '%')).all()
-        posts = joined_query('post search', { 'query': search_query })['return']
+        posts = joined_query('post search', {'query': search_query})['return']
         formatted_users = []
 
         # Get the total number of items
@@ -355,7 +355,7 @@ def create_app(test_config=None):
         # If the user being updated was given a hug, also update the current
         # user's "given hugs" value, as they just gave a hug
         if(original_user.received_hugs != updated_user['receivedH']):
-            current_user.given_hugs += 1;
+            current_user.given_hugs += 1
 
         # Update user data
         original_user.received_hugs = updated_user['receivedH']
@@ -543,9 +543,9 @@ def create_app(test_config=None):
             # users, raise an AuthError
             if((message.user_1_id != requesting_user.id) and
                (message.user_2_id != requesting_user.id)):
-              raise AuthError({
-                'code': 403,
-                'description': 'You do not have permission to view another\
+                raise AuthError({
+                    'code': 403,
+                    'description': 'You do not have permission to view another\
                                 user\'s messages.'
                 }, 403)
         else:
@@ -598,8 +598,8 @@ def create_app(test_config=None):
         # Checks if there's an existing thread between the users
         thread = Thread.query.filter(((Thread.user_1_id ==
                                        message_data['fromId']) and
-                                    (Thread.user_2_id ==
-                                     message_data['forId']))).one_or_none()
+                                     (Thread.user_2_id ==
+                                      message_data['forId']))).one_or_none()
 
         # If there's no thread between the users
         if(thread is None):
@@ -685,7 +685,7 @@ def create_app(test_config=None):
     @app.route('/messages/<mailbox_type>', methods=['DELETE'])
     @requires_auth(['delete:messages'])
     def clear_mailbox(token_payload, mailbox_type):
-        user_id = request.args.get('userID');
+        user_id = request.args.get('userID')
 
         # If there's no specified mailbox, abort
         if(mailbox_type is None):
@@ -785,7 +785,6 @@ def create_app(test_config=None):
             'success': True,
             'deleted': thread_id
         })
-
 
     # Error Handlers
     # -----------------------------------------------------------------
