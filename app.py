@@ -664,7 +664,7 @@ def create_app(test_config=None):
         request_user = User.query.filter(User.auth0_id ==
                                          token_payload['sub']).one_or_none()
 
-        #
+        # If the mailbox type is inbox
         if(mailbox_type == 'inbox'):
             # If the user is attempting to delete another user's messages
             if(request_user.id != delete_item.for_id):
@@ -673,7 +673,7 @@ def create_app(test_config=None):
                     'description': 'You do not have permission to delete \
                                     another user\'s messages.'
                 }, 403)
-        #
+        # If the mailbox type is outbox
         elif(mailbox_type == 'outbox'):
             # If the user is attempting to delete another user's messages
             if(request_user.id != delete_item.from_id):
@@ -682,7 +682,7 @@ def create_app(test_config=None):
                     'description': 'You do not have permission to delete \
                                     another user\'s messages.'
                 }, 403)
-        #
+        # If the mailbox type is threads
         elif(mailbox_type == 'threads'):
             # If the user is attempting to delete another user's thread
             if((request_user.id != delete_item.user_1_id) and
