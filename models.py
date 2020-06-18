@@ -267,6 +267,25 @@ def joined_query(target, params={}):
                     'latestMessage': latest_message[index][0]
                     }
                 return_obj.append(thread)
+    # if the target is posts search (for the search endpoint)
+    elif(target.lower() == 'post search'):
+        search_query = params['query']
+        posts = db.session.query(Post, User.display_name).join(User).\
+                                 order_by(db.desc(Post.date)).\
+                                 filter(Post.text.like('%' +
+                                        search_query + '%')).all()
+
+        # Formats the posts
+        for post in posts:
+            post = {
+                'id': post[0].id,
+                'userId': post[0].user_id,
+                'user': post[1],
+                'text': post[0].text,
+                'date': post[0].date,
+                'givenHugs': post[0].given_hugs
+            }
+            return_obj.append(post)
 
     return {
         'return': return_obj

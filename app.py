@@ -65,6 +65,44 @@ def create_app(test_config=None):
             'suggested': suggested_posts
         })
 
+    # Endpoint: POST /
+    # Description: Run a search.
+    # Parameters: None.
+    # Authorization: None.
+    @app.route('/', methods=['POST'])
+    def search():
+        search_query = json.loads(request.data)['search']
+        current_page = request.args.get('page', 1, type=int)
+
+        # Get the users with the search query in their display name
+        users = User.query.filter(User.display_name.
+                                  ilike('%' + search_query + '%')).all()
+        posts = joined_query('post search', { 'query': search_query })['return']
+        formatted_users = []
+
+        # Get the total number of items
+        user_results = len(users)
+        post_results = len(posts)
+
+        # Formats the users' data
+        for user in users:
+            formatted_users.append(user.format())
+
+        # Paginates posts
+        paginated_data = paginate(posts, current_page)
+        paginated_posts = paginated_data[0]
+        total_pages = paginated_data[1]
+
+        return jsonify({
+            'success': True,
+            'users': formatted_users,
+            'posts': paginated_posts,
+            'user_results': user_results,
+            'post_results': post_results,
+            'current_page': current_page,
+            'total_pages': total_pages
+        })
+
     # Endpoint: POST /posts
     # Description: Add a new post to the database.
     # Parameters: None.
