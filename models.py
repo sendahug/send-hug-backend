@@ -332,6 +332,27 @@ def joined_query(target, params={}):
                 'givenHugs': post[0].given_hugs
             }
             return_obj.append(post)
+    # If the target is user reports (admin dashboard)
+    elif(target.lower() == 'user reports'):
+        reports = db.session.query(Report, User.display_name).\
+            join(User, User.id == Report.user_id).\
+            filter(Report.type == 'user').order_by(db.desc(Report.date)).all()
+
+        # Formats the reports
+        for report in reports:
+            formatted_report = report[0].format()
+            formatted_report['displayName'] = report[1]
+            return_obj.append(formatted_report)
+    # If the target is post reports (admin dashboard)
+    elif(target.lower() == 'post reports'):
+        reports = db.session.query(Report, Post.text).join(Post).\
+            filter(Report.type == 'post').order_by(db.desc(Report.date)).all()
+
+        # Formats the reports
+        for report in reports:
+            formatted_report = report[0].format()
+            formatted_report['text'] = report[1]
+            return_obj.append(formatted_report)
 
     return {
         'return': return_obj
