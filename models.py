@@ -136,6 +136,7 @@ class Report(db.Model):
                 'userID': self.user_id,
                 'reporter': self.reporter,
                 'reportReason': self.report_reason,
+                'date': self.date,
                 'dismissed': self.dismissed,
                 'closed': self.closed
             }
@@ -148,6 +149,7 @@ class Report(db.Model):
                 'postID': self.post_id,
                 'reporter': self.reporter,
                 'reportReason': self.report_reason,
+                'date': self.date,
                 'dismissed': self.dismissed,
                 'closed': self.closed
             }
