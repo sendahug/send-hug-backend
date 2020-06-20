@@ -119,6 +119,7 @@ class Report(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
     reporter = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     report_reason = db.Column(db.String(480), nullable=False)
+    date = db.Column(db.DateTime)
     dismissed = db.Column(db.Boolean, nullable=False, default=False)
     closed = db.Column(db.Boolean, nullable=False, default=False)
 
