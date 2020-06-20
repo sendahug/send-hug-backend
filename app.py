@@ -10,6 +10,7 @@ from models import (
     User,
     Message,
     Thread,
+    Report,
     add as db_add,
     update as db_update,
     delete_object as db_delete,
@@ -768,6 +769,36 @@ def create_app(test_config=None):
             'success': True,
             'userID': user_id,
             'deleted': num_messages
+        })
+
+    # Endpoint: GET /reports
+    # Description: Gets the currently open reports.
+    # Parameters: None.
+    # Authorization: read:admin-board.
+    @app.route('/reports')
+    @requires_auth(['read:admin-board'])
+    def get_open_reports(token_payload):
+        user_reports_page = request.args.get('userPage', 1, type=int)
+        post_reports_page = request.args.get('postPage', 1, type=int)
+
+        # Get the user and post reports
+        user_reports = joined_query('user reports')
+        post_reports = joined_query('post reports')
+
+        # Paginate user and posts reports
+        paginated_user_data = paginate(user_reports, user_reports_page)
+        paginated_user_reports = paginated_user_data[0]
+        total_user_pages = paginated_user_data[1]
+        paginated_post_data = paginate(post_reports, post_reports_page)
+        paginated_post_reports = paginated_post_data[0]
+        total_post_pages = paginated_post_data[1]
+
+        return jsonify({
+            'success': True,
+            'userReports': paginated_user_reports,
+            'totalUserPages': total_user_pages,
+            'postReports': paginated_post_reports,
+            'totalPostPages': total_post_pages
         })
 
     # Error Handlers
