@@ -27,6 +27,7 @@ class Post(db.Model):
     text = db.Column(db.String(480), nullable=False)
     date = db.Column(db.DateTime)
     given_hugs = db.Column(db.Integer, default=0)
+    report = db.relationship('Report', backref='post')
 
     # Format method
     # Responsible for returning a JSON object
@@ -51,6 +52,7 @@ class User(db.Model):
     login_count = db.Column(db.Integer, default=1)
     role = db.Column(db.String(), default='user')
     posts = db.relationship('Post', backref='user')
+    report = db.relationship('Report', backref='user')
 
     # Format method
     # Responsible for returning a JSON object
@@ -106,6 +108,50 @@ class Thread(db.Model):
             'user1': self.user_1_id,
             'user2': self.user_2_id
         }
+
+
+# Report Model
+class Report(db.Model):
+    __tablename__ = 'reports'
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(10), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
+    reporter = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    report_reason = db.Column(db.String(480), nullable=False)
+    dismissed = db.Column(db.Boolean, nullable=False, default=False)
+    closed = db.Column(db.Boolean, nullable=False, default=False)
+
+    # Format method
+    # Responsible for returning a JSON object
+    def format(self):
+        return_report = {}
+
+        # If the report was for a user
+        if(self.type.lower() == 'user'):
+            return_report = {
+                'id': self.id,
+                'type': self.type,
+                'userID': self.user_id,
+                'reporter': self.reporter,
+                'reportReason': self.report_reason,
+                'dismissed': self.dismissed,
+                'closed': self.closed
+            }
+        # If the report was for a post
+        elif(self.type.lower() == 'post'):
+            return_report = {
+                'id': self.id,
+                'type': self.type,
+                'userID': self.user_id,
+                'postID': self.post_id,
+                'reporter': self.reporter,
+                'reportReason': self.report_reason,
+                'dismissed': self.dismissed,
+                'closed': self.closed
+            }
+
+        return return_report
 
 
 # Database management methods
