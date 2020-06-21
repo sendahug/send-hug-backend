@@ -969,7 +969,7 @@ def create_app(test_config=None):
     # Authorization: read:admin-board.
     @app.route('/filters')
     @requires_auth(['read:admin-board'])
-    def get_filters():
+    def get_filters(token_payload):
         page = request.args.get('page', 1, type=int)
         filtered_words = word_filter.get_words()
 
