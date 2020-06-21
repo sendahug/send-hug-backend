@@ -801,7 +801,61 @@ def create_app(test_config=None):
             'totalPostPages': total_post_pages
         })
 
-    # Endpoint: patch /reports/<report_id>
+    # Endpoint: POST /reports
+    # Description: Add a new report to the database.
+    # Parameters: None.
+    # Authorization: post:report.
+    @app.route('/reports', methods=['POST'])
+    @requires_auth(['post:report'])
+    def create_new_report(token_payload):
+        report_data = json.loads(request.data)
+
+        # If the reported item is a post
+        if(report_data['type'].lower() == 'post'):
+            reported_post = Post.query.filter(Post.id ==
+                                              report_data['postID']).\
+                                              one_or_none()
+
+            # If this post doesn't exist, abort
+            if(reported_post is None):
+                abort(404)
+
+            report = Report(type=report_data['type'], date=report_data['date'],
+                            user_id=report_data['userID'],
+                            post_id=report_data['postID'],
+                            reporter=report_data['reporter'],
+                            report_reason=report_data['reportReason'],
+                            dismissed=False, closed=False)
+        # Otherwise the reported item is a user
+        else:
+            reported_user = User.query.filter(User.id ==
+                                              report_data['userID']).\
+                                              one_or_none()
+
+            # If this user doesn't exist, abort
+            if(reported_user is None):
+                abort(404)
+
+            report = Report(type=report_data['type'], date=report_data['date'],
+                            user_id=report_data['userID'],
+                            reporter=report_data['reporter'],
+                            report_reason=report_data['reportReason'],
+                            dismissed=False, closed=False)
+
+        # Try to add the report to the database
+        try:
+            db_add(report)
+            added_report = report.format()
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'report': added_report
+        })
+
+    # Endpoint: PATCH /reports/<report_id>
     # Description: Update the status of the report with the given ID.
     # Parameters: report_id - The ID of the report to update.
     # Authorization: read:admin-board.
