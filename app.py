@@ -1010,6 +1010,29 @@ def create_app(test_config=None):
             'added': new_filter
         })
 
+    # Endpoint: DELETE /filters/<filter_id>
+    # Description: Delete a word from the filtered words list.
+    # Parameters: filter_id - the index of the word to delete.
+    # Authorization: read:admin-board.
+    @app.route('/filters/<filter_id>', methods=['DELETE'])
+    @requires_auth(['read:admin-board'])
+    def delete_filter(token_payload, filter_id):
+        # If there's no word in that index
+        if(word_filter.get_words()[filter_id] is None):
+            abort(404)
+
+        # Otherwise, try to delete it
+        try:
+            removed = word_filter.remove_word(filter_id)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'deleted': removed
+        })
+
     # Error Handlers
     # -----------------------------------------------------------------
     # Bad request error handler
