@@ -352,6 +352,11 @@ def create_app(test_config=None):
         # Gets the user's data
         user_data = json.loads(request.data)
 
+        # If the user is attempting to add a user that isn't themselves to
+        # the database, aborts
+        if(user_data['auth0Id'] != token_payload['sub']):
+            abort(422)
+
         # Checks whether a user with that Auth0 ID already exists
         # If it is, aborts
         database_user = User.query.filter(User.auth0_id ==
