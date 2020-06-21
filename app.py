@@ -985,6 +985,31 @@ def create_app(test_config=None):
             'total_pages': total_pages
         })
 
+    # Endpoint: POST /filters
+    # Description: Add a word or phrase to the list of filtered words.
+    # Parameters: None.
+    # Authorization: read:admin-board.
+    @app.route('/filters', methods=['POST'])
+    @requires_auth(['read:admin-board'])
+    def add_filter(token_payload):
+        new_filter = json.loads(request.data)['word']
+
+        # If the word already exists in the filters list, abort
+        if(new_filter in word_filter.get_full_list()):
+            abort(409)
+
+        # Try to add the word to the filters list
+        try:
+            word_filter.add_words(new_filter)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'added': new_filter
+        })
+
     # Error Handlers
     # -----------------------------------------------------------------
     # Bad request error handler
