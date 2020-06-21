@@ -812,12 +812,12 @@ def create_app(test_config=None):
 
         # If the reported item is a post
         if(report_data['type'].lower() == 'post'):
-            reported_post = Post.query.filter(Post.id ==
+            reported_item = Post.query.filter(Post.id ==
                                               report_data['postID']).\
                                               one_or_none()
 
             # If this post doesn't exist, abort
-            if(reported_post is None):
+            if(reported_item is None):
                 abort(404)
 
             report = Report(type=report_data['type'], date=report_data['date'],
@@ -826,14 +826,16 @@ def create_app(test_config=None):
                             reporter=report_data['reporter'],
                             report_reason=report_data['reportReason'],
                             dismissed=False, closed=False)
+
+            reported_item.open_report = True
         # Otherwise the reported item is a user
         else:
-            reported_user = User.query.filter(User.id ==
+            reported_item = User.query.filter(User.id ==
                                               report_data['userID']).\
                                               one_or_none()
 
             # If this user doesn't exist, abort
-            if(reported_user is None):
+            if(reported_item is None):
                 abort(404)
 
             report = Report(type=report_data['type'], date=report_data['date'],
@@ -842,9 +844,12 @@ def create_app(test_config=None):
                             report_reason=report_data['reportReason'],
                             dismissed=False, closed=False)
 
+            reported_item.open_report = True
+
         # Try to add the report to the database
         try:
             db_add(report)
+            db_update(reported_item)
             added_report = report.format()
         # If there's an error, abort
         except Exception as e:
@@ -869,13 +874,28 @@ def create_app(test_config=None):
         if(report is None):
             abort(404)
 
+        # If the item reported is a user
+        if(report.type.lower() == 'user'):
+            reported_item = User.query.filter(User.id ==
+                                              updated_report['userID']).\
+                                              one_or_none()
+        # If the item reported is a post
+        elif(report.type.lower() == 'post'):
+            reported_item = Post.query.filter(Post.id ==
+                                              updated_report['postID']).\
+                                              one_or_none()
+
         # Set the dismissed and closed values to those of the updated report
         report.dismissed = updated_report['dismissed']
         report.closed = updated_report['closed']
 
+        # Set the post/user's open_report value to false
+        reported_item.open_report = False
+
         # Try to update the report in the database
         try:
             db_update(report)
+            db_update(reported_item)
             return_report = report.format()
         # If there's an error, abort
         except Exception as e:
