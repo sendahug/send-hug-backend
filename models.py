@@ -52,7 +52,6 @@ class User(db.Model):
     login_count = db.Column(db.Integer, default=1)
     role = db.Column(db.String(), default='user')
     posts = db.relationship('Post', backref='user')
-    report = db.relationship('Report', backref='user')
 
     # Format method
     # Responsible for returning a JSON object
