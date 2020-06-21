@@ -801,6 +801,37 @@ def create_app(test_config=None):
             'totalPostPages': total_post_pages
         })
 
+    # Endpoint: patch /reports/<report_id>
+    # Description: Update the status of the report with the given ID.
+    # Parameters: report_id - The ID of the report to update.
+    # Authorization: read:admin-board.
+    @app.route('/reports/<report_id>', methods=['PATCH'])
+    @requires_auth(['read:admin-board'])
+    def update_report_status(token_payload, report_id):
+        updated_report = json.loads(request.data)
+        report = Report.query.filter(Report.id == report_id).one_or_none()
+
+        # If there's no report with that ID, abort
+        if(report is None):
+            abort(404)
+
+        # Set the dismissed and closed values to those of the updated report
+        report.dismissed = updated_report['dismissed']
+        report.closed = updated_report['closed']
+
+        # Try to update the report in the database
+        try:
+            db_update(report)
+            return_report = report.format()
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'updated': return_report
+        })
+
     # Error Handlers
     # -----------------------------------------------------------------
     # Bad request error handler
