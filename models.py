@@ -53,7 +53,7 @@ class User(db.Model):
     login_count = db.Column(db.Integer, default=1)
     role = db.Column(db.String(), default='user')
     blocked = db.Column(db.Boolean, nullable=False, default=False)
-    releaseDate = db.Column(db.DateTime)
+    release_date = db.Column(db.DateTime)
     open_report = db.Column(db.Boolean, nullable=False, default=False)
     posts = db.relationship('Post', backref='user')
 
