@@ -18,6 +18,7 @@ from models import (
     joined_query
     )
 from auth import AuthError, requires_auth
+from filter import Filter
 
 
 def create_app(test_config=None):
@@ -25,6 +26,7 @@ def create_app(test_config=None):
     app = Flask(__name__)
     create_db(app)
     CORS(app, origins='')
+    word_filter = Filter()
 
     # CORS Setup
     @app.after_request
@@ -959,6 +961,28 @@ def create_app(test_config=None):
         return jsonify({
             'success': True,
             'updated': return_report
+        })
+
+    # Endpoint: GET /filters
+    # Description: Get a paginated list of filtered words.
+    # Parameters: None.
+    # Authorization: read:admin-board.
+    @app.route('/filters')
+    @requires_auth(['read:admin-board'])
+    def get_filters():
+        page = request.args.get('page', 1, type=int)
+        filtered_words = word_filter.get_words()
+
+        # Paginate the filtered words
+        words_per_page = 10
+        start_index = (page - 1) * words_per_page
+        paginated_words = filtered_words[start_index:(start_index+10)]
+        total_pages = math.ceil(len(filtered_words) / 10)
+
+        return jsonify({
+            'success': True,
+            'words': paginated_words,
+            'total_pages': total_pages
         })
 
     # Error Handlers
