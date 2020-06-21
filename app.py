@@ -272,6 +272,43 @@ def create_app(test_config=None):
             'total_pages': total_pages
         })
 
+    # Endpoint: GET /users/<type>
+    # Description: Gets users by a given type.
+    # Parameters: type - A type by which to filter the users.
+    # Authorization: read:admin-board.
+    @app.route('/users/<type>')
+    @requires_auth(['read:admin-board'])
+    def get_users_by_type(token_payload, type):
+        page = request.args.get('page', 1, type=int)
+
+        # If the type of users to fetch is blocked users
+        if(type.lower() == 'blocked'):
+            # Get all blocked users
+            users = User.query.filter(User.blocked == True).\
+                    order_by(User.release_date).all()
+
+            # If there are no blocked users
+            if(users is None):
+                paginated_users = []
+            # Otherwise, filter and paginate blocked users
+            else:
+                formatted_users = []
+
+                # Format users data
+                for user in users:
+                    formatted_users.append(user.format())
+
+                # Paginate users
+                paginated_data = paginate(formatted_users, page)
+                paginated_users = paginated_data[0]
+                total_pages = paginated_data[1]
+
+        return jsonify({
+            'success': True,
+            'users': paginated_users,
+            'total_pages': total_pages
+        })
+
     # Endpoint: GET /users/<user_id>
     # Description: Gets the user's data.
     # Parameters: user_id - The user's Auth0 ID.
