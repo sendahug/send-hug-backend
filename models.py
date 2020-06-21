@@ -173,15 +173,9 @@ def joined_query(target, params={}):
 
         # formats each post in the list
         for post in new_posts:
-            post = {
-                'id': post[0].id,
-                'userId': post[0].user_id,
-                'user': post[1],
-                'text': post[0].text,
-                'date': post[0].date,
-                'givenHugs': post[0].given_hugs
-            }
-            return_obj.append(post)
+            new_post = post[0].format()
+            new_post['user'] = post[1]
+            return_obj.append(new_post)
     # if the target is the suggested_posts array in the main page endpoint
     elif(target.lower() == 'main suggested'):
         sug_posts = db.session.query(Post, User.display_name).join(User).\
@@ -189,15 +183,9 @@ def joined_query(target, params={}):
 
         # formats each post in the list
         for post in sug_posts:
-            post = {
-                'id': post[0].id,
-                'userId': post[0].user_id,
-                'user': post[1],
-                'text': post[0].text,
-                'date': post[0].date,
-                'givenHugs': post[0].given_hugs
-            }
-            return_obj.append(post)
+            sug_post = post[0].format()
+            sug_post['user'] = post[1]
+            return_obj.append(sug_post)
     # If the target is the full list of new items
     elif(target.lower() == 'full new'):
         full_new_posts = db.session.query(Post, User.display_name).join(User).\
@@ -205,15 +193,9 @@ def joined_query(target, params={}):
 
         # formats each post in the list
         for post in full_new_posts:
-            post = {
-                'id': post[0].id,
-                'userId': post[0].user_id,
-                'user': post[1],
-                'text': post[0].text,
-                'date': post[0].date,
-                'givenHugs': post[0].given_hugs
-            }
-            return_obj.append(post)
+            new_post = post[0].format()
+            new_post['user'] = post[1]
+            return_obj.append(new_post)
     # If the target is the full list of suggested items
     elif(target.lower() == 'full suggested'):
         full_sug_posts = db.session.query(Post, User.display_name).join(User).\
@@ -221,14 +203,9 @@ def joined_query(target, params={}):
 
         # formats each post in the list
         for post in full_sug_posts:
-            post = {
-                'id': post[0].id,
-                'userId': post[0].user_id,
-                'user': post[1],
-                'text': post[0].text,
-                'date': post[0].date,
-                'givenHugs': post[0].given_hugs
-            }
+            sug_post = post[0].format()
+            sug_post['user'] = post[1]
+            return_obj.append(sug_post)
             return_obj.append(post)
     # if the target is the user's messages (get messages endpoint)
     elif(target.lower() == 'messages'):
@@ -292,16 +269,10 @@ def joined_query(target, params={}):
         if((type == 'outbox') or (type == 'inbox') or (type == 'thread')):
             # formats each message in the list
             for message in user_messages:
-                message = {
-                    'id': message[0].id,
-                    'from': message[1],
-                    'fromId': message[0].from_id,
-                    'for': message[2],
-                    'forId': message[0].for_id,
-                    'messageText': message[0].text,
-                    'date': message[0].date
-                    }
-                return_obj.append(message)
+                user_message = message[0].format()
+                user_message['from'] = message[1]
+                user_message['for'] = message[2]
+                return_obj.append(user_message)
         # Otherwise the type is threads
         else:
             # Threads data formatting
@@ -325,15 +296,9 @@ def joined_query(target, params={}):
 
         # Formats the posts
         for post in posts:
-            post = {
-                'id': post[0].id,
-                'userId': post[0].user_id,
-                'user': post[1],
-                'text': post[0].text,
-                'date': post[0].date,
-                'givenHugs': post[0].given_hugs
-            }
-            return_obj.append(post)
+            searched_post = post[0].format()
+            searched_post['user'] = post[1]
+            return_obj.append(searched_post)
     # If the target is user reports (admin dashboard)
     elif(target.lower() == 'user reports'):
         reports = db.session.query(Report, User.display_name).\
