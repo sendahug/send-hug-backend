@@ -171,7 +171,8 @@ def joined_query(target, params={}):
     # if the target is the recent_posts array in the main page endpoint
     if(target.lower() == 'main new'):
         new_posts = db.session.query(Post, User.display_name).join(User).\
-                    order_by(db.desc(Post.date)).limit(10).all()
+                    order_by(db.desc(Post.date)).\
+                    filter(Post.open_report == False).limit(10).all()
 
         # formats each post in the list
         for post in new_posts:
@@ -181,7 +182,8 @@ def joined_query(target, params={}):
     # if the target is the suggested_posts array in the main page endpoint
     elif(target.lower() == 'main suggested'):
         sug_posts = db.session.query(Post, User.display_name).join(User).\
-                    order_by(Post.given_hugs).limit(10).all()
+                    order_by(Post.given_hugs).\
+                    filter(Post.open_report == False).limit(10).all()
 
         # formats each post in the list
         for post in sug_posts:
@@ -191,7 +193,8 @@ def joined_query(target, params={}):
     # If the target is the full list of new items
     elif(target.lower() == 'full new'):
         full_new_posts = db.session.query(Post, User.display_name).join(User).\
-                         order_by(db.desc(Post.date)).all()
+                         order_by(db.desc(Post.date)).\
+                         filter(Post.open_report == False).all()
 
         # formats each post in the list
         for post in full_new_posts:
@@ -201,7 +204,8 @@ def joined_query(target, params={}):
     # If the target is the full list of suggested items
     elif(target.lower() == 'full suggested'):
         full_sug_posts = db.session.query(Post, User.display_name).join(User).\
-                    order_by(Post.given_hugs).all()
+                    order_by(Post.given_hugs).\
+                    filter(Post.open_report == False).all()
 
         # formats each post in the list
         for post in full_sug_posts:
@@ -294,7 +298,8 @@ def joined_query(target, params={}):
         search_query = params['query']
         posts = db.session.query(Post, User.display_name).join(User).\
             order_by(db.desc(Post.date)).filter(Post.text.like('%' +
-                                                search_query + '%')).all()
+                                                search_query + '%')).\
+            filter(Post.open_report == False).all()
 
         # Formats the posts
         for post in posts:
