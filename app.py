@@ -355,12 +355,13 @@ def create_app(test_config=None):
 
         # If the user being updated was given a hug, also update the current
         # user's "given hugs" value, as they just gave a hug
-        if(original_user.received_hugs != updated_user['receivedH']):
-            current_user.given_hugs += 1
+        if('receivedH' in updated_user and 'givenH' in updated_user):
+            if(original_user.received_hugs != updated_user['receivedH']):
+                current_user.given_hugs += 1
 
-        # Update user data
-        original_user.received_hugs = updated_user['receivedH']
-        original_user.given_hugs = updated_user['givenH']
+            # Update user data
+            original_user.received_hugs = updated_user['receivedH']
+            original_user.given_hugs = updated_user['givenH']
 
         # If there's a login count (meaning, the user is editing their own
         # data), update it
@@ -369,19 +370,21 @@ def create_app(test_config=None):
 
         # If the user is attempting to change a user's display name, check
         # their permissions
-        if(updated_user['displayName'] != original_user.display_name):
-            # if the user is only allowed to change their own name (user / mod)
-            if('patch:user' in token_payload['permissions']):
-                if(token_payload['sub'] != original_user.auth0_id):
-                    raise AuthError({
-                        'code': 403,
-                        'description': 'You do not have permission to edit \
-                                        this user\'s display name.'
-                        }, 403)
-            else:
-                # if the user can edit anyone or the user is trying to update
-                # their own name
-                original_user.display_name = updated_user['displayName']
+        if('displayName' in updated_user):
+            if(updated_user['displayName'] != original_user.display_name):
+                # if the user is only allowed to change their own name
+                # (user / mod)
+                if('patch:user' in token_payload['permissions']):
+                    if(token_payload['sub'] != original_user.auth0_id):
+                        raise AuthError({
+                            'code': 403,
+                            'description': 'You do not have permission to \
+                                            edit this user\'s display name.'
+                            }, 403)
+                else:
+                    # if the user can edit anyone or the user is trying to
+                    # update their own name
+                    original_user.display_name = updated_user['displayName']
 
         # Checks if the user's role is updated based on the
         # permissions in the JWT
