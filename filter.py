@@ -6,3 +6,8 @@ class Filter(Wordfilter):
     # built into the module
     def get_words(self):
         return self.blacklist[66:len(self.blacklist)]
+
+    # Gets the full list of blacklisted words
+    # Only to be used by the backend!
+    def get_full_list(self):
+        return self.blacklist
