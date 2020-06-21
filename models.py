@@ -51,6 +51,8 @@ class User(db.Model):
     given_hugs = db.Column(db.Integer, default=0)
     login_count = db.Column(db.Integer, default=1)
     role = db.Column(db.String(), default='user')
+    blocked = db.Column(db.Boolean, nullable=False, default=False)
+    releaseDate = db.Column(db.DateTime)
     posts = db.relationship('Post', backref='user')
 
     # Format method
