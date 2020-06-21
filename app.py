@@ -386,6 +386,21 @@ def create_app(test_config=None):
                     # update their own name
                     original_user.display_name = updated_user['displayName']
 
+        # If the request was in done in order to block or unlock a user
+        if('blocked' in updated_user):
+            # If the user doesn't have permission to block/unblock a user
+            if('block:user' not in token_payload['permissions']):
+                raise AuthError({
+                    'code': 403,
+                    'description': 'You do not have permission to block \
+                                    this user.'
+                }, 403)
+            # Otherwise, the user is a manager, so they can block a user.
+            # In that case, block / unblock the user as requested.
+            else:
+                original_user.blocked = updated_user['blocked']
+                original_user.release_date = updated_user['releaseDate']
+
         # Checks if the user's role is updated based on the
         # permissions in the JWT
         # Checks whether the user has 'patch:any-post' permission, which
