@@ -963,13 +963,21 @@ def create_app(test_config=None):
         report.dismissed = updated_report['dismissed']
         report.closed = updated_report['closed']
 
-        # Set the post/user's open_report value to false
-        reported_item.open_report = False
+        # If the item wasn't deleted, set the post/user's open_report
+        # value to false
+        if(reported_item):
+            reported_item.open_report = False
+
+            # Try to update the item in the database
+            try:
+                db_update(reported_item)
+            # If there's an error, abort
+            except Exception as e:
+                abort(500)
 
         # Try to update the report in the database
         try:
             db_update(report)
-            db_update(reported_item)
             return_report = report.format()
         # If there's an error, abort
         except Exception as e:
