@@ -292,6 +292,7 @@ def create_app(test_config=None):
             # If there are no blocked users
             if(users is None):
                 paginated_users = []
+                total_pages = 1
             # Otherwise, filter and paginate blocked users
             else:
                 formatted_users = []
