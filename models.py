@@ -313,7 +313,7 @@ def joined_query(target, params={}):
     elif(target.lower() == 'user reports'):
         reports = db.session.query(Report, User.display_name).\
             join(User, User.id == Report.user_id).\
-            filter(Report.closed == False).filter(Report.type == 'user').\
+            filter(Report.closed == False).filter(Report.type == 'User').\
             order_by(db.desc(Report.date)).all()
 
         # Formats the reports
@@ -324,7 +324,7 @@ def joined_query(target, params={}):
     # If the target is post reports (admin dashboard)
     elif(target.lower() == 'post reports'):
         reports = db.session.query(Report, Post.text).join(Post).\
-            filter(Report.closed == False).filter(Report.type == 'post').\
+            filter(Report.closed == False).filter(Report.type == 'Post').\
             order_by(db.desc(Report.date)).all()
 
         # Formats the reports
