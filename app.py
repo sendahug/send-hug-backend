@@ -126,7 +126,7 @@ def create_app(test_config=None):
 
         # Get the post data and create a new post object
         new_post_data = json.loads(request.data)
-        new_post = Post(user_id=new_post_data['user_id'],
+        new_post = Post(user_id=new_post_data['userId'],
                         text=new_post_data['text'],
                         date=new_post_data['date'],
                         given_hugs=new_post_data['givenHugs'])
