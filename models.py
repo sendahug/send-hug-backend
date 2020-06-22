@@ -67,7 +67,9 @@ class User(db.Model):
             'receivedH': self.received_hugs,
             'givenH': self.given_hugs,
             'loginCount': self.login_count,
-            'role': self.role
+            'role': self.role,
+            'blocked': self.blocked,
+            'releaseDate': self.release_date
         }
 
 
