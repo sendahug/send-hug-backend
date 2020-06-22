@@ -1067,7 +1067,7 @@ def create_app(test_config=None):
     @requires_auth(['read:admin-board'])
     def delete_filter(token_payload, filter_id):
         # If there's no word in that index
-        if(word_filter.get_words()[filter_id] is None):
+        if(word_filter.get_words()[int(filter_id)] is None):
             abort(404)
 
         # Otherwise, try to delete it

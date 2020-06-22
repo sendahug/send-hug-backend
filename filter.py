@@ -14,5 +14,5 @@ class Filter(Wordfilter):
 
     # Remove a word from the list
     def remove_word(self, index):
-        remove_index = index + 66
+        remove_index = int(index) + 66
         return self.blacklist.pop(remove_index)
