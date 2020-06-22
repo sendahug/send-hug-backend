@@ -845,8 +845,8 @@ def create_app(test_config=None):
         post_reports_page = request.args.get('postPage', 1, type=int)
 
         # Get the user and post reports
-        user_reports = joined_query('user reports')
-        post_reports = joined_query('post reports')
+        user_reports = joined_query('user reports')['return']
+        post_reports = joined_query('post reports')['return']
 
         # Paginate user and posts reports
         paginated_user_data = paginate(user_reports, user_reports_page)
