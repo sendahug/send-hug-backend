@@ -114,6 +114,16 @@ def create_app(test_config=None):
     @app.route('/posts', methods=['POST'])
     @requires_auth(['post:post'])
     def add_post(token_payload):
+        current_user = User.query.filter(User.auth0_id ==
+                                         token_payload['sub']).one_or_none()
+
+        # If the user is currently blocked, raise an AuthError
+        if(current_user.blocked is True):
+            raise AuthError({
+                'code': 403,
+                'description': 'You cannot create posts while being blocked.'
+            }, 403)
+
         # Get the post data and create a new post object
         new_post_data = json.loads(request.data)
         new_post = Post(user_id=new_post_data['user_id'],
