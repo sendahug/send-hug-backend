@@ -311,11 +311,11 @@ def create_app(test_config=None):
             'total_pages': total_pages
         })
 
-    # Endpoint: GET /users/<user_id>
+    # Endpoint: GET /users/all/<user_id>
     # Description: Gets the user's data.
     # Parameters: user_id - The user's Auth0 ID.
     # Authorization: read:user.
-    @app.route('/users/<user_id>')
+    @app.route('/users/all/<user_id>')
     @requires_auth(['read:user'])
     def get_user_data(token_payload, user_id):
         # If there's no ID provided
