@@ -131,8 +131,6 @@ class Report(db.Model):
     # Format method
     # Responsible for returning a JSON object
     def format(self):
-        return_report = {}
-
         # If the report was for a user
         if(self.type.lower() == 'user'):
             return_report = {

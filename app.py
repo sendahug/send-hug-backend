@@ -203,11 +203,23 @@ def create_app(test_config=None):
                 current_user.given_hugs += 1
                 post_author.received_hugs += 1
 
+        # If there's a 'closeReport' value, this update is the result of
+        # a report, which means the report with the given ID needs to be
+        # closed.
+        if('closeReport' in updated_post):
+            open_report = Report.query.filter(Report.id ==
+                                              updated_post['closeReport']).\
+                                              one_or_none()
+            open_report.dismissed = False
+            open_report.closed = True
+            original_post.open_report = False
+
         # Try to update the database
         try:
             db_update(original_post)
             db_update(current_user)
             db_update(post_author)
+            db_update(open_report)
             db_updated_post = original_post.format()
         # If there's an error, abort
         except Exception as e:
@@ -457,6 +469,17 @@ def create_app(test_config=None):
                 original_user.blocked = updated_user['blocked']
                 original_user.release_date = updated_user['releaseDate']
 
+        # If there's a 'closeReport' value, this update is the result of
+        # a report, which means the report with the given ID needs to be
+        # closed.
+        if('closeReport' in updated_user):
+            open_report = Report.query.filter(Report.id ==
+                                              updated_user['closeReport']).\
+                                              one_or_none()
+            open_report.dismissed = False
+            open_report.closed = True
+            original_user.open_report = False
+
         # Checks if the user's role is updated based on the
         # permissions in the JWT
         # Checks whether the user has 'patch:any-post' permission, which
@@ -483,6 +506,7 @@ def create_app(test_config=None):
         try:
             db_update(original_user)
             db_update(current_user)
+            db_update(open_report)
             updated_user = original_user.format()
         # If there's an error, abort
         except Exception as e:
