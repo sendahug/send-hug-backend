@@ -219,7 +219,8 @@ def create_app(test_config=None):
             db_update(original_post)
             db_update(current_user)
             db_update(post_author)
-            db_update(open_report)
+            if('closeReport' in updated_post):
+                db_update(open_report)
             db_updated_post = original_post.format()
         # If there's an error, abort
         except Exception as e:
@@ -506,7 +507,8 @@ def create_app(test_config=None):
         try:
             db_update(original_user)
             db_update(current_user)
-            db_update(open_report)
+            if('closeReport' in updated_user):
+                db_update(open_report)
             updated_user = original_user.format()
         # If there's an error, abort
         except Exception as e:
