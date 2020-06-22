@@ -197,10 +197,11 @@ def create_app(test_config=None):
 
         # If a hug was added
         # Since anyone can give hugs, this doesn't require a permissions check
-        if(original_post.given_hugs != updated_post['givenHugs']):
-            original_post.given_hugs = updated_post['givenHugs']
-            current_user.given_hugs += 1
-            post_author.received_hugs += 1
+        if('givenHugs' in updated_post):
+            if(original_post.given_hugs != updated_post['givenHugs']):
+                original_post.given_hugs = updated_post['givenHugs']
+                current_user.given_hugs += 1
+                post_author.received_hugs += 1
 
         # Try to update the database
         try:
