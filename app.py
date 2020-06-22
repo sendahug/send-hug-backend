@@ -393,11 +393,11 @@ def create_app(test_config=None):
             'user': added_user
         })
 
-    # Endpoint: PATCH /users/<user_id>
+    # Endpoint: PATCH /users/all/<user_id>
     # Description: Updates a user in the database.
     # Parameters: user_id - ID of the user to update.
     # Authorization: patch:user or patch:any-user.
-    @app.route('/users/<user_id>', methods=['PATCH'])
+    @app.route('/users/all/<user_id>', methods=['PATCH'])
     @requires_auth(['patch:user', 'patch:any-user'])
     def edit_user(token_payload, user_id):
         # if there's no user ID provided, abort with 'Bad Request'
@@ -493,11 +493,11 @@ def create_app(test_config=None):
             'updated': updated_user
         })
 
-    # Endpoint: GET /users/<user_id>/posts
+    # Endpoint: GET /users/all/<user_id>/posts
     # Description: Gets a specific user's posts.
     # Parameters: user_id - whose posts to fetch.
     # Authorization: read:user.
-    @app.route('/users/<user_id>/posts')
+    @app.route('/users/all/<user_id>/posts')
     @requires_auth(['read:user'])
     def get_user_posts(token_payload, user_id):
         page = request.args.get('page', 1, type=int)
@@ -530,11 +530,11 @@ def create_app(test_config=None):
             'total_pages': total_pages
         })
 
-    # Endpoint: DELETE /users/<user_id>/posts
+    # Endpoint: DELETE /users/all/<user_id>/posts
     # Description: Deletes a specific user's posts.
     # Parameters: user_id - whose posts to delete.
     # Authorization: delete:my-post or delete:any-post
-    @app.route('/users/<user_id>/posts', methods=['DELETE'])
+    @app.route('/users/all/<user_id>/posts', methods=['DELETE'])
     @requires_auth(['delete:my-post', 'delete:any-post'])
     def delete_user_posts(token_payload, user_id):
         current_user = User.query.filter(User.auth0_id ==
