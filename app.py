@@ -1,6 +1,7 @@
 import os
 import json
 import math
+from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
 
@@ -357,6 +358,22 @@ def create_app(test_config=None):
             # If there's no user with that ID either, abort
             if(user_data is None):
                 abort(404)
+
+        # If the user is currently blocked, compare their release date to
+        # the current date and time.
+        if(user_data.release_date):
+            current_date = datetime.now()
+            # If it's past the user's release date, unblock them
+            if(user_data.release_date < current_date):
+                user_data.blocked = False
+                user_data.release_date = None
+
+                # Try to update the database
+                try:
+                    db_update(user_data)
+                # If there's an error, abort
+                except Exception as e:
+                    abort(500)
 
         formatted_user_data = user_data.format()
         formatted_user_data['posts'] = len(Post.query.filter(Post.user_id ==
