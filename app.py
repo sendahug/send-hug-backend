@@ -10,6 +10,7 @@ from models import (
     User,
     Message,
     Thread,
+    Report,
     add as db_add,
     update as db_update,
     delete_object as db_delete,
@@ -17,6 +18,7 @@ from models import (
     joined_query
     )
 from auth import AuthError, requires_auth
+from filter import Filter
 
 
 def create_app(test_config=None):
@@ -24,6 +26,7 @@ def create_app(test_config=None):
     app = Flask(__name__)
     create_db(app)
     CORS(app, origins='')
+    word_filter = Filter()
 
     # CORS Setup
     @app.after_request
@@ -111,9 +114,19 @@ def create_app(test_config=None):
     @app.route('/posts', methods=['POST'])
     @requires_auth(['post:post'])
     def add_post(token_payload):
+        current_user = User.query.filter(User.auth0_id ==
+                                         token_payload['sub']).one_or_none()
+
+        # If the user is currently blocked, raise an AuthError
+        if(current_user.blocked is True):
+            raise AuthError({
+                'code': 403,
+                'description': 'You cannot create posts while being blocked.'
+            }, 403)
+
         # Get the post data and create a new post object
         new_post_data = json.loads(request.data)
-        new_post = Post(user_id=new_post_data['user_id'],
+        new_post = Post(user_id=new_post_data['userId'],
                         text=new_post_data['text'],
                         date=new_post_data['date'],
                         given_hugs=new_post_data['givenHugs'])
@@ -184,16 +197,30 @@ def create_app(test_config=None):
 
         # If a hug was added
         # Since anyone can give hugs, this doesn't require a permissions check
-        if(original_post.given_hugs != updated_post['givenHugs']):
-            original_post.given_hugs = updated_post['givenHugs']
-            current_user.given_hugs += 1
-            post_author.received_hugs += 1
+        if('givenHugs' in updated_post):
+            if(original_post.given_hugs != updated_post['givenHugs']):
+                original_post.given_hugs = updated_post['givenHugs']
+                current_user.given_hugs += 1
+                post_author.received_hugs += 1
+
+        # If there's a 'closeReport' value, this update is the result of
+        # a report, which means the report with the given ID needs to be
+        # closed.
+        if('closeReport' in updated_post):
+            open_report = Report.query.filter(Report.id ==
+                                              updated_post['closeReport']).\
+                                              one_or_none()
+            open_report.dismissed = False
+            open_report.closed = True
+            original_post.open_report = False
 
         # Try to update the database
         try:
             db_update(original_post)
             db_update(current_user)
             db_update(post_author)
+            if('closeReport' in updated_post):
+                db_update(open_report)
             db_updated_post = original_post.format()
         # If there's an error, abort
         except Exception as e:
@@ -271,11 +298,49 @@ def create_app(test_config=None):
             'total_pages': total_pages
         })
 
-    # Endpoint: GET /users/<user_id>
+    # Endpoint: GET /users/<type>
+    # Description: Gets users by a given type.
+    # Parameters: type - A type by which to filter the users.
+    # Authorization: read:admin-board.
+    @app.route('/users/<type>')
+    @requires_auth(['read:admin-board'])
+    def get_users_by_type(token_payload, type):
+        page = request.args.get('page', 1, type=int)
+
+        # If the type of users to fetch is blocked users
+        if(type.lower() == 'blocked'):
+            # Get all blocked users
+            users = User.query.filter(User.blocked == True).\
+                    order_by(User.release_date).all()
+
+            # If there are no blocked users
+            if(users is None):
+                paginated_users = []
+                total_pages = 1
+            # Otherwise, filter and paginate blocked users
+            else:
+                formatted_users = []
+
+                # Format users data
+                for user in users:
+                    formatted_users.append(user.format())
+
+                # Paginate users
+                paginated_data = paginate(formatted_users, page)
+                paginated_users = paginated_data[0]
+                total_pages = paginated_data[1]
+
+        return jsonify({
+            'success': True,
+            'users': paginated_users,
+            'total_pages': total_pages
+        })
+
+    # Endpoint: GET /users/all/<user_id>
     # Description: Gets the user's data.
     # Parameters: user_id - The user's Auth0 ID.
     # Authorization: read:user.
-    @app.route('/users/<user_id>')
+    @app.route('/users/all/<user_id>')
     @requires_auth(['read:user'])
     def get_user_data(token_payload, user_id):
         # If there's no ID provided
@@ -312,6 +377,11 @@ def create_app(test_config=None):
         # Gets the user's data
         user_data = json.loads(request.data)
 
+        # If the user is attempting to add a user that isn't themselves to
+        # the database, aborts
+        if(user_data['auth0Id'] != token_payload['sub']):
+            abort(422)
+
         # Checks whether a user with that Auth0 ID already exists
         # If it is, aborts
         database_user = User.query.filter(User.auth0_id ==
@@ -336,11 +406,11 @@ def create_app(test_config=None):
             'user': added_user
         })
 
-    # Endpoint: PATCH /users/<user_id>
+    # Endpoint: PATCH /users/all/<user_id>
     # Description: Updates a user in the database.
     # Parameters: user_id - ID of the user to update.
     # Authorization: patch:user or patch:any-user.
-    @app.route('/users/<user_id>', methods=['PATCH'])
+    @app.route('/users/all/<user_id>', methods=['PATCH'])
     @requires_auth(['patch:user', 'patch:any-user'])
     def edit_user(token_payload, user_id):
         # if there's no user ID provided, abort with 'Bad Request'
@@ -354,12 +424,13 @@ def create_app(test_config=None):
 
         # If the user being updated was given a hug, also update the current
         # user's "given hugs" value, as they just gave a hug
-        if(original_user.received_hugs != updated_user['receivedH']):
-            current_user.given_hugs += 1
+        if('receivedH' in updated_user and 'givenH' in updated_user):
+            if(original_user.received_hugs != updated_user['receivedH']):
+                current_user.given_hugs += 1
 
-        # Update user data
-        original_user.received_hugs = updated_user['receivedH']
-        original_user.given_hugs = updated_user['givenH']
+            # Update user data
+            original_user.received_hugs = updated_user['receivedH']
+            original_user.given_hugs = updated_user['givenH']
 
         # If there's a login count (meaning, the user is editing their own
         # data), update it
@@ -368,19 +439,47 @@ def create_app(test_config=None):
 
         # If the user is attempting to change a user's display name, check
         # their permissions
-        if(updated_user['displayName'] != original_user.display_name):
-            # if the user is only allowed to change their own name (user / mod)
-            if('patch:user' in token_payload['permissions']):
-                if(token_payload['sub'] != original_user.auth0_id):
-                    raise AuthError({
-                        'code': 403,
-                        'description': 'You do not have permission to edit \
-                                        this user\'s display name.'
-                        }, 403)
+        if('displayName' in updated_user):
+            if(updated_user['displayName'] != original_user.display_name):
+                # if the user is only allowed to change their own name
+                # (user / mod)
+                if('patch:user' in token_payload['permissions']):
+                    if(token_payload['sub'] != original_user.auth0_id):
+                        raise AuthError({
+                            'code': 403,
+                            'description': 'You do not have permission to \
+                                            edit this user\'s display name.'
+                            }, 403)
+                else:
+                    # if the user can edit anyone or the user is trying to
+                    # update their own name
+                    original_user.display_name = updated_user['displayName']
+
+        # If the request was in done in order to block or unlock a user
+        if('blocked' in updated_user):
+            # If the user doesn't have permission to block/unblock a user
+            if('block:user' not in token_payload['permissions']):
+                raise AuthError({
+                    'code': 403,
+                    'description': 'You do not have permission to block \
+                                    this user.'
+                }, 403)
+            # Otherwise, the user is a manager, so they can block a user.
+            # In that case, block / unblock the user as requested.
             else:
-                # if the user can edit anyone or the user is trying to update
-                # their own name
-                original_user.display_name = updated_user['displayName']
+                original_user.blocked = updated_user['blocked']
+                original_user.release_date = updated_user['releaseDate']
+
+        # If there's a 'closeReport' value, this update is the result of
+        # a report, which means the report with the given ID needs to be
+        # closed.
+        if('closeReport' in updated_user):
+            open_report = Report.query.filter(Report.id ==
+                                              updated_user['closeReport']).\
+                                              one_or_none()
+            open_report.dismissed = False
+            open_report.closed = True
+            original_user.open_report = False
 
         # Checks if the user's role is updated based on the
         # permissions in the JWT
@@ -408,6 +507,8 @@ def create_app(test_config=None):
         try:
             db_update(original_user)
             db_update(current_user)
+            if('closeReport' in updated_user):
+                db_update(open_report)
             updated_user = original_user.format()
         # If there's an error, abort
         except Exception as e:
@@ -418,11 +519,11 @@ def create_app(test_config=None):
             'updated': updated_user
         })
 
-    # Endpoint: GET /users/<user_id>/posts
+    # Endpoint: GET /users/all/<user_id>/posts
     # Description: Gets a specific user's posts.
     # Parameters: user_id - whose posts to fetch.
     # Authorization: read:user.
-    @app.route('/users/<user_id>/posts')
+    @app.route('/users/all/<user_id>/posts')
     @requires_auth(['read:user'])
     def get_user_posts(token_payload, user_id):
         page = request.args.get('page', 1, type=int)
@@ -455,11 +556,11 @@ def create_app(test_config=None):
             'total_pages': total_pages
         })
 
-    # Endpoint: DELETE /users/<user_id>/posts
+    # Endpoint: DELETE /users/all/<user_id>/posts
     # Description: Deletes a specific user's posts.
     # Parameters: user_id - whose posts to delete.
     # Authorization: delete:my-post or delete:any-post
-    @app.route('/users/<user_id>/posts', methods=['DELETE'])
+    @app.route('/users/all/<user_id>/posts', methods=['DELETE'])
     @requires_auth(['delete:my-post', 'delete:any-post'])
     def delete_user_posts(token_payload, user_id):
         current_user = User.query.filter(User.auth0_id ==
@@ -664,7 +765,7 @@ def create_app(test_config=None):
         request_user = User.query.filter(User.auth0_id ==
                                          token_payload['sub']).one_or_none()
 
-        #
+        # If the mailbox type is inbox
         if(mailbox_type == 'inbox'):
             # If the user is attempting to delete another user's messages
             if(request_user.id != delete_item.for_id):
@@ -673,7 +774,7 @@ def create_app(test_config=None):
                     'description': 'You do not have permission to delete \
                                     another user\'s messages.'
                 }, 403)
-        #
+        # If the mailbox type is outbox
         elif(mailbox_type == 'outbox'):
             # If the user is attempting to delete another user's messages
             if(request_user.id != delete_item.from_id):
@@ -682,7 +783,7 @@ def create_app(test_config=None):
                     'description': 'You do not have permission to delete \
                                     another user\'s messages.'
                 }, 403)
-        #
+        # If the mailbox type is threads
         elif(mailbox_type == 'threads'):
             # If the user is attempting to delete another user's thread
             if((request_user.id != delete_item.user_1_id) and
@@ -768,6 +869,219 @@ def create_app(test_config=None):
             'success': True,
             'userID': user_id,
             'deleted': num_messages
+        })
+
+    # Endpoint: GET /reports
+    # Description: Gets the currently open reports.
+    # Parameters: None.
+    # Authorization: read:admin-board.
+    @app.route('/reports')
+    @requires_auth(['read:admin-board'])
+    def get_open_reports(token_payload):
+        user_reports_page = request.args.get('userPage', 1, type=int)
+        post_reports_page = request.args.get('postPage', 1, type=int)
+
+        # Get the user and post reports
+        user_reports = joined_query('user reports')['return']
+        post_reports = joined_query('post reports')['return']
+
+        # Paginate user and posts reports
+        paginated_user_data = paginate(user_reports, user_reports_page)
+        paginated_user_reports = paginated_user_data[0]
+        total_user_pages = paginated_user_data[1]
+        paginated_post_data = paginate(post_reports, post_reports_page)
+        paginated_post_reports = paginated_post_data[0]
+        total_post_pages = paginated_post_data[1]
+
+        return jsonify({
+            'success': True,
+            'userReports': paginated_user_reports,
+            'totalUserPages': total_user_pages,
+            'postReports': paginated_post_reports,
+            'totalPostPages': total_post_pages
+        })
+
+    # Endpoint: POST /reports
+    # Description: Add a new report to the database.
+    # Parameters: None.
+    # Authorization: post:report.
+    @app.route('/reports', methods=['POST'])
+    @requires_auth(['post:report'])
+    def create_new_report(token_payload):
+        report_data = json.loads(request.data)
+
+        # If the reported item is a post
+        if(report_data['type'].lower() == 'post'):
+            reported_item = Post.query.filter(Post.id ==
+                                              report_data['postID']).\
+                                              one_or_none()
+
+            # If this post doesn't exist, abort
+            if(reported_item is None):
+                abort(404)
+
+            report = Report(type=report_data['type'], date=report_data['date'],
+                            user_id=report_data['userID'],
+                            post_id=report_data['postID'],
+                            reporter=report_data['reporter'],
+                            report_reason=report_data['reportReason'],
+                            dismissed=False, closed=False)
+
+            reported_item.open_report = True
+        # Otherwise the reported item is a user
+        else:
+            reported_item = User.query.filter(User.id ==
+                                              report_data['userID']).\
+                                              one_or_none()
+
+            # If this user doesn't exist, abort
+            if(reported_item is None):
+                abort(404)
+
+            report = Report(type=report_data['type'], date=report_data['date'],
+                            user_id=report_data['userID'],
+                            reporter=report_data['reporter'],
+                            report_reason=report_data['reportReason'],
+                            dismissed=False, closed=False)
+
+            reported_item.open_report = True
+
+        # Try to add the report to the database
+        try:
+            db_add(report)
+            db_update(reported_item)
+            added_report = report.format()
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'report': added_report
+        })
+
+    # Endpoint: PATCH /reports/<report_id>
+    # Description: Update the status of the report with the given ID.
+    # Parameters: report_id - The ID of the report to update.
+    # Authorization: read:admin-board.
+    @app.route('/reports/<report_id>', methods=['PATCH'])
+    @requires_auth(['read:admin-board'])
+    def update_report_status(token_payload, report_id):
+        updated_report = json.loads(request.data)
+        report = Report.query.filter(Report.id == report_id).one_or_none()
+
+        # If there's no report with that ID, abort
+        if(report is None):
+            abort(404)
+
+        # If the item reported is a user
+        if(report.type.lower() == 'user'):
+            reported_item = User.query.filter(User.id ==
+                                              updated_report['userID']).\
+                                              one_or_none()
+        # If the item reported is a post
+        elif(report.type.lower() == 'post'):
+            reported_item = Post.query.filter(Post.id ==
+                                              updated_report['postID']).\
+                                              one_or_none()
+
+        # Set the dismissed and closed values to those of the updated report
+        report.dismissed = updated_report['dismissed']
+        report.closed = updated_report['closed']
+
+        # If the item wasn't deleted, set the post/user's open_report
+        # value to false
+        if(reported_item):
+            reported_item.open_report = False
+
+            # Try to update the item in the database
+            try:
+                db_update(reported_item)
+            # If there's an error, abort
+            except Exception as e:
+                abort(500)
+
+        # Try to update the report in the database
+        try:
+            db_update(report)
+            return_report = report.format()
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'updated': return_report
+        })
+
+    # Endpoint: GET /filters
+    # Description: Get a paginated list of filtered words.
+    # Parameters: None.
+    # Authorization: read:admin-board.
+    @app.route('/filters')
+    @requires_auth(['read:admin-board'])
+    def get_filters(token_payload):
+        page = request.args.get('page', 1, type=int)
+        filtered_words = word_filter.get_words()
+
+        # Paginate the filtered words
+        words_per_page = 10
+        start_index = (page - 1) * words_per_page
+        paginated_words = filtered_words[start_index:(start_index+10)]
+        total_pages = math.ceil(len(filtered_words) / 10)
+
+        return jsonify({
+            'success': True,
+            'words': paginated_words,
+            'total_pages': total_pages
+        })
+
+    # Endpoint: POST /filters
+    # Description: Add a word or phrase to the list of filtered words.
+    # Parameters: None.
+    # Authorization: read:admin-board.
+    @app.route('/filters', methods=['POST'])
+    @requires_auth(['read:admin-board'])
+    def add_filter(token_payload):
+        new_filter = json.loads(request.data)['word']
+
+        # If the word already exists in the filters list, abort
+        if(new_filter in word_filter.get_full_list()):
+            abort(409)
+
+        # Try to add the word to the filters list
+        try:
+            word_filter.add_words(new_filter)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'added': new_filter
+        })
+
+    # Endpoint: DELETE /filters/<filter_id>
+    # Description: Delete a word from the filtered words list.
+    # Parameters: filter_id - the index of the word to delete.
+    # Authorization: read:admin-board.
+    @app.route('/filters/<filter_id>', methods=['DELETE'])
+    @requires_auth(['read:admin-board'])
+    def delete_filter(token_payload, filter_id):
+        # If there's no word in that index
+        if(word_filter.get_words()[int(filter_id)] is None):
+            abort(404)
+
+        # Otherwise, try to delete it
+        try:
+            removed = word_filter.remove_word(filter_id)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'deleted': removed
         })
 
     # Error Handlers

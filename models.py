@@ -27,6 +27,8 @@ class Post(db.Model):
     text = db.Column(db.String(480), nullable=False)
     date = db.Column(db.DateTime)
     given_hugs = db.Column(db.Integer, default=0)
+    open_report = db.Column(db.Boolean, nullable=False, default=False)
+    report = db.relationship('Report', backref='post')
 
     # Format method
     # Responsible for returning a JSON object
@@ -50,6 +52,9 @@ class User(db.Model):
     given_hugs = db.Column(db.Integer, default=0)
     login_count = db.Column(db.Integer, default=1)
     role = db.Column(db.String(), default='user')
+    blocked = db.Column(db.Boolean, nullable=False, default=False)
+    release_date = db.Column(db.DateTime)
+    open_report = db.Column(db.Boolean, nullable=False, default=False)
     posts = db.relationship('Post', backref='user')
 
     # Format method
@@ -62,7 +67,9 @@ class User(db.Model):
             'receivedH': self.received_hugs,
             'givenH': self.given_hugs,
             'loginCount': self.login_count,
-            'role': self.role
+            'role': self.role,
+            'blocked': self.blocked,
+            'releaseDate': self.release_date
         }
 
 
@@ -108,6 +115,51 @@ class Thread(db.Model):
         }
 
 
+# Report Model
+class Report(db.Model):
+    __tablename__ = 'reports'
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(10), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
+    reporter = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    report_reason = db.Column(db.String(480), nullable=False)
+    date = db.Column(db.DateTime)
+    dismissed = db.Column(db.Boolean, nullable=False, default=False)
+    closed = db.Column(db.Boolean, nullable=False, default=False)
+
+    # Format method
+    # Responsible for returning a JSON object
+    def format(self):
+        # If the report was for a user
+        if(self.type.lower() == 'user'):
+            return_report = {
+                'id': self.id,
+                'type': self.type,
+                'userID': self.user_id,
+                'reporter': self.reporter,
+                'reportReason': self.report_reason,
+                'date': self.date,
+                'dismissed': self.dismissed,
+                'closed': self.closed
+            }
+        # If the report was for a post
+        elif(self.type.lower() == 'post'):
+            return_report = {
+                'id': self.id,
+                'type': self.type,
+                'userID': self.user_id,
+                'postID': self.post_id,
+                'reporter': self.reporter,
+                'reportReason': self.report_reason,
+                'date': self.date,
+                'dismissed': self.dismissed,
+                'closed': self.closed
+            }
+
+        return return_report
+
+
 # Database management methods
 # -----------------------------------------------------------------
 # Method: Joined_Query
@@ -120,66 +172,47 @@ def joined_query(target, params={}):
     # if the target is the recent_posts array in the main page endpoint
     if(target.lower() == 'main new'):
         new_posts = db.session.query(Post, User.display_name).join(User).\
-                    order_by(db.desc(Post.date)).limit(10).all()
+                    order_by(db.desc(Post.date)).\
+                    filter(Post.open_report == False).limit(10).all()
 
         # formats each post in the list
         for post in new_posts:
-            post = {
-                'id': post[0].id,
-                'userId': post[0].user_id,
-                'user': post[1],
-                'text': post[0].text,
-                'date': post[0].date,
-                'givenHugs': post[0].given_hugs
-            }
-            return_obj.append(post)
+            new_post = post[0].format()
+            new_post['user'] = post[1]
+            return_obj.append(new_post)
     # if the target is the suggested_posts array in the main page endpoint
     elif(target.lower() == 'main suggested'):
         sug_posts = db.session.query(Post, User.display_name).join(User).\
-                    order_by(Post.given_hugs).limit(10).all()
+                    order_by(Post.given_hugs).\
+                    filter(Post.open_report == False).limit(10).all()
 
         # formats each post in the list
         for post in sug_posts:
-            post = {
-                'id': post[0].id,
-                'userId': post[0].user_id,
-                'user': post[1],
-                'text': post[0].text,
-                'date': post[0].date,
-                'givenHugs': post[0].given_hugs
-            }
-            return_obj.append(post)
+            sug_post = post[0].format()
+            sug_post['user'] = post[1]
+            return_obj.append(sug_post)
     # If the target is the full list of new items
     elif(target.lower() == 'full new'):
         full_new_posts = db.session.query(Post, User.display_name).join(User).\
-                         order_by(db.desc(Post.date)).all()
+                         order_by(db.desc(Post.date)).\
+                         filter(Post.open_report == False).all()
 
         # formats each post in the list
         for post in full_new_posts:
-            post = {
-                'id': post[0].id,
-                'userId': post[0].user_id,
-                'user': post[1],
-                'text': post[0].text,
-                'date': post[0].date,
-                'givenHugs': post[0].given_hugs
-            }
-            return_obj.append(post)
+            new_post = post[0].format()
+            new_post['user'] = post[1]
+            return_obj.append(new_post)
     # If the target is the full list of suggested items
     elif(target.lower() == 'full suggested'):
         full_sug_posts = db.session.query(Post, User.display_name).join(User).\
-                    order_by(Post.given_hugs).all()
+                    order_by(Post.given_hugs).\
+                    filter(Post.open_report == False).all()
 
         # formats each post in the list
         for post in full_sug_posts:
-            post = {
-                'id': post[0].id,
-                'userId': post[0].user_id,
-                'user': post[1],
-                'text': post[0].text,
-                'date': post[0].date,
-                'givenHugs': post[0].given_hugs
-            }
+            sug_post = post[0].format()
+            sug_post['user'] = post[1]
+            return_obj.append(sug_post)
             return_obj.append(post)
     # if the target is the user's messages (get messages endpoint)
     elif(target.lower() == 'messages'):
@@ -243,16 +276,10 @@ def joined_query(target, params={}):
         if((type == 'outbox') or (type == 'inbox') or (type == 'thread')):
             # formats each message in the list
             for message in user_messages:
-                message = {
-                    'id': message[0].id,
-                    'from': message[1],
-                    'fromId': message[0].from_id,
-                    'for': message[2],
-                    'forId': message[0].for_id,
-                    'messageText': message[0].text,
-                    'date': message[0].date
-                    }
-                return_obj.append(message)
+                user_message = message[0].format()
+                user_message['from'] = message[1]
+                user_message['for'] = message[2]
+                return_obj.append(user_message)
         # Otherwise the type is threads
         else:
             # Threads data formatting
@@ -272,19 +299,37 @@ def joined_query(target, params={}):
         search_query = params['query']
         posts = db.session.query(Post, User.display_name).join(User).\
             order_by(db.desc(Post.date)).filter(Post.text.like('%' +
-                                                search_query + '%')).all()
+                                                search_query + '%')).\
+            filter(Post.open_report == False).all()
 
         # Formats the posts
         for post in posts:
-            post = {
-                'id': post[0].id,
-                'userId': post[0].user_id,
-                'user': post[1],
-                'text': post[0].text,
-                'date': post[0].date,
-                'givenHugs': post[0].given_hugs
-            }
-            return_obj.append(post)
+            searched_post = post[0].format()
+            searched_post['user'] = post[1]
+            return_obj.append(searched_post)
+    # If the target is user reports (admin dashboard)
+    elif(target.lower() == 'user reports'):
+        reports = db.session.query(Report, User.display_name).\
+            join(User, User.id == Report.user_id).\
+            filter(Report.closed == False).filter(Report.type == 'User').\
+            order_by(db.desc(Report.date)).all()
+
+        # Formats the reports
+        for report in reports:
+            formatted_report = report[0].format()
+            formatted_report['displayName'] = report[1]
+            return_obj.append(formatted_report)
+    # If the target is post reports (admin dashboard)
+    elif(target.lower() == 'post reports'):
+        reports = db.session.query(Report, Post.text).join(Post).\
+            filter(Report.closed == False).filter(Report.type == 'Post').\
+            order_by(db.desc(Report.date)).all()
+
+        # Formats the reports
+        for report in reports:
+            formatted_report = report[0].format()
+            formatted_report['text'] = report[1]
+            return_obj.append(formatted_report)
 
     return {
         'return': return_obj

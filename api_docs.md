@@ -11,17 +11,27 @@ For full instructions check the [`backend README`](./backend/README.md)
 ### Application Endpoints
 
 1. GET /
-2. POST /posts
-3. PATCH /posts/<post_id>
-4. DELETE /posts/<post_id>
-5. GET /posts/<type>
-6. GET /users/<user_id>
-7. POST /users
-8. PATCH /users/<user_id>
-9. GET /users/<user_id>/posts
-10. GET /messages
-11. POST /messages
-12. DELETE /messages/<message_id>
+2. POST /
+3. POST /posts
+4. PATCH /posts/<post_id>
+5. DELETE /posts/<post_id>
+6. GET /posts/<type>
+7. GET /users/<type>
+8. GET /users/all/<user_id>
+9. POST /users
+10. PATCH /users/all/<user_id>
+11. GET /users/all/<user_id>/posts
+12. DELETE /users/all/<user_id>/posts
+13. GET /messages
+14. POST /messages
+15. DELETE /messages/<mailbox_type>/<item_id>
+16. DELETE /messages/<mailbox_type>
+17. GET /reports
+18. POST /reports
+19. PATCH /reports/<report_id>
+20. GET /filters
+21. POST /filters
+22. DELETE /filters/<filter_id>
 
 **NOTE**: All sample curl requests are done via user 4; for your own tests, change the user ID and the user's display name.
 
@@ -136,6 +146,86 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
+### POST /
+**Description**: Runs a search in the posts and users' tables.
+
+**Handler Function**: search.
+
+**Request Arguments**:
+  - page (Int) - An optional query parameter containing the current page of search results.
+
+**Required Data**: A JSON containing a search query, in the following format:
+  - search (string) - the search query.
+
+**Required Permission:** None.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - users (List) - List of users matching the query.
+  - posts (List) - Paginated list of posts matching the query.
+  - user_results (Number) - Total number of user results.
+  - post_results (Number) - Total number of post results.
+  - current_page (Number) - Current page of post results.
+  - total_pages (Number) - Total pages of post results.
+
+**Expected Errors**: None.
+
+**CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/ -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"search":"test"}'`
+
+**Response Example:**
+```
+{
+  "current_page": 1,
+  "post_results": 7,
+  "posts": [
+    {
+      "date": "Mon, 01 Jun 2020 15:20:11 GMT",
+      "givenHugs": 0,
+      "id": 7,
+      "text": "test",
+      "user": "shirb",
+      "userId": 1
+    },
+    {
+      "date": "Mon, 01 Jun 2020 15:19:41 GMT",
+      "givenHugs": 0,
+      "id": 6,
+      "text": "test",
+      "user": "shirb",
+      "userId": 1
+    },
+    {
+      "date": "Mon, 01 Jun 2020 15:18:37 GMT",
+      "givenHugs": 0,
+      "id": 5,
+      "text": "test",
+      "user": "shirb",
+      "userId": 1
+    },
+    {
+      "date": "Mon, 01 Jun 2020 15:17:56 GMT",
+      "givenHugs": 0,
+      "id": 4,
+      "text": "test",
+      "user": "shirb",
+      "userId": 1
+    },
+    {
+      "date": "Mon, 01 Jun 2020 15:15:12 GMT",
+      "givenHugs": 0,
+      "id": 3,
+      "text": "testing",
+      "user": "shirb",
+      "userId": 1
+    }
+  ],
+  "success": true,
+  "total_pages": 2,
+  "user_results": 0,
+  "users": []
+}
+```
+
 ### POST /posts
 **Description**: Creates a new post in the database.
 
@@ -158,7 +248,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Expected Errors**:
   - 500 (Internal Server Error) - In case there's an error adding the new post to the database.
 
-**CURL Request Sample**: `  curl -X POST http://127.0.0.1:5000/posts -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"user_id":4, "user":"user14", "text":"test curl", "date":"Wed Jun 10 2020 10:30:05 GMT+0300", "givenHugs":0}'`
+**CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/posts -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"user_id":4, "user":"user14", "text":"test curl", "date":"Wed Jun 10 2020 10:30:05 GMT+0300", "givenHugs":0}'`
 
 **Response Example:**
 ```
@@ -185,6 +275,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Required Data**: A JSON containing the post's updated data, in the following format:
   - text (String) - The updated post's text.
   - given_hugs (Number) - The updated hugs count.
+  - closeReport (Number) - the ID of the report to close (if there is one). This variable is only needed if the post is edited from the Admin Dashboard.
 
 **Required Permission:** 'patch:my-post' or 'patch:any-post'.
 
@@ -193,7 +284,7 @@ For full instructions check the [`backend README`](./backend/README.md)
   - updated (Dictionary) - the updated post.
 
 **Expected Errors**:
-  - 400 (Bad Request) - In case there was no ID supplied.
+  - 403 (Forbidden) - In case the user is attempting to edit the text of another user's posts without permission.
   - 404 (Not Found) - In case there's no post with that ID.
   - 500 (Internal Server Error) - In case there's an error updating the post's data in the database.
 
@@ -230,8 +321,8 @@ For full instructions check the [`backend README`](./backend/README.md)
   - deleted (Number) - The ID of the post deleted.
 
 **Expected Errors**:
-  - 400 (Bad Request) - In case no ID was supplied.
-  - 404 (Not Found) - In case there's no post with that ID.
+  - 403 (Forbidden) - In case the user is attempting to edit the text of another user's posts without permission.
+  - 404 (Not Found) - In case there's no post with that ID or there's no ID supplied.
   - 500 (Internal Server Error) - In case there's an error deleting the post from the database.
 
 **CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/posts/15 -H 'Authorization: Bearer <YOUR_TOKEN>'`
@@ -251,7 +342,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Request Arguments**:
   - type (string) - The type of posts to fetch.
-  - page (number) - Current page.
+  - page (number) - An option query parameter indicating the current page.
 
 **Required Data**: None.
 
@@ -367,13 +458,44 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### GET /users/<user_id>
+### GET /users/<type>
+**Description**: Gets a list of users by a given type (like 'blocked users') from the databsae.
+
+**Handler Function**: get_users_by_type.
+
+**Request Arguments**:
+  - type (string) - The type of users to fetch from the database.
+  - page (number) - An option query parameter indicating the current page.
+
+**Required Data**: None.
+
+**Required Permission:** 'read:admin-board'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - users (Dictionary) - A list containing the data of the users matching the given type.
+  - total_pages (Number) - Total number of pages in the list.
+
+**Expected Errors**: None.
+
+**CURL Request Sample**: `curl http://127.0.0.1:5000/users/blocked -H 'Authorization: Bearer <YOUR_TOKEN>'`
+
+**Response Example:**
+```
+{
+  "success": true,
+  "total_pages": 0,
+  "users": []
+}
+```
+
+### GET /users/all/<user_id>
 **Description**: Gets a user's data from the database.
 
 **Handler Function**: get_user_data.
 
 **Request Arguments**:
-  - user_id - A parameter indicating the User's Auth0 ID. This parameter comes directly from the user's JWT.
+  - user_id - A parameter indicating the User's Auth0 ID (This parameter comes directly from the user's JWT) or the user's ID (from the database).
 
 **Required Data**: None.
 
@@ -384,10 +506,9 @@ For full instructions check the [`backend README`](./backend/README.md)
   - User (Dictionary) - A dictionary containing the user's data.
 
 **Expected Errors**:
-  - 400 (Bad Request) - In case no ID was supplied.
-  - 404 (Not Found) - In case there's no user with that ID.
+  - 404 (Not Found) - In case no ID was supplied or there's no user with that ID.
 
-**CURL Request Sample**: `curl http://127.0.0.1:5000/users/auth0%7C5ed8e3d0def75d0befbc7e50 -H 'Authorization: Bearer <YOUR_TOKEN>'`
+**CURL Request Sample**: `curl http://127.0.0.1:5000/users/all/auth0%7C5ed8e3d0def75d0befbc7e50 -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
@@ -425,9 +546,10 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Expected Errors**:
   - 409 (Conflict) - In case the user is attempting to create a user that already exists.
+  - 422 (Unprocessable) - In case the user is attempting to create a user other than themselves.
   - 500 (Internal Server Error) - In case there's an error updating the user's data in the database.
 
-### PATCH /users/<user_id>
+### PATCH /users/all/<user_id>
 **Description**: Updates a user's data in the database.
 
 **Handler Function**: edit_user.
@@ -435,22 +557,27 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Request Arguments**:
   - user_id - The ID of the user to update.
 
-**Required Data**: A JSON containing the post's updated data, in the following format:
+**Required Data**: A JSON containing the user's updated data, in the following format (all fields are optional):
   - receivedH (Number) - The user's received hugs.
   - givenH (Number) - The user's given hugs.
-  - posts (Number) - Number of posts the user made.
+  - displayName (string) - The user's display name.
+  - loginCount (Number) - The user's login count.
+  - blocked (Boolean) - Whether or not the user is blocked.
+  - releaseDate (Date) - When the user will be unblocked. Must be in request data if 'blocked' is set to true in the request data.
+  - closeReport (Number) - the ID of the report to close (if the edit request was sent from the Admin Dashboard).
 
-**Required Permission:** 'patch:user'.
+**Required Permission:** 'patch:user' or 'patch:any-user'.
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
   - updated (Dictionary) - The updated user's data.
 
 **Expected Errors**:
-  - 400 (Bad Request) - In case no ID was supplied.
+  - 403 (Forbidden) - In case the user is attempting to edit someone else's posts or block a user without the required permissions.
+  - 404 (Not Found) - In case no ID was supplied.
   - 500 (Internal Server Error) - In case there's an error updating the user's data in the database.
 
-**CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/users/4 -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"displayName":"user_14", "receivedH":0, "givenH":0, "posts":2, "loginCount":2}'`
+**CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/users/all/4 -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"displayName":"user_14", "receivedH":0, "givenH":0, "posts":2, "loginCount":2}'`
 
 **Response Example:**
 ```
@@ -468,14 +595,14 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### GET /users/<user_id>/posts
+### GET /users/all/<user_id>/posts
 **Description**: Gets the user's posts.
 
 **Handler Function**: get_user_posts.
 
 **Request Arguments**:
   - userID - The ID of the user.
-  - page - A query parameters indicating the user's current page.
+  - page - An optional query parameter indicating the user's current page.
 
 **Required Data**: None.
 
@@ -490,7 +617,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Expected Errors**:
   - 400 (Bad Request) - In case there's no ID supplied.
 
-**CURL Request Sample**: `curl http://127.0.0.1:5000/users/4/posts -H 'Authorization: Bearer <YOUR_TOKEN>'`
+**CURL Request Sample**: `curl http://127.0.0.1:5000/users/all/4/posts -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
@@ -510,6 +637,39 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
+### DELETE /users/all/<user_id>/posts
+**Description**: Deletes all of the user's posts.
+
+**Handler Function**: delete_user_posts.
+
+**Request Arguments**:
+  - userID - The ID of the user.
+
+**Required Data**: None.
+
+**Required Permission:** 'delete:my-post' or 'delete:any-post'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - userID (number) - The user's ID.
+  - deleted (number) - The number of deleted posts.
+
+**Expected Errors**:
+  - 403 (Forbidden) - In case the user is trying to delete another user's posts without the required permission.
+  - 404 (Not Found) - In case there are no posts to delete.
+  - 500 (Internal Server Error) - In case there's an issue deleting the posts.
+
+**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/users/all/4/posts -H 'Authorization: Bearer <YOUR_TOKEN>'`
+
+**Response Example:**
+```
+{
+  "deleted": 1,
+  "success": true,
+  "userID": "4"
+}
+```
+
 ### GET /messages
 **Description**: Gets the user's messages.
 
@@ -517,6 +677,8 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Request Arguments**:
   - userID - A query parameter indicating the User's ID.
+  - page - An optional query parameter indicating the user's current page.
+  - type - An optional query parameter indicating the type of messages the user is attempting to get (inbox, outbox, threads or a specific thread's messages).
 
 **Required Data**: None.
 
@@ -530,6 +692,8 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Expected Errors**:
   - 400 (Bad Request) - In case no ID was supplied.
+  - 403 (Forbidden) - In case the user is trying to read another user's messages.
+  - 404 (Not Found) - In case the mailbox the user is requesting doesn't exist.
 
 **CURL Request Sample**: `curl http://127.0.0.1:5000/messages?userID=4 -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
@@ -582,7 +746,8 @@ For full instructions check the [`backend README`](./backend/README.md)
   - message (Dictionary) - a dictionary containing the newly-sent message.
 
 **Expected Errors**:
-  - 500 (Internal Server Error) - In case there's an error adding the new message to the database.
+  - 403 (Forbidden) - In case the user is trying to post the message from another user.
+  - 500 (Internal Server Error) - In case there's an error adding the new message (or the new thread if one is needed) to the database.
 
 **CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/messages -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"from":"user14", "fromId":4, "forId":1, "messageText":"hang in there", "date":"Mon, 08 Jun 2020 14:43:15 GMT"}'`
 
@@ -600,12 +765,13 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### DELETE /messages/<message_id>
+### DELETE /messages/<mailbox_type>/<item_id>
 **Description**: Deletes a message from the database.
 
-**Handler Function**: delete_message,
+**Handler Function**: delete_message.
 
 **Request Arguments**:
+  - mailbox_type - the type of mailbox from which to delete the message.
   - message_id - The ID of the message to delete.
 
 **Required Data**: None.
@@ -617,16 +783,270 @@ For full instructions check the [`backend README`](./backend/README.md)
   - deleted (Number) - the ID of the message that was deleted.
 
 **Expected Errors**:
-  - 400 (Bad Request) - In case no ID was supplied.
+  - 403 (Forbidden) - In case the user is trying to delete another user's message.
   - 404 (Not Found) - In case there's no message with that ID.
+  - 405 (Method Not Allowed) - In case no ID was supplied.
   - 500 (Internal Server Error) - In case an error occurred while deleting the message from the database.
 
-**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/messages/6 -H 'Authorization: Bearer <YOUR_TOKEN>'`
+**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/messages/inbox/6 -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
 {
   "deleted": "6",
+  "success": true
+}
+```
+
+### DELETE /messages/<mailbox_type>
+**Description**: Clears the given mailbox (meaning, deletes all of the messages in it).
+
+**Handler Function**: clear_mailbox.
+
+**Request Arguments**:
+  - mailbox_type - the type of mailbox from which to delete the messages.
+  - userID - A query parameter indicating the User's ID.
+
+**Required Data**: None.
+
+**Required Permission:** 'delete:message'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - userID (number) - the ID of the user whose message were deleted.
+  - deleted (Number) - the number of deleted messages.
+
+**Expected Errors**:
+  - 400 (Bad Request) - In case there's no mailbox type or user ID.
+  - 403 (Forbidden) - In case the user is trying to delete another user's message.
+  - 404 (Not Found) - In case there are no messages in the given mailbox.
+  - 500 (Internal Server Error) - In case an error occurred while deleting the messages from the database.
+
+**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/messages/inbox?userID=4 -H 'Authorization: Bearer <YOUR_TOKEN>'`
+
+**Response Example:**
+```
+{
+  "deleted": "2",
+  "success": true,
+  "userID": "4"
+}
+```
+
+### GET /reports
+**Description**: Gets a paginated list of currently open user and post reports.
+
+**Handler Function**: get_open_reports.
+
+**Request Arguments**:
+  - userPage - A query parameter indicating the current page of user reports.
+  - postPage - A query parameter indicating the current page of post reports.
+
+**Required Data**: None.
+
+**Required Permission:** 'read:admin-board'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - userReports (List) - A list of paginated user reports.
+  - totalUserPages (Number) - the total number of pages of user reports.
+  - postReports (List) - A list of paginated post reports.
+  - totalPostPages (Number) - the total number of pages of post reports.
+
+**Expected Errors**: None.
+
+**CURL Request Sample**: `curl http://127.0.0.1:5000/reports -H 'Authorization: Bearer <YOUR_TOKEN>'`
+
+**Response Example:**
+```
+{
+  "postReports": [],
+  "success": true,
+  "totalPostPages": 0,
+  "totalUserPages": 0,
+  "userReports": []
+}
+```
+
+### POST /reports
+**Description**: Adds a new report to the database.
+
+**Handler Function**: create_new_report.
+
+**Request Arguments**: None.
+
+**Required Data**: A JSON containing the report's data, in the following format:
+  - type (string) - 'Post' or 'User', depending on the type of report being submitted.
+  - userID (Number) - The ID of the user being reported.
+  - postID (Number | null) - the ID of the post being reported (if any; for user reports this field is left empty).
+  - reporter (Number) - The ID of the user making the report.
+  - reportReason (String) - The reason for the report.
+  - date (Date) - The date the report is submitted.
+
+**Required Permission:** 'post:report'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - report (Dictionary) - the newly created report.
+
+**Expected Errors**:
+  - 404 (Not Found) - In case the item being reported doesn't exist.
+  - 500 (Internal Server Error) - In case an error occurred while adding the new report to the database.
+
+**CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/reports -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"type":"Post", "userID":"1", "postID":4, "reporter":5,"reportReason":"this post is inappropriate", "date":"Tue Jun 23 2020 14:59:31 GMT+0300"}'`
+
+**Response Example:**
+```
+{
+  "report": {
+    "closed": false,
+    "date": "Tue Jun 23 2020 14:59:31 GMT+0300",
+    "dismissed": false,
+    "id": 36,
+    "postID": 4,
+    "reportReason": "this post is inappropriate",
+    "reporter": 5,
+    "type": "Post",
+    "userID": "1"
+  },
+  "success": true
+}
+```
+
+### PATCH /reports/<report_id>
+**Description**: Updates a report's data (used to close an open report).
+
+**Handler Function**: update_report_status.
+
+**Request Arguments**:
+  - report_id - the ID of the report to close.
+
+**Required Data**: A JSON containing the updated report's data, in the following format:
+  - type (string) - 'Post' or 'User', depending on the type of report being submitted.
+  - userID (Number) - The ID of the user being reported.
+  - postID (Number | null) - the ID of the post being reported (if any; for user reports this field is left empty).
+  - reporter (Number) - The ID of the user making the report.
+  - reportReason (String) - The reason for the report.
+  - date (Date) - The date the report is submitted.
+  - dismissed (Boolean) - Whether the report was dismissed.
+  - closed (Boolean) - Whether the report was closed.
+
+**Required Permission:** 'read:admin-board'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - report (Dictionary) - the newly created report.
+
+**Expected Errors**:
+  - 404 (Not Found) - In case a report with that ID doesn't exist.
+  - 500 (Internal Server Error) - In case an error occurred while updating the report in the database.
+
+**CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/reports/36 -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"type":"Post", "userID":"1", "postID":4, "reporter":5,"reportReason":"this post is inappropriate", "date":"Tue Jun 23 2020 14:59:31 GMT+0300", "dismissed": true, "closed": true}'`
+
+**Response Example:**
+```
+{
+  "updated": {
+    "closed": true,
+    "date": "Tue Jun 23 2020 14:59:31 GMT+0300",
+    "dismissed": true,
+    "id": 36,
+    "postID": 4,
+    "reportReason": "this post is inappropriate",
+    "reporter": 5,
+    "type": "Post",
+    "userID": "1"
+  },
+  "success": true
+}
+```
+
+### GET /filters
+**Description**: Gets a paginated list of filtered words.
+
+**Handler Function**: get_filters.
+
+**Request Arguments**:
+  - page - A query parameter indicating the current page of filtered words.
+
+**Required Data**: None.
+
+**Required Permission:** 'read:admin-board'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - words (List) - A list of paginated filtered words.
+  - total_pages (Number) - the total number of pages of filtered words.
+
+**Expected Errors**: None.
+
+**CURL Request Sample**: `curl http://127.0.0.1:5000/filters -H 'Authorization: Bearer <YOUR_TOKEN>'`
+
+**Response Example:**
+```
+{
+  "success": true,
+  "total_pages": 0,
+  "words": []
+}
+```
+
+### POST /filters
+**Description**: Adds a new filtered word to the app.
+
+**Handler Function**: add_filter.
+
+**Request Arguments**: None.
+
+**Required Data**: A JSON containing the new filter, in the following format:
+  - word (string) - The filter.
+
+**Required Permission:** 'read:admin-board'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - added (string) - the newly added filter.
+
+**Expected Errors**:
+  - 409 (Conflict) - In case the filter already exists.
+  - 500 (Internal Server Error) - In case an error occurred while adding the new filter.
+
+**CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/filters -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"word":"sample"}'`
+
+**Response Example:**
+```
+{
+  "added": "sample",
+  "success": true
+}
+```
+
+### DELETE /filters/<filter_id>
+**Description**: Deletes a word from the filters list (only possible for user-added words).
+
+**Handler Function**: delete_filter.
+
+**Request Arguments**:
+  - filter_id (number) - the ID of the filter to delete (i.e., it's list index).
+
+**Required Data**: None.
+
+**Required Permission:** 'read:admin-board'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - deleted (string) - the deleted filter.
+
+**Expected Errors**:
+  - 404 (Not Found) - In case there's no filter in the given index.
+  - 500 (Internal Server Error) - In case an error occurred while deleting the filter.
+
+**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/filters/1 -H 'Authorization: Bearer <YOUR_TOKEN>'`
+
+**Response Example:**
+```
+{
+  "deleted": "sample",
   "success": true
 }
 ```

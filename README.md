@@ -42,9 +42,11 @@ For full project information, check the [`main README file`](https://github.com/
 The app contains several files and folders:
 
 1. **app.py** - The main application file. This file contains all endpoints and error handlers.
-2. **models.py** - The file containing SQLAlchemy models, as well as all database-related methods.
-3. **auth.py** - The file dealing with authentication - getting the Authorization header, verifying the JWT and confirming the user has the required permission.
-4. **test_app.py** - The file containing the backend's test suite.
+2. **filter.py** - The system responsible for filtering words. (Work in progress)
+3. **manage.py** - The file managing running database migrations when deploying.
+4. **models.py** - The file containing SQLAlchemy models, as well as all database-related methods.
+5. **auth.py** - The file dealing with authentication - getting the Authorization header, verifying the JWT and confirming the user has the required permission.
+6. **test_app.py** - The file containing the backend's test suite.
 
 ## Dependencies
 
@@ -59,6 +61,8 @@ The site uses several tools to maximise compatibility:
 4. **Flask-CORS** - This application uses Flask-CORS in order to enable communication from the frontend. You can read more on the [Flask-CORS](https://flask-cors.readthedocs.io/en/latest/) website.
 
 5. **Python-Jose** - This application uses Python-Jose in order to decode and verify the authenticity of a given JWT (see Contents -> auth.py). You can read more on the [Python-Jose](https://python-jose.readthedocs.io/en/latest/) website.
+
+6. **Wordfilter** - This application uses the Wordfilter module in order to handle word filtering. You can read about it more on the module's [PyPI page](https://pypi.org/project/wordfilter/).
 
 ## Authentication
 
