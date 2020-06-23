@@ -438,11 +438,33 @@ def delete_all(type, id):
         # If the type of objects to delete is inbox, delete all messages
         # for the user with that ID
         if(type == 'inbox'):
-            db.session.query(Message).filter(Message.for_id == id).delete()
+            # Separates messages that were deleted by the other user (and are
+            # thus okay to delete completely) from messages that weren't
+            # (so that these will only be deleted for one user rather than
+            # for both)
+            messages_to_delete = db.session.query(Message).filter(Message.for_id == id).filter(Message.from_deleted == True).delete()
+            messages_to_update = db.session.query(Message).filter(Message.for_id == id).filter(Message.from_deleted == False).all()
+
+            # For each message that wasn't deleted by the other user, the
+            # value of for_deleted (indicating whether the user the message
+            # is for deleted it) is updated to True
+            for message in messages_to_update:
+                message.for_deleted = True
         # If the type of objects to delete is outbox, delete all messages
         # from the user with that ID
         if(type == 'outbox'):
-            db.session.query(Message).filter(Message.from_id == id).delete()
+            # Separates messages that were deleted by the other user (and are
+            # thus okay to delete completely) from messages that weren't
+            # (so that these will only be deleted for one user rather than
+            # for both)
+            messages_to_delete = db.session.query(Message).filter(Message.from_id == id).filter(Message.for_deleted == True).delete()
+            messages_to_update = db.session.query(Message).filter(Message.from_id == id).filter(Message.for_deleted == False).all()
+
+            # For each message that wasn't deleted by the other user, the
+            # value of from_deleted (indicating whether the user who wrote
+            # the message deleted it) is updated to True
+            for message in messages_to_update:
+                message.from_deleted = True
         # If the type of objects to delete is threads, delete all messages
         # to and from the user with that ID
         if(type == 'threads'):
@@ -450,14 +472,49 @@ def delete_all(type, id):
             Threads = db.session.query(Thread).filter((Thread.user_1_id == id)
                                                       or (Thread.user_2_id ==
                                                       id)).all()
+            # List of thread IDs to delete
+            threads_to_delete = []
+
             # Delete the messages in each thread
             for thread in Threads:
-                db.session.query(Message).filter(Message.thread ==
-                                                 thread.id).delete()
+                # Separates messages that were deleted by the other user (and
+                # are thus okay to delete completely) from messages that
+                # weren't (so that these will only be deleted for one user
+                # rather than for both)
+                messages_to_delete = db.session.query(Message).filter(Message.thread == thread.id).filter(((Message.for_id == id) and (Message.from_deleted == True)) | ((Message.from_id == id) and (Message.for_deleted == True))).delete()
+                messages_for_to_update = db.session.query(Message).filter(Message.thread == thread.id).filter((Message.for_id == id) and (Message.from_deleted == False)).all()
+                messages_from_to_update = db.session.query(Message).filter(Message.thread == thread.id).filter((Message.from_id == id) and (Message.for_deleted == False)).all()
 
-            # Then try to delete the threads
-            db.session.query(Thread).filter((Thread.user_1_id == id) or
-                                            (Thread.user_2_id == id)).delete()
+                # For each message that wasn't deleted by the other user, the
+                # value of for_deleted (indicating whether the user the message
+                # is for deleted it) is updated to True
+                for message in messages_for_to_update:
+                    message.for_deleted = True
+
+                # For each message that wasn't deleted by the other user, the
+                # value of from_deleted (indicating whether the user who wrote
+                # the message deleted it) is updated to True
+                for message in messages_from_to_update:
+                    message.from_deleted = True
+
+                # If there are no messages left in this thread, both users
+                # deleted all messages in it, so the thread can be added
+                # to the "to delete" list
+                if(len(messages_for_to_update) == 0 and len(messages_from_to_update) == 0):
+                    threads_to_delete.append(thread.id)
+                else:
+                    # If the current user is user 1 in the threads table,
+                    # set their deleted value to true
+                    if(thread.user_1_id == id):
+                        thread.user_1_deleted = True
+                    # Otherwise it's user 2, so set their deleted value
+                    # to true
+                    else:
+                        thread.user_2_deleted = True
+
+            # Then try to delete the threads that are okay to delete
+            for thread in threads_to_delete:
+                db.session.query(Thread).filter(Thread.id == thread).delete()
 
         db.session.commit()
     # If there's an error, rollback
