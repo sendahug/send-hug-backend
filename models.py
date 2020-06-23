@@ -82,8 +82,8 @@ class Message(db.Model):
     text = db.Column(db.String(480), nullable=False)
     date = db.Column(db.DateTime)
     thread = db.Column(db.Integer, db.ForeignKey('threads.id'), nullable=False)
-    user_1_deleted = db.Column(db.Boolean, nullable=False, default=False)
-    user_2_deleted = db.Column(db.Boolean, nullable=False, default=False)
+    from_deleted = db.Column(db.Boolean, nullable=False, default=False)
+    for_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
     # Format method
     # Responsible for returning a JSON object
