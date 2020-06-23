@@ -60,6 +60,8 @@ The site uses several tools to maximise compatibility:
 
 5. **Python-Jose** - This application uses Python-Jose in order to decode and verify the authenticity of a given JWT (see Contents -> auth.py). You can read more on the [Python-Jose](https://python-jose.readthedocs.io/en/latest/) website.
 
+6. **Wordfilter** - This application uses the Wordfilter module in order to handle word filtering. You can read about it more on the module's [PyPI page](https://pypi.org/project/wordfilter/).
+
 ## Authentication
 
 The project uses Auth0 as a third-party authentication provider. Authentication is done by Auth0, which in turn returns a JSON Web Token containing the user's data and permissions.
