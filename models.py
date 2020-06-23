@@ -259,9 +259,9 @@ def joined_query(target, params={}):
                 group_by(Message.thread, from_user.display_name,
                          for_user.display_name, Thread.user_1_id,
                          Thread.user_2_id, Thread.id).order_by(Thread.id).\
-                filter(((Thread.user_1_id == user_id) and
+                filter(((Thread.user_1_id == user_id) &
                         (Thread.user_1_deleted == False)) |
-                       ((Thread.user_2_id == user_id) and
+                       ((Thread.user_2_id == user_id) &
                         (Thread.user_2_deleted == False))).all()
 
             # Get the date of the latest message in the thread
@@ -270,9 +270,9 @@ def joined_query(target, params={}):
                 join(Thread, Message.thread == Thread.id).\
                 group_by(Message.thread, Thread.user_1_id, Thread.user_2_id).\
                 order_by(Message.thread).\
-                filter(((Thread.user_1_id == user_id) and
+                filter(((Thread.user_1_id == user_id) &
                         (Thread.user_1_deleted == False)) |
-                       ((Thread.user_2_id == user_id) and
+                       ((Thread.user_2_id == user_id) &
                         (Thread.user_2_deleted == False))).all()
         # Gets a specific thread's messages
         elif(type == 'thread'):
@@ -280,9 +280,9 @@ def joined_query(target, params={}):
                                              for_user.display_name).\
                 join(from_user, from_user.id == Message.from_id).\
                 join(for_user, for_user.id == Message.for_id).\
-                filter(((Message.for_id == user_id) and
+                filter(((Message.for_id == user_id) &
                         (Message.for_deleted == False)) |
-                       ((Message.from_id == user_id) and
+                       ((Message.from_id == user_id) &
                         (Message.from_deleted == False))).\
                 filter(Message.thread == thread).all()
 
