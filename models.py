@@ -234,6 +234,7 @@ def joined_query(target, params={}):
                                              for_user.display_name).\
                 join(from_user, from_user.id == Message.from_id).\
                 join(for_user, for_user.id == Message.for_id).\
+                filter(Message.for_deleted == False).\
                 filter(Message.for_id == user_id).all()
         # For outbox, gets all outgoing messages
         elif(type == 'outbox'):
@@ -241,6 +242,7 @@ def joined_query(target, params={}):
                                              for_user.display_name).\
                 join(from_user, from_user.id == Message.from_id).\
                 join(for_user, for_user.id == Message.for_id).\
+                filter(Message.from_deleted == False).\
                 filter(Message.from_id == user_id).all()
         # For threads, gets all threads' data
         elif(type == 'threads'):
@@ -257,8 +259,10 @@ def joined_query(target, params={}):
                 group_by(Message.thread, from_user.display_name,
                          for_user.display_name, Thread.user_1_id,
                          Thread.user_2_id, Thread.id).order_by(Thread.id).\
-                filter((Thread.user_1_id == user_id) |
-                       (Thread.user_2_id == user_id)).all()
+                filter(((Thread.user_1_id == user_id) and
+                        (Thread.user_1_deleted == False)) |
+                       ((Thread.user_2_id == user_id) and
+                        (Thread.user_2_deleted == False))).all()
 
             # Get the date of the latest message in the thread
             latest_message = db.session.query(db.func.max(Message.date),
@@ -274,6 +278,10 @@ def joined_query(target, params={}):
                                              for_user.display_name).\
                 join(from_user, from_user.id == Message.from_id).\
                 join(for_user, for_user.id == Message.for_id).\
+                filter(((Message.for_id == user_id) and
+                        (Message.for_deleted == False)) |
+                       ((Message.from_id == user_id) and
+                        (Message.from_deleted == False))).\
                 filter(Message.thread == thread).all()
 
         # If the mailbox type is outbox or inbox
