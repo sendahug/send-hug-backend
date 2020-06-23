@@ -10,28 +10,28 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 ### Application Endpoints
 
-1. GET /
-2. POST /
-3. POST /posts
-4. PATCH /posts/<post_id>
-5. DELETE /posts/<post_id>
-6. GET /posts/<type>
-7. GET /users/<type>
-8. GET /users/all/<user_id>
-9. POST /users
-10. PATCH /users/all/<user_id>
-11. GET /users/all/<user_id>/posts
-12. DELETE /users/all/<user_id>/posts
-13. GET /messages
-14. POST /messages
-15. DELETE /messages/<mailbox_type>/<item_id>
-16. DELETE /messages/<mailbox_type>
-17. GET /reports
-18. POST /reports
-19. PATCH /reports/<report_id>
-20. GET /filters
-21. POST /filters
-22. DELETE /filters/<filter_id>
+1. [GET /](#get-)
+2. [POST /](#post-)
+3. [POST /posts](#post-posts)
+4. [PATCH /posts/<post_id>](#patch-postspost_id)
+5. [DELETE /posts/<post_id>](#delete-postspost_id)
+6. [GET /posts/<type>](#get-posts)
+7. [GET /users/<type>](#get-users)
+8. [GET /users/all/<user_id>](#get-usersalluser_id)
+9. [POST /users](#post-users)
+10. [PATCH /users/all/<user_id>](#patch-usersalluser_id)
+11. [GET /users/all/<user_id>/posts](#get-usersalluser_idposts)
+12. [DELETE /users/all/<user_id>/posts](#delete-usersalluser_idposts)
+13. [GET /messages](#get-messages)
+14. [POST /messages](#post-messages)
+15. [DELETE /messages/<mailbox_type>/<item_id>](#delete-messagesmailbox_typeitem_id)
+16. [DELETE /messages/<mailbox_type>](#delete-messagesmailbox_type)
+17. [GET /reports](#get-reports)
+18. [POST /reports](#post-reports)
+19. [PATCH /reports/<report_id>](#patch-reportsreport_id)
+20. [GET /filters](#get-filters)
+21. [POST /filters](#post-filters)
+22. [DELETE /filters/<filter_id>](#delete-filtersfilter_id)
 
 **NOTE**: All sample curl requests are done via user 4; for your own tests, change the user ID and the user's display name.
 
