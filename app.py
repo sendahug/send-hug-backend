@@ -736,7 +736,7 @@ def create_app(test_config=None):
             'message': sent_message
         })
 
-    # Endpoint: DELETE /messages/<mailbox_type>/<thread_id>
+    # Endpoint: DELETE /messages/<mailbox_type>/<item_id>
     # Description: Deletes a message/thread from the database.
     # Parameters: mailbox_type - the type of message to delete.
     #             item_id - ID of the message/thread to delete.
