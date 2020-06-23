@@ -270,8 +270,10 @@ def joined_query(target, params={}):
                 join(Thread, Message.thread == Thread.id).\
                 group_by(Message.thread, Thread.user_1_id, Thread.user_2_id).\
                 order_by(Message.thread).\
-                filter((Thread.user_1_id == user_id) |
-                       (Thread.user_2_id == user_id)).all()
+                filter(((Thread.user_1_id == user_id) and
+                        (Thread.user_1_deleted == False)) |
+                       ((Thread.user_2_id == user_id) and
+                        (Thread.user_2_deleted == False))).all()
         # Gets a specific thread's messages
         elif(type == 'thread'):
             user_messages = db.session.query(Message, from_user.display_name,
@@ -375,11 +377,32 @@ def add(obj):
 # Method: Update
 # Description: Updates an existing record.
 # Parameters: Updated object (User, Post or Message).
-def update(obj):
+def update(obj, params={}):
     updated_object = {}
 
     # Try to update the object in the database
     try:
+        # If the item to update is a thread and 'set_deleted' appears in
+        # params, this means the messages in the thread need to be updated
+        # as deleted
+        if(type(obj) == Thread and 'set_deleted' in params):
+            # Just in case, makes sure that set_deleted was set to true
+            if(params['set_deleted']):
+                messages_for = db.session.query(Message).filter(Message.thread == obj.id).filter(Message.for_id == params['user_id']).filter(Message.from_deleted == False).all()
+                messages_from = db.session.query(Message).filter(Message.thread == obj.id).filter(Message.from_id == params['user_id']).filter(Message.for_deleted == False).all()
+
+                # For each message that wasn't deleted by the other user, the
+                # value of for_deleted (indicating whether the user the message
+                # is for deleted it) is updated to True
+                for message in messages_for:
+                    message.for_deleted = True
+
+                # For each message that wasn't deleted by the other user, the
+                # value of from_deleted (indicating whether the user who wrote
+                # the message deleted it) is updated to True
+                for message in messages_from:
+                    message.from_deleted = True
+
         db.session.commit()
         updated_object = obj.format()
     # If there's an error, rollback
