@@ -834,7 +834,8 @@ def create_app(test_config=None):
                 db_delete(delete_item)
             # Otherwise, just update the appropriate deleted property
             else:
-                db_update(delete_item, {'set_deleted': True, 'user_id': request_user.id})
+                db_update(delete_item, {'set_deleted': True,
+                                        'user_id': request_user.id})
         # If there's an error, abort
         except Exception as e:
             abort(500)
