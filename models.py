@@ -105,6 +105,8 @@ class Thread(db.Model):
                           nullable=False)
     user_2_id = db.Column(db.Integer, db.ForeignKey('users.id'),
                           nullable=False)
+    user_1_deleted = db.Column(db.Boolean, nullable=False, default=False)
+    user_2_deleted = db.Column(db.Boolean, nullable=False, default=False)
     messages = db.relationship('Message', backref='threads')
 
     # Format method
