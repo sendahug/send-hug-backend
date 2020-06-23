@@ -42,9 +42,11 @@ For full project information, check the [`main README file`](https://github.com/
 The app contains several files and folders:
 
 1. **app.py** - The main application file. This file contains all endpoints and error handlers.
-2. **models.py** - The file containing SQLAlchemy models, as well as all database-related methods.
-3. **auth.py** - The file dealing with authentication - getting the Authorization header, verifying the JWT and confirming the user has the required permission.
-4. **test_app.py** - The file containing the backend's test suite.
+2. **filter.py** - The system responsible for filtering words. (Work in progress)
+3. **manage.py** - The file managing running database migrations when deploying.
+4. **models.py** - The file containing SQLAlchemy models, as well as all database-related methods.
+5. **auth.py** - The file dealing with authentication - getting the Authorization header, verifying the JWT and confirming the user has the required permission.
+6. **test_app.py** - The file containing the backend's test suite.
 
 ## Dependencies
 
