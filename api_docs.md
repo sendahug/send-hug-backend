@@ -15,8 +15,8 @@ For full instructions check the [`backend README`](./backend/README.md)
 3. [POST /posts](#post-posts)
 4. [PATCH /posts/<post_id>](#patch-postspost_id)
 5. [DELETE /posts/<post_id>](#delete-postspost_id)
-6. [GET /posts/<type>](#get-posts)
-7. [GET /users/<type>](#get-users)
+6. [GET /posts/<post_type>](#get-posts)
+7. [GET /users/<user_type>](#get-users)
 8. [GET /users/all/<user_id>](#get-usersalluser_id)
 9. [POST /users](#post-users)
 10. [PATCH /users/all/<user_id>](#patch-usersalluser_id)
@@ -335,7 +335,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### GET /posts/<type>
+### GET /posts/<post_type>
 **Description**: Gets the new/recent posts, depending on the type passed on. Recent posts are ordered by descending order (most recent to least recent).
 
 **Handler Function**: get_new_posts.
@@ -458,7 +458,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### GET /users/<type>
+### GET /users/<user_type>
 **Description**: Gets a list of users by a given type (like 'blocked users') from the databsae.
 
 **Handler Function**: get_users_by_type.
