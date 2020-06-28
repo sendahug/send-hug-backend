@@ -93,7 +93,8 @@ class Message(db.Model):
             'fromId': self.from_id,
             'forId': self.for_id,
             'messageText': self.text,
-            'date': self.date
+            'date': self.date,
+            'threadID': self.thread
         }
 
 
