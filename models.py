@@ -218,7 +218,6 @@ def joined_query(target, params={}):
             sug_post = post[0].format()
             sug_post['user'] = post[1]
             return_obj.append(sug_post)
-            return_obj.append(post)
     # if the target is the user's messages (get messages endpoint)
     elif(target.lower() == 'messages'):
         user_id = params['user_id']
