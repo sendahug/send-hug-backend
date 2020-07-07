@@ -167,12 +167,14 @@ class Report(db.Model):
         return return_report
 
 
-# Hug Model
-class Hug(db.Model):
-    __tablename__ = 'hugs'
+# Notification Model
+class Notification(db.Model):
+    __tablename__ = 'notifications'
     id = db.Column(db.Integer, primary_key=True)
     for_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     from_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    type = db.Column(db.String(), nullable=False)
+    text = db.Column(db.String(), nullable=False)
     date = db.Column(db.DateTime, nullable=False)
 
     # Format method
@@ -377,37 +379,21 @@ def joined_query(target, params={}):
         from_user = db.aliased(User)
         for_user = db.aliased(User)
 
-        # Gets all new messages
-        messages = db.session.query(Message, from_user.display_name,
+        # Gets all new notifications
+        notifications = db.session.query(Notification, from_user.display_name,
                                              for_user.display_name).\
-            join(from_user, from_user.id == Message.from_id).\
-            join(for_user, for_user.id == Message.for_id).\
-            filter(Message.for_id == user_id).\
-            filter(Message.date > last_read).order_by(Message.date).all()
+            join(from_user, from_user.id == Notification.from_id).\
+            join(for_user, for_user.id == Notification.for_id).\
+            filter(Notification.for_id == user_id).\
+            filter(Notification.date > last_read).\
+            order_by(Notification.date).all()
 
         # Formats all new messages
-        for message in messages:
-            user_message = message[0].format()
-            user_message['from'] = message[1]
-            user_message['for'] = message[2]
-            user_message['type'] = 'message'
-            return_obj.append(user_message)
-
-        # Gets all new hugs
-        hugs = db.session.query(Hug, from_user.display_name,
-                                     for_user.display_name).\
-            join(from_user, from_user.id == Hug.from_id).\
-            join(for_user, for_user.id == Hug.for_id).\
-            filter(Hug.for_id == user_id).filter(Hug.date > last_read).\
-            order_by(Hug.date).all()
-
-        # Formats all new hugs
-        for hug in hugs:
-            user_hug = hug[0].format()
-            user_hug['from'] = hug[1]
-            user_hug['for'] = hug[2]
-            user_hug['type'] = 'hug'
-            return_obj.append(user_hug)
+        for notification in notifications:
+            user_notification = notification[0].format()
+            user_notification['from'] = notification[1]
+            user_notification['for'] = notification[2]
+            return_obj.append(user_notification)
 
     return {
         'return': return_obj
