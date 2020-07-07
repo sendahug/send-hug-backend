@@ -388,7 +388,7 @@ def joined_query(target, params={}):
 
         # Gets all new hugs
         hugs = db.session.query(Hug, from_user.display_name,
-                                     for_user.display_name)
+                                     for_user.display_name).\
             join(from_user, from_user.id == Hug.from_id).\
             join(for_user, for_user.id == Hug.for_id).\
             filter(Hug.for_id == user_id).filter(Hug.date > last_read).\
