@@ -363,6 +363,43 @@ def joined_query(target, params={}):
             formatted_report = report[0].format()
             formatted_report['text'] = report[1]
             return_obj.append(formatted_report)
+    # if
+    elif(target.lower() == 'notifications'):
+        user_id = params['user_id']
+        last_read = params['last_read']
+
+        from_user = db.aliased(User)
+        for_user = db.aliased(User)
+
+        # Gets all new messages
+        messages = db.session.query(Message, from_user.display_name,
+                                             for_user.display_name).\
+            join(from_user, from_user.id == Message.from_id).\
+            join(for_user, for_user.id == Message.for_id).\
+            filter(Message.for_id == user_id).\
+            filter(Message.date > last_read).order_by(Message.date).all()
+
+        # Formats all new messages
+        for message in messages:
+            user_message = message[0].format()
+            user_message['from'] = message[1]
+            user_message['for'] = message[2]
+            return_obj.append(user_message)
+
+        # Gets all new hugs
+        hugs = db.session.query(Hug, from_user.display_name,
+                                     for_user.display_name)
+            join(from_user, from_user.id == Hug.from_id).\
+            join(for_user, for_user.id == Hug.for_id).\
+            filter(Hug.for_id == user_id).filter(Hug.date > last_read).\
+            order_by(Hug.date).all()
+
+        # Formats all new hugs
+        for hug in hugs:
+            user_hug = hug[0].format()
+            user_hug['from'] = hug[1]
+            user_hug['for'] = hug[2]
+            return_obj.append(user_hug)
 
     return {
         'return': return_obj

@@ -1139,6 +1139,49 @@ def create_app(test_config=None):
             'deleted': removed
         })
 
+    # Endpoint: GET /notifications
+    # Description: Gets the latest notifications for the given user.
+    # Parameters: None.
+    # Authorization: read:messages.
+    @app.route('/notifications')
+    @requires_auth(['read:messages'])
+    def get_latest_notifications(token_payload):
+        user = User.query.filter(User.auth0_id == token_payload['sub']).\
+            one_or_none()
+
+        # If there's no user with that ID, abort
+        if(user is None):
+            abort(404)
+
+        # Get user notifications
+        notifications = joined_query('notifications',
+                                     {'user_id': user.id,
+                                      'last_read':
+                                      user.last_notifications_read})
+
+        # Check whether each notification is for a message or a hug
+        # and add the data to the notification
+        for notification in notifications:
+            # If there's a 'text' value in it, it's a message
+            if('text' in notification):
+                notification['type'] = 'message'
+            # Otherwise it's a hug
+            else:
+                notification['type'] = 'hug'
+
+        # Update the user's last-read date
+        try:
+            user.last_notifications_read = datetime.now()
+            db_update(user)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return jsonify({
+            'success': True,
+            'notifications': notifications
+        })
+
     # Error Handlers
     # -----------------------------------------------------------------
     # Bad request error handler
