@@ -32,6 +32,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 20. [GET /filters](#get-filters)
 21. [POST /filters](#post-filters)
 22. [DELETE /filters/<filter_id>](#delete-filtersfilter_id)
+23. [GET /notifications](#get-notifications)
 
 **NOTE**: All sample curl requests are done via user 4; for your own tests, change the user ID and the user's display name.
 
@@ -1049,6 +1050,32 @@ For full instructions check the [`backend README`](./backend/README.md)
   "deleted": "sample",
   "success": true
 }
+```
+
+### GET /notifications
+**Description**: Gets the user's unread notifications
+
+**Handler Function**: get_latest_notifications.
+
+**Request Arguments**: None.
+
+**Required Data**: None.
+
+**Required Permission:** 'read:messages'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - notifications (List) - a list containing all user notifications
+
+**Expected Errors**:
+  - 404 (Not Found) - In case there's no user with the given Auth0 ID.
+  - 500 (Internal Server Error) - In case an error occurred while trying to update the user's 'last read' date.
+
+**CURL Request Sample**: `curl http://127.0.0.1:5000/notifications -H 'Authorization: Bearer <YOUR_TOKEN>'`
+
+**Response Example:**
+```
+
 ```
 
 ### Error Handlers
