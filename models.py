@@ -166,6 +166,24 @@ class Report(db.Model):
         return return_report
 
 
+# Hug Model
+class Hug(db.Model):
+    __tablename__ = 'hugs'
+    id = db.Column(db.Integer, primary_key=True)
+    for_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    from_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+
+    # Format method
+    def format(self):
+        return {
+            'id': self.id,
+            'fromId': self.from_id,
+            'forId': self.for_id,
+            'date': self.date
+        }
+
+
 # Database management methods
 # -----------------------------------------------------------------
 # Method: Joined_Query
