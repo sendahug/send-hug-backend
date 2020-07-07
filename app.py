@@ -1157,7 +1157,7 @@ def create_app(test_config=None):
         notifications = joined_query('notifications',
                                      {'user_id': user.id,
                                       'last_read':
-                                      user.last_notifications_read})
+                                      user.last_notifications_read})['return']
 
         # Update the user's last-read date
         try:
