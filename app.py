@@ -1159,16 +1159,6 @@ def create_app(test_config=None):
                                       'last_read':
                                       user.last_notifications_read})
 
-        # Check whether each notification is for a message or a hug
-        # and add the data to the notification
-        for notification in notifications:
-            # If there's a 'text' value in it, it's a message
-            if('text' in notification):
-                notification['type'] = 'message'
-            # Otherwise it's a hug
-            else:
-                notification['type'] = 'hug'
-
         # Update the user's last-read date
         try:
             user.last_notifications_read = datetime.now()

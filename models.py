@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from flask import abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -363,10 +364,15 @@ def joined_query(target, params={}):
             formatted_report = report[0].format()
             formatted_report['text'] = report[1]
             return_obj.append(formatted_report)
-    # if
+    # If the target is notifications
     elif(target.lower() == 'notifications'):
         user_id = params['user_id']
         last_read = params['last_read']
+
+        # If there's no last_read date, it means the user never checked
+        # their notifications, so set it to the time this feature was added
+        if(last_read is None):
+            last_read = datetime(2020, 7, 1, 12, 00)
 
         from_user = db.aliased(User)
         for_user = db.aliased(User)
@@ -384,6 +390,7 @@ def joined_query(target, params={}):
             user_message = message[0].format()
             user_message['from'] = message[1]
             user_message['for'] = message[2]
+            user_message['type'] = 'message'
             return_obj.append(user_message)
 
         # Gets all new hugs
@@ -399,6 +406,7 @@ def joined_query(target, params={}):
             user_hug = hug[0].format()
             user_hug['from'] = hug[1]
             user_hug['for'] = hug[2]
+            user_hug['type'] = 'hug'
             return_obj.append(user_hug)
 
     return {
