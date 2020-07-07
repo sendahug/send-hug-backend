@@ -55,6 +55,7 @@ class User(db.Model):
     blocked = db.Column(db.Boolean, nullable=False, default=False)
     release_date = db.Column(db.DateTime)
     open_report = db.Column(db.Boolean, nullable=False, default=False)
+    last_notifications_read = db.Column(db.DateTime)
     posts = db.relationship('Post', backref='user')
 
     # Format method
