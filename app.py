@@ -1,9 +1,10 @@
 import os
 import json
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
+from pywebpush import webpush, WebPushException
 
 from models import (
     create_db,
@@ -51,6 +52,27 @@ def create_app(test_config=None):
         total_pages = math.ceil(len(items) / 5)
 
         return [paginated_items, total_pages]
+
+    # Send push notification
+    def send_push_notification(user_id, data):
+        vapid_key = os.environ.get('PRIVATE_KEY')
+        expiry_time = datetime.timestamp(datetime.utcnow() +
+                                         timedelta(hours=12))
+        vapid_claims = {
+            'sub': 'mailto:theobjectivistb@gmail.com',
+            'exp': expiry_time
+        }
+        subscriptions = NotificationSub.query.filter(NotificationSub.user ==
+                                                     user_id).all()
+
+        # Try to send the push notification
+        try:
+            for subscription in subscriptions:
+                webpush(subscription_info=subscription, data=data,
+                        vapid_private_key=vapid_key, vapid_claims=vapid_claims)
+        # If there's an error, print the details
+        except WebPushException as e:
+            print(e)
 
     # Routes
     # -----------------------------------------------------------------
