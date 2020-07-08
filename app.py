@@ -68,7 +68,8 @@ def create_app(test_config=None):
         # Try to send the push notification
         try:
             for subscription in subscriptions:
-                webpush(subscription_info=subscription, data=data,
+                sub_data = json.loads(subscription.subscription_data)
+                webpush(subscription_info=sub_data, data=data,
                         vapid_private_key=vapid_key, vapid_claims=vapid_claims)
         # If there's an error, print the details
         except WebPushException as e:
@@ -237,6 +238,9 @@ def create_app(test_config=None):
                                             type='hug',
                                             text='You got a hug',
                                             date=today)
+                push_notification = current_user.display_name + \
+                    ' sent you a hug'
+                notification_for = post_author.id
 
         # If there's a 'closeReport' value, this update is the result of
         # a report, which means the report with the given ID needs to be
@@ -260,6 +264,8 @@ def create_app(test_config=None):
             # If there was an added hug, add the new notification
             if('givenHugs' in updated_post):
                 if(original_hugs != updated_post['givenHugs']):
+                    send_push_notification(user_id=notification_for,
+                                           data=push_notification)
                     db_add(notification)
             db_updated_post = original_post.format()
         # If there's an error, abort
@@ -490,6 +496,9 @@ def create_app(test_config=None):
                                             type='hug',
                                             text='You got a hug',
                                             date=today)
+                push_notification = current_user.display_name + \
+                    ' sent you a hug'
+                notification_for = original_user.id
 
             # Update user data
             original_user.received_hugs = updated_user['receivedH']
@@ -576,6 +585,8 @@ def create_app(test_config=None):
             # If the user was given a hug, add a new notification
             if('receivedH' in updated_user and 'givenH' in updated_user):
                 if(original_hugs != updated_user['receivedH']):
+                    send_push_notification(user_id=notification_for,
+                                           data=push_notification)
                     db_add(notification)
             updated_user = original_user.format()
         # If there's an error, abort
@@ -798,11 +809,16 @@ def create_app(test_config=None):
                                     type='message',
                                     text='You have a new message',
                                     date=message_data['date'])
+        push_notification = logged_user.display_name + \
+            ' sent you a message'
+        notification_for = message_data['forId']
 
         # Try to add the message to the database
         try:
             db_add(new_message)
             db_add(notification)
+            send_push_notification(user_id=notification_for,
+                                   data=push_notification)
             sent_message = new_message.format()
         # If there's an error, abort
         except Exception as e:
