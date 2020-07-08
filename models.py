@@ -183,6 +183,8 @@ class Notification(db.Model):
             'id': self.id,
             'fromId': self.from_id,
             'forId': self.for_id,
+            'type': self.type,
+            'text': self.text,
             'date': self.date
         }
 
