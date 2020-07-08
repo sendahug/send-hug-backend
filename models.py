@@ -186,6 +186,23 @@ class Notification(db.Model):
             'date': self.date
         }
 
+# Notification Subscription Model
+class NotificationSub(db.Model):
+    __tablename__ = 'subscriptions'
+    id = db.Column(db.Integer, primary_key=True)
+    user = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    endpoint = db.Column(db.String(), nullable=False)
+    subscription_data = db.Column(db.Text, nullable=False)
+
+    # Format method
+    def format(self):
+        return {
+            'id': self.id,
+            'user_id': self.user,
+            'endpoint': self.endpoint,
+            'subscription_data': self.subscription_data
+        }
+
 
 # Database management methods
 # -----------------------------------------------------------------
