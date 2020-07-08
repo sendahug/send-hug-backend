@@ -201,6 +201,8 @@ def create_app(test_config=None):
         # If a hug was added
         # Since anyone can give hugs, this doesn't require a permissions check
         if('givenHugs' in updated_post):
+            original_hugs = original_post.given_hugs
+
             if(original_post.given_hugs != updated_post['givenHugs']):
                 original_post.given_hugs = updated_post['givenHugs']
                 current_user.given_hugs += 1
@@ -227,17 +229,16 @@ def create_app(test_config=None):
 
         # Try to update the database
         try:
-            # If there was an added hug, add the new notification
-            if('givenHugs' in updated_post):
-                if(original_post.given_hugs != updated_post['givenHugs']):
-                    db_add(notification)
-
             # Update users' and post's data
             db_update(original_post)
             db_update(current_user)
             db_update(post_author)
             if('closeReport' in updated_post):
                 db_update(open_report)
+            # If there was an added hug, add the new notification
+            if('givenHugs' in updated_post):
+                if(original_hugs != updated_post['givenHugs']):
+                    db_add(notification)
             db_updated_post = original_post.format()
         # If there's an error, abort
         except Exception as e:
@@ -458,6 +459,7 @@ def create_app(test_config=None):
         # If the user being updated was given a hug, also update the current
         # user's "given hugs" value, as they just gave a hug
         if('receivedH' in updated_user and 'givenH' in updated_user):
+            original_hugs = original_user.given_hugs
             if(original_user.received_hugs != updated_user['receivedH']):
                 current_user.given_hugs += 1
                 today = datetime.now()
@@ -544,16 +546,15 @@ def create_app(test_config=None):
 
         # Try to update it in the database
         try:
-            # If the user was given a hug, add a new notification
-            if('receivedH' in updated_user and 'givenH' in updated_user):
-                if(original_user.received_hugs != updated_user['receivedH']):
-                    db_add(notification)
-
             # Update users' data
             db_update(original_user)
             db_update(current_user)
             if('closeReport' in updated_user):
                 db_update(open_report)
+            # If the user was given a hug, add a new notification
+            if('receivedH' in updated_user and 'givenH' in updated_user):
+                if(original_hugs != updated_user['receivedH']):
+                    db_add(notification)
             updated_user = original_user.format()
         # If there's an error, abort
         except Exception as e:
