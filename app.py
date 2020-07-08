@@ -12,6 +12,7 @@ from models import (
     Message,
     Thread,
     Report,
+    NotificationSub,
     add as db_add,
     update as db_update,
     delete_object as db_delete,
@@ -1171,6 +1172,40 @@ def create_app(test_config=None):
             'success': True,
             'notifications': notifications
         })
+
+    # Endpoint: POST /notifications
+    # Description: Add a new PushSubscription to the database (for push
+    #              notifications).
+    # Parameters: None.
+    # Authorization: read:messages.
+    @app.route('/notifications', methods=['POST'])
+    @requires_auth(['read:messages'])
+    def add_notification_subscription(token_payload):
+        subscription_data = json.loads(request.data)
+        user = User.query.filter(User.auth0_id == token_payload['sub']).\
+            one_or_none()
+
+        # If there's no user with that ID, abort
+        if(user is None):
+            abort(404)
+
+        # Create a new subscription object with the given data
+        subscription = NotificationSub(user=user.id,
+                                       endpoint=subscription_data['endpoint'],
+                                       subscription_data=subscription_data)
+
+        # Try to add it to the database
+        try:
+            db_add(subscription)
+            subscribed = user.display_name
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return {
+            'success': True,
+            'subscribed': subscribed
+        }
 
     # Error Handlers
     # -----------------------------------------------------------------
