@@ -1245,7 +1245,14 @@ def create_app(test_config=None):
     @app.route('/notifications', methods=['POST'])
     @requires_auth(['read:messages'])
     def add_notification_subscription(token_payload):
-        subscription_data = json.loads(request.data)
+        # if the request is empty, return 204. This happens due to a bug
+        # in the frontend that causes the request to be sent twice, once
+        # with subscription data and once with an empty object
+        if(not request.data):
+            return ('', 204)
+
+        subscription_json = request.data.decode('utf8').replace("'", '"')
+        subscription_data = json.loads(subscription_json)
         user = User.query.filter(User.auth0_id == token_payload['sub']).\
             one_or_none()
 
@@ -1256,12 +1263,13 @@ def create_app(test_config=None):
         # Create a new subscription object with the given data
         subscription = NotificationSub(user=user.id,
                                        endpoint=subscription_data['endpoint'],
-                                       subscription_data=subscription_data)
+                                       subscription_data=json.dumps(
+                                                         subscription_data))
 
         # Try to add it to the database
         try:
-            db_add(subscription)
             subscribed = user.display_name
+            db_add(subscription)
         # If there's an error, abort
         except Exception as e:
             abort(500)
