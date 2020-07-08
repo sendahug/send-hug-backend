@@ -64,6 +64,8 @@ The site uses several tools to maximise compatibility:
 
 6. **Wordfilter** - This application uses the Wordfilter module in order to handle word filtering. You can read about it more on the module's [PyPI page](https://pypi.org/project/wordfilter/).
 
+7. **PyWebPush** - This application uses pywebpush in order to handle push notifications. For more information, check their [GitHub repo](https://github.com/web-push-libs/pywebpush).
+
 ## Authentication
 
 The project uses Auth0 as a third-party authentication provider. Authentication is done by Auth0, which in turn returns a JSON Web Token containing the user's data and permissions.

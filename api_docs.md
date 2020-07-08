@@ -33,6 +33,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 21. [POST /filters](#post-filters)
 22. [DELETE /filters/<filter_id>](#delete-filtersfilter_id)
 23. [GET /notifications](#get-notifications)
+24. [POST /notifications](#post-notifications)
 
 **NOTE**: All sample curl requests are done via user 4; for your own tests, change the user ID and the user's display name.
 
@@ -1072,6 +1073,32 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 500 (Internal Server Error) - In case an error occurred while trying to update the user's 'last read' date.
 
 **CURL Request Sample**: `curl http://127.0.0.1:5000/notifications -H 'Authorization: Bearer <YOUR_TOKEN>'`
+
+**Response Example:**
+```
+
+```
+
+### POST /notifications
+**Description**: Adds a new PushSubscription to the subscriptions database.
+
+**Handler Function**: add_notification_subscription.
+
+**Request Arguments**: None.
+
+**Required Data**: A PushSubscription data object, based on the Web Push Protocol. (For more information, check out [this link](https://www.w3.org/TR/push-api/#pushsubscription-interface)).
+
+**Required Permission:** 'read:messages'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - subscribed (String) - the display name of the newly subscribed user.
+
+**Expected Errors**:
+  - 404 (Not Found) - In case there's no user with the given Auth0 ID.
+  - 500 (Internal Server Error) - In case an error occurred while trying to add the new subscription to the database.
+
+**CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/filters -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '<PUSH_SUBSCRIPTION_OBJECT>'`
 
 **Response Example:**
 ```
