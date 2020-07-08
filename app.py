@@ -12,6 +12,7 @@ from models import (
     Message,
     Thread,
     Report,
+    Notification,
     NotificationSub,
     add as db_add,
     update as db_update,
@@ -205,6 +206,14 @@ def create_app(test_config=None):
                 current_user.given_hugs += 1
                 post_author.received_hugs += 1
 
+                # Create a notification for the user getting the hug
+                today = datetime.now()
+                notification = Notification(for_id=post_author.id,
+                                            from_id=current_user.id,
+                                            type='hug',
+                                            text='You got a hug',
+                                            date=today)
+
         # If there's a 'closeReport' value, this update is the result of
         # a report, which means the report with the given ID needs to be
         # closed.
@@ -218,6 +227,12 @@ def create_app(test_config=None):
 
         # Try to update the database
         try:
+            # If there was an added hug, add the new notification
+            if('givenHugs' in updated_post):
+                if(original_post.given_hugs != updated_post['givenHugs']):
+                    db_add(notification)
+
+            # Update users' and post's data
             db_update(original_post)
             db_update(current_user)
             db_update(post_author)
@@ -445,6 +460,12 @@ def create_app(test_config=None):
         if('receivedH' in updated_user and 'givenH' in updated_user):
             if(original_user.received_hugs != updated_user['receivedH']):
                 current_user.given_hugs += 1
+                today = datetime.now()
+                notification = Notification(for_id=original_user.id,
+                                            from_id=current_user.id,
+                                            type='hug',
+                                            text='You got a hug',
+                                            date=today)
 
             # Update user data
             original_user.received_hugs = updated_user['receivedH']
@@ -523,6 +544,12 @@ def create_app(test_config=None):
 
         # Try to update it in the database
         try:
+            # If the user was given a hug, add a new notification
+            if('receivedH' in updated_user and 'givenH' in updated_user):
+                if(original_user.received_hugs != updated_user['receivedH']):
+                    db_add(notification)
+
+            # Update users' data
             db_update(original_user)
             db_update(current_user)
             if('closeReport' in updated_user):
@@ -735,15 +762,24 @@ def create_app(test_config=None):
         else:
             thread_id = thread.id
 
+        # Create a new message
         new_message = Message(from_id=message_data['fromId'],
                               for_id=message_data['forId'],
                               text=message_data['messageText'],
                               date=message_data['date'],
                               thread=thread_id)
 
+        # Create a notification for the user getting the message
+        notification = Notification(for_id=message_data['forId'],
+                                    from_id=message_data['fromId'],
+                                    type='message',
+                                    text='You have a new message',
+                                    date=message_data['date'])
+
         # Try to add the message to the database
         try:
             db_add(new_message)
+            db_add(notification)
             sent_message = new_message.format()
         # If there's an error, abort
         except Exception as e:
