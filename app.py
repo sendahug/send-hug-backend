@@ -369,7 +369,21 @@ def create_app(test_config=None):
 
                 # Format users data
                 for user in users:
-                    formatted_users.append(user.format())
+                    # If it's past the user's release date, unblock them
+                    current_date = datetime.now()
+                    if(user.release_date < current_date):
+                        user.blocked = False
+                        user.release_date = None
+
+                        # Try to update the database
+                        try:
+                            db_update(user)
+                        # If there's an error, abort
+                        except Exception as e:
+                            abort(500)
+                    # Otherwise, format the user's data
+                    else:
+                        formatted_users.append(user.format())
 
                 # Paginate users
                 paginated_data = paginate(formatted_users, page)
