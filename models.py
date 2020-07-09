@@ -57,6 +57,8 @@ class User(db.Model):
     release_date = db.Column(db.DateTime)
     open_report = db.Column(db.Boolean, nullable=False, default=False)
     last_notifications_read = db.Column(db.DateTime)
+    auto_refresh = db.Column(db.Boolean, default=True)
+    push_enabled = db.Column(db.Boolean, default=False)
     posts = db.relationship('Post', backref='user')
 
     # Format method
@@ -71,7 +73,9 @@ class User(db.Model):
             'loginCount': self.login_count,
             'role': self.role,
             'blocked': self.blocked,
-            'releaseDate': self.release_date
+            'releaseDate': self.release_date,
+            'autoRefresh': self.auto_refresh,
+            'pushEnabled': self.push_enabled
         }
 
 
