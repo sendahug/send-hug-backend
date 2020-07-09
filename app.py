@@ -1,6 +1,7 @@
 import os
 import json
 import math
+import sys
 from datetime import datetime, timedelta
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
@@ -64,12 +65,17 @@ def create_app(test_config=None):
         }
         subscriptions = NotificationSub.query.filter(NotificationSub.user ==
                                                      user_id).all()
+        notification_data = {
+            'title': 'New ' + data['type'],
+            'body': data['text']
+        }
 
         # Try to send the push notification
         try:
             for subscription in subscriptions:
                 sub_data = json.loads(subscription.subscription_data)
-                webpush(subscription_info=sub_data, data=data,
+                webpush(subscription_info=sub_data,
+                        data=json.dumps(notification_data),
                         vapid_private_key=vapid_key, vapid_claims=vapid_claims)
         # If there's an error, print the details
         except WebPushException as e:
@@ -238,8 +244,10 @@ def create_app(test_config=None):
                                             type='hug',
                                             text='You got a hug',
                                             date=today)
-                push_notification = current_user.display_name + \
-                    ' sent you a hug'
+                push_notification = {
+                    'type': 'hug',
+                    'text': current_user.display_name + ' sent you a hug'
+                }
                 notification_for = post_author.id
 
         # If there's a 'closeReport' value, this update is the result of
@@ -270,6 +278,7 @@ def create_app(test_config=None):
             db_updated_post = original_post.format()
         # If there's an error, abort
         except Exception as e:
+            print(sys.exc_info())
             abort(500)
 
         return jsonify({
@@ -510,8 +519,10 @@ def create_app(test_config=None):
                                             type='hug',
                                             text='You got a hug',
                                             date=today)
-                push_notification = current_user.display_name + \
-                    ' sent you a hug'
+                push_notification = {
+                    'type': 'hug',
+                    'text': current_user.display_name + ' sent you a hug'
+                }
                 notification_for = original_user.id
 
             # Update user data
@@ -823,8 +834,10 @@ def create_app(test_config=None):
                                     type='message',
                                     text='You have a new message',
                                     date=message_data['date'])
-        push_notification = logged_user.display_name + \
-            ' sent you a message'
+        push_notification = {
+            'type': 'message',
+            'text': logged_user.display_name + ' sent you a message'
+        }
         notification_for = message_data['forId']
 
         # Try to add the message to the database
