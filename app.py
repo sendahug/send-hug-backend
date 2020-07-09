@@ -578,6 +578,14 @@ def create_app(test_config=None):
             open_report.closed = True
             original_user.open_report = False
 
+        # If the user is changing their auto-refresh setting
+        if('autoRefresh' in updated_user):
+            original_user.auto_refresh = updated_user['autoRefresh']
+
+        # If the user is changing their push notifications setting
+        if('pushEnabled' in updated_user):
+            original_user.push_enabled = updated_user['pushEnabled']
+
         # Checks if the user's role is updated based on the
         # permissions in the JWT
         # Checks whether the user has 'patch:any-post' permission, which
