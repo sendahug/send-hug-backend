@@ -1249,7 +1249,7 @@ def create_app(test_config=None):
     @app.route('/notifications')
     @requires_auth(['read:messages'])
     def get_latest_notifications(token_payload):
-        silent_refresh = request.args.get('silentRefresh', True, type=bool)
+        silent_refresh = request.args.get('silentRefresh', True)
         user = User.query.filter(User.auth0_id == token_payload['sub']).\
             one_or_none()
 
@@ -1266,7 +1266,7 @@ def create_app(test_config=None):
         # Updates the user's 'last read' time only if this fetch was
         # triggered by the user (meaning, they're looking at the
         # notifications tab right now).
-        if(not silent_refresh):
+        if(silent_refresh == 'false'):
             # Update the user's last-read date
             try:
                 user.last_notifications_read = datetime.now()
