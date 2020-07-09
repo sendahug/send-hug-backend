@@ -501,7 +501,7 @@ def create_app(test_config=None):
         # If the user being updated was given a hug, also update the current
         # user's "given hugs" value, as they just gave a hug
         if('receivedH' in updated_user and 'givenH' in updated_user):
-            original_hugs = original_user.given_hugs
+            original_hugs = original_user.received_hugs
             if(original_user.received_hugs != updated_user['receivedH']):
                 current_user.given_hugs += 1
                 today = datetime.now()
