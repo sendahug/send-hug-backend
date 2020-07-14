@@ -1106,7 +1106,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
 
     # Attempt to get open reports with a user's JWT
-    def test_get_open_reports_messages_as_user(self):
+    def test_get_open_reports_as_user(self):
         response = self.client().get('/reports', headers=user_header)
         response_data = json.loads(response.data)
 
@@ -1114,7 +1114,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
 
     #  Attempt to get open reports with a moderator's JWT
-    def test_get_open_reports_messages_as_mod(self):
+    def test_get_open_reports_as_mod(self):
         response = self.client().get('/reports', headers=moderator_header)
         response_data = json.loads(response.data)
 
