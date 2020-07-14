@@ -463,6 +463,52 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(len(response_data['posts']), 5)
         self.assertEqual(response_data['total_pages'], 2)
 
+    # Get Users by Type Tests ('/users/<type>', GET)
+    # -------------------------------------------------------
+    # Attempt to get list of users without auth header
+    def test_get_user_list_no_auth(self):
+        response = self.client().get('/users/blocked')
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get list of users with malformed auth header
+    def test_get_user_list_malformed_auth(self):
+        response = self.client().get('/users/blocked',
+                                     headers=malformed_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get list of users with user's auth header
+    def test_get_user_list_as_user(self):
+        response = self.client().get('/users/blocked', headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to get list of users with moderator's auth header
+    def test_get_user_list_as_mod(self):
+        response = self.client().get('/users/blocked',
+                                     headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to get list of users with admin's auth header
+    def test_get_user_list_as_admin(self):
+        response = self.client().get('/users/blocked',
+                                     headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['total_pages'], 0)
+
     # Get User Data Tests ('/users/all/<user_id>', GET)
     # -------------------------------------------------------
     # Attempt to get a user's data without auth header
