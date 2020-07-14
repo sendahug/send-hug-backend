@@ -1309,6 +1309,50 @@ class TestHugApp(unittest.TestCase):
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 404)
 
+    # Get Filters Tests ('/filters', GET)
+    # -------------------------------------------------------
+    # Attempt to get filters without auth header
+    def test_get_filters_no_auth(self):
+        response = self.client().get('/filters')
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get filters with malformed auth header
+    def test_get_filters_malformed_auth(self):
+        response = self.client().get('/filters', headers=malformed_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get filters with a user's JWT
+    def test_get_filters_as_user(self):
+        response = self.client().get('/filters', headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    #  Attempt to get filters with a moderator's JWT
+    def test_get_filters_as_mod(self):
+        response = self.client().get('/filters', headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to get filters with an admin's JWT
+    def test_get_filters_as_admin(self):
+        response = self.client().get('/filters', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['total_pages'], 0)
+        self.assertEqual(len(response_data['words']), 0)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
