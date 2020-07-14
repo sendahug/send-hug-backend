@@ -1353,6 +1353,54 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response_data['total_pages'], 0)
         self.assertEqual(len(response_data['words']), 0)
 
+    # Create Filters Tests ('/filters', POST)
+    # -------------------------------------------------------
+    # Attempt to create a filter without auth header
+    def test_create_filters_no_auth(self):
+        response = self.client().post('/filters',
+                                      data=json.dumps({"word":"sample"}))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to create a filter with malformed auth header
+    def test_create_filters_malformed_auth(self):
+        response = self.client().post('/filters', headers=malformed_header,
+                                      data=json.dumps({"word":"sample"}))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to create a filter with a user's JWT
+    def test_create_filters_as_user(self):
+        response = self.client().post('/filters', headers=user_header,
+                                      data=json.dumps({"word":"sample"}))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    #  Attempt to create a filter with a moderator's JWT
+    def test_create_filters_as_mod(self):
+        response = self.client().post('/filters', headers=moderator_header,
+                                      data=json.dumps({"word":"sample"}))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to create a filter with an admin's JWT
+    def test_create_filters_as_admin(self):
+        response = self.client().post('/filters', headers=admin_header,
+                                      data=json.dumps({"word":"sample"}))
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['added'], 'sample')
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
