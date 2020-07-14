@@ -116,6 +116,49 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(len(response_data['recent']), 10)
         self.assertEqual(len(response_data['suggested']), 10)
 
+    # Search Route Tests ('/', POST)
+    # -------------------------------------------------------
+    # Run a search
+    def test_search(self):
+        response = self.client().post('/', data=json.dumps({'search': 'user'}))
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['users'])
+        self.assertTrue(response_data['posts'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['post_results'], 1)
+        self.assertEqual(response_data['user_results'], 6)
+
+    # Run a search which returns multiple pages of results
+    def test_search_multiple_pages(self):
+        response = self.client().post('/', data=json.dumps({'search': 'test'}))
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['posts'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['post_results'], 9)
+        self.assertEqual(len(response_data['posts']), 5)
+        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(response_data['current_page'], 1)
+        self.assertEqual(response_data['user_results'], 0)
+
+    # Run a search which returns multiple pages of results - get page 2
+    def test_search_multiple_pages_page_2(self):
+        response = self.client().post('/', data=json.dumps({'search': 'test',
+                                                            'page': 2}))
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['posts'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['post_results'], 9)
+        self.assertEqual(len(response_data['posts']), 4)
+        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(response_data['current_page'], 2)
+        self.assertEqual(response_data['user_results'], 0)
+
     # Create Post Route Tests ('/posts', POST)
     # -------------------------------------------------------
     # Attempt to create a post with no authorisation header
