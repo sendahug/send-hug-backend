@@ -1078,6 +1078,52 @@ class TestHugApp(unittest.TestCase):
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 404)
 
+    # Get Open Reports Tests ('/reports', GET)
+    # -------------------------------------------------------
+    # Attempt to get open reports without auth header
+    def test_get_open_reports_no_auth(self):
+        response = self.client().get('/reports')
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get open reports with malformed auth header
+    def test_get_open_reports_malformed_auth(self):
+        response = self.client().get('/reports', headers=malformed_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get open reports with a user's JWT
+    def test_get_open_reports_messages_as_user(self):
+        response = self.client().get('/reports', headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    #  Attempt to get open reports with a moderator's JWT
+    def test_get_open_reports_messages_as_mod(self):
+        response = self.client().get('/reports', headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to get open reports with an admin's JWT
+    def test_get_open_reports_as_admin(self):
+        response = self.client().get('/reports', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['totalUserPages'], 0)
+        self.assertEqual(response_data['totalPostPages'], 0)
+        self.assertEqual(len(response_data['userReports']), 0)
+        self.assertEqual(len(response_data['postReports']), 0)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
