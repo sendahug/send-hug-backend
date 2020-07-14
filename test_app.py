@@ -81,6 +81,15 @@ new_message = {
     "date": "Sun Jun 07 2020 15:57:45 GMT+0300"
 }
 
+new_report = {
+    "type": "Post",
+    "userID": 0,
+    "postID": 0,
+    "reporter": 0,
+    "reportReason": "It is inappropriate",
+    "date": "Sun Jun 07 2020 15:57:45 GMT+0300"
+}
+
 
 # App testing
 class TestHugApp(unittest.TestCase):
@@ -1123,6 +1132,86 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response_data['totalPostPages'], 0)
         self.assertEqual(len(response_data['userReports']), 0)
         self.assertEqual(len(response_data['postReports']), 0)
+
+    # Create Report Route Tests ('/reports', POST)
+    # -------------------------------------------------------
+    # Attempt to create a report with no authorisation header
+    def test_send_report_no_auth(self):
+        response = self.client().post('/reports', data=json.dumps(new_report))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to create a report with a malformed auth header
+    def test_send_report_malformed_auth(self):
+        response = self.client().post('/reports', headers=malformed_header,
+                                      data=json.dumps(new_report))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to create a report with a user's JWT
+    def test_send_report_as_user(self):
+        report = new_report
+        report['userID'] = 4
+        report['postID'] = 25
+        report['reporter'] = sample_user_id
+        response = self.client().post('/reports', headers=user_header,
+                                      data=json.dumps(report))
+        response_data = json.loads(response.data)
+        response_report = response_data['report']
+
+        self.assertTrue(response_data['success'])
+        self.assertFalse(response_report['closed'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_report['postID'], report['postID'])
+
+    # Attempt to create a report with a moderator's JWT
+    def test_send_report_as_mod(self):
+        report = new_report
+        report['userID'] = 4
+        report['postID'] = 25
+        report['reporter'] = sample_moderator_id
+        response = self.client().post('/reports', headers=moderator_header,
+                                      data=json.dumps(report))
+        response_data = json.loads(response.data)
+        response_report = response_data['report']
+
+        self.assertTrue(response_data['success'])
+        self.assertFalse(response_report['closed'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_report['postID'], report['postID'])
+
+    # Attempt to create a report with an admin's JWT
+    def test_send_report_as_admin(self):
+        report = new_report
+        report['userID'] = 4
+        report['postID'] = 25
+        report['reporter'] = sample_admin_id
+        response = self.client().post('/reports', headers=admin_header,
+                                      data=json.dumps(report))
+        response_data = json.loads(response.data)
+        response_report = response_data['report']
+
+        self.assertTrue(response_data['success'])
+        self.assertFalse(response_report['closed'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_report['postID'], report['postID'])
+
+    # Attempt to create a post report without post ID with an admin's JWT
+    def test_send_malformed_report_as_admin(self):
+        report = new_report
+        report['userID'] = 4
+        report['postID'] = None
+        report['reporter'] = sample_admin_id
+        response = self.client().post('/reports', headers=admin_header,
+                                      data=json.dumps(report))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 400)
 
 
 # Make the tests conveniently executable
