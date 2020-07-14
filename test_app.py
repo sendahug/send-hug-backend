@@ -1213,6 +1213,102 @@ class TestHugApp(unittest.TestCase):
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 400)
 
+    # Update Report Route Tests ('/reports/<report_id>', PATCH)
+    # -------------------------------------------------------
+    # Attempt to update a report with no authorisation header
+    def test_update_report_no_auth(self):
+        response = self.client().patch('/reports/36',
+                                       data=json.dumps(new_report))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to update a report with a malformed auth header
+    def test_update_report_malformed_auth(self):
+        response = self.client().patch('/reports/36', headers=malformed_header,
+                                       data=json.dumps(new_report))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to update a report (with user's JWT)
+    def test_update_report_as_user(self):
+        report = new_report
+        report['userID'] = 4
+        report['postID'] = 25
+        report['reporter'] = sample_user_id
+        response = self.client().patch('/reports/36', headers=user_header,
+                                       data=json.dumps(report))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to update a report (with moderator's JWT)
+    def test_update_report_as_mod(self):
+        report = new_report
+        report['userID'] = 4
+        report['postID'] = 25
+        report['reporter'] = sample_moderator_id
+        response = self.client().patch('/reports/36', headers=moderator_header,
+                                       data=json.dumps(report))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to update a report (with admin's JWT)
+    def test_update_report_as_admin(self):
+        report = new_report
+        report['id'] = 36
+        report['userID'] = 4
+        report['postID'] = 25
+        report['reporter'] = sample_admin_id
+        report['dismissed'] = False
+        report['closed'] = False
+        response = self.client().patch('/reports/36', headers=admin_header,
+                                       data=json.dumps(report))
+        response_data = json.loads(response.data)
+        report_text = response_data['updated']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(report_text['id'], report['id'])
+
+    # Attempt to update a report with no ID (with admin's JWT)
+    def test_update_no_id_report_as_admin(self):
+        report = new_report
+        report['id'] = 36
+        report['userID'] = 4
+        report['postID'] = 25
+        report['reporter'] = sample_admin_id
+        report['dismissed'] = False
+        report['closed'] = False
+        response = self.client().patch('/reports/', headers=admin_header,
+                                       data=json.dumps(report))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 404)
+
+    # Attempt to update a report that doesn't exist (with admin's JWT)
+    def test_update_nonexistent_report_as_admin(self):
+        report = new_report
+        report['id'] = 36
+        report['userID'] = 4
+        report['postID'] = 25
+        report['reporter'] = sample_admin_id
+        report['dismissed'] = False
+        report['closed'] = False
+        response = self.client().patch('/reports/100', headers=admin_header,
+                                       data=json.dumps(report))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 404)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
