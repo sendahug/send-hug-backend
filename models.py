@@ -75,7 +75,8 @@ class User(db.Model):
             'blocked': self.blocked,
             'releaseDate': self.release_date,
             'autoRefresh': self.auto_refresh,
-            'pushEnabled': self.push_enabled
+            'pushEnabled': self.push_enabled,
+            'last_notifications_read': self.last_notifications_read
         }
 
 
