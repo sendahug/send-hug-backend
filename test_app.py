@@ -1484,6 +1484,145 @@ class TestHugApp(unittest.TestCase):
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 404)
 
+    # Get New Notifications Route Tests ('/notifications', GET)
+    # -------------------------------------------------------
+    # Attempt to get user notifications without auth header
+    def test_get_notifications_no_auth(self):
+        response = self.client().get('/notifications')
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get user notifications with malformed auth header
+    def test_get_notifications_malformed_auth(self):
+        response = self.client().get('/notifications',
+                                     headers=malformed_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to get user notifications with a user's JWT (silent refresh)
+    def test_get_silent_notifications_as_user(self):
+        pre_user_query = self.client().get('/users/all/' +
+                                           sample_user_auth0_id,
+                                           headers=user_header)
+        pre_user_data = json.loads(pre_user_query.data)['user']
+        response = self.client().get('/notifications?silentRefresh=true',
+                                     headers=user_header)
+        response_data = json.loads(response.data)
+        post_user_query = self.client().get('/users/all/' +
+                                            sample_user_auth0_id,
+                                            headers=user_header)
+        post_user_data = json.loads(post_user_query.data)['user']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response_data['notifications']), 0)
+        self.assertEqual(pre_user_data['last_notifications_read'],
+                         post_user_data['last_notifications_read'])
+
+    # Attempt to get user notifications with a user's JWT (non-silent refresh)
+    def test_get_non_silent_notifications_as_user(self):
+        pre_user_query = self.client().get('/users/all/' +
+                                           sample_user_auth0_id,
+                                           headers=user_header)
+        pre_user_data = json.loads(pre_user_query.data)['user']
+        response = self.client().get('/notifications?silentRefresh=false',
+                                     headers=user_header)
+        response_data = json.loads(response.data)
+        post_user_query = self.client().get('/users/all/' +
+                                            sample_user_auth0_id,
+                                            headers=user_header)
+        post_user_data = json.loads(post_user_query.data)['user']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response_data['notifications']), 0)
+        self.assertNotEqual(pre_user_data['last_notifications_read'],
+                            post_user_data['last_notifications_read'])
+
+    # Attempt to get user notifications with a mod's JWT (silent refresh)
+    def test_get_silent_notifications_as_mod(self):
+        pre_user_query = self.client().get('/users/all/' +
+                                           sample_moderator_auth0_id,
+                                           headers=moderator_header)
+        pre_user_data = json.loads(pre_user_query.data)['user']
+        response = self.client().get('/notifications?silentRefresh=true',
+                                     headers=moderator_header)
+        response_data = json.loads(response.data)
+        post_user_query = self.client().get('/users/all/' +
+                                            sample_moderator_auth0_id,
+                                            headers=moderator_header)
+        post_user_data = json.loads(post_user_query.data)['user']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response_data['notifications']), 0)
+        self.assertEqual(pre_user_data['last_notifications_read'],
+                         post_user_data['last_notifications_read'])
+
+    # Attempt to get user notifications with a mod's JWT (non-silent refresh)
+    def test_get_non_silent_notifications_as_mod(self):
+        pre_user_query = self.client().get('/users/all/' +
+                                           sample_moderator_auth0_id,
+                                           headers=moderator_header)
+        pre_user_data = json.loads(pre_user_query.data)['user']
+        response = self.client().get('/notifications?silentRefresh=false',
+                                     headers=moderator_header)
+        response_data = json.loads(response.data)
+        post_user_query = self.client().get('/users/all/' +
+                                            sample_moderator_auth0_id,
+                                            headers=moderator_header)
+        post_user_data = json.loads(post_user_query.data)['user']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response_data['notifications']), 0)
+        self.assertNotEqual(pre_user_data['last_notifications_read'],
+                            post_user_data['last_notifications_read'])
+
+        # Attempt to get user notifications with an admin's JWT (silently)
+        def test_get_silent_notifications_as_admin(self):
+            pre_user_query = self.client().get('/users/all/' +
+                                               sample_admin_auth0_id,
+                                               headers=admin_header)
+            pre_user_data = json.loads(pre_user_query.data)['user']
+            response = self.client().get('/notifications?silentRefresh=true',
+                                         headers=admin_header)
+            response_data = json.loads(response.data)
+            post_user_query = self.client().get('/users/all/' +
+                                                sample_admin_auth0_id,
+                                                headers=admin_header)
+            post_user_data = json.loads(post_user_query.data)['user']
+
+            self.assertTrue(response_data['success'])
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(len(response_data['notifications']), 0)
+            self.assertEqual(pre_user_data['last_notifications_read'],
+                             post_user_data['last_notifications_read'])
+
+        # Attempt to get user notifications with an admin's JWT (non-silently)
+        def test_get_non_silent_notifications_as_admin(self):
+            pre_user_query = self.client().get('/users/all/' +
+                                               sample_admin_auth0_id,
+                                               headers=admin_header)
+            pre_user_data = json.loads(pre_user_query.data)['user']
+            response = self.client().get('/notifications?silentRefresh=false',
+                                         headers=admin_header)
+            response_data = json.loads(response.data)
+            post_user_query = self.client().get('/users/all/' +
+                                                sample_admin_auth0_id,
+                                                headers=admin_header)
+            post_user_data = json.loads(post_user_query.data)['user']
+
+            self.assertTrue(response_data['success'])
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(len(response_data['notifications']), 0)
+            self.assertNotEqual(pre_user_data['last_notifications_read'],
+                                post_user_data['last_notifications_read'])
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
