@@ -74,6 +74,15 @@ updated_user = {
     "loginCount": 0
 }
 
+updated_unblock_user = {
+    "id": 0,
+    "displayName": "",
+    "receivedH": 0,
+    "givenH": 0,
+    "loginCount": 0,
+    "blocked": False
+}
+
 updated_display = {
     "id": 0,
     "displayName": "meow",
@@ -711,6 +720,18 @@ class TestHugApp(unittest.TestCase):
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 403)
 
+    # Attempt to update a user's blocked state with a user's JWT
+    def test_update_block_user_as_user(self):
+        user = updated_unblock_user
+        user['id'] = sample_user_id
+        response = self.client().patch('/users/all/' + sample_user_id,
+                                       headers=user_header,
+                                       data=json.dumps(user))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
     # Attempt to update a user's data with a moderator's JWT
     def test_update_user_as_mod(self):
         user = updated_user
@@ -732,6 +753,18 @@ class TestHugApp(unittest.TestCase):
         user = updated_display
         user['id'] = sample_admin_id
         response = self.client().patch('/users/all/' + sample_admin_id,
+                                       headers=moderator_header,
+                                       data=json.dumps(user))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to update a user's blocked state with a moderator's JWT
+    def test_update_block_user_as_mod(self):
+        user = updated_unblock_user
+        user['id'] = sample_moderator_id
+        response = self.client().patch('/users/all/' + sample_moderator_id,
                                        headers=moderator_header,
                                        data=json.dumps(user))
         response_data = json.loads(response.data)
@@ -768,6 +801,19 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(updated['receivedH'], user['receivedH'])
+
+    # Attempt to update a user's blocked state with an admin's JWT
+    def test_update_block_user_as_admin(self):
+        user = updated_unblock_user
+        user['id'] = sample_user_id
+        response = self.client().patch('/users/all/' + sample_user_id,
+                                       headers=admin_header,
+                                       data=json.dumps(user))
+        updated = response_data['updated']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(updated['id'], user['id'])
 
     # Attempt to update a user's data with no ID (with admin's JWT)
     def test_update_no_id_user_as_admin(self):
