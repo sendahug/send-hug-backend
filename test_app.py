@@ -51,6 +51,14 @@ updated_post = {
     "givenHugs": 0
 }
 
+report_post = {
+    "user_id": 0,
+    "text": "test post",
+    "date": "Sun Jun 07 2020 15:57:45 GMT+0300",
+    "givenHugs": 0,
+    "closeReport": True
+}
+
 new_user = '{\
 "auth0Id": "",\
 "displayName": "",\
@@ -296,6 +304,17 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(post_text['text'], post['text'])
 
+    # Attempt to close the report on another user's post (with mod's JWT)
+    def test_update_other_users_post_report_as_mod(self):
+        post = report_post
+        post['user_id'] = sample_user_id
+        response = self.client().patch('/posts/4', headers=moderator_header,
+                                       data=json.dumps(post))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
     # Attempt to update the admin's post (with same admin's JWT)
     def test_update_own_post_as_admin(self):
         post = updated_post
@@ -312,6 +331,19 @@ class TestHugApp(unittest.TestCase):
     # Attempt to update another user's post (with admin's JWT)
     def test_update_other_users_post_as_admin(self):
         post = updated_post
+        post['user_id'] = sample_user_id
+        response = self.client().patch('/posts/4', headers=admin_header,
+                                       data=json.dumps(post))
+        response_data = json.loads(response.data)
+        post_text = response_data['updated']
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(post_text['text'], post['text'])
+
+    # Attempt to close the report on another user's post (with admin's JWT)
+    def test_update_other_users_post_report_as_admin(self):
+        post = report_post
         post['user_id'] = sample_user_id
         response = self.client().patch('/posts/4', headers=admin_header,
                                        data=json.dumps(post))
