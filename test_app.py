@@ -1401,6 +1401,57 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['added'], 'sample')
 
+    # Delete Filters Tests ('/filters/<id>', DELETE)
+    # -------------------------------------------------------
+    # Attempt to delete a filter without auth header
+    def test_delete_filters_no_auth(self):
+        response = self.client().delete('/filters/1')
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to delete a filter with malformed auth header
+    def test_delete_filters_malformed_auth(self):
+        response = self.client().delete('/filters/1', headers=malformed_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to delete a filter with a user's JWT
+    def test_delete_filters_as_user(self):
+        response = self.client().delete('/filters/1', headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    #  Attempt to delete a filter with a moderator's JWT
+    def test_delete_filters_as_mod(self):
+        response = self.client().delete('/filters/1', headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to delete a filter with an admin's JWT
+    def test_delete_filters_as_admin(self):
+        response = self.client().post('/filters/1', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], 'sample')
+
+    # Attempt to delete a filter that doesn't exist with an admin's JWT
+    def test_delete_nonexistent_filters_as_admin(self):
+        response = self.client().post('/filters/100', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 404)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
