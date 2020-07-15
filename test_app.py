@@ -899,9 +899,37 @@ class TestHugApp(unittest.TestCase):
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 401)
 
-    # Attempt to get a user's messages with a user's JWT
-    def test_get_user_messages_as_user(self):
+    # Attempt to get a user's inbox with a user's JWT
+    def test_get_user_inbox_as_user(self):
         response = self.client().get('/messages?userID=' + sample_user_id,
+                                     headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['messages'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['current_page'], 1)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['messages']), 2)
+
+    # Attempt to get a user's outbox with a user's JWT
+    def test_get_user_outbox_as_user(self):
+        response = self.client().get('/messages?type=outbox&userID=' +
+                                     sample_user_id,
+                                     headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['messages'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['current_page'], 1)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['messages']), 2)
+
+    # Attempt to get a user's threads mailbox with a user's JWT
+    def test_get_user_threads_as_user(self):
+        response = self.client().get('/messages?type=threads&userID=' +
+                                     sample_user_id,
                                      headers=user_header)
         response_data = json.loads(response.data)
 
@@ -921,8 +949,8 @@ class TestHugApp(unittest.TestCase):
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 403)
 
-    # Attempt to get a user's messages with a moderator's JWT
-    def test_get_user_messages_as_mod(self):
+    # Attempt to get a user's inbox with a moderator's JWT
+    def test_get_user_inbox_as_mod(self):
         response = self.client().get('/messages?userID=' + sample_moderator_id,
                                      headers=moderator_header)
         response_data = json.loads(response.data)
@@ -934,6 +962,34 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response_data['total_pages'], 1)
         self.assertEqual(len(response_data['messages']), 1)
 
+    # Attempt to get a user's outbox with a moderator's JWT
+    def test_get_user_outbox_as_mod(self):
+        response = self.client().get('/messages?type=outbox&userID=' +
+                                     sample_moderator_id,
+                                     headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['messages'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['current_page'], 1)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['messages']), 2)
+
+    # Attempt to get a user's threads mailbox with a moderator's JWT
+    def test_get_user_threads_as_mod(self):
+        response = self.client().get('/messages?type=threads&userID=' +
+                                     sample_moderator_id,
+                                     headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['messages'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['current_page'], 1)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['messages']), 2)
+
     #  Attempt to get another user's messages with a moderator's JWT
     def test_get_another_users_messages_as_mod(self):
         response = self.client().get('/messages?userID=' + sample_admin_id,
@@ -943,8 +999,8 @@ class TestHugApp(unittest.TestCase):
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 403)
 
-    # Attempt to get a user's messages with an admin's JWT
-    def test_get_user_messages_as_admin(self):
+    # Attempt to get a user's inbox with an admin's JWT
+    def test_get_user_inbox_as_admin(self):
         response = self.client().get('/messages?userID=' + sample_admin_id,
                                      headers=admin_header)
         response_data = json.loads(response.data)
@@ -955,6 +1011,34 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
         self.assertEqual(len(response_data['messages']), 1)
+
+    # Attempt to get a user's outbox with an admin's JWT
+    def test_get_user_outbox_as_admin(self):
+        response = self.client().get('/messages?type=outbox&userID=' +
+                                     sample_admin_id,
+                                     headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['messages'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['current_page'], 1)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['messages']), 2)
+
+    # Attempt to get a user's threads mailbox with an admin's JWT
+    def test_get_user_threads_as_admin(self):
+        response = self.client().get('/messages?type=threads&userID=' +
+                                     sample_admin_id,
+                                     headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['messages'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['current_page'], 1)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['messages']), 2)
 
     # Attempt to get another user's messages with an admin's JWT
     def test_get_another_users_messages_as_admin(self):
