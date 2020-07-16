@@ -637,7 +637,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
 
     # Attempt to create a user with malformed auth header
-    def test_create_user_no_auth(self):
+    def test_create_user_malformed_auth(self):
         response = self.client().post('/users', headers=malformed_header,
                                       data=new_user)
         response_data = json.loads(response.data)
@@ -646,7 +646,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
 
     # Attempt to create a user with user's JWT
-    def test_create_user_no_auth(self):
+    def test_create_user_as_user(self):
         response = self.client().post('/users', headers=user_header,
                                       data=new_user)
         response_data = json.loads(response.data)
@@ -655,7 +655,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
 
     # Attempt to create a user with moderator's JWT
-    def test_create_user_no_auth(self):
+    def test_create_user_as_moderator(self):
         response = self.client().post('/users', headers=moderator_header,
                                       data=new_user)
         response_data = json.loads(response.data)
@@ -664,7 +664,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
 
     # Attempt to create a user with admin's JWT
-    def test_create_user_no_auth(self):
+    def test_create_user_as_damin(self):
         response = self.client().post('/users', headers=admin_header,
                                       data=new_user)
         response_data = json.loads(response.data)
