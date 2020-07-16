@@ -1190,6 +1190,27 @@ class TestHugApp(unittest.TestCase):
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 403)
 
+    # Attempt to send a message from a user (when there's no thread)
+    def test_send_message_create_thread_as_user(self):
+        message = new_message
+        message['fromId'] = int(blocked_user_id)
+        message['forId'] = sample_admin_id
+        response = self.client().post('/messages', headers=blocked_header,
+                                      data=json.dumps(message))
+        response_data = json.loads(response.data)
+        response_message = response_data['message']
+        new_thread = self.client().get('/messages?userID=9&type=thread&\
+                                        threadID=7', headers=blocked_header)
+        new_thread_data = json.loads(new_thread.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['message'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_message['messageText'],
+                         message['messageText'])
+        self.assertEqual(response_message['threadID'], '7')
+        self.assertEqual(len(new_thread_data['messages']), 1)
+
     # Delete Message Route Tests ('/message/<message_id>', DELETE)
     # -------------------------------------------------------
     # Attempt to delete a message with no authorisation header
