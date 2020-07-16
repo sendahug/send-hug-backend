@@ -857,6 +857,19 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(updated['id'], user['id'])
 
+    # Attempt to update another user's settings (admin's JWT)
+    def test_update_user_settings_as_admin(self):
+        user = updated_unblock_user
+        user['id'] = sample_user_id
+        user['autoRefresh'] = True
+        user['pushEnabled'] = True
+        response = self.client().patch('/users/all/' + sample_user_id,
+                                       headers=admin_header,
+                                       data=json.dumps(user))
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
     # Attempt to update a user's data with no ID (with admin's JWT)
     def test_update_no_id_user_as_admin(self):
         response = self.client().patch('/users/all/', headers=admin_header,
