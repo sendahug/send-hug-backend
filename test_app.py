@@ -67,7 +67,7 @@ report_post = {
 }
 
 new_user = '{\
-"auth0Id": "",\
+"auth0Id": "auth0|5edf778e56d062001335196e",\
 "displayName": "",\
 "receivedH": 0,\
 "givenH": 0,\
@@ -678,6 +678,17 @@ class TestHugApp(unittest.TestCase):
 
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 403)
+
+    # Attempt to create a user with new user's JWT (until we get the
+    # Auth0 issue sorted out, this test is required to ensure users can't
+    # create any user they like)
+    def test_create_different_user_as_new_user(self):
+        response = self.client().post('/users', headers=blocked_header,
+                                      data=new_user)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 422)
 
     # Edit User Data Tests ('/users/all/<user_id>', PATCH)
     # -------------------------------------------------------
