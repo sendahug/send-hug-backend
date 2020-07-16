@@ -1345,7 +1345,7 @@ class TestHugApp(unittest.TestCase):
     # -------------------------------------------------------
     # Attempt to delete a message with no authorisation header
     def test_delete_message_no_auth(self):
-        response = self.client().delete('/messages/1')
+        response = self.client().delete('/messages/inbox/1')
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
@@ -1353,7 +1353,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete a message with a malformed auth header
     def test_delete_message_malformed_auth(self):
-        response = self.client().delete('/messages/1',
+        response = self.client().delete('/messages/inbox/1',
                                         headers=malformed_header)
         response_data = json.loads(response.data)
 
@@ -1362,7 +1362,8 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete a message with a user's JWT
     def test_delete_message_as_user(self):
-        response = self.client().delete('/messages/1', headers=user_header)
+        response = self.client().delete('/messages/inbox/3',
+                                        headers=user_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -1371,15 +1372,30 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete another user's message (with a user's JWT)
     def test_delete_message_from_another_user_as_user(self):
-        response = self.client().delete('/messages/7', headers=user_header)
+        response = self.client().delete('/messages/inbox/7',
+                                        headers=user_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 403)
 
+    # Attempt to delete a thread with a user's JWT
+    def test_delete_thread_as_user(self):
+        response = self.client().delete('/messages/thread/2',
+                                        headers=user_header)
+        response_data = json.loads(response.data)
+        get_thread = self.client().get('/messages?userID=1&type=thread&\
+                                        threadID=2')
+        thread_data = json.loads(get_thread)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], '2')
+        self.assertEqual(len(thread_data['messages']), 0)
+
     # Attempt to delete a message with a moderator's JWT
     def test_delete_message_as_mod(self):
-        response = self.client().delete('/messages/5',
+        response = self.client().delete('/messages/inbox/5',
                                         headers=moderator_header)
         response_data = json.loads(response.data)
 
@@ -1389,7 +1405,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete another user's message (with a moderator's JWT)
     def test_delete_message_from_another_user_as_mod(self):
-        response = self.client().delete('/messages/8',
+        response = self.client().delete('/messages/outbox/8',
                                         headers=moderator_header)
         response_data = json.loads(response.data)
 
@@ -1398,7 +1414,8 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete a message with an admin's JWT
     def test_delete_message_as_admin(self):
-        response = self.client().delete('/messages/6', headers=admin_header)
+        response = self.client().delete('/messages/outbox/10',
+                                        headers=admin_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -1407,13 +1424,14 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete another user's message (with an admin's JWT)
     def test_delete_message_from_another_user_as_admin(self):
-        response = self.client().delete('/messages/3', headers=admin_header)
+        response = self.client().delete('/messages/outbox/3',
+                                        headers=admin_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 403)
 
-    # Attempt to delete a user's message with no ID (with admin's JWT)
+    # Attempt to delete a user's message with no mailbox (with admin's JWT)
     def test_delete_no_id_user_message_as_admin(self):
         response = self.client().delete('/messages/', headers=admin_header)
         response_data = json.loads(response.data)
@@ -1423,7 +1441,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete a nonexistent user's message (with admin's JWT)
     def test_delete_nonexistent_user_message_as_admin(self):
-        response = self.client().delete('/messages/100', headers=admin_header)
+        response = self.client().delete('/messages/inbox/100', headers=admin_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
