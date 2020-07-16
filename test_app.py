@@ -250,6 +250,17 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_post['text'], post['text'])
 
+    # Attempt to create a post with a blocked user's JWT
+    def test_send_post_as_blocked(self):
+        post = new_post
+        post['user_id'] = blocked_user_id
+        response = self.client().post('/posts', headers=blocked_header,
+                                      data=json.dumps(post))
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
     # Update Post Route Tests ('/posts/<post_id>', PATCH)
     # -------------------------------------------------------
     # Attempt to update a post with no authorisation header
