@@ -545,12 +545,9 @@ COPY public.threads (id, user_1_id, user_2_id, user_1_deleted, user_2_deleted) F
 --
 
 COPY public.users (id, auth0_id, received_hugs, given_hugs, display_name, login_count, role, blocked, open_report, release_date, last_notifications_read, auto_refresh, push_enabled) FROM stdin;
-6	auth0|5edf778e56d062001335196e	0	0	user17	1	user	f	f	\N	\N	\N	\N
-7	auth0|5edf78af0793080013276338	0	0	user84	1	user	f	f	\N	\N	\N	\N
-8	auth0|5edf79c30793080013276511	0	0	user63	1	user	f	f	\N	\N	\N	\N
-9	auth0|5edf7b060793080013276746	0	1	user93	2	user	f	f	\N	\N	\N	\N
 1	auth0|5ed34765f0b8e60c8e87ca62	3	2	shirb	59	admin	f	f	\N	\N	\N	\N
 4	auth0|5ed8e3d0def75d0befbc7e50	75	75	user14	23	admin	f	f	\N	2020-07-14 16:01:02.204372	f	t
+9	auth0|5edf7b060793080013276746	0	1	user93	2	admin	t	f	2020-08-15 10:01:27.669	\N	\N	\N
 5	auth0|5ede3e7a0793080013259050	0	0	user52	7	moderator	f	f	\N	\N	\N	\N
 \.
 
