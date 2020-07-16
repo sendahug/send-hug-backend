@@ -1249,6 +1249,88 @@ class TestHugApp(unittest.TestCase):
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 404)
 
+    # Empty Mailbox Tests ('/messages/<mailbox>', DELETE)
+    # -------------------------------------------------------
+    # Attempt to empty mailbox without auth header
+    def test_empty_mailbox_no_auth(self):
+        response = self.client().delete('/messages/inbox?userID=4')
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to empty mailbox with malformed auth header
+    def test_empty_mailbox_malformed_auth(self):
+        response = self.client().delete('/messages/inbox?userID=4',
+                                        headers=malformed_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to empty user's inbox (user JWT)
+    def test_empty_mailbox_as_user(self):
+        response = self.client().delete('/messages/inbox?userID=' +
+                                        sample_user_id,
+                                        headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], '5')
+        self.assertEqual(response_data['userID'], '1')
+
+    # Attempt to empty another user's inbox (user JWT)
+    def test_empty_other_users_mailbox_as_user(self):
+        response = self.client().delete('/messages/inbox?userID=4',
+                                        headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to empty user's outbox (moderator's JWT)
+    def test_empty_mailbox_as_mod(self):
+        response = self.client().delete('/messages/outbox?userID=' +
+                                        sample_moderator_id,
+                                        headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], '5')
+        self.assertEqual(response_data['userID'], '5')
+
+    # Attempt to empty another user's outbox (moderator's JWT)
+    def test_empty_other_users_mailbox_as_mod(self):
+        response = self.client().delete('/messages/outbox?userID=1',
+                                        headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to empty user's threads mailbox (admin's JWT)
+    def test_empty_mailbox_as_admin(self):
+        response = self.client().delete('/messages/threads?userID=' +
+                                        sample_admin_id,
+                                        headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], '5')
+        self.assertEqual(response_data['userID'], '4')
+
+    # Attempt to empty another user's threads mailbox (admin's JWT)
+    def test_empty_other_users_mailbox_as_admin(self):
+        response = self.client().delete('/messages/threads?userID=5',
+                                        headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
     # Get Open Reports Tests ('/reports', GET)
     # -------------------------------------------------------
     # Attempt to get open reports without auth header
