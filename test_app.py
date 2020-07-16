@@ -115,6 +115,15 @@ new_report = {
     "date": "Sun Jun 07 2020 15:57:45 GMT+0300"
 }
 
+new_subscription = {
+    "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",
+    "expirationTime": None,
+    "keys": {
+            "p256dh": "fdsfd",
+            "auth": "dfs"
+            }
+}
+
 
 # App testing
 class TestHugApp(unittest.TestCase):
@@ -1993,6 +2002,59 @@ class TestHugApp(unittest.TestCase):
             self.assertNotEqual(pre_user_data['last_notifications_read'],
                                 post_user_data['last_notifications_read'])
 
+        # Add New Push Subscription Route Tests ('/notifications', POST)
+        # -------------------------------------------------------
+        # Attempt to create push subscription without auth header
+        def test_post_subscription_no_auth(self):
+            response = self.client().post('/notifications',
+                                          data=json.dumps(new_subscription))
+            response_data = json.loads(response.data)
+
+            self.assertFalse(response_data['success'])
+            self.assertEqual(response.status_code, 401)
+
+        # Attempt to create push subscription with malformed auth header
+        def test_post_subscription_malformed_auth(self):
+            response = self.client().post('/notifications',
+                                          data=json.dumps(new_subscription),
+                                          headers=malformed_header)
+            response_data = json.loads(response.data)
+
+            self.assertFalse(response_data['success'])
+            self.assertEqual(response.status_code, 401)
+
+        # Attempt to create push subscription with a user's JWT
+        def test_post_subscription_as_user(self):
+            response = self.client().post('/notifications',
+                                          data=json.dumps(new_subscription),
+                                          headers=user_header)
+            response_data = json.loads(response.data)
+
+            self.assertTrue(response_data['success'])
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response_data['subscribed'], 'shirb')
+
+        # Attempt to create push subscription with a moderator's JWT
+        def test_post_subscription_as_mod(self):
+            response = self.client().post('/notifications',
+                                          data=json.dumps(new_subscription),
+                                          headers=moderator_header)
+            response_data = json.loads(response.data)
+
+            self.assertTrue(response_data['success'])
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response_data['subscribed'], 'user52')
+
+        # Attempt to create push subscription with an admin's JWT
+        def test_post_subscription_as_admin(self):
+            response = self.client().post('/notifications',
+                                          data=json.dumps(new_subscription),
+                                          headers=admin_header)
+            response_data = json.loads(response.data)
+
+            self.assertTrue(response_data['success'])
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response_data['subscribed'], 'user14')
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
