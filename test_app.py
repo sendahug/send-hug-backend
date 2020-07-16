@@ -1086,6 +1086,15 @@ class TestHugApp(unittest.TestCase):
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 400)
 
+    # Attempt to get other users' messaging thread (with admin's JWT)
+    def get_other_users_thread_as_admin(self):
+        response = self.client().get('/messages?userID=4&type=thread&\
+                                     threadID=2', headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
     # Create Message Route Tests ('/message', POST)
     # -------------------------------------------------------
     # Attempt to create a message with no authorisation header
