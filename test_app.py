@@ -1,6 +1,7 @@
 import unittest
 import json
 from flask_sqlalchemy import SQLAlchemy
+from sh import createdb, dropdb, psql
 
 from app import create_app
 from models import create_db, Post, User, Message
@@ -122,6 +123,9 @@ class TestHugApp(unittest.TestCase):
         self.app = create_app()
         self.client = self.app.test_client
         self.database_path = 'postgres://localhost:5432/test-capstone'
+        dropdb('test-capstone')
+        createdb('test-capstone')
+        psql('-d', 'test-capstone', '-f' ,'capstone_db.sql')
 
         create_db(self.app, self.database_path)
 
