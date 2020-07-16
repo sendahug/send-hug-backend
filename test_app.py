@@ -913,6 +913,101 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response_data['total_pages'], 1)
         self.assertEqual(len(response_data['posts']), 1)
 
+    # Delete User's Posts Route Tests ('/users/all/<user_id>/posts', DELETE)
+    # -------------------------------------------------------
+    # Attempt to delete user's posts with no authorisation header
+    def test_delete_posts_no_auth(self):
+        response = self.client().delete('/users/all/1/posts')
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to delete user's with a malformed auth header
+    def test_delete_posts_malformed_auth(self):
+        response = self.client().delete('/users/all/1/posts',
+                                        headers=malformed_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 401)
+
+    # Attempt to delete the user's posts (with same user's JWT)
+    def test_delete_own_posts_as_user(self):
+        response = self.client().delete('/users/all/1/posts',
+                                        headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], '2')
+
+    # Attempt to delete another user's posts (with user's JWT)
+    def test_delete_other_users_posts_as_user(self):
+        response = self.client().delete('/users/all/4/posts',
+                                        headers=user_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to delete the moderator's posts (with same moderator's JWT)
+    def test_delete_own_posts_as_mod(self):
+        response = self.client().delete('/users/all/5/posts',
+                                        headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], '12')
+
+    # Attempt to delete another user's posts (with moderator's JWT)
+    def test_delete_other_users_posts_as_mod(self):
+        response = self.client().delete('/users/all/1/posts',
+                                        headers=moderator_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 403)
+
+    # Attempt to delete the admin's posts (with same admin's JWT)
+    def test_delete_own_posts_as_admin(self):
+        response = self.client().delete('/users/all/4/posts',
+                                        headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], '14')
+
+    # Attempt to delete another user's posts (with admin's JWT)
+    def test_delete_other_users_posts_as_admin(self):
+        response = self.client().delete('/users/all/5/posts',
+                                        headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertTrue(response_data['success'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['deleted'], '1')
+
+    # Attempt to delete the posts of a user that doesn't exist (admin's JWT)
+    def test_delete_nonexistent_users_posts_as_admin(self):
+        response = self.client().delete('/users/all/100/posts',
+                                        headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 404)
+
+    # Attempt to delete the posts of a user that has no posts (admin's JWT)
+    def test_delete_nonexistent_posts_as_admin(self):
+        response = self.client().delete('/users/all/9/posts',
+                                        headers=admin_header)
+        response_data = json.loads(response.data)
+
+        self.assertFalse(response_data['success'])
+        self.assertEqual(response.status_code, 404)
+
     # Get User's Messages Tests ('/messages', GET)
     # -------------------------------------------------------
     # Attempt to get a user's messages without auth header
