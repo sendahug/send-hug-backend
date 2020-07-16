@@ -86,7 +86,14 @@ In case the user's authorisation header is malformed, their JWT is invalid in an
 
 ## Testing
 
-This project utilises unittest for testing. In order to run project tests, run the following commands:
+This project utilises unittest for testing. In order to run project tests, you need to set up the following environment variables:
+
+1. USER_JWT - JWT of a user with the role of a user.
+2. MOD_JWT - JWT of a user with the role of a moderator.
+3. ADMIN_JWT - JWT of a user with the role of an admin.
+4. BLOCKED_JWT - JWT of a user who's currently blocked.
+
+Then, run the following commands:
 
 ```
 dropdb test-capstone && createdb test-capstone
