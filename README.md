@@ -66,6 +66,8 @@ The site uses several tools to maximise compatibility:
 
 7. **PyWebPush** - This application uses pywebpush in order to handle push notifications. For more information, check their [GitHub repo](https://github.com/web-push-libs/pywebpush).
 
+8. **sh** - This application uses sh during testing (in order to handle the database). For more information, check the [sh PyPi page](https://pypi.org/project/sh/).
+
 ## Authentication
 
 The project uses Auth0 as a third-party authentication provider. Authentication is done by Auth0, which in turn returns a JSON Web Token containing the user's data and permissions.
@@ -115,6 +117,7 @@ The project is hosted live on Heroku. You can view the live version [here](https
     - AUTH0_DOMAIN - set with your own Auth0 domain
     - CLIENT_ID - set with your own client ID from Auth0
     - FRONTEND - set with your own frontend URL (necessary for setting up CORS!)
+    - PRIVATE_KEY - The private VAPID key (required for sending push notifications).
   9. Enter `heroku run python manage.py db upgrade --app <APP_NAME>` to trigger database migrations and bring your live database up to date.
   10. All done! Now you can visit your <GIT_URL> to see the live app.
 
