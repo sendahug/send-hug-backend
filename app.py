@@ -858,6 +858,18 @@ def create_app(test_config=None):
                                 on behalf of another user.'
             }, 403)
 
+        blacklist_check = word_filter.blacklisted(message_data['messageText'])
+
+        # If there's a blacklisted word / phrase, alert the user
+        if(blacklist_check['blacklisted'] is True):
+            num_issues = len(blacklist_check['indexes'])
+            raise ValidationError({
+                'code': 400,
+                'description': 'Your message contains ' + str(num_issues) + ' \
+                                forbidden term(s). Please fix your post\'s \
+                                text and try again.'
+            }, 400)
+
         # Checks if there's an existing thread between the users
         thread = Thread.query.filter(((Thread.user_1_id ==
                                        message_data['fromId']) and
