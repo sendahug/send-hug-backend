@@ -26,6 +26,13 @@ from auth import AuthError, requires_auth
 from filter import Filter
 
 
+# Validation Error
+class ValidationError(Exception):
+    def __init__(self, error, status_code):
+        self.error = error
+        self.status_code = status_code
+
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
@@ -1395,6 +1402,15 @@ def create_app(test_config=None):
             'code': error.status_code,
             'message': error.error
         }), error.status_code
+
+    # Validation error handler
+    @app.errorhandler(ValidationError)
+    def validation_error(error):
+        return jsonify({
+            'success': False,
+            'code': error.status_code,
+            'message': error.error
+        }, error.status_code)
 
     return app
 
