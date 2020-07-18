@@ -695,7 +695,7 @@ def create_app(test_config=None):
             abort(400)
 
         # Gets all posts written by the given user
-        user_posts = Post.query.filter(Post.user_id == user_id).all()
+        user_posts = Post.query.filter(Post.user_id == user_id).order_by(Post.date).all()
         user_posts_array = []
 
         # If there are no posts, returns an empty array
