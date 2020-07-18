@@ -239,13 +239,39 @@ def create_app(test_config=None):
             else:
                 # If the text was changed
                 if(original_post.text != updated_post['text']):
-                    original_post.text = updated_post['text']
+                    blacklist_check = word_filter.blacklisted(updated_post['text'])
+                    # If there's no blacklisted word, add the new post to the database
+                    if(blacklist_check['blacklisted'] is False):
+                        original_post.text = updated_post['text']
+                    # If there's a blacklisted word / phrase, alert the user
+                    else:
+                        num_issues = len(blacklist_check['indexes'])
+                        raise ValidationError({
+                            'code': 400,
+                            'description': 'Your text contains ' +
+                                            str(num_issues) + ' forbidden \
+                                            term(s). Please fix your post\'s \
+                                            text and try again.'
+                        }, 400)
         # Otherwise, the user is allowed to edit any post, and thus text
         # editing is allowed
         else:
             # If the text was changed
             if(original_post.text != updated_post['text']):
-                original_post.text = updated_post['text']
+                blacklist_check = word_filter.blacklisted(updated_post['text'])
+                # If there's no blacklisted word, add the new post to the database
+                if(blacklist_check['blacklisted'] is False):
+                    original_post.text = updated_post['text']
+                # If there's a blacklisted word / phrase, alert the user
+                else:
+                    num_issues = len(blacklist_check['indexes'])
+                    raise ValidationError({
+                        'code': 400,
+                        'description': 'Your text contains ' +
+                                        str(num_issues) + ' forbidden \
+                                        term(s). Please fix your post\'s \
+                                        text and try again.'
+                    }, 400)
 
         # If a hug was added
         # Since anyone can give hugs, this doesn't require a permissions check
