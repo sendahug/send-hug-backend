@@ -117,6 +117,14 @@ def create_app(test_config=None):
         search_query = json.loads(request.data)['search']
         current_page = request.args.get('page', 1, type=int)
 
+        # Check if the search query is empty; if it is, abort
+        if(len(search_query) < 1):
+            raise ValidationError({
+                'code': 400,
+                'description': 'Search query cannot be empty. Please \
+                                write something and try again.'
+            }, 400)
+
         # Get the users with the search query in their display name
         users = User.query.filter(User.display_name.
                                   ilike('%' + search_query + '%')).all()
@@ -168,6 +176,21 @@ def create_app(test_config=None):
 
         # If there's no blacklisted word, add the new post to the database
         if(blacklist_check['blacklisted'] is False):
+            # Check if the post is too long; if it is, abort
+            if(len(new_post_data['text']) > 480):
+                raise ValidationError({
+                    'code': 400,
+                    'description': 'Your post is too long! Please shorten \
+                                    it and try to post it again.'
+                }, 400)
+            # Check if the post is empty; if it is, abort
+            elif(len(new_post_data['text']) < 1):
+                raise ValidationError({
+                    'code': 400,
+                    'description': 'You cannot post an empty post. Please \
+                                    write something and try to send it again.'
+                }, 400)
+
             # Create a new post object
             new_post = Post(user_id=new_post_data['userId'],
                             text=new_post_data['text'],
@@ -242,6 +265,23 @@ def create_app(test_config=None):
                     blacklist_check = word_filter.blacklisted(updated_post['text'])
                     # If there's no blacklisted word, add the new post to the database
                     if(blacklist_check['blacklisted'] is False):
+                        # Check if the post is too long; if it is, abort
+                        if(len(updated_post['text']) > 480):
+                            raise ValidationError({
+                                'code': 400,
+                                'description': 'Your post is too long! \
+                                                Please shorten it and try \
+                                                to post it again.'
+                            }, 400)
+                        # Check if the post is empty; if it is, abort
+                        elif(len(updated_post['text']) < 1):
+                            raise ValidationError({
+                                'code': 400,
+                                'description': 'You cannot post an empty \
+                                                post. Please write something \
+                                                and try to send it again.'
+                            }, 400)
+
                         original_post.text = updated_post['text']
                     # If there's a blacklisted word / phrase, alert the user
                     else:
@@ -596,10 +636,44 @@ def create_app(test_config=None):
                             }, 403)
                     # If it is, let them update user data
                     else:
+                        # Check if the name is too long; if it is, abort
+                        if(len(updated_user['displayName']) > 60):
+                            raise ValidationError({
+                                'code': 400,
+                                'description': 'Your new display name is \
+                                                too long! Please shorten \
+                                                it and try again.'
+                            }, 400)
+                        # Check if the name is empty; if it is, abort
+                        elif(len(updated_user['displayName']) < 1):
+                            raise ValidationError({
+                                'code': 400,
+                                'description': 'Your display name cannot be \
+                                                empty. Please add text and \
+                                                try again.'
+                            }, 400)
+
                         original_user.display_name = updated_user['displayName']
+                # if the user can edit anyone or the user is trying to
+                # update their own name
                 else:
-                    # if the user can edit anyone or the user is trying to
-                    # update their own name
+                    # Check if the name is too long; if it is, abort
+                    if(len(updated_user['displayName']) > 60):
+                        raise ValidationError({
+                            'code': 400,
+                            'description': 'Your new display name is \
+                                            too long! Please shorten \
+                                            it and try again.'
+                        }, 400)
+                    # Check if the name is empty; if it is, abort
+                    elif(len(updated_user['displayName']) < 1):
+                        raise ValidationError({
+                            'code': 400,
+                            'description': 'Your display name cannot be \
+                                            empty. Please add text and \
+                                            try again.'
+                        }, 400)
+
                     original_user.display_name = updated_user['displayName']
 
         # If the request was in done in order to block or unlock a user
@@ -868,6 +942,21 @@ def create_app(test_config=None):
                 'description': 'Your message contains ' + str(num_issues) + ' \
                                 forbidden term(s). Please fix your post\'s \
                                 text and try again.'
+            }, 400)
+
+        # Check if the message is too long; if it is, abort
+        if(len(message_data['messageText']) > 480):
+            raise ValidationError({
+                'code': 400,
+                'description': 'Your message is too long! Please shorten \
+                                it and try to send it again.'
+            }, 400)
+        # Check if the message is empty; if it is, abort
+        elif(len(message_data['messageText']) < 1):
+            raise ValidationError({
+                'code': 400,
+                'description': 'You cannot send an empty message. Please \
+                                write something and try to send it again.'
             }, 400)
 
         # Checks if there's an existing thread between the users
@@ -1139,6 +1228,22 @@ def create_app(test_config=None):
     def create_new_report(token_payload):
         report_data = json.loads(request.data)
 
+        # Check if the report reason is too long; if it is, abort
+        if(len(report_data['reportReason']) > 120):
+            raise ValidationError({
+                'code': 400,
+                'description': 'Your report reason is too long! Please \
+                                shorten it and try to send it again.'
+            }, 400)
+        # Check if the report reason is empty; if it is, abort
+        elif(len(report_data['reportReason']) < 1):
+            raise ValidationError({
+                'code': 400,
+                'description': 'You cannot send a report without a reason. \
+                                Please write something and try to send it \
+                                again.'
+            }, 400)
+
         # If the reported item is a post
         if(report_data['type'].lower() == 'post'):
             reported_item = Post.query.filter(Post.id ==
@@ -1272,6 +1377,14 @@ def create_app(test_config=None):
     @requires_auth(['read:admin-board'])
     def add_filter(token_payload):
         new_filter = json.loads(request.data)['word']
+
+        # Check if the filter is empty; if it is, abort
+        if(len(new_filter) < 1):
+            raise ValidationError({
+                'code': 400,
+                'description': 'Phrase to filter cannot be empty. Please \
+                                write something and try again.'
+            }, 400)
 
         # If the word already exists in the filters list, abort
         if(new_filter in word_filter.get_full_list()):
