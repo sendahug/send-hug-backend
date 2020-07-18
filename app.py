@@ -587,12 +587,16 @@ def create_app(test_config=None):
                 # if the user is only allowed to change their own name
                 # (user / mod)
                 if('patch:user' in token_payload['permissions']):
+                    # If it's not the current user, abort
                     if(token_payload['sub'] != original_user.auth0_id):
                         raise AuthError({
                             'code': 403,
                             'description': 'You do not have permission to \
                                             edit this user\'s display name.'
                             }, 403)
+                    # If it is, let them update user data
+                    else:
+                        original_user.display_name = updated_user['displayName']
                 else:
                     # if the user can edit anyone or the user is trying to
                     # update their own name
