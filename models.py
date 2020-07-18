@@ -47,7 +47,7 @@ class Post(db.Model):
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    display_name = db.Column(db.String(), nullable=False)
+    display_name = db.Column(db.String(60), nullable=False)
     auth0_id = db.Column(db.String(), nullable=False)
     received_hugs = db.Column(db.Integer, default=0)
     given_hugs = db.Column(db.Integer, default=0)
@@ -135,7 +135,7 @@ class Report(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
     reporter = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    report_reason = db.Column(db.String(480), nullable=False)
+    report_reason = db.Column(db.String(120), nullable=False)
     date = db.Column(db.DateTime)
     dismissed = db.Column(db.Boolean, nullable=False, default=False)
     closed = db.Column(db.Boolean, nullable=False, default=False)
