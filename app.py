@@ -1423,7 +1423,7 @@ def create_app(test_config=None):
             'success': False,
             'code': error.status_code,
             'message': error.error
-        }, error.status_code)
+        }), error.status_code
 
     return app
 
