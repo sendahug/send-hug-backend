@@ -163,20 +163,33 @@ def create_app(test_config=None):
                 'description': 'You cannot create posts while being blocked.'
             }, 403)
 
-        # Get the post data and create a new post object
         new_post_data = json.loads(request.data)
-        new_post = Post(user_id=new_post_data['userId'],
-                        text=new_post_data['text'],
-                        date=new_post_data['date'],
-                        given_hugs=new_post_data['givenHugs'])
+        blacklist_check = word_filter.blacklisted(new_post_data['text'])
 
-        # Try to add the post to the database
-        try:
-            db_add(new_post)
-            added_post = new_post.format()
-        # If there's an error, abort
-        except Exception as e:
-            abort(500)
+        # If there's no blacklisted word, add the new post to the database
+        if(blacklist_check['blacklisted'] is False):
+            # Create a new post object
+            new_post = Post(user_id=new_post_data['userId'],
+                            text=new_post_data['text'],
+                            date=new_post_data['date'],
+                            given_hugs=new_post_data['givenHugs'])
+
+            # Try to add the post to the database
+            try:
+                db_add(new_post)
+                added_post = new_post.format()
+            # If there's an error, abort
+            except Exception as e:
+                abort(500)
+        # If there's a blacklisted word / phrase, alert the user
+        else:
+            num_issues = len(blacklist_check['indexes'])
+            raise ValidationError({
+                'code': 400,
+                'description': 'Your text contains ' + str(num_issues) + ' \
+                                forbidden term(s). Please fix your post\'s \
+                                text and try again.'
+            }, 400)
 
         return jsonify({
             'success': True,
