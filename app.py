@@ -195,15 +195,9 @@ def create_app(test_config=None):
 
         # If there's no blacklisted word, add the new post to the database
         if(blacklist_check['blacklisted'] is False):
-            validated = validator.check_length(new_post_data['text'], 'post')
-
-            # Check if the post's text isn't a string; if it isn't, abort
-            if(type(new_post_data['text']) is not str):
-                raise ValidationError({
-                    'code': 400,
-                    'description': 'Post text must be of type \'String\'. \
-                                    Please correct the error and try again.'
-                }, 400)
+            # Check the length adn  type of the post's text
+            length_validated = validator.check_length(new_post_data['text'], 'post')
+            type_validated = validator.check_type(new_post_data['text'], 'post text')
 
             # Create a new post object
             new_post = Post(user_id=new_post_data['userId'],
@@ -286,18 +280,9 @@ def create_app(test_config=None):
                     blacklist_check = word_filter.blacklisted(updated_post['text'])
                     # If there's no blacklisted word, add the new post to the database
                     if(blacklist_check['blacklisted'] is False):
-                        validated = validator.check_length(updated_post['text'], 'post')
-
-                        # Check if the post's text isn't a string; if it
-                        # isn't, abort
-                        if(type(updated_post['text']) is not str):
-                                raise ValidationError({
-                                    'code': 400,
-                                    'description': 'The post\'s text must be \
-                                                    of type \'integer\'. \
-                                                    Please correct the error \
-                                                    and try again.'
-                                }, 400)
+                        # Check the length adn  type of the post's text
+                        length_validated = validator.check_length(updated_post['text'], 'post')
+                        type_validated = validator.check_type(updated_post['text'], 'post text')
 
                         original_post.text = updated_post['text']
                     # If there's a blacklisted word / phrase, alert the user
@@ -318,18 +303,9 @@ def create_app(test_config=None):
                 blacklist_check = word_filter.blacklisted(updated_post['text'])
                 # If there's no blacklisted word, add the new post to the database
                 if(blacklist_check['blacklisted'] is False):
-                    validated = validator.check_length(updated_post['text'], 'post')
-
-                    # Check if the post's text isn't a string; if it
-                    # isn't, abort
-                    if(type(updated_post['text']) is not str):
-                            raise ValidationError({
-                                'code': 400,
-                                'description': 'The post\'s text must be \
-                                                of type \'integer\'. \
-                                                Please correct the error \
-                                                and try again.'
-                            }, 400)
+                    # Check the length adn  type of the post's text
+                    length_validated = validator.check_length(updated_post['text'], 'post')
+                    type_validated = validator.check_type(updated_post['text'], 'post text')
 
                     original_post.text = updated_post['text']
                 # If there's a blacklisted word / phrase, alert the user
@@ -680,32 +656,17 @@ def create_app(test_config=None):
                             }, 403)
                     # If it is, let them update user data
                     else:
-                        validated = validator.check_length(updated_user['displayName'], 'display name')
-                        # Check if the user's display name isn't a string;
-                        # if it isn't, abort
-                        if(type(updated_user['displayName']) is not str):
-                            raise ValidationError({
-                                'code': 400,
-                                'description': 'User display name must be of\
-                                                type \'string\'. Please \
-                                                correct the error and try \
-                                                again.'
-                            }, 400)
+                        # Check the length adn  type of the user's display name
+                        length_validated = validator.check_length(updated_user['displayName'], 'display name')
+                        type_validated = validator.check_type(updated_user['displayName'], 'display name')
 
                         original_user.display_name = updated_user['displayName']
                 # if the user can edit anyone or the user is trying to
                 # update their own name
                 else:
-                    validated = validator.check_length(updated_user['displayName'], 'display name')
-                    # Check if the user's display name isn't a string;
-                    # if it isn't, abort
-                    if(type(updated_user['displayName']) is not str):
-                        raise ValidationError({
-                            'code': 400,
-                            'description': 'User display name must be of\
-                                            type \'string\'. Please \
-                                            correct the error and try again.'
-                        }, 400)
+                    # Check the length adn  type of the user's display name
+                    length_validated = validator.check_length(updated_user['displayName'], 'display name')
+                    type_validated = validator.check_type(updated_user['displayName'], 'display name')
 
                     original_user.display_name = updated_user['displayName']
 
@@ -977,14 +938,9 @@ def create_app(test_config=None):
                                 text and try again.'
             }, 400)
 
-        validated = validator.check_length(message_data['messageText'], 'message')
-        # Check if the user's message isn't a string; if it isn't, abort
-        if(type(message_data['messageText']) is not str):
-            raise ValidationError({
-                'code': 400,
-                'description': 'Message text must be of type \'string\'. \
-                                Please correct the error and try again.'
-            }, 400)
+        # Check the length adn  type of the message text
+        length_validated = validator.check_length(message_data['messageText'], 'message')
+        type_validated = validator.check_type(message_data['messageText'], 'message text')
 
         # Checks if there's an existing thread between the users
         thread = Thread.query.filter(((Thread.user_1_id ==
@@ -1255,7 +1211,9 @@ def create_app(test_config=None):
     def create_new_report(token_payload):
         report_data = json.loads(request.data)
 
-        validated = validator.check_length(new_post_data['text'], 'post')
+        # Check the length adn  type of the report reason
+        length_validated = validator.check_length(report_data['reportReason'], 'report')
+        type_validated = validator.check_type(report_data['reportReason'], 'report reason')
         # Check if the report reason isn't a string; if it isn't, abort
         if(type(report_data['reportReason']) is not str):
             raise ValidationError({

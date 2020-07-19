@@ -80,3 +80,19 @@ class Validator():
                 }, 400)
 
         return True
+
+    # Checks the type of the given item
+    def check_type(self, data, type):
+        # If the type is one of the free text types, check that it's a
+        # string
+        if(type.lower() is 'post text' or type.lower() is 'message text' or
+           type.lower() is 'display name' or type.lower() is 'report reason'):
+           # If it's not a string, raise a validation error
+            if(type(data) is not str):
+                raise ValidationError({
+                    'code': 400,
+                    'description': type + ' must be of type \'String\'. \
+                                    Please correct the error and try again.'
+                }, 400)
+
+        return True
