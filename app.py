@@ -132,12 +132,7 @@ def create_app(test_config=None):
         # Check if the search query is empty; if it is, abort
         length_validated = validator.check_length(search_query, 'Search query')
         # Check if the search query isn't a string; if it isn't, abort
-        if(type(search_query) is not str):
-            raise ValidationError({
-                'code': 400,
-                'description': 'Search query must be of type \'String\'. \
-                                Please correct the error and try again.'
-            }, 400)
+        type_validated = validator.check_type(search_query, 'Search query')
 
         # Get the users with the search query in their display name
         users = User.query.filter(User.display_name.

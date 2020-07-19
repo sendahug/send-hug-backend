@@ -94,7 +94,8 @@ class Validator():
         # If the type is one of the free text types, check that it's a
         # string
         if(type.lower() is 'post text' or type.lower() is 'message text' or
-           type.lower() is 'display name' or type.lower() is 'report reason'):
+           type.lower() is 'display name' or type.lower() is 'report reason'
+           or type.lower() is 'search query'):
            # If it's not a string, raise a validation error
             if(type(data) is not str):
                 raise ValidationError({
