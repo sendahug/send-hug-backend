@@ -94,5 +94,16 @@ class Validator():
                     'description': type + ' must be of type \'String\'. \
                                     Please correct the error and try again.'
                 }, 400)
+        # If the type is one of the ID types, check that it's an integer
+        elif(type.lower() is 'post id' or type.lower() is 'user id' or
+             type.lower() is 'message id' or type.lower() is 'report id' or 
+             type.lower() is 'filter id'):
+            if(type(data) is not int):
+                # If it's not an integer, raise a validation error
+                raise ValidationError({
+                    'code': 400,
+                    'description': type + ' must be of type \'Integer\'. \
+                                    Please correct the error and try again.'
+                }, 400)
 
         return True

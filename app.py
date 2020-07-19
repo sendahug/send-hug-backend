@@ -239,12 +239,7 @@ def create_app(test_config=None):
         if(post_id is None):
             abort(404)
         # Check if the post ID isn't an integer; if it isn't, abort
-        elif(type(post_id) is not int):
-            raise ValidationError({
-                'code': 400,
-                'description': 'Post ID must be of type \'integer\'. \
-                                Please correct the error and try again.'
-            }, 400)
+        id_validated = validator.check_type(post_id, 'Post ID')
 
         updated_post = json.loads(request.data)
         original_post = Post.query.filter(Post.id == post_id).one_or_none()
@@ -389,12 +384,7 @@ def create_app(test_config=None):
         if(post_id is None):
             abort(404)
         # Check if the post ID isn't an integer; if it isn't, abort
-        elif(type(post_id) is not int):
-            raise ValidationError({
-                'code': 400,
-                'description': 'Post ID must be of type \'integer\'. \
-                                Please correct the error and try again.'
-            }, 400)
+        id_validated = validator.check_type(post_id, 'Post ID')
 
         # Gets the post to delete
         post_data = Post.query.filter(Post.id == post_id).one_or_none()
@@ -601,12 +591,7 @@ def create_app(test_config=None):
         if(user_id is None):
             abort(404)
         # Check if the user ID isn't an integer; if it isn't, abort
-        elif(type(user_id) is not int):
-            raise ValidationError({
-                'code': 400,
-                'description': 'User ID must be of type \'integer\'. \
-                                Please correct the error and try again.'
-            }, 400)
+        id_validated = validator.check_type(user_id, 'User ID')
 
         updated_user = json.loads(request.data)
         original_user = User.query.filter(User.id == user_id).one_or_none()
@@ -762,6 +747,8 @@ def create_app(test_config=None):
         if(user_id is None):
             abort(400)
 
+        id_validated = validator.check_type(user_id, 'User ID')
+
         # Gets all posts written by the given user
         user_posts = Post.query.filter(Post.user_id == user_id).order_by(Post.date).all()
         user_posts_array = []
@@ -793,6 +780,7 @@ def create_app(test_config=None):
     @app.route('/users/all/<user_id>/posts', methods=['DELETE'])
     @requires_auth(['delete:my-post', 'delete:any-post'])
     def delete_user_posts(token_payload, user_id):
+        id_validated = validator.check_type(user_id, 'User ID')
         current_user = User.query.filter(User.auth0_id ==
                                          token_payload['sub']).one_or_none()
 
@@ -1013,6 +1001,8 @@ def create_app(test_config=None):
         # If there's no thread ID, abort
         if(item_id is None):
             abort(405)
+
+        id_validated = validator.check_type(item_id, 'Message ID')
 
         # If the mailbox type is inbox or outbox, search for a message
         # with that ID
@@ -1286,6 +1276,8 @@ def create_app(test_config=None):
         if(report is None):
             abort(404)
 
+        id_validated = validator.check_type(report_id, 'Report ID')
+
         # If the item reported is a user
         if(report.type.lower() == 'user'):
             reported_item = User.query.filter(User.id ==
@@ -1387,6 +1379,8 @@ def create_app(test_config=None):
     @app.route('/filters/<filter_id>', methods=['DELETE'])
     @requires_auth(['read:admin-board'])
     def delete_filter(token_payload, filter_id):
+        id_validated = validator.check_type(filter_id, 'Filter ID')
+
         # If there's no word in that index
         if(word_filter.get_words()[int(filter_id)] is None):
             abort(404)
