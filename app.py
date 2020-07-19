@@ -130,14 +130,9 @@ def create_app(test_config=None):
         current_page = request.args.get('page', 1, type=int)
 
         # Check if the search query is empty; if it is, abort
-        if(len(search_query) < 1):
-            raise ValidationError({
-                'code': 400,
-                'description': 'Search query cannot be empty. Please \
-                                write something and try again.'
-            }, 400)
+        length_validated = validator.check_length(search_query, 'Search query')
         # Check if the search query isn't a string; if it isn't, abort
-        elif(type(search_query) is not str):
+        if(type(search_query) is not str):
             raise ValidationError({
                 'code': 400,
                 'description': 'Search query must be of type \'String\'. \
@@ -1349,12 +1344,7 @@ def create_app(test_config=None):
         new_filter = json.loads(request.data)['word']
 
         # Check if the filter is empty; if it is, abort
-        if(len(new_filter) < 1):
-            raise ValidationError({
-                'code': 400,
-                'description': 'Phrase to filter cannot be empty. Please \
-                                write something and try again.'
-            }, 400)
+        length_validated = validator.check_length(new_filter, 'Phrase to filter')
 
         # If the word already exists in the filters list, abort
         if(new_filter in word_filter.get_full_list()):
