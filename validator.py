@@ -109,8 +109,12 @@ class Validator():
         elif(objType.lower() == 'post id' or objType.lower() == 'user id' or
              objType.lower() == 'message id' or objType.lower() == 'report id'
              or objType.lower() == 'filter id'):
-            if(type(data) is not int):
-                # If it's not an integer, raise a validation error
+            # Try to convert the data to int
+            try:
+                int(data)
+            # If there's a problem, it's not an integer,
+            except Exception as e:
+                # Raise a validation error
                 raise ValidationError({
                     'code': 400,
                     'description': objType + ' must be of type \'Integer\'. \
