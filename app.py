@@ -24,13 +24,7 @@ from models import (
     )
 from auth import AuthError, requires_auth
 from filter import Filter
-
-
-# Validation Error
-class ValidationError(Exception):
-    def __init__(self, error, status_code):
-        self.error = error
-        self.status_code = status_code
+from validator import Validator, ValidationError
 
 
 def create_app(test_config=None):
@@ -39,6 +33,24 @@ def create_app(test_config=None):
     create_db(app)
     CORS(app, origins='')
     word_filter = Filter()
+    validator = Validator({
+        'post': {
+            'max': 480,
+            'min': 1
+        },
+        'message': {
+            'max': 480,
+            'min': 1
+        },
+        'user': {
+            'max': 60,
+            'min': 1
+        },
+        'report': {
+            'max': 120,
+            'min': 1
+        }
+    })
 
     # CORS Setup
     @app.after_request
@@ -183,22 +195,10 @@ def create_app(test_config=None):
 
         # If there's no blacklisted word, add the new post to the database
         if(blacklist_check['blacklisted'] is False):
-            # Check if the post is too long; if it is, abort
-            if(len(new_post_data['text']) > 480):
-                raise ValidationError({
-                    'code': 400,
-                    'description': 'Your post is too long! Please shorten \
-                                    it and try to post it again.'
-                }, 400)
-            # Check if the post is empty; if it is, abort
-            elif(len(new_post_data['text']) < 1):
-                raise ValidationError({
-                    'code': 400,
-                    'description': 'You cannot post an empty post. Please \
-                                    write something and try to send it again.'
-                }, 400)
+            validated = validator.check_length(new_post_data['text'], 'post')
+
             # Check if the post's text isn't a string; if it isn't, abort
-            elif(type(new_post_data['text']) is not str):
+            if(type(new_post_data['text']) is not str):
                 raise ValidationError({
                     'code': 400,
                     'description': 'Post text must be of type \'String\'. \
@@ -286,25 +286,11 @@ def create_app(test_config=None):
                     blacklist_check = word_filter.blacklisted(updated_post['text'])
                     # If there's no blacklisted word, add the new post to the database
                     if(blacklist_check['blacklisted'] is False):
-                        # Check if the post is too long; if it is, abort
-                        if(len(updated_post['text']) > 480):
-                            raise ValidationError({
-                                'code': 400,
-                                'description': 'Your post is too long! \
-                                                Please shorten it and try \
-                                                to post it again.'
-                            }, 400)
-                        # Check if the post is empty; if it is, abort
-                        elif(len(updated_post['text']) < 1):
-                            raise ValidationError({
-                                'code': 400,
-                                'description': 'You cannot post an empty \
-                                                post. Please write something \
-                                                and try to send it again.'
-                            }, 400)
+                        validated = validator.check_length(updated_post['text'], 'post')
+
                         # Check if the post's text isn't a string; if it
                         # isn't, abort
-                        elif(type(updated_post['text']) is not str):
+                        if(type(updated_post['text']) is not str):
                                 raise ValidationError({
                                     'code': 400,
                                     'description': 'The post\'s text must be \
@@ -332,25 +318,11 @@ def create_app(test_config=None):
                 blacklist_check = word_filter.blacklisted(updated_post['text'])
                 # If there's no blacklisted word, add the new post to the database
                 if(blacklist_check['blacklisted'] is False):
-                    # Check if the post is too long; if it is, abort
-                    if(len(updated_post['text']) > 480):
-                        raise ValidationError({
-                            'code': 400,
-                            'description': 'Your post is too long! \
-                                            Please shorten it and try \
-                                            to post it again.'
-                        }, 400)
-                    # Check if the post is empty; if it is, abort
-                    elif(len(updated_post['text']) < 1):
-                        raise ValidationError({
-                            'code': 400,
-                            'description': 'You cannot post an empty \
-                                            post. Please write something \
-                                            and try to send it again.'
-                        }, 400)
+                    validated = validator.check_length(updated_post['text'], 'post')
+
                     # Check if the post's text isn't a string; if it
                     # isn't, abort
-                    elif(type(updated_post['text']) is not str):
+                    if(type(updated_post['text']) is not str):
                             raise ValidationError({
                                 'code': 400,
                                 'description': 'The post\'s text must be \
@@ -708,25 +680,10 @@ def create_app(test_config=None):
                             }, 403)
                     # If it is, let them update user data
                     else:
-                        # Check if the name is too long; if it is, abort
-                        if(len(updated_user['displayName']) > 60):
-                            raise ValidationError({
-                                'code': 400,
-                                'description': 'Your new display name is \
-                                                too long! Please shorten \
-                                                it and try again.'
-                            }, 400)
-                        # Check if the name is empty; if it is, abort
-                        elif(len(updated_user['displayName']) < 1):
-                            raise ValidationError({
-                                'code': 400,
-                                'description': 'Your display name cannot be \
-                                                empty. Please add text and \
-                                                try again.'
-                            }, 400)
+                        validated = validator.check_length(updated_user['displayName'], 'display name')
                         # Check if the user's display name isn't a string;
                         # if it isn't, abort
-                        elif(type(updated_user['displayName']) is not str):
+                        if(type(updated_user['displayName']) is not str):
                             raise ValidationError({
                                 'code': 400,
                                 'description': 'User display name must be of\
@@ -739,25 +696,10 @@ def create_app(test_config=None):
                 # if the user can edit anyone or the user is trying to
                 # update their own name
                 else:
-                    # Check if the name is too long; if it is, abort
-                    if(len(updated_user['displayName']) > 60):
-                        raise ValidationError({
-                            'code': 400,
-                            'description': 'Your new display name is \
-                                            too long! Please shorten \
-                                            it and try again.'
-                        }, 400)
-                    # Check if the name is empty; if it is, abort
-                    elif(len(updated_user['displayName']) < 1):
-                        raise ValidationError({
-                            'code': 400,
-                            'description': 'Your display name cannot be \
-                                            empty. Please add text and \
-                                            try again.'
-                        }, 400)
+                    validated = validator.check_length(updated_user['displayName'], 'display name')
                     # Check if the user's display name isn't a string;
                     # if it isn't, abort
-                    elif(type(updated_user['displayName']) is not str):
+                    if(type(updated_user['displayName']) is not str):
                         raise ValidationError({
                             'code': 400,
                             'description': 'User display name must be of\
@@ -1035,22 +977,9 @@ def create_app(test_config=None):
                                 text and try again.'
             }, 400)
 
-        # Check if the message is too long; if it is, abort
-        if(len(message_data['messageText']) > 480):
-            raise ValidationError({
-                'code': 400,
-                'description': 'Your message is too long! Please shorten \
-                                it and try to send it again.'
-            }, 400)
-        # Check if the message is empty; if it is, abort
-        elif(len(message_data['messageText']) < 1):
-            raise ValidationError({
-                'code': 400,
-                'description': 'You cannot send an empty message. Please \
-                                write something and try to send it again.'
-            }, 400)
+        validated = validator.check_length(message_data['messageText'], 'message')
         # Check if the user's message isn't a string; if it isn't, abort
-        elif(type(message_data['messageText']) is not str):
+        if(type(message_data['messageText']) is not str):
             raise ValidationError({
                 'code': 400,
                 'description': 'Message text must be of type \'string\'. \
@@ -1326,23 +1255,9 @@ def create_app(test_config=None):
     def create_new_report(token_payload):
         report_data = json.loads(request.data)
 
-        # Check if the report reason is too long; if it is, abort
-        if(len(report_data['reportReason']) > 120):
-            raise ValidationError({
-                'code': 400,
-                'description': 'Your report reason is too long! Please \
-                                shorten it and try to send it again.'
-            }, 400)
-        # Check if the report reason is empty; if it is, abort
-        elif(len(report_data['reportReason']) < 1):
-            raise ValidationError({
-                'code': 400,
-                'description': 'You cannot send a report without a reason. \
-                                Please write something and try to send it \
-                                again.'
-            }, 400)
+        validated = validator.check_length(new_post_data['text'], 'post')
         # Check if the report reason isn't a string; if it isn't, abort
-        elif(type(report_data['reportReason']) is not str):
+        if(type(report_data['reportReason']) is not str):
             raise ValidationError({
                 'code': 400,
                 'description': 'Report reason must be of type \'string\'. \
