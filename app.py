@@ -124,6 +124,13 @@ def create_app(test_config=None):
                 'description': 'Search query cannot be empty. Please \
                                 write something and try again.'
             }, 400)
+        # Check if the search query isn't a string; if it isn't, abort
+        elif(type(search_query) is not str):
+            raise ValidationError({
+                'code': 400,
+                'description': 'Search query must be of type \'String\'. \
+                                Please correct the error and try again.'
+            }, 400)
 
         # Get the users with the search query in their display name
         users = User.query.filter(User.display_name.
@@ -190,6 +197,13 @@ def create_app(test_config=None):
                     'description': 'You cannot post an empty post. Please \
                                     write something and try to send it again.'
                 }, 400)
+            # Check if the post's text isn't a string; if it isn't, abort
+            elif(type(new_post_data['text']) is not str):
+                raise ValidationError({
+                    'code': 400,
+                    'description': 'Post text must be of type \'String\'. \
+                                    Please correct the error and try again.'
+                }, 400)
 
             # Create a new post object
             new_post = Post(user_id=new_post_data['userId'],
@@ -230,6 +244,13 @@ def create_app(test_config=None):
         # If there's no ID provided
         if(post_id is None):
             abort(404)
+        # Check if the post ID isn't an integer; if it isn't, abort
+        elif(type(post_id) is not int):
+            raise ValidationError({
+                'code': 400,
+                'description': 'Post ID must be of type \'integer\'. \
+                                Please correct the error and try again.'
+            }, 400)
 
         updated_post = json.loads(request.data)
         original_post = Post.query.filter(Post.id == post_id).one_or_none()
@@ -281,6 +302,16 @@ def create_app(test_config=None):
                                                 post. Please write something \
                                                 and try to send it again.'
                             }, 400)
+                        # Check if the post's text isn't a string; if it
+                        # isn't, abort
+                        elif(type(updated_post['text']) is not str):
+                                raise ValidationError({
+                                    'code': 400,
+                                    'description': 'The post\'s text must be \
+                                                    of type \'integer\'. \
+                                                    Please correct the error \
+                                                    and try again.'
+                                }, 400)
 
                         original_post.text = updated_post['text']
                     # If there's a blacklisted word / phrase, alert the user
@@ -301,6 +332,33 @@ def create_app(test_config=None):
                 blacklist_check = word_filter.blacklisted(updated_post['text'])
                 # If there's no blacklisted word, add the new post to the database
                 if(blacklist_check['blacklisted'] is False):
+                    # Check if the post is too long; if it is, abort
+                    if(len(updated_post['text']) > 480):
+                        raise ValidationError({
+                            'code': 400,
+                            'description': 'Your post is too long! \
+                                            Please shorten it and try \
+                                            to post it again.'
+                        }, 400)
+                    # Check if the post is empty; if it is, abort
+                    elif(len(updated_post['text']) < 1):
+                        raise ValidationError({
+                            'code': 400,
+                            'description': 'You cannot post an empty \
+                                            post. Please write something \
+                                            and try to send it again.'
+                        }, 400)
+                    # Check if the post's text isn't a string; if it
+                    # isn't, abort
+                    elif(type(updated_post['text']) is not str):
+                            raise ValidationError({
+                                'code': 400,
+                                'description': 'The post\'s text must be \
+                                                of type \'integer\'. \
+                                                Please correct the error \
+                                                and try again.'
+                            }, 400)
+
                     original_post.text = updated_post['text']
                 # If there's a blacklisted word / phrase, alert the user
                 else:
@@ -382,6 +440,13 @@ def create_app(test_config=None):
         # If there's no ID provided
         if(post_id is None):
             abort(404)
+        # Check if the post ID isn't an integer; if it isn't, abort
+        elif(type(post_id) is not int):
+            raise ValidationError({
+                'code': 400,
+                'description': 'Post ID must be of type \'integer\'. \
+                                Please correct the error and try again.'
+            }, 400)
 
         # Gets the post to delete
         post_data = Post.query.filter(Post.id == post_id).one_or_none()
@@ -587,6 +652,13 @@ def create_app(test_config=None):
         # if there's no user ID provided, abort with 'Bad Request'
         if(user_id is None):
             abort(404)
+        # Check if the user ID isn't an integer; if it isn't, abort
+        elif(type(user_id) is not int):
+            raise ValidationError({
+                'code': 400,
+                'description': 'User ID must be of type \'integer\'. \
+                                Please correct the error and try again.'
+            }, 400)
 
         updated_user = json.loads(request.data)
         original_user = User.query.filter(User.id == user_id).one_or_none()
@@ -652,6 +724,16 @@ def create_app(test_config=None):
                                                 empty. Please add text and \
                                                 try again.'
                             }, 400)
+                        # Check if the user's display name isn't a string;
+                        # if it isn't, abort
+                        elif(type(updated_user['displayName']) is not str):
+                            raise ValidationError({
+                                'code': 400,
+                                'description': 'User display name must be of\
+                                                type \'string\'. Please \
+                                                correct the error and try \
+                                                again.'
+                            }, 400)
 
                         original_user.display_name = updated_user['displayName']
                 # if the user can edit anyone or the user is trying to
@@ -672,6 +754,15 @@ def create_app(test_config=None):
                             'description': 'Your display name cannot be \
                                             empty. Please add text and \
                                             try again.'
+                        }, 400)
+                    # Check if the user's display name isn't a string;
+                    # if it isn't, abort
+                    elif(type(updated_user['displayName']) is not str):
+                        raise ValidationError({
+                            'code': 400,
+                            'description': 'User display name must be of\
+                                            type \'string\'. Please \
+                                            correct the error and try again.'
                         }, 400)
 
                     original_user.display_name = updated_user['displayName']
@@ -958,6 +1049,13 @@ def create_app(test_config=None):
                 'description': 'You cannot send an empty message. Please \
                                 write something and try to send it again.'
             }, 400)
+        # Check if the user's message isn't a string; if it isn't, abort
+        elif(type(message_data['messageText']) is not str):
+            raise ValidationError({
+                'code': 400,
+                'description': 'Message text must be of type \'string\'. \
+                                Please correct the error and try again.'
+            }, 400)
 
         # Checks if there's an existing thread between the users
         thread = Thread.query.filter(((Thread.user_1_id ==
@@ -1242,6 +1340,13 @@ def create_app(test_config=None):
                 'description': 'You cannot send a report without a reason. \
                                 Please write something and try to send it \
                                 again.'
+            }, 400)
+        # Check if the report reason isn't a string; if it isn't, abort
+        elif(type(report_data['reportReason']) is not str):
+            raise ValidationError({
+                'code': 400,
+                'description': 'Report reason must be of type \'string\'. \
+                                Please correct the error and try again.'
             }, 400)
 
         # If the reported item is a post
