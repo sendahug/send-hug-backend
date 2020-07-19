@@ -1199,13 +1199,6 @@ def create_app(test_config=None):
         # Check the length adn  type of the report reason
         length_validated = validator.check_length(report_data['reportReason'], 'report')
         type_validated = validator.check_type(report_data['reportReason'], 'report reason')
-        # Check if the report reason isn't a string; if it isn't, abort
-        if(type(report_data['reportReason']) is not str):
-            raise ValidationError({
-                'code': 400,
-                'description': 'Report reason must be of type \'string\'. \
-                                Please correct the error and try again.'
-            }, 400)
 
         # If the reported item is a post
         if(report_data['type'].lower() == 'post'):
