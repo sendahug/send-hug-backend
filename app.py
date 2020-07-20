@@ -193,7 +193,8 @@ def create_app(test_config=None):
             new_post = Post(user_id=new_post_data['userId'],
                             text=new_post_data['text'],
                             date=new_post_data['date'],
-                            given_hugs=new_post_data['givenHugs'])
+                            given_hugs=new_post_data['givenHugs'],
+                            sent_hugs='[]')
 
             # Try to add the post to the database
             try:
@@ -313,6 +314,9 @@ def create_app(test_config=None):
                 original_post.given_hugs = updated_post['givenHugs']
                 current_user.given_hugs += 1
                 post_author.received_hugs += 1
+                sent_hugs = original_post.sent_hugs.split(', ')
+                sent_hugs.append(current_user.id)
+                original_post.sent_hugs = sent_hugs.join(', ')
 
                 # Create a notification for the user getting the hug
                 today = datetime.now()
