@@ -29,6 +29,7 @@ class Post(db.Model):
     date = db.Column(db.DateTime)
     given_hugs = db.Column(db.Integer, default=0)
     open_report = db.Column(db.Boolean, nullable=False, default=False)
+    sent_hugs = db.Column(db.Text)
     report = db.relationship('Report', backref='post')
 
     # Format method
