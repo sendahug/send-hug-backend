@@ -194,7 +194,7 @@ def create_app(test_config=None):
                             text=new_post_data['text'],
                             date=new_post_data['date'],
                             given_hugs=new_post_data['givenHugs'],
-                            sent_hugs='[]')
+                            sent_hugs='')
 
             # Try to add the post to the database
             try:
@@ -314,7 +314,7 @@ def create_app(test_config=None):
                 sent_hugs = original_post.sent_hugs.split(', ')
 
                 # If the current user already sent a hug on this post, abort
-                if(current_user.id in sent_hugs):
+                if(str(current_user.id) in sent_hugs):
                     abort(409)
 
                 # Otherwise, continue adding the new hug
@@ -322,7 +322,7 @@ def create_app(test_config=None):
                 current_user.given_hugs += 1
                 post_author.received_hugs += 1
                 sent_hugs.append(current_user.id)
-                original_post.sent_hugs = sent_hugs.join(', ')
+                original_post.sent_hugs = ''.join([str(e) for e in sent_hugs])
 
                 # Create a notification for the user getting the hug
                 today = datetime.now()
