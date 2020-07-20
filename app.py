@@ -311,10 +311,16 @@ def create_app(test_config=None):
             original_hugs = original_post.given_hugs
 
             if(original_post.given_hugs != updated_post['givenHugs']):
+                sent_hugs = original_post.sent_hugs.split(', ')
+
+                # If the current user already sent a hug on this post, abort
+                if(current_user.id in sent_hugs):
+                    abort(409)
+
+                # Otherwise, continue adding the new hug
                 original_post.given_hugs = updated_post['givenHugs']
                 current_user.given_hugs += 1
                 post_author.received_hugs += 1
-                sent_hugs = original_post.sent_hugs.split(', ')
                 sent_hugs.append(current_user.id)
                 original_post.sent_hugs = sent_hugs.join(', ')
 
