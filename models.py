@@ -40,7 +40,8 @@ class Post(db.Model):
             'userId': self.user_id,
             'text': self.text,
             'date': self.date,
-            'givenHugs': self.given_hugs
+            'givenHugs': self.given_hugs,
+            'sentHugs': self.sent_hugs.split(', ')
         }
 
 
