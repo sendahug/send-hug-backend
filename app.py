@@ -311,7 +311,8 @@ def create_app(test_config=None):
             original_hugs = original_post.given_hugs
 
             if(original_post.given_hugs != updated_post['givenHugs']):
-                sent_hugs = original_post.sent_hugs.split(', ')
+                hugs = original_post.sent_hugs.split(' ')
+                sent_hugs = list(filter(None, hugs))
 
                 # If the current user already sent a hug on this post, abort
                 if(str(current_user.id) in sent_hugs):
@@ -322,7 +323,7 @@ def create_app(test_config=None):
                 current_user.given_hugs += 1
                 post_author.received_hugs += 1
                 sent_hugs.append(current_user.id)
-                original_post.sent_hugs = ''.join([str(e) + ', ' for e in sent_hugs])
+                original_post.sent_hugs = ''.join([str(e) + ' ' for e in sent_hugs])
 
                 # Create a notification for the user getting the hug
                 today = datetime.now()

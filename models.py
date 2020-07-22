@@ -41,7 +41,7 @@ class Post(db.Model):
             'text': self.text,
             'date': self.date,
             'givenHugs': self.given_hugs,
-            'sentHugs': self.sent_hugs.split(', ')
+            'sentHugs': list(filter(None, self.sent_hugs.split(' ')))
         }
 
 
