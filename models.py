@@ -60,6 +60,7 @@ class User(db.Model):
     open_report = db.Column(db.Boolean, nullable=False, default=False)
     last_notifications_read = db.Column(db.DateTime)
     auto_refresh = db.Column(db.Boolean, default=True)
+    refresh_rate = db.Column(db.Integer, default=20)
     push_enabled = db.Column(db.Boolean, default=False)
     posts = db.relationship('Post', backref='user')
 
@@ -77,6 +78,7 @@ class User(db.Model):
             'blocked': self.blocked,
             'releaseDate': self.release_date,
             'autoRefresh': self.auto_refresh,
+            'refreshRate': self.refresh_rate,
             'pushEnabled': self.push_enabled,
             'last_notifications_read': self.last_notifications_read
         }
