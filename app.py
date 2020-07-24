@@ -566,7 +566,9 @@ def create_app(test_config=None):
 
         new_user = User(auth0_id=user_data['id'],
                         display_name=user_data['displayName'],
-                        role='user')
+                        role='user',last_notifications_read=datetime.now(),
+                        login_count=0,blocked=False,open_report=False,
+                        auto_refresh=True,refresh_rate=20,push_enabled=False)
 
         # Try to add the post to the database
         try:
@@ -682,13 +684,17 @@ def create_app(test_config=None):
             open_report.closed = True
             original_user.open_report = False
 
-        # If the user is changing their auto-refresh setting
+        # If the user is changing their auto-refresh settings
         if('autoRefresh' in updated_user):
             original_user.auto_refresh = updated_user['autoRefresh']
 
         # If the user is changing their push notifications setting
         if('pushEnabled' in updated_user):
             original_user.push_enabled = updated_user['pushEnabled']
+
+        # If the user is changing their auto-refresh settings
+        if('refreshRate' in updated_user):
+            original_user.refresh_rate = updated_user['refreshRate']
 
         # Checks if the user's role is updated based on the
         # permissions in the JWT
