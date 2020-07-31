@@ -2,6 +2,7 @@ import os
 import json
 import math
 import sys
+import urllib.request
 from datetime import datetime, timedelta
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
@@ -22,10 +23,11 @@ from models import (
     delete_all as db_delete_all,
     joined_query
     )
-from auth import AuthError, requires_auth
+from auth import AuthError, requires_auth, AUTH0_DOMAIN, API_AUDIENCE
 from filter import Filter
 from validator import Validator, ValidationError
 
+MGMT_API_TOKEN = os.environ.get('MGMT_API_TOKEN')
 
 def create_app(test_config=None):
     # create and configure the app
@@ -577,6 +579,41 @@ def create_app(test_config=None):
         # If there's an error, abort
         except Exception as e:
             abort(500)
+
+        # Try to replace the user's role in Auth0's systems
+        try:
+            # Remove the 'new user' role from the user's payload
+            data = "{ \"roles\": [ \"rol_QeyIIcHg326Vv1Ay\" ] }"
+            url = "https://" + AUTH0_DOMAIN + "/api/v2/users/" + user_data['auth0Id'] + "/roles"
+            auth_header = "Bearer " + MGMT_API_TOKEN
+            headers = {
+                'content-type': "application/json",
+                'authorization': auth_header,
+                'cache-control': "no-cache"
+            }
+            req = urllib.request.Request(url, data.encode('utf-8'), headers, method='DELETE')
+            f = urllib.request.urlopen(req)
+            for x in f:
+                print(x)
+            f.close()
+
+            # Then add the 'user' role to the user's payload
+            data = "{ \"roles\": [ \"rol_BhidDxUqlXDx8qIr\" ] }"
+            url = "https://" + AUTH0_DOMAIN + "/api/v2/users/" + user_data['auth0Id'] + "/roles"
+            auth_header = "Bearer " + MGMT_API_TOKEN
+            headers = {
+                'content-type': "application/json",
+                'authorization': auth_header,
+                'cache-control': "no-cache"
+            }
+            req = urllib.request.Request(url, data.encode('utf-8'), headers, method='POST')
+            f = urllib.request.urlopen(req)
+            for x in f:
+                print(x)
+            f.close()
+        # If there's an error, print it
+        except Exception as e:
+            print(e)
 
         return jsonify({
             'success': True,
