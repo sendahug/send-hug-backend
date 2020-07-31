@@ -192,6 +192,7 @@ def requires_auth(permission=['']):
 #          message if the token expired.
 def check_mgmt_api_token():
     token = os.environ.get('MGMT_API_TOKEN')
+    token_header = jwt.get_unverified_header(token)
 
     # Gets the JWKS from Auth0
     auth_json = urlopen('https://' + AUTH0_DOMAIN + '/.well-known/jwks.json')
@@ -199,7 +200,7 @@ def check_mgmt_api_token():
 
     # If the 'kid' key doesn't exist in the token header
     for key in jwks['keys']:
-        if(key['kid'] == token['kid']):
+        if(key['kid'] == token_header['kid']):
             rsa_key = {
                 "kty": key["kty"],
                 "kid": key["kid"],
