@@ -1,13 +1,15 @@
 import json
 import os
 from jose import jwt
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from functools import wraps
 from flask import request
 
 # Auth0 Configuration
 AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN')
 API_AUDIENCE = os.environ.get('API_AUDIENCE')
+CLIENT_ID = os.environ.get('CLIENT_ID')
+CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
 ALGORITHMS = ['RS256']
 
 
@@ -180,3 +182,70 @@ def requires_auth(permission=['']):
 
         return wrapper
     return requires_auth_decorator
+
+
+# Function: check_mgmt_api_token
+# Description: Checks that the Management API token is valid and still hasn't
+#              expired.
+# Parameters: None.
+# Returns: Either the verified token's payload (payload) or a 'token expired'
+#          message if the token expired.
+def check_mgmt_api_token():
+    token = os.environ.get('MGMT_API_TOKEN')
+
+    # Gets the JWKS from Auth0
+    auth_json = urlopen('https://' + AUTH0_DOMAIN + '/.well-known/jwks.json')
+    jwks = json.loads(auth_json.read())
+
+    # If the 'kid' key doesn't exist in the token header
+    for key in jwks['keys']:
+        if(key['kid'] == token['kid']):
+            rsa_key = {
+                "kty": key["kty"],
+                "kid": key["kid"],
+                "use": key["use"],
+                "n": key["n"],
+                "e": key["e"]
+            }
+
+    # Try to decode and validate the token
+    if(rsa_key):
+        try:
+            payload = jwt.decode(
+                token,
+                rsa_key,
+                algorithms=ALGORITHMS,
+                audience=API_AUDIENCE,
+                issuer="https://" + AUTH0_DOMAIN + "/"
+            )
+        # If the token expired
+        except jwt.ExpiredSignatureError:
+            return 'token expired'
+        # If there's any other error
+        except Exception as e:
+            print(e)
+
+    return token
+
+
+# Function: get_management_api_token
+# Description: Gets a new Management API token from Auth0, in order to update
+#              users' data in their systems.
+# Parameters: None.
+# Returns: token - The JWT returned by Auth0.
+def get_management_api_token():
+    data = "grant_type=client_credentials&client_id=" + CLIENT_ID +
+            "&client_secret=" + CLIENT_SECRET + "&audience=https://" + AUTH0_DOMAIN + "/api/v2/"
+    url = "https://" + AUTH0_DOMAIN + "/oauth/token"
+    headers = {
+      'content-type': "application/x-www-form-urlencoded"
+    }
+    req = urllib.request.Request(url, data.encode('utf-8'), headers, method='POST')
+    f = urllib.request.urlopen(req)
+    response = f.read()
+    f.close()
+
+    token_data = response.data.decode('utf8').replace("'", '"')
+    token = json.loads(token_data)['access_token']
+
+    return token
