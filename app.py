@@ -518,10 +518,18 @@ def create_app(test_config=None):
         # If there's no user with that Auth0 ID, try to find a user with that
         # ID; the user might be trying to view user profile
         if(user_data is None):
-            user_data = User.query.filter(User.id == user_id).one_or_none()
+            # Try to convert it to a number; if it's a number, it's a
+            # regular ID, so try to find the user with that ID
+            try:
+                int(user_id)
+                user_data = User.query.filter(User.id == user_id).one_or_none()
 
-            # If there's no user with that ID either, abort
-            if(user_data is None):
+                # If there's no user with that ID either, abort
+                if(user_data is None):
+                    abort(404)
+            # Otherwise, it's an Auth0 ID and it's the user's first login,
+            # so just return a 'not found' message
+            except Exception as e:
                 abort(404)
 
         # If the user is currently blocked, compare their release date to
