@@ -234,7 +234,7 @@ def check_mgmt_api_token():
 # Parameters: None.
 # Returns: token - The JWT returned by Auth0.
 def get_management_api_token():
-    data = "grant_type=client_credentials&client_id=" + CLIENT_ID +
+    data = "grant_type=client_credentials&client_id=" + CLIENT_ID + \
             "&client_secret=" + CLIENT_SECRET + "&audience=https://" + AUTH0_DOMAIN + "/api/v2/"
     url = "https://" + AUTH0_DOMAIN + "/oauth/token"
     headers = {
