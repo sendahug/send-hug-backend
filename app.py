@@ -23,11 +23,16 @@ from models import (
     delete_all as db_delete_all,
     joined_query
     )
-from auth import AuthError, requires_auth, AUTH0_DOMAIN, API_AUDIENCE
+from auth import (
+    AuthError,
+    requires_auth,
+    check_mgmt_api_token,
+    get_management_api_token,
+    AUTH0_DOMAIN,
+    API_AUDIENCE
+    )
 from filter import Filter
 from validator import Validator, ValidationError
-
-MGMT_API_TOKEN = os.environ.get('MGMT_API_TOKEN')
 
 def create_app(test_config=None):
     # create and configure the app
@@ -579,6 +584,13 @@ def create_app(test_config=None):
         # If there's an error, abort
         except Exception as e:
             abort(500)
+
+        # Get the Management API token and check that it's valid
+        MGMT_API_TOKEN = check_mgmt_api_token()
+        # If the token expired, get and check a
+        if(MGMT_API_TOKEN.lower() == 'token expired'):
+            get_management_api_token()
+            MGMT_API_TOKEN = check_mgmt_api_token()
 
         # Try to replace the user's role in Auth0's systems
         try:

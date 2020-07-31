@@ -248,4 +248,4 @@ def get_management_api_token():
     token_data = response.data.decode('utf8').replace("'", '"')
     token = json.loads(token_data)['access_token']
 
-    return token
+    os.environ['MGMT_API_TOKEN'] = token
