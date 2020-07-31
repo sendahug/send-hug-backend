@@ -569,7 +569,7 @@ def create_app(test_config=None):
 
         # If the user is attempting to add a user that isn't themselves to
         # the database, aborts
-        if(user_data['auth0Id'] != token_payload['sub']):
+        if(user_data['id'] != token_payload['sub']):
             abort(422)
 
         # Checks whether a user with that Auth0 ID already exists
@@ -604,7 +604,7 @@ def create_app(test_config=None):
         try:
             # Remove the 'new user' role from the user's payload
             data = "{ \"roles\": [ \"rol_QeyIIcHg326Vv1Ay\" ] }"
-            url = "https://" + AUTH0_DOMAIN + "/api/v2/users/" + user_data['auth0Id'] + "/roles"
+            url = "https://" + AUTH0_DOMAIN + "/api/v2/users/" + user_data['id'] + "/roles"
             auth_header = "Bearer " + MGMT_API_TOKEN
             headers = {
                 'content-type': "application/json",
@@ -619,7 +619,7 @@ def create_app(test_config=None):
 
             # Then add the 'user' role to the user's payload
             data = "{ \"roles\": [ \"rol_BhidDxUqlXDx8qIr\" ] }"
-            url = "https://" + AUTH0_DOMAIN + "/api/v2/users/" + user_data['auth0Id'] + "/roles"
+            url = "https://" + AUTH0_DOMAIN + "/api/v2/users/" + user_data['id'] + "/roles"
             auth_header = "Bearer " + MGMT_API_TOKEN
             headers = {
                 'content-type': "application/json",
