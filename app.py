@@ -2,7 +2,7 @@ import os
 import json
 import math
 import sys
-import urllib.request
+import http.client
 from datetime import datetime, timedelta
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
@@ -602,35 +602,28 @@ def create_app(test_config=None):
 
         # Try to replace the user's role in Auth0's systems
         try:
-            # Remove the 'new user' role from the user's payload
-            data = "{ \"roles\": [ \"rol_QeyIIcHg326Vv1Ay\" ] }"
-            url = "https://" + AUTH0_DOMAIN + "/api/v2/users/" + user_data['id'] + "/roles"
+            # General variables for establishing an HTTPS connection to Auth0
+            connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
             auth_header = "Bearer " + MGMT_API_TOKEN
             headers = {
                 'content-type': "application/json",
                 'authorization': auth_header,
                 'cache-control': "no-cache"
             }
-            req = urllib.request.Request(url, data.encode('utf-8'), headers, method='DELETE')
-            f = urllib.request.urlopen(req)
-            for x in f:
-                print(x)
-            f.close()
+
+            # Remove the 'new user' role from the user's payload
+            delete_payload = "{ \"roles\": [ \"rol_QeyIIcHg326Vv1Ay\" ] }"
+            connection.request("DELETE", "/api/v2/users/" + user_data['id'] + "/roles", delete_payload, headers)
+            delete_response = connection.getresponse()
+            delete_response_data = delete_response.read()
+            print(delete_response_data)
 
             # Then add the 'user' role to the user's payload
-            data = "{ \"roles\": [ \"rol_BhidDxUqlXDx8qIr\" ] }"
-            url = "https://" + AUTH0_DOMAIN + "/api/v2/users/" + user_data['id'] + "/roles"
-            auth_header = "Bearer " + MGMT_API_TOKEN
-            headers = {
-                'content-type': "application/json",
-                'authorization': auth_header,
-                'cache-control': "no-cache"
-            }
-            req = urllib.request.Request(url, data.encode('utf-8'), headers, method='POST')
-            f = urllib.request.urlopen(req)
-            for x in f:
-                print(x)
-            f.close()
+            create_payload = "{ \"roles\": [ \"rol_BhidDxUqlXDx8qIr\" ] }"
+            connection.request("POST", "/api/v2/users/" + user_data['id'] + "/roles", create_payload, headers)
+            create_response = connection.getresponse()
+            create_response_data = create_response.read()
+            print(create_response_data)
         # If there's an error, print it
         except Exception as e:
             print(e)
