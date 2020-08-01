@@ -991,11 +991,20 @@ def create_app(test_config=None):
         length_validated = validator.check_length(message_data['messageText'], 'message')
         type_validated = validator.check_type(message_data['messageText'], 'message text')
 
-        # Checks if there's an existing thread between the users
-        thread = Thread.query.filter(((Thread.user_1_id ==
-                                       message_data['fromId']) and
-                                     (Thread.user_2_id ==
-                                      message_data['forId']))).one_or_none()
+        # Checks if there's an existing thread between the users (with user 1
+        # being the sender and user 2 being the recipient)
+        thread = Thread.query.filter(Thread.user_1_id ==
+                                       message_data['fromId']).\
+            filter(Thread.user_2_id == message_data['forId']).one_or_none()
+
+        # Checks if there's an existing thread between the users (in the
+        # opposite order - with user 1 being the recipient and user 2 being
+        # the sender)
+        if(thread is None):
+            thread = Thread.query.filter(Thread.user_1_id ==
+                                           message_data['forId']).\
+                filter(Thread.user_2_id == message_data['fromId']).\
+                one_or_none()
 
         # If there's no thread between the users
         if(thread is None):
@@ -1003,14 +1012,19 @@ def create_app(test_config=None):
                                 user_2_id=message_data['forId'])
             # Try to create the new thread
             try:
-                db_add(new_thread)
-                thread_id = new_thread.id
+                data = db_add(new_thread)
+                thread_id = data['added']['id']
             # If there's an error, abort
             except Exception as e:
                 abort(500)
         # If there's a thread between the users
         else:
             thread_id = thread.id
+
+        # If a new thread was created and the database session ended, we need
+        # to get the logged user's data again.
+        logged_user = User.query.filter(User.auth0_id ==
+                                        token_payload['sub']).one_or_none()
 
         # Create a new message
         new_message = Message(from_id=message_data['fromId'],

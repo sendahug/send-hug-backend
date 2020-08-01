@@ -446,10 +446,10 @@ def add(obj):
     finally:
         db.session.close()
 
-    return jsonify({
+    return {
         'success': True,
         'added': return_object
-    })
+    }
 
 
 # Method: Update
