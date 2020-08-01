@@ -1,7 +1,8 @@
 import json
 import os
 from jose import jwt
-from urllib.request import urlopen, Request
+from urllib.request import urlopen
+import http.client
 from functools import wraps
 from flask import request
 
@@ -235,18 +236,19 @@ def check_mgmt_api_token():
 # Parameters: None.
 # Returns: token - The JWT returned by Auth0.
 def get_management_api_token():
+    # General variables for establishing an HTTPS connection to Auth0
+    connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
+    headers = {
+        'content-type': "application/x-www-form-urlencoded"
+    }
     data = "grant_type=client_credentials&client_id=" + CLIENT_ID + \
             "&client_secret=" + CLIENT_SECRET + "&audience=https://" + AUTH0_DOMAIN + "/api/v2/"
-    url = "https://" + AUTH0_DOMAIN + "/oauth/token"
-    headers = {
-      'content-type': "application/x-www-form-urlencoded"
-    }
-    req = urllib.request.Request(url, data.encode('utf-8'), headers, method='POST')
-    f = urllib.request.urlopen(req)
-    response = f.read()
-    f.close()
 
-    token_data = response.data.decode('utf8').replace("'", '"')
+    # Then add the 'user' role to the user's payload
+    connection.request("POST", "/oauth/token", data, headers)
+    response = connection.getresponse()
+    response_data = response.read()
+    token_data = response_data.data.decode('utf8').replace("'", '"')
     token = json.loads(token_data)['access_token']
 
     os.environ['MGMT_API_TOKEN'] = token
