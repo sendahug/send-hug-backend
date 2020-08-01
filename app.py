@@ -767,6 +767,10 @@ def create_app(test_config=None):
             elif('delete:any-post' not in token_payload['permissions'] and
                  original_user.role != 'moderator'):
                 original_user.role = 'moderator'
+        # Otherwise, the user's role is a user, so make sure to mark it
+        # as such.
+        else:
+            original_user.role = 'user'
 
         # Try to update it in the database
         try:
