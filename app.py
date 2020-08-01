@@ -205,8 +205,7 @@ def create_app(test_config=None):
 
             # Try to add the post to the database
             try:
-                db_add(new_post)
-                added_post = new_post.format()
+                added_post = db_add(new_post)
             # If there's an error, abort
             except Exception as e:
                 abort(500)
@@ -587,8 +586,7 @@ def create_app(test_config=None):
 
         # Try to add the post to the database
         try:
-            db_add(new_user)
-            added_user = new_user.format()
+            added_user = db_add(new_user)
         # If there's an error, abort
         except Exception as e:
             abort(500)
@@ -1047,11 +1045,10 @@ def create_app(test_config=None):
 
         # Try to add the message to the database
         try:
-            db_add(new_message)
+            sent_message = db_add(new_message)
             db_add(notification)
             send_push_notification(user_id=notification_for,
                                    data=push_notification)
-            sent_message = new_message.format()
         # If there's an error, abort
         except Exception as e:
             abort(500)
@@ -1318,9 +1315,8 @@ def create_app(test_config=None):
 
         # Try to add the report to the database
         try:
-            db_add(report)
+            added_report = db_add(report)
             db_update(reported_item)
-            added_report = report.format()
         # If there's an error, abort
         except Exception as e:
             abort(500)
