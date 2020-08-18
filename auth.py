@@ -262,7 +262,7 @@ def get_management_api_token():
     connection.request("POST", "/oauth/token", data, headers)
     response = connection.getresponse()
     response_data = response.read()
-    token_data = response_data.data.decode('utf8').replace("'", '"')
+    token_data = response_data.decode('utf8').replace("'", '"')
     token = json.loads(token_data)['access_token']
 
     os.environ['MGMT_API_TOKEN'] = token
