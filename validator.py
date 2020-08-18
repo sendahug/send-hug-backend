@@ -1,3 +1,17 @@
+# MIT License
+#
+# Copyright (c) 2020 Send A Hug
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
 # Validation Error
 class ValidationError(Exception):
     def __init__(self, error, status_code):
@@ -17,14 +31,14 @@ class Validator():
     def check_length(self, data, objType):
         if(objType.lower() == 'post'):
             # Check if the post is too long; if it is, abort
-            if(len(data) > self.constraints.post.max):
+            if(len(data) > self.constraints['post']['max']):
                 raise ValidationError({
                     'code': 400,
                     'description': 'Your post is too long! Please shorten \
                                     it and try to post it again.'
                 }, 400)
             # Check if the post is empty; if it is, abort
-            elif(len(data) < self.constraints.post.min):
+            elif(len(data) < self.constraints['post']['min']):
                 raise ValidationError({
                     'code': 400,
                     'description': 'You cannot post an empty post. Please \
@@ -32,14 +46,14 @@ class Validator():
                 }, 400)
         elif(objType.lower() == 'message'):
             # Check if the message is too long; if it is, abort
-            if(len(data) > self.constraints.message.max):
+            if(len(data) > self.constraints['message']['max']):
                 raise ValidationError({
                     'code': 400,
                     'description': 'Your message is too long! Please shorten \
                                     it and try to send it again.'
                 }, 400)
             # Check if the message is empty; if it is, abort
-            elif(len(data) < self.constraints.message.min):
+            elif(len(data) < self.constraints['message']['min']):
                 raise ValidationError({
                     'code': 400,
                     'description': 'You cannot send an empty message. Please \
@@ -47,7 +61,7 @@ class Validator():
                 }, 400)
         elif(objType.lower() == 'display name'):
             # Check if the name is too long; if it is, abort
-            if(len(data) > self.constraints.user.max):
+            if(len(data) > self.constraints['user']['max']):
                 raise ValidationError({
                     'code': 400,
                     'description': 'Your new display name is \
@@ -55,7 +69,7 @@ class Validator():
                                     it and try again.'
                 }, 400)
             # Check if the name is empty; if it is, abort
-            elif(len(data) < self.constraints.user.min):
+            elif(len(data) < self.constraints['user']['min']):
                 raise ValidationError({
                     'code': 400,
                     'description': 'Your display name cannot be \
@@ -64,14 +78,14 @@ class Validator():
                 }, 400)
         elif(objType.lower() == 'report'):
             # Check if the report reason is too long; if it is, abort
-            if(len(data) > self.constraints.report.max):
+            if(len(data) > self.constraints['report']['max']):
                 raise ValidationError({
                     'code': 400,
                     'description': 'Your report reason is too long! Please \
                                     shorten it and try to send it again.'
                 }, 400)
             # Check if the report reason is empty; if it is, abort
-            elif(len(data) < self.constraints.report.min):
+            elif(len(data) < self.constraints['report']['min']):
                 raise ValidationError({
                     'code': 400,
                     'description': 'You cannot send a report without a reason. \
@@ -91,7 +105,6 @@ class Validator():
 
     # Checks the type of the given item
     def check_type(self, data, objType):
-        print(type(data))
         # If the type is one of the free text types, check that it's a
         # string
         if(objType.lower() == 'post text' or objType.lower() == 'message text'

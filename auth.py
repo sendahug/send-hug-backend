@@ -1,13 +1,30 @@
+# MIT License
+#
+# Copyright (c) 2020 Send A Hug
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
 import json
 import os
 from jose import jwt
 from urllib.request import urlopen
+import http.client
 from functools import wraps
 from flask import request
 
 # Auth0 Configuration
 AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN')
 API_AUDIENCE = os.environ.get('API_AUDIENCE')
+CLIENT_ID = os.environ.get('CLIENT_ID')
+CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
 ALGORITHMS = ['RS256']
 
 
@@ -180,3 +197,72 @@ def requires_auth(permission=['']):
 
         return wrapper
     return requires_auth_decorator
+
+
+# Function: check_mgmt_api_token
+# Description: Checks that the Management API token is valid and still hasn't
+#              expired.
+# Parameters: None.
+# Returns: Either the verified token's payload (payload) or a 'token expired'
+#          message if the token expired.
+def check_mgmt_api_token():
+    token = os.environ.get('MGMT_API_TOKEN')
+    token_header = jwt.get_unverified_header(token)
+
+    # Gets the JWKS from Auth0
+    auth_json = urlopen('https://' + AUTH0_DOMAIN + '/.well-known/jwks.json')
+    jwks = json.loads(auth_json.read())
+
+    # If the 'kid' key doesn't exist in the token header
+    for key in jwks['keys']:
+        if(key['kid'] == token_header['kid']):
+            rsa_key = {
+                "kty": key["kty"],
+                "kid": key["kid"],
+                "use": key["use"],
+                "n": key["n"],
+                "e": key["e"]
+            }
+
+    # Try to decode and validate the token
+    if(rsa_key):
+        try:
+            payload = jwt.decode(
+                token,
+                rsa_key,
+                algorithms=ALGORITHMS,
+                audience=API_AUDIENCE,
+                issuer="https://" + AUTH0_DOMAIN + "/"
+            )
+        # If the token expired
+        except jwt.ExpiredSignatureError:
+            return 'token expired'
+        # If there's any other error
+        except Exception as e:
+            print(e)
+
+    return token
+
+
+# Function: get_management_api_token
+# Description: Gets a new Management API token from Auth0, in order to update
+#              users' data in their systems.
+# Parameters: None.
+# Returns: token - The JWT returned by Auth0.
+def get_management_api_token():
+    # General variables for establishing an HTTPS connection to Auth0
+    connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
+    headers = {
+        'content-type': "application/x-www-form-urlencoded"
+    }
+    data = "grant_type=client_credentials&client_id=" + CLIENT_ID + \
+            "&client_secret=" + CLIENT_SECRET + "&audience=https://" + AUTH0_DOMAIN + "/api/v2/"
+
+    # Then add the 'user' role to the user's payload
+    connection.request("POST", "/oauth/token", data, headers)
+    response = connection.getresponse()
+    response_data = response.read()
+    token_data = response_data.decode('utf8').replace("'", '"')
+    token = json.loads(token_data)['access_token']
+
+    os.environ['MGMT_API_TOKEN'] = token

@@ -1,7 +1,22 @@
+# MIT License
+#
+# Copyright (c) 2020 Send A Hug
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
 import os
 import json
 import math
 import sys
+import http.client
 from datetime import datetime, timedelta
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
@@ -22,10 +37,16 @@ from models import (
     delete_all as db_delete_all,
     joined_query
     )
-from auth import AuthError, requires_auth
+from auth import (
+    AuthError,
+    requires_auth,
+    check_mgmt_api_token,
+    get_management_api_token,
+    AUTH0_DOMAIN,
+    API_AUDIENCE
+    )
 from filter import Filter
 from validator import Validator, ValidationError
-
 
 def create_app(test_config=None):
     # create and configure the app
@@ -198,8 +219,7 @@ def create_app(test_config=None):
 
             # Try to add the post to the database
             try:
-                db_add(new_post)
-                added_post = new_post.format()
+                added_post = db_add(new_post)
             # If there's an error, abort
             except Exception as e:
                 abort(500)
@@ -511,10 +531,18 @@ def create_app(test_config=None):
         # If there's no user with that Auth0 ID, try to find a user with that
         # ID; the user might be trying to view user profile
         if(user_data is None):
-            user_data = User.query.filter(User.id == user_id).one_or_none()
+            # Try to convert it to a number; if it's a number, it's a
+            # regular ID, so try to find the user with that ID
+            try:
+                int(user_id)
+                user_data = User.query.filter(User.id == user_id).one_or_none()
 
-            # If there's no user with that ID either, abort
-            if(user_data is None):
+                # If there's no user with that ID either, abort
+                if(user_data is None):
+                    abort(404)
+            # Otherwise, it's an Auth0 ID and it's the user's first login,
+            # so just return a 'not found' message
+            except Exception as e:
                 abort(404)
 
         # If the user is currently blocked, compare their release date to
@@ -554,7 +582,7 @@ def create_app(test_config=None):
 
         # If the user is attempting to add a user that isn't themselves to
         # the database, aborts
-        if(user_data['auth0Id'] != token_payload['sub']):
+        if(user_data['id'] != token_payload['sub']):
             abort(422)
 
         # Checks whether a user with that Auth0 ID already exists
@@ -566,15 +594,51 @@ def create_app(test_config=None):
 
         new_user = User(auth0_id=user_data['id'],
                         display_name=user_data['displayName'],
-                        role='user')
+                        role='user',last_notifications_read=datetime.now(),
+                        login_count=0,blocked=False,open_report=False,
+                        auto_refresh=True,refresh_rate=20,push_enabled=False)
 
         # Try to add the post to the database
         try:
-            db_add(new_user)
-            added_user = new_user.format()
+            added_user = db_add(new_user)
         # If there's an error, abort
         except Exception as e:
             abort(500)
+
+        # Get the Management API token and check that it's valid
+        MGMT_API_TOKEN = check_mgmt_api_token()
+        # If the token expired, get and check a
+        if(MGMT_API_TOKEN.lower() == 'token expired'):
+            get_management_api_token()
+            MGMT_API_TOKEN = check_mgmt_api_token()
+
+        # Try to replace the user's role in Auth0's systems
+        try:
+            # General variables for establishing an HTTPS connection to Auth0
+            connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
+            auth_header = "Bearer " + MGMT_API_TOKEN
+            headers = {
+                'content-type': "application/json",
+                'authorization': auth_header,
+                'cache-control': "no-cache"
+            }
+
+            # Remove the 'new user' role from the user's payload
+            delete_payload = "{ \"roles\": [ \"rol_QeyIIcHg326Vv1Ay\" ] }"
+            connection.request("DELETE", "/api/v2/users/" + user_data['id'] + "/roles", delete_payload, headers)
+            delete_response = connection.getresponse()
+            delete_response_data = delete_response.read()
+            print(delete_response_data)
+
+            # Then add the 'user' role to the user's payload
+            create_payload = "{ \"roles\": [ \"rol_BhidDxUqlXDx8qIr\" ] }"
+            connection.request("POST", "/api/v2/users/" + user_data['id'] + "/roles", create_payload, headers)
+            create_response = connection.getresponse()
+            create_response_data = create_response.read()
+            print(create_response_data)
+        # If there's an error, print it
+        except Exception as e:
+            print(e)
 
         return jsonify({
             'success': True,
@@ -682,13 +746,17 @@ def create_app(test_config=None):
             open_report.closed = True
             original_user.open_report = False
 
-        # If the user is changing their auto-refresh setting
+        # If the user is changing their auto-refresh settings
         if('autoRefresh' in updated_user):
             original_user.auto_refresh = updated_user['autoRefresh']
 
         # If the user is changing their push notifications setting
         if('pushEnabled' in updated_user):
             original_user.push_enabled = updated_user['pushEnabled']
+
+        # If the user is changing their auto-refresh settings
+        if('refreshRate' in updated_user):
+            original_user.refresh_rate = updated_user['refreshRate']
 
         # Checks if the user's role is updated based on the
         # permissions in the JWT
@@ -711,6 +779,10 @@ def create_app(test_config=None):
             elif('delete:any-post' not in token_payload['permissions'] and
                  original_user.role != 'moderator'):
                 original_user.role = 'moderator'
+        # Otherwise, the user's role is a user, so make sure to mark it
+        # as such.
+        else:
+            original_user.role = 'user'
 
         # Try to update it in the database
         try:
@@ -931,11 +1003,20 @@ def create_app(test_config=None):
         length_validated = validator.check_length(message_data['messageText'], 'message')
         type_validated = validator.check_type(message_data['messageText'], 'message text')
 
-        # Checks if there's an existing thread between the users
-        thread = Thread.query.filter(((Thread.user_1_id ==
-                                       message_data['fromId']) and
-                                     (Thread.user_2_id ==
-                                      message_data['forId']))).one_or_none()
+        # Checks if there's an existing thread between the users (with user 1
+        # being the sender and user 2 being the recipient)
+        thread = Thread.query.filter(Thread.user_1_id ==
+                                       message_data['fromId']).\
+            filter(Thread.user_2_id == message_data['forId']).one_or_none()
+
+        # Checks if there's an existing thread between the users (in the
+        # opposite order - with user 1 being the recipient and user 2 being
+        # the sender)
+        if(thread is None):
+            thread = Thread.query.filter(Thread.user_1_id ==
+                                           message_data['forId']).\
+                filter(Thread.user_2_id == message_data['fromId']).\
+                one_or_none()
 
         # If there's no thread between the users
         if(thread is None):
@@ -943,14 +1024,19 @@ def create_app(test_config=None):
                                 user_2_id=message_data['forId'])
             # Try to create the new thread
             try:
-                db_add(new_thread)
-                thread_id = new_thread.id
+                data = db_add(new_thread)
+                thread_id = data['added']['id']
             # If there's an error, abort
             except Exception as e:
                 abort(500)
         # If there's a thread between the users
         else:
             thread_id = thread.id
+
+        # If a new thread was created and the database session ended, we need
+        # to get the logged user's data again.
+        logged_user = User.query.filter(User.auth0_id ==
+                                        token_payload['sub']).one_or_none()
 
         # Create a new message
         new_message = Message(from_id=message_data['fromId'],
@@ -973,11 +1059,10 @@ def create_app(test_config=None):
 
         # Try to add the message to the database
         try:
-            db_add(new_message)
+            sent_message = db_add(new_message)
             db_add(notification)
             send_push_notification(user_id=notification_for,
                                    data=push_notification)
-            sent_message = new_message.format()
         # If there's an error, abort
         except Exception as e:
             abort(500)
@@ -1244,9 +1329,8 @@ def create_app(test_config=None):
 
         # Try to add the report to the database
         try:
-            db_add(report)
+            added_report = db_add(report)
             db_update(reported_item)
-            added_report = report.format()
         # If there's an error, abort
         except Exception as e:
             abort(500)
