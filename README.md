@@ -1,5 +1,8 @@
 # Send A Hug
 
+[![Build Status](https://travis-ci.com/sendahug/send-hug-backend.svg?branch=Dev)](https://travis-ci.com/sendahug/send-hug-backend)
+[![Known Vulnerabilities](https://snyk.io/test/github/sendahug/send-hug-backend/badge.svg)](https://snyk.io/test/github/sendahug/send-hug-backend)
+
 ## Version
 
 Version 1 (currently in development).
