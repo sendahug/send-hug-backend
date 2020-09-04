@@ -94,7 +94,7 @@ sample_moderator_id = str(5)
 sample_moderator_auth0_id = 'auth0|5ede3e7a0793080013259050'
 sample_admin_id = str(4)
 sample_admin_auth0_id = 'auth0|5ed8e3d0def75d0befbc7e50'
-blocked_user_id = str(9)
+blocked_user_id = str(20)
 
 # Item Samples
 new_post = {
