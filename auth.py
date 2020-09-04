@@ -256,7 +256,8 @@ def get_management_api_token():
         'content-type': "application/x-www-form-urlencoded"
     }
     data = "grant_type=client_credentials&client_id=" + CLIENT_ID + \
-            "&client_secret=" + CLIENT_SECRET + "&audience=https://" + AUTH0_DOMAIN + "/api/v2/"
+            "&client_secret=" + CLIENT_SECRET + "&audience=https%3A%2F%2F" + \
+            AUTH0_DOMAIN + "%2Fapi%2Fv2%2F"
 
     # Then add the 'user' role to the user's payload
     connection.request("POST", "/oauth/token", data, headers)
