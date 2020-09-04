@@ -600,7 +600,7 @@ def create_app(test_config=None):
 
         # Try to add the post to the database
         try:
-            added_user = db_add(new_user)
+            added_user = db_add(new_user)['added']
         # If there's an error, abort
         except Exception as e:
             abort(500)
