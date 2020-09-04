@@ -71,20 +71,20 @@ malformed_header = {
                     }
 user_header = {
                'Content-Type': 'application/json',
-               'Authorization': 'Bearer ' + user_jwt
+               'Authorization': 'Bearer ' + access_tokens['user_jwt']
               }
 moderator_header = {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + moderator_jwt
+                    'Authorization': 'Bearer ' + access_tokens['moderator_jwt']
                    }
 admin_header = {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + admin_jwt
+                'Authorization': 'Bearer ' + access_tokens['admin_jwt']
                }
 
 blocked_header = {
                   'Content-Type': 'application/json',
-                  'Authorization': 'Bearer ' + blocked_jwt
+                  'Authorization': 'Bearer ' + access_tokens['blocked_jwt']
                  }
 
 # Sample users data
