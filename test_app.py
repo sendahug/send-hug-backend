@@ -15,17 +15,54 @@
 import unittest
 import json
 import os
+import http.client
 from flask_sqlalchemy import SQLAlchemy
 from sh import createdb, dropdb, psql
 
 from app import create_app
 from models import create_db, Post, User, Message
 
+AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN')
+API_AUDIENCE = os.environ.get('API_AUDIENCE')
+TEST_CLIENT_ID = os.environ.get('CLIENT_ID')
+TEST_CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
+
 # Tokens
-user_jwt = os.environ.get('USER_JWT')
-moderator_jwt = os.environ.get('MOD_JWT')
-admin_jwt = os.environ.get('ADMIN_JWT')
-blocked_jwt = os.environ.get('BLOCKED_JWT')
+access_tokens = {
+    'user_jwt': '',
+    'moderator_jwt': '',
+    'admin_jwt': '',
+    'blocked_jwt': ''
+}
+
+
+# Get Auth0 access tokens for each of the users to be able to ru
+# the tests.
+def get_user_tokens():
+    # General variables for establishing an HTTPS connection to Auth0
+    connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
+    headers = {
+        'content-type': "application/x-www-form-urlencoded"
+    }
+
+    roles = ['user', 'moderator', 'admin', 'blocked']
+    for role in roles:
+        # Get the user's username and password
+        role_username = os.environ.get(role.upper() + '_USERNAME')
+        role_password = os.environ.get(role.upper() + '_PASSWORD')
+
+        data = "grant_type=password&username=" + role_username + \
+               "&password=" + role_password + "&audience=" + API_AUDIENCE + \
+               "&client_id=" + CLIENT_ID + "&client_secret=" + CLIENT_SECRET
+
+        # make the request and get the token
+        conn.request("POST", "/YOUR_DOMAIN/oauth/token", payload, headers)
+        res = conn.getresponse()
+        response_data = response.read()
+        token_data = response_data.decode('utf8').replace("'", '"')
+        token = json.loads(token_data)['access_token']
+        access_tokens[role + '_jwt'] = token
+
 
 # Headers
 malformed_header = {
@@ -142,6 +179,11 @@ new_subscription = {
 
 # App testing
 class TestHugApp(unittest.TestCase):
+    # Settings up the suite
+    @classmethod
+    def setUpClass(cls):
+        get_user_tokens()
+
     # Setting up each test
     def setUp(self):
         self.app = create_app()
