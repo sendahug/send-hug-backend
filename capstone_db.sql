@@ -119,7 +119,8 @@ CREATE TABLE public.posts (
     text character varying(480) NOT NULL,
     date timestamp without time zone,
     given_hugs integer,
-    open_report boolean NOT NULL
+    open_report boolean NOT NULL,
+    sent_hugs text
 );
 
 
@@ -278,7 +279,8 @@ CREATE TABLE public.users (
     release_date timestamp without time zone,
     last_notifications_read timestamp without time zone,
     auto_refresh boolean,
-    push_enabled boolean
+    push_enabled boolean,
+    refresh_rate integer
 );
 
 
@@ -360,7 +362,7 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.alembic_version (version_num) FROM stdin;
-1c6735c6ed2a
+97ebcd9c039d
 \.
 
 
@@ -439,6 +441,37 @@ COPY public.notifications (id, for_id, from_id, type, text, date) FROM stdin;
 47	4	4	hug	You got a hug	2020-07-14 16:00:48.658501
 48	4	4	hug	You got a hug	2020-07-14 16:00:52.290504
 49	4	4	hug	You got a hug	2020-07-14 16:00:57.635331
+50	4	4	hug	You got a hug	2020-07-20 17:30:57.513678
+51	4	4	hug	You got a hug	2020-07-20 17:31:18.728888
+52	4	4	hug	You got a hug	2020-07-20 17:31:45.554583
+53	4	4	hug	You got a hug	2020-07-20 17:32:19.808169
+54	4	4	hug	You got a hug	2020-07-21 14:35:20.297422
+55	4	4	hug	You got a hug	2020-07-21 14:35:34.933279
+56	4	4	hug	You got a hug	2020-07-21 14:36:00.316687
+57	4	4	hug	You got a hug	2020-07-21 14:36:05.76754
+58	4	4	hug	You got a hug	2020-07-22 11:38:02.864273
+59	4	4	hug	You got a hug	2020-07-22 11:39:45.109452
+60	4	4	hug	You got a hug	2020-07-22 11:45:57.699555
+61	4	4	hug	You got a hug	2020-07-22 11:47:10.258195
+62	4	4	hug	You got a hug	2020-07-22 12:16:14.657724
+63	4	4	hug	You got a hug	2020-07-22 12:18:54.286811
+64	4	4	hug	You got a hug	2020-07-22 12:22:00.067407
+65	4	4	hug	You got a hug	2020-07-22 12:22:54.884349
+66	4	4	hug	You got a hug	2020-07-22 12:23:21.062704
+67	4	4	hug	You got a hug	2020-07-22 12:37:08.019144
+68	4	4	hug	You got a hug	2020-07-22 13:20:59.398594
+69	4	4	hug	You got a hug	2020-07-22 13:36:52.419098
+70	1	4	hug	You got a hug	2020-07-22 13:40:25.495938
+71	1	4	hug	You got a hug	2020-07-22 13:41:51.227895
+72	4	4	hug	You got a hug	2020-07-22 13:42:35.797629
+73	5	4	hug	You got a hug	2020-07-22 13:42:40.059274
+74	1	4	hug	You got a hug	2020-07-22 13:42:44.75568
+75	1	4	hug	You got a hug	2020-07-22 14:09:01.457204
+76	1	4	hug	You got a hug	2020-07-22 15:01:45.393836
+77	1	4	hug	You got a hug	2020-07-22 15:09:58.206196
+78	1	4	hug	You got a hug	2020-07-22 15:18:49.469451
+79	4	4	hug	You got a hug	2020-07-22 15:30:06.395028
+80	5	4	hug	You got a hug	2020-08-10 19:40:21.244178
 \.
 
 
@@ -446,23 +479,24 @@ COPY public.notifications (id, for_id, from_id, type, text, date) FROM stdin;
 -- Data for Name: posts; Type: TABLE DATA; Schema: public; Owner: shirbarlev
 --
 
-COPY public.posts (id, user_id, text, date, given_hugs, open_report) FROM stdin;
-5	1	test	2020-06-01 15:18:37.305	0	f
-6	1	test	2020-06-01 15:19:41.25	0	f
-7	1	test	2020-06-01 15:20:11.927	0	f
-2	1	test	2020-06-01 15:10:59.898	1	f
-1	1	test	2020-06-01 15:05:01.966	1	f
-10	1	cutie baby lee	2020-06-04 07:56:09.791	0	f
-12	5	new user	2020-06-08 14:07:25.297	0	f
-13	5	2nd post	2020-06-08 14:30:58.88	0	f
-11	1	baby lee :))	2020-06-04 08:15:50.811	1	f
-9	1	leeeeeee b :))	2020-06-03 07:11:40.421	0	f
-22	4	testing service worker	2020-06-27 10:31:24.915	0	f
-23	4	post	2020-06-27 19:17:31.072	1	f
-25	4	for report	2020-07-06 08:02:02.184	66	f
-26	4	testing new design	2020-07-13 18:40:34.806	0	f
-4	1	test	2020-06-01 15:17:56.294	1	f
-28	4	testing2	2020-07-13 18:43:51.255	8	f
+COPY public.posts (id, user_id, text, date, given_hugs, open_report, sent_hugs) FROM stdin;
+30	4	hello :)	2020-07-18 12:11:39.65	24	f	4 
+28	4	testing2	2020-07-13 18:43:51.255	9	f	4 
+26	4	testing new design	2020-07-13 18:40:34.806	1	f	4 
+6	1	testing	2020-06-01 15:19:41.25	1	f	4 
+11	1	baby lee :))	2020-06-04 08:15:50.811	2	f	4 
+22	4	testing service worker	2020-06-27 10:31:24.915	1	f	4 
+13	5	2nd post	2020-06-08 14:30:58.88	1	f	4 
+10	1	cutie baby lee	2020-06-04 07:56:09.791	1	f	4 
+5	1	testing update	2020-06-01 15:18:37.305	1	f	4 
+7	1	testing #2	2020-06-01 15:20:11.927	1	f	4 
+2	1	test	2020-06-01 15:10:59.898	2	f	4 
+4	1	test	2020-06-01 15:17:56.294	2	f	4 
+23	4	post	2020-06-27 19:17:31.072	2	f	4 
+12	5	new user	2020-06-08 14:07:25.297	1	f	4 
+1	1	test	2020-06-01 15:05:01.966	1	f	
+9	1	leeeeeee b :))	2020-06-03 07:11:40.421	0	f	
+25	4	for report	2020-07-06 08:02:02.184	66	f	
 \.
 
 
@@ -544,11 +578,12 @@ COPY public.threads (id, user_1_id, user_2_id, user_1_deleted, user_2_deleted) F
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: shirbarlev
 --
 
-COPY public.users (id, auth0_id, received_hugs, given_hugs, display_name, login_count, role, blocked, open_report, release_date, last_notifications_read, auto_refresh, push_enabled) FROM stdin;
-1	auth0|5ed34765f0b8e60c8e87ca62	3	2	shirb	59	admin	f	f	\N	\N	\N	\N
-4	auth0|5ed8e3d0def75d0befbc7e50	75	75	user14	23	admin	f	f	\N	2020-07-14 16:01:02.204372	f	t
-9	auth0|5edf7b060793080013276746	0	1	user93	2	admin	t	f	2020-08-15 10:01:27.669	\N	\N	\N
-5	auth0|5ede3e7a0793080013259050	0	0	user52	7	moderator	f	f	\N	\N	\N	\N
+COPY public.users (id, auth0_id, received_hugs, given_hugs, display_name, login_count, role, blocked, open_report, release_date, last_notifications_read, auto_refresh, push_enabled, refresh_rate) FROM stdin;
+9	auth0|5edf7b060793080013276746	0	1	user93	2	admin	f	f	\N	\N	\N	\N	\N
+4	auth0|5ed8e3d0def75d0befbc7e50	97	106	user14	32	admin	f	f	\N	2020-07-14 16:01:02.204372	f	t	\N
+20	auth0|5f4b9fd9915cd400670f4633	0	0	user24	0	admin	t	f	2120-08-11 08:33:22.473	2020-09-04 11:19:24.680191	f	f	0
+1	auth0|5ed34765f0b8e60c8e87ca62	10	2	shirb	60	admin	f	f	\N	\N	\N	\N	\N
+5	auth0|5ede3e7a0793080013259050	2	0	user52	7	moderator	f	f	\N	\N	\N	\N	\N
 \.
 
 
@@ -563,14 +598,14 @@ SELECT pg_catalog.setval('public.messages_id_seq', 22, true);
 -- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: shirbarlev
 --
 
-SELECT pg_catalog.setval('public.notifications_id_seq', 49, true);
+SELECT pg_catalog.setval('public.notifications_id_seq', 80, true);
 
 
 --
 -- Name: posts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: shirbarlev
 --
 
-SELECT pg_catalog.setval('public.posts_id_seq', 28, true);
+SELECT pg_catalog.setval('public.posts_id_seq', 31, true);
 
 
 --
@@ -598,7 +633,7 @@ SELECT pg_catalog.setval('public.threads_id_seq', 6, true);
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: shirbarlev
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 9, true);
+SELECT pg_catalog.setval('public.users_id_seq', 20, true);
 
 
 --
