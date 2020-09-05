@@ -15,7 +15,9 @@
 import unittest
 import json
 import os
-import http.client
+import urllib.request
+import base64
+import time
 from flask_sqlalchemy import SQLAlchemy
 from sh import createdb, dropdb, psql
 
@@ -24,8 +26,8 @@ from models import create_db, Post, User, Message
 
 AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN')
 API_AUDIENCE = os.environ.get('API_AUDIENCE')
-TEST_CLIENT_ID = os.environ.get('CLIENT_ID')
-TEST_CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
+TEST_CLIENT_ID = os.environ.get('TEST_CLIENT_ID')
+TEST_CLIENT_SECRET = os.environ.get('TEST_CLIENT_SECRET')
 
 # Tokens
 access_tokens = {
@@ -39,29 +41,31 @@ access_tokens = {
 # Get Auth0 access tokens for each of the users to be able to ru
 # the tests.
 def get_user_tokens():
-    # General variables for establishing an HTTPS connection to Auth0
-    connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
     headers = {
         'content-type': "application/x-www-form-urlencoded"
     }
 
     roles = ['user', 'moderator', 'admin', 'blocked']
     for role in roles:
+        url = "https://" + AUTH0_DOMAIN + "/oauth/token"
+
         # Get the user's username and password
         role_username = os.environ.get(role.upper() + '_USERNAME')
         role_password = os.environ.get(role.upper() + '_PASSWORD')
 
         data = "grant_type=password&username=" + role_username + \
                "&password=" + role_password + "&audience=" + API_AUDIENCE + \
-               "&client_id=" + CLIENT_ID + "&client_secret=" + CLIENT_SECRET
+               "&client_id=" + TEST_CLIENT_ID + "&client_secret=" +\
+                TEST_CLIENT_SECRET
 
         # make the request and get the token
-        conn.request("POST", "/YOUR_DOMAIN/oauth/token", payload, headers)
-        res = conn.getresponse()
-        response_data = response.read()
+        req = urllib.request.Request(url, data.encode('utf-8'), headers, method='POST')
+        f = urllib.request.urlopen(req)
+        response_data = f.read()
         token_data = response_data.decode('utf8').replace("'", '"')
         token = json.loads(token_data)['access_token']
         access_tokens[role + '_jwt'] = token
+        f.close()
 
 
 # Headers
@@ -179,7 +183,7 @@ new_subscription = {
 
 # App testing
 class TestHugApp(unittest.TestCase):
-    # Settings up the suite
+    # Setting up the suite
     @classmethod
     def setUpClass(cls):
         get_user_tokens()
