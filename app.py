@@ -1357,7 +1357,7 @@ def create_app(test_config=None):
 
         # Try to add the report to the database
         try:
-            added_report = db_add(report)
+            added_report = db_add(report)['added']
             db_update(reported_item)
         # If there's an error, abort
         except Exception as e:
