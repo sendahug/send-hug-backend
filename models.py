@@ -516,6 +516,31 @@ def update(obj, params={}):
     })
 
 
+# Method: Update Multiple
+# Description: Updates multiple records.
+# Parameters: A list with all objects to update.
+def update_multiple(objs=[]):
+    updated_objects = []
+
+    # Try to update the object in the database
+    try:
+        for obj in objs:
+            db.session.commit()
+            updated_objects.append(obj.format())
+    # If there's an error, rollback
+    except Exception as e:
+        print(e)
+        db.session.rollback()
+    # Close the connection once the attempt is complete
+    finally:
+        db.session.close()
+
+    return jsonify({
+        'success': True,
+        'updated': updated_objects
+    })
+
+
 # Method: Delete Object
 # Description: Deletes an existing record.
 # Parameters: Object (User, Post or Message) to delete.
