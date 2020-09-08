@@ -1321,6 +1321,10 @@ def create_app(test_config=None):
 
         # If the reported item is a post
         if(report_data['type'].lower() == 'post'):
+            # If there's no post ID, abort
+            if(report_data['postID'] is None):
+                abort(422)
+
             reported_item = Post.query.filter(Post.id ==
                                               report_data['postID']).\
                                               one_or_none()
@@ -1339,6 +1343,10 @@ def create_app(test_config=None):
             reported_item.open_report = True
         # Otherwise the reported item is a user
         else:
+            # If there's no user ID, abort
+            if(report_data['userID'] is None):
+                abort(422)
+
             reported_item = User.query.filter(User.id ==
                                               report_data['userID']).\
                                               one_or_none()
