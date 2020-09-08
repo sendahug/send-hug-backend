@@ -363,6 +363,16 @@ def create_app(test_config=None):
         # a report, which means the report with the given ID needs to be
         # closed.
         if('closeReport' in updated_post):
+            # Check the user has permission to close reports
+            # If he doesn't, raise an AuthError
+            if('read:admin-board' not in token_payload['permissions']):
+                raise AuthError({
+                    'code': 403,
+                    'description': 'You do not have permission to close \
+                                    this post\'s report.'
+                    }, 403)
+
+            # Otherwise get the open report and close it
             open_report = Report.query.filter(Report.id ==
                                               updated_post['closeReport']).\
                                               one_or_none()
@@ -387,7 +397,7 @@ def create_app(test_config=None):
                     send_push_notification(user_id=notification_for,
                                            data=push_notification)
                     db_add(notification)
-            
+
             data = json.loads(updated_res.data)['updated']
             db_updated_post = data[0]
         # If there's an error, abort
