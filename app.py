@@ -1232,7 +1232,7 @@ def create_app(test_config=None):
                                          token_payload['sub']).one_or_none()
 
         # If the user is attempting to delete another user's messages
-        if(current_user.id != user_id):
+        if(current_user.id != int(user_id)):
             raise AuthError({
                 'code': 403,
                 'description': 'You do not have permission to delete another\
