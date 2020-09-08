@@ -19,7 +19,7 @@ import urllib.request
 import base64
 import time
 from flask_sqlalchemy import SQLAlchemy
-from sh import psql
+from sh import pg_restore
 
 from app import create_app
 from models import create_db, Post, User, Message
@@ -199,9 +199,9 @@ class TestHugApp(unittest.TestCase):
         self.app = create_app()
         self.client = self.app.test_client
         self.database_path = 'postgres://localhost:5432/test-capstone'
-        psql('-d', 'test-capstone', '-f' ,'capstone_db.sql')
 
         create_db(self.app, self.database_path)
+        pg_restore('-d', 'test-capstone', 'capstone_db', '-Fc', '-c')
 
         # binds the app to the current context
         with self.app.app_context():
@@ -214,8 +214,8 @@ class TestHugApp(unittest.TestCase):
     def tearDown(self):
         # binds the app to the current context
         with self.app.app_context():
-            self.db = SQLAlchemy()
             self.db.drop_all()
+            self.db.session.close()
 
     # Index Route Tests ('/', GET)
     # -------------------------------------------------------
