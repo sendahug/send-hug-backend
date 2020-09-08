@@ -193,7 +193,6 @@ class TestHugApp(unittest.TestCase):
         self.app = create_app()
         self.client = self.app.test_client
         self.database_path = 'postgres://localhost:5432/test-capstone'
-        dropdb('test-capstone')
         createdb('test-capstone')
         psql('-d', 'test-capstone', '-f' ,'capstone_db.sql')
 
@@ -208,7 +207,10 @@ class TestHugApp(unittest.TestCase):
 
     # Executed after each test
     def tearDown(self):
-        pass
+        # binds the app to the current context
+        with self.app.app_context():
+            self.db = SQLAlchemy()
+            self.db.drop_all()
 
     # Index Route Tests ('/', GET)
     # -------------------------------------------------------
