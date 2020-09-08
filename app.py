@@ -35,6 +35,7 @@ from models import (
     update as db_update,
     delete_object as db_delete,
     delete_all as db_delete_all,
+    update_multiple as db_update_multi,
     joined_query
     )
 from auth import (
@@ -371,19 +372,24 @@ def create_app(test_config=None):
 
         # Try to update the database
         try:
-            # Update users' and post's data
-            db_update(original_post)
-            db_update(current_user)
-            db_update(post_author)
+            # Objects to update
+            to_update = [original_post, current_user, post_author]
+            # If there's a report to close, add it to the list of objects
+            # to update.
             if('closeReport' in updated_post):
-                db_update(open_report)
+                to_update.append(open_report)
+            # Update users' and post's data
+            updated_res = db_update_multi(to_update)
+
             # If there was an added hug, add the new notification
             if('givenHugs' in updated_post):
                 if(original_hugs != updated_post['givenHugs']):
                     send_push_notification(user_id=notification_for,
                                            data=push_notification)
                     db_add(notification)
-            db_updated_post = original_post.format()
+            
+            data = json.loads(updated_res.data)['updated']
+            db_updated_post = data[0]
         # If there's an error, abort
         except Exception as e:
             print(sys.exc_info())
