@@ -166,7 +166,7 @@ new_message = {
     "fromId": 0,
     "forId": 0,
     "messageText": "meow",
-    "date": "Sun Jun 07 2020 15:57:45 GMT+0300"
+    "date": "Sun Jun 07 2020 15:57:45"
 }
 
 new_report = {
@@ -175,7 +175,7 @@ new_report = {
     "postID": 0,
     "reporter": 0,
     "reportReason": "It is inappropriate",
-    "date": "Sun Jun 07 2020 15:57:45 GMT+0300"
+    "date": "Sun Jun 07 2020 15:57:45"
 }
 
 new_subscription = {
@@ -1732,7 +1732,7 @@ class TestHugApp(unittest.TestCase):
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 422)
 
     # Update Report Route Tests ('/reports/<report_id>', PATCH)
     # -------------------------------------------------------
@@ -1958,7 +1958,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete a filter with an admin's JWT
     def test_delete_filters_as_admin(self):
-        response = self.client().post('/filters/1', headers=admin_header)
+        response = self.client().delete('/filters/1', headers=admin_header)
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
@@ -1967,7 +1967,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete a filter that doesn't exist with an admin's JWT
     def test_delete_nonexistent_filters_as_admin(self):
-        response = self.client().post('/filters/100', headers=admin_header)
+        response = self.client().delete('/filters/100', headers=admin_header)
         response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
