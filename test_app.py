@@ -274,6 +274,7 @@ class TestHugApp(unittest.TestCase):
 
     # Create Post Route Tests ('/posts', POST)
     # -------------------------------------------------------
+    # Attempt to create a post without auth header
     def test_send_post_no_auth(self):
         response = self.client().post('/posts', data=json.dumps(new_post))
         response_data = json.loads(response.data)
