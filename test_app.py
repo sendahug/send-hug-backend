@@ -1139,8 +1139,8 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['messages'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
-        self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 2)
+        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(len(response_data['messages']), 5)
 
     # Attempt to get a user's outbox with a user's JWT
     def test_get_user_outbox_as_user(self):
@@ -1168,7 +1168,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 2)
+        self.assertEqual(len(response_data['messages']), 3)
 
     # Attempt to get another user's messages with a user's JWT
     def test_get_another_users_messages_as_user(self):
@@ -1190,7 +1190,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 1)
+        self.assertEqual(len(response_data['messages']), 3)
 
     # Attempt to get a user's outbox with a moderator's JWT
     def test_get_user_outbox_as_mod(self):
@@ -1218,7 +1218,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 2)
+        self.assertEqual(len(response_data['messages']), 3)
 
     #  Attempt to get another user's messages with a moderator's JWT
     def test_get_another_users_messages_as_mod(self):
@@ -1236,11 +1236,10 @@ class TestHugApp(unittest.TestCase):
         response_data = json.loads(response.data)
 
         self.assertTrue(response_data['success'])
-        self.assertTrue(response_data['messages'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
-        self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 1)
+        self.assertEqual(response_data['total_pages'], 0)
+        self.assertEqual(len(response_data['messages']), 0)
 
     # Attempt to get a user's outbox with an admin's JWT
     def test_get_user_outbox_as_admin(self):
@@ -1254,7 +1253,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 2)
+        self.assertEqual(len(response_data['messages']), 4)
 
     # Attempt to get a user's threads mailbox with an admin's JWT
     def test_get_user_threads_as_admin(self):
@@ -1268,7 +1267,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 2)
+        self.assertEqual(len(response_data['messages']), 1)
 
     # Attempt to get another user's messages with an admin's JWT
     def test_get_another_users_messages_as_admin(self):
@@ -1448,7 +1447,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], '1')
+        self.assertEqual(response_data['deleted'], '3')
 
     # Attempt to delete another user's message (with a user's JWT)
     def test_delete_message_from_another_user_as_user(self):
@@ -1485,7 +1484,7 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete another user's message (with a moderator's JWT)
     def test_delete_message_from_another_user_as_mod(self):
-        response = self.client().delete('/messages/outbox/8',
+        response = self.client().delete('/messages/outbox/9',
                                         headers=moderator_header)
         response_data = json.loads(response.data)
 
@@ -1500,7 +1499,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], '6')
+        self.assertEqual(response_data['deleted'], '10')
 
     # Attempt to delete another user's message (with an admin's JWT)
     def test_delete_message_from_another_user_as_admin(self):
@@ -1555,7 +1554,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], '5')
+        self.assertEqual(response_data['deleted'], 6)
         self.assertEqual(response_data['userID'], '1')
 
     # Attempt to empty another user's inbox (user JWT)
@@ -1576,7 +1575,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], '5')
+        self.assertEqual(response_data['deleted'], 2)
         self.assertEqual(response_data['userID'], '5')
 
     # Attempt to empty another user's outbox (moderator's JWT)
@@ -1597,7 +1596,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], '5')
+        self.assertEqual(response_data['deleted'], 1)
         self.assertEqual(response_data['userID'], '4')
 
     # Attempt to empty another user's threads mailbox (admin's JWT)
