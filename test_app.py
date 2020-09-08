@@ -130,8 +130,8 @@ report_post = {
 }
 
 new_user = '{\
-"auth0Id": "auth0|5edf778e56d062001335196e",\
-"displayName": "",\
+"id": "auth0|5edf778e56d062001335196e",\
+"displayName": "user",\
 "receivedH": 0,\
 "givenH": 0,\
 "loginCount": 0 }'
@@ -146,11 +146,12 @@ updated_user = {
 
 updated_unblock_user = {
     "id": 0,
-    "displayName": "",
+    "displayName": "hello",
     "receivedH": 0,
     "givenH": 0,
     "loginCount": 0,
-    "blocked": False
+    "blocked": False,
+    "releaseDate": None
 }
 
 updated_display = {
@@ -663,7 +664,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['total_pages'], 0)
+        self.assertEqual(response_data['total_pages'], 1)
 
     # Get User Data Tests ('/users/all/<user_id>', GET)
     # -------------------------------------------------------
@@ -778,9 +779,11 @@ class TestHugApp(unittest.TestCase):
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 403)
 
-    # Attempt to create a user with new user's JWT (until we get the
-    # Auth0 issue sorted out, this test is required to ensure users can't
-    # create any user they like)
+    # Attempt to create a user with new user's JWT
+    # This test is performed as fallback; since the new user -> user change
+    # is done automatically, it's no longer needed, but in case of an error
+    # adjusting a user's roles, it's important to make sure they still
+    # can't create other users
     def test_create_different_user_as_new_user(self):
         response = self.client().post('/users', headers=blocked_header,
                                       data=new_user)
@@ -926,11 +929,12 @@ class TestHugApp(unittest.TestCase):
         response = self.client().patch('/users/all/' + sample_user_id,
                                        headers=admin_header,
                                        data=json.dumps(user))
+        response_data = json.loads(response.data)
         updated = response_data['updated']
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(updated['id'], user['id'])
+        self.assertEqual(updated['id'], int(user['id']))
 
     # Attempt to update another user's settings (admin's JWT)
     def test_update_user_settings_as_admin(self):
@@ -941,6 +945,7 @@ class TestHugApp(unittest.TestCase):
         response = self.client().patch('/users/all/' + sample_user_id,
                                        headers=admin_header,
                                        data=json.dumps(user))
+        response_data = json.loads(response.data)
 
         self.assertFalse(response_data['success'])
         self.assertEqual(response.status_code, 403)
@@ -995,8 +1000,8 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['posts'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['page'], 1)
-        self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['posts']), 1)
+        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(len(response_data['posts']), 5)
 
     # Attempt to get a user's posts with an admin's JWT
     def test_get_user_posts_as_admin(self):
@@ -1008,7 +1013,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['posts']), 1)
+        self.assertEqual(len(response_data['posts']), 2)
 
     # Delete User's Posts Route Tests ('/users/all/<user_id>/posts', DELETE)
     # -------------------------------------------------------
@@ -1037,7 +1042,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], '2')
+        self.assertEqual(response_data['deleted'], 9)
 
     # Attempt to delete another user's posts (with user's JWT)
     def test_delete_other_users_posts_as_user(self):
@@ -1056,7 +1061,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], '12')
+        self.assertEqual(response_data['deleted'], 2)
 
     # Attempt to delete another user's posts (with moderator's JWT)
     def test_delete_other_users_posts_as_mod(self):
@@ -1075,7 +1080,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], '14')
+        self.assertEqual(response_data['deleted'], 6)
 
     # Attempt to delete another user's posts (with admin's JWT)
     def test_delete_other_users_posts_as_admin(self):
@@ -1085,7 +1090,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], '1')
+        self.assertEqual(response_data['deleted'], 2)
 
     # Attempt to delete the posts of a user that doesn't exist (admin's JWT)
     def test_delete_nonexistent_users_posts_as_admin(self):
