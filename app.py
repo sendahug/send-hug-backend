@@ -887,7 +887,7 @@ def create_app(test_config=None):
 
         # If the user making the request isn't the same as the user
         # whose posts should be deleted
-        if(current_user.id != user_id):
+        if(current_user.id != int(user_id)):
             # If the user can only delete their own posts, they're not
             # allowed to delete others' posts, so raise an AuthError
             if('delete:my-post' in token_payload['permissions']):
