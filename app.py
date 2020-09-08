@@ -762,6 +762,18 @@ def create_app(test_config=None):
             open_report.closed = True
             original_user.open_report = False
 
+        # If the user is attempting to change a user's settings, check
+        # whether it's the current user
+        if('autoRefresh' in updated_user or 'pushEnabled' in updated_user
+           or 'refreshRate' in updated_user):
+            # If it's not the current user, abort
+            if(token_payload['sub'] != original_user.auth0_id):
+                raise AuthError({
+                    'code': 403,
+                    'description': 'You do not have permission to \
+                                    edit another user\'s settings.'
+                    }, 403)
+
         # If the user is changing their auto-refresh settings
         if('autoRefresh' in updated_user):
             original_user.auto_refresh = updated_user['autoRefresh']
