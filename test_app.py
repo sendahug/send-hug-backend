@@ -37,6 +37,29 @@ access_tokens = {
     'blocked_jwt': ''
 }
 
+# Headers
+malformed_header = {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer '
+                    }
+user_header = {
+               'Content-Type': 'application/json',
+               'Authorization': 'Bearer ' + access_tokens['user_jwt']
+              }
+moderator_header = {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + access_tokens['moderator_jwt']
+                   }
+admin_header = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + access_tokens['admin_jwt']
+               }
+
+blocked_header = {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + access_tokens['blocked_jwt']
+                 }
+
 
 # Get Auth0 access tokens for each of the users to be able to ru
 # the tests.
@@ -67,29 +90,12 @@ def get_user_tokens():
         access_tokens[role + '_jwt'] = token
         f.close()
 
+    # Set the authorisation headers with the newly fetched JWTs
+    user_header['Authorization'] = 'Bearer ' + access_tokens['user_jwt']
+    moderator_header['Authorization'] = 'Bearer ' + access_tokens['moderator_jwt']
+    admin_header['Authorization'] = 'Bearer ' + access_tokens['admin_jwt']
+    blocked_header['Authorization'] = 'Bearer ' + access_tokens['blocked_jwt']
 
-# Headers
-malformed_header = {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer '
-                    }
-user_header = {
-               'Content-Type': 'application/json',
-               'Authorization': 'Bearer ' + access_tokens['user_jwt']
-              }
-moderator_header = {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + access_tokens['moderator_jwt']
-                   }
-admin_header = {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + access_tokens['admin_jwt']
-               }
-
-blocked_header = {
-                  'Content-Type': 'application/json',
-                  'Authorization': 'Bearer ' + access_tokens['blocked_jwt']
-                 }
 
 # Sample users data
 sample_user_id = str(1)
