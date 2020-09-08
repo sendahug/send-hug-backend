@@ -220,7 +220,7 @@ def create_app(test_config=None):
 
             # Try to add the post to the database
             try:
-                added_post = db_add(new_post)
+                added_post = db_add(new_post)['added']
             # If there's an error, abort
             except Exception as e:
                 abort(500)
@@ -1087,7 +1087,7 @@ def create_app(test_config=None):
 
         # Try to add the message to the database
         try:
-            sent_message = db_add(new_message)
+            sent_message = db_add(new_message)['added']
             db_add(notification)
             send_push_notification(user_id=notification_for,
                                    data=push_notification)
