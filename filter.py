@@ -28,7 +28,7 @@ class Filter(Wordfilter):
 
     # Remove a word from the list
     def remove_word(self, index):
-        remove_index = int(index) + 66
+        remove_index = int(index) + 65
         return self.blacklist.pop(remove_index)
 
     # Check if there's a blacklisted word in the text

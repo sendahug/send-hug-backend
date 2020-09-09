@@ -1,0 +1,23 @@
+dist: bionic
+
+language: python
+python:
+  - "3.8"
+
+branches:
+  only:
+  - master
+  except:
+  - Dev
+
+services:
+  - postgresql
+
+install:
+  - pip install -r requirements.txt
+
+before_script:
+  - psql -c 'create database test-capstone;' -U postgres
+
+script:
+  - python test_app.py

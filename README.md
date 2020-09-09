@@ -1,5 +1,10 @@
 # Send A Hug
 
+[![Build Status](https://travis-ci.com/sendahug/send-hug-backend.svg?branch=Dev)](https://travis-ci.com/sendahug/send-hug-backend)
+[![Known Vulnerabilities](https://snyk.io/test/github/sendahug/send-hug-backend/badge.svg)](https://snyk.io/test/github/sendahug/send-hug-backend)
+[![Updates](https://pyup.io/repos/github/sendahug/send-hug-backend/shield.svg)](https://pyup.io/repos/github/sendahug/send-hug-backend/)
+[![Python 3](https://pyup.io/repos/github/sendahug/send-hug-backend/python-3-shield.svg)](https://pyup.io/repos/github/sendahug/send-hug-backend/)
+
 ## Version
 
 Version 1 (currently in development).
@@ -86,25 +91,49 @@ In case the user's authorisation header is malformed, their JWT is invalid in an
 
 ## Testing
 
-This project utilises unittest for testing. In order to run project tests, you need to set up the following environment variables:
+This project utilises Python's unittest for testing. There are two options in terms of setting up authentication for testing: generating JWTs for each of the four required users manually, or using Auth0's Resource Owner Password flow. This project is set up using the latter, but if you want to use the former, skip to the second part of testing.
+
+### Automated Testing Using the Resource Owner Password Flow
+
+As said, automated testing takes advantage of Auth0's [Resource Owner Password flow](https://auth0.com/docs/flows/call-your-api-using-resource-owner-password-flow?_ga=2.97409119.1158006766.1599115125-2036507523.1598430579). This means that the users' credentials are sent to Auth0 in exchange for a JWT.
+
+The required setup is:
+
+1. The password flow needs to be added to the application's grant types. This is done via the Auth0 Management API. See full instructions [here](https://community.auth0.com/t/error-grant-type-password-not-allowed-for-the-client-for-resource-owner-password-flow/6951/2).
+  * **Make sure to change only the Test Application's grant types!** This is important as this grant type should only be given to highly trusted apps, and doing it in the main application could lower your application's security. This is the purpose of the test application Auth0 automatically creates; use it.
+2. If you haven't set it before, add the default connection to your account. This tells Auth0's systems where to look for a match for the sent username and password. This is done through your user's settings, in the field `Default Directory`.
+3. Once the password flow was added as a grant type, add the following environment variables:
+  - TEST_CLIENT_ID - The ID of your Test Application.
+  - TEST_CLIENT_SECRET - The secret of your Test Application.
+  - Username and password for each user:
+    - For the User - USER_USERNAME + USER_PASSWORD
+    - For the Moderator - MODERATOR_USERNAME + MODERATOR_PASSWORD
+    - For the Admin - ADMIN_USERNAME + ADMIN_PASSWORD
+    - For the Blocked New User - BLOCKED_USERNAME + BLOCKED_PASSWORD
+
+### Generating User Tokens
+
+Should you choose to manually generate user tokens, the `get_user_tokens()` request flow (lines 67-91) can be replaced with the relevant access tokens. These should be saved as environment variables.
+
+The recommended structure is:
 
 1. USER_JWT - JWT of a user with the role of a user.
 2. MOD_JWT - JWT of a user with the role of a moderator.
 3. ADMIN_JWT - JWT of a user with the role of an admin.
-4. BLOCKED_JWT - JWT of a user who's currently blocked.
+4. BLOCKED_JWT - JWT of a user who's currently blocked and is a new user. (This is required for one of the tests, so make sure to manually change the user's role.)
 
-Then, run the following commands:
+### Running Tests
+
+Once you've completed the setup for whichever approach you've chosen, run the following commands:
 
 ```
 dropdb test-capstone && createdb test-capstone
-psql test-capstone < capstone_db.sql
 python test_app.py
 ```
 
 Or, if using MacOS:
 ```
 dropdb test-capstone && createdb test-capstone
-psql test-capstone < capstone_db.sql
 python3 test_app.py
 ```
 

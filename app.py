@@ -35,6 +35,7 @@ from models import (
     update as db_update,
     delete_object as db_delete,
     delete_all as db_delete_all,
+    update_multiple as db_update_multi,
     joined_query
     )
 from auth import (
@@ -219,7 +220,7 @@ def create_app(test_config=None):
 
             # Try to add the post to the database
             try:
-                added_post = db_add(new_post)
+                added_post = db_add(new_post)['added']
             # If there's an error, abort
             except Exception as e:
                 abort(500)
@@ -362,6 +363,16 @@ def create_app(test_config=None):
         # a report, which means the report with the given ID needs to be
         # closed.
         if('closeReport' in updated_post):
+            # Check the user has permission to close reports
+            # If he doesn't, raise an AuthError
+            if('read:admin-board' not in token_payload['permissions']):
+                raise AuthError({
+                    'code': 403,
+                    'description': 'You do not have permission to close \
+                                    this post\'s report.'
+                    }, 403)
+
+            # Otherwise get the open report and close it
             open_report = Report.query.filter(Report.id ==
                                               updated_post['closeReport']).\
                                               one_or_none()
@@ -371,19 +382,24 @@ def create_app(test_config=None):
 
         # Try to update the database
         try:
-            # Update users' and post's data
-            db_update(original_post)
-            db_update(current_user)
-            db_update(post_author)
+            # Objects to update
+            to_update = [original_post, current_user, post_author]
+            # If there's a report to close, add it to the list of objects
+            # to update.
             if('closeReport' in updated_post):
-                db_update(open_report)
+                to_update.append(open_report)
+            # Update users' and post's data
+            updated_res = db_update_multi(to_update)
+
             # If there was an added hug, add the new notification
             if('givenHugs' in updated_post):
                 if(original_hugs != updated_post['givenHugs']):
                     send_push_notification(user_id=notification_for,
                                            data=push_notification)
                     db_add(notification)
-            db_updated_post = original_post.format()
+
+            data = json.loads(updated_res.data)['updated']
+            db_updated_post = data[0]
         # If there's an error, abort
         except Exception as e:
             print(sys.exc_info())
@@ -600,7 +616,7 @@ def create_app(test_config=None):
 
         # Try to add the post to the database
         try:
-            added_user = db_add(new_user)
+            added_user = db_add(new_user)['added']
         # If there's an error, abort
         except Exception as e:
             abort(500)
@@ -746,6 +762,18 @@ def create_app(test_config=None):
             open_report.closed = True
             original_user.open_report = False
 
+        # If the user is attempting to change a user's settings, check
+        # whether it's the current user
+        if('autoRefresh' in updated_user or 'pushEnabled' in updated_user
+           or 'refreshRate' in updated_user):
+            # If it's not the current user, abort
+            if(token_payload['sub'] != original_user.auth0_id):
+                raise AuthError({
+                    'code': 403,
+                    'description': 'You do not have permission to \
+                                    edit another user\'s settings.'
+                    }, 403)
+
         # If the user is changing their auto-refresh settings
         if('autoRefresh' in updated_user):
             original_user.auto_refresh = updated_user['autoRefresh']
@@ -859,7 +887,7 @@ def create_app(test_config=None):
 
         # If the user making the request isn't the same as the user
         # whose posts should be deleted
-        if(current_user.id != user_id):
+        if(current_user.id != int(user_id)):
             # If the user can only delete their own posts, they're not
             # allowed to delete others' posts, so raise an AuthError
             if('delete:my-post' in token_payload['permissions']):
@@ -931,17 +959,17 @@ def create_app(test_config=None):
                                            (Message.for_id == user_id)).all()
         elif(type == 'thread'):
             message = Thread.query.filter(Thread.id == thread_id).one_or_none()
-            # If the user is trying to view a thread that belongs to other
-            # users, raise an AuthError
-            if((message.user_1_id != requesting_user.id) and
-               (message.user_2_id != requesting_user.id)):
-                raise AuthError({
-                    'code': 403,
-                    'description': 'You do not have permission to view another\
-                                user\'s messages.'
-                }, 403)
-        else:
-            abort(404)
+            # Check if there's a thread with that ID at all
+            if(message):
+                # If the user is trying to view a thread that belongs to other
+                # users, raise an AuthError
+                if((message.user_1_id != requesting_user.id) and
+                   (message.user_2_id != requesting_user.id)):
+                    raise AuthError({
+                        'code': 403,
+                        'description': 'You do not have permission to view \
+                                        another user\'s messages.'
+                    }, 403)
 
         # If there are no messages for the user, return an empty array
         if(not message):
@@ -1059,7 +1087,7 @@ def create_app(test_config=None):
 
         # Try to add the message to the database
         try:
-            sent_message = db_add(new_message)
+            sent_message = db_add(new_message)['added']
             db_add(notification)
             send_push_notification(user_id=notification_for,
                                    data=push_notification)
@@ -1092,7 +1120,8 @@ def create_app(test_config=None):
 
         # If the mailbox type is inbox or outbox, search for a message
         # with that ID
-        if(mailbox_type == 'inbox' or mailbox_type == 'outbox'):
+        if(mailbox_type == 'inbox' or mailbox_type == 'outbox' or
+           mailbox_type == 'thread'):
             delete_item = Message.query.filter(Message.id == item_id).\
                 one_or_none()
         # If the mailbox type is threads, search for a thread with that ID
@@ -1204,7 +1233,7 @@ def create_app(test_config=None):
                                          token_payload['sub']).one_or_none()
 
         # If the user is attempting to delete another user's messages
-        if(current_user.id != user_id):
+        if(current_user.id != int(user_id)):
             raise AuthError({
                 'code': 403,
                 'description': 'You do not have permission to delete another\
@@ -1293,6 +1322,10 @@ def create_app(test_config=None):
 
         # If the reported item is a post
         if(report_data['type'].lower() == 'post'):
+            # If there's no post ID, abort
+            if(report_data['postID'] is None):
+                abort(422)
+
             reported_item = Post.query.filter(Post.id ==
                                               report_data['postID']).\
                                               one_or_none()
@@ -1311,6 +1344,10 @@ def create_app(test_config=None):
             reported_item.open_report = True
         # Otherwise the reported item is a user
         else:
+            # If there's no user ID, abort
+            if(report_data['userID'] is None):
+                abort(422)
+
             reported_item = User.query.filter(User.id ==
                                               report_data['userID']).\
                                               one_or_none()
@@ -1329,7 +1366,7 @@ def create_app(test_config=None):
 
         # Try to add the report to the database
         try:
-            added_report = db_add(report)
+            added_report = db_add(report)['added']
             db_update(reported_item)
         # If there's an error, abort
         except Exception as e:
@@ -1455,7 +1492,7 @@ def create_app(test_config=None):
         id_validated = validator.check_type(filter_id, 'Filter ID')
 
         # If there's no word in that index
-        if(word_filter.get_words()[int(filter_id)] is None):
+        if(len(word_filter.get_words()) < int(filter_id)):
             abort(404)
 
         # Otherwise, try to delete it
