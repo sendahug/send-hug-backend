@@ -21,15 +21,13 @@ addons:
     packages:
     - postgresql-12
     - postgresql-client-12
-  env:
-    global:
-        - PGPORT=5433
 
 install:
   - pip install -r requirements.txt
 
 before_script:
   - psql -c 'create database "test-capstone";' -U postgres
+  - pg_restore -d test-capstone capstone_db -Fc -c --no-owner --role=postgres
 
 script:
   - coverage run test_app.py
