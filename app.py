@@ -1120,7 +1120,8 @@ def create_app(test_config=None):
 
         # If the mailbox type is inbox or outbox, search for a message
         # with that ID
-        if(mailbox_type == 'inbox' or mailbox_type == 'outbox'):
+        if(mailbox_type == 'inbox' or mailbox_type == 'outbox' or
+           mailbox_type == 'thread'):
             delete_item = Message.query.filter(Message.id == item_id).\
                 one_or_none()
         # If the mailbox type is threads, search for a thread with that ID
