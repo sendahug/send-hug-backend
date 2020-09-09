@@ -20,4 +20,7 @@ before_script:
   - psql -c 'create database test-capstone;' -U postgres
 
 script:
-  - python test_app.py
+  - coverage run test_app.py
+
+after_success:
+  - codecov
