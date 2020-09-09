@@ -959,17 +959,17 @@ def create_app(test_config=None):
                                            (Message.for_id == user_id)).all()
         elif(type == 'thread'):
             message = Thread.query.filter(Thread.id == thread_id).one_or_none()
-            # If the user is trying to view a thread that belongs to other
-            # users, raise an AuthError
-            if((message.user_1_id != requesting_user.id) and
-               (message.user_2_id != requesting_user.id)):
-                raise AuthError({
-                    'code': 403,
-                    'description': 'You do not have permission to view another\
-                                user\'s messages.'
-                }, 403)
-        else:
-            abort(404)
+            # Check if there's a thread with that ID at all
+            if(message):
+                # If the user is trying to view a thread that belongs to other
+                # users, raise an AuthError
+                if((message.user_1_id != requesting_user.id) and
+                   (message.user_2_id != requesting_user.id)):
+                    raise AuthError({
+                        'code': 403,
+                        'description': 'You do not have permission to view \
+                                        another user\'s messages.'
+                    }, 403)
 
         # If there are no messages for the user, return an empty array
         if(not message):
