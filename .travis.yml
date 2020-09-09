@@ -12,6 +12,9 @@ branches:
 services:
   - postgresql
 
+addons:
+  postgresql: "12.2"
+
 install:
   - pip install -r requirements.txt
 
