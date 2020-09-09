@@ -529,7 +529,6 @@ def update_multiple(objs=[]):
             updated_objects.append(obj.format())
     # If there's an error, rollback
     except Exception as e:
-        print(e)
         db.session.rollback()
     # Close the connection once the attempt is complete
     finally:
