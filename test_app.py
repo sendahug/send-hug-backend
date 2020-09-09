@@ -40,7 +40,7 @@ access_tokens = {
 # Headers
 malformed_header = {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer '
+                    'Authorization': 'Bearer'
                     }
 user_header = {
                'Content-Type': 'application/json',
@@ -1408,8 +1408,7 @@ class TestHugApp(unittest.TestCase):
                                       data=json.dumps(message))
         response_data = json.loads(response.data)
         response_message = response_data['message']
-        new_thread = self.client().get('/messages?userID=9&type=thread&\
-                                        threadID=7', headers=blocked_header)
+        new_thread = self.client().get('/messages?userID=20&type=thread&threadID=7', headers=blocked_header)
         new_thread_data = json.loads(new_thread.data)
 
         self.assertTrue(response_data['success'])
@@ -1417,7 +1416,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_message['messageText'],
                          message['messageText'])
-        self.assertEqual(response_message['threadID'], '7')
+        self.assertEqual(response_message['threadID'], 7)
         self.assertEqual(len(new_thread_data['messages']), 1)
 
     # Delete Message Route Tests ('/message/<message_id>', DELETE)
@@ -1460,12 +1459,12 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete a thread with a user's JWT
     def test_delete_thread_as_user(self):
-        response = self.client().delete('/messages/thread/2',
+        response = self.client().delete('/messages/threads/2',
                                         headers=user_header)
         response_data = json.loads(response.data)
-        get_thread = self.client().get('/messages?userID=1&type=thread&\
-                                        threadID=2')
-        thread_data = json.loads(get_thread)
+        get_thread = self.client().get('/messages?userID=1&type=threads&\
+                                        threadID=2', headers=user_header)
+        thread_data = json.loads(get_thread.data)
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
@@ -1958,6 +1957,10 @@ class TestHugApp(unittest.TestCase):
 
     # Attempt to delete a filter with an admin's JWT
     def test_delete_filters_as_admin(self):
+        # Set up the test by adding a word
+        self.client().post('/filters', headers=admin_header,
+                                      data=json.dumps({"word":"sample"}))
+        # Delete the filter
         response = self.client().delete('/filters/1', headers=admin_header)
         response_data = json.loads(response.data)
 
@@ -2008,7 +2011,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 0)
+        self.assertEqual(len(response_data['notifications']), 8)
         self.assertEqual(pre_user_data['last_notifications_read'],
                          post_user_data['last_notifications_read'])
 
@@ -2028,7 +2031,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 0)
+        self.assertEqual(len(response_data['notifications']), 8)
         self.assertNotEqual(pre_user_data['last_notifications_read'],
                             post_user_data['last_notifications_read'])
 
@@ -2048,7 +2051,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 0)
+        self.assertEqual(len(response_data['notifications']), 2)
         self.assertEqual(pre_user_data['last_notifications_read'],
                          post_user_data['last_notifications_read'])
 
@@ -2068,7 +2071,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 0)
+        self.assertEqual(len(response_data['notifications']), 2)
         self.assertNotEqual(pre_user_data['last_notifications_read'],
                             post_user_data['last_notifications_read'])
 
