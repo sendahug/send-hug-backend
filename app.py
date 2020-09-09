@@ -1492,7 +1492,7 @@ def create_app(test_config=None):
         id_validated = validator.check_type(filter_id, 'Filter ID')
 
         # If there's no word in that index
-        if(word_filter.get_words()[int(filter_id)] is None):
+        if(len(word_filter.get_words()) < int(filter_id)):
             abort(404)
 
         # Otherwise, try to delete it
