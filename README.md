@@ -26,15 +26,20 @@ For full project information, check the [`main README file`](https://github.com/
 2. cd into the project directory.
 3. cd into backend.
 4. Run ```pip install -r requirements.txt``` to install dependencies.
-5. Update the database URI to match your system.
+5. Create a database for the app.
+6. Update the database URI to match your system.
   - The database URI comes from an environment variable named **DATABASE_URL**.
-6. Set Auth0 configuration variables:
+7. Set Auth0 configuration variables:
   - AUTH0_DOMAIN - environment variable containing your Auth0 domain.
   - API_AUDIENCE - environment variable containing your Auth0 API audience.
-7. Set up your frontend URI.
+  - CLIENT_ID - environment variable containing your Auth0 application's client ID.
+  - PRIVATE_KEY - environment variable containing your private VAPID key (required for push notifications).
+  - MGMT_API_TOKEN - environment variable containing your Auth0 Management API token (required for updating user roles on signup).
+  - CLIENT_SECRET - environment variable containing your Auth0 application's client secret (required for updating user roles on signup).
+8. Set up your frontend URI.
   - The frontend URI comes from an environment variable named **FRONTEND**.
-7. Update your database using ```flask migrate upgrade```
-8. Run flask with:
+9. Update your database using ```flask migrate upgrade```
+10. Run flask with:
   - ```export FLASK_APP=app.py```
   - ```export FLASK_ENV=development``` (Recommended)
   - ```flask run```
@@ -73,6 +78,8 @@ The site uses several tools to maximise compatibility:
 7. **PyWebPush** - This application uses pywebpush in order to handle push notifications. For more information, check their [GitHub repo](https://github.com/web-push-libs/pywebpush).
 
 8. **sh** - This application uses sh during testing (in order to handle the database). For more information, check the [sh PyPi page](https://pypi.org/project/sh/).
+
+9. **Coverage** - This application uses coverage in order to provide code coverage for testing. For more information, check the [Coverage documentation](https://coverage.readthedocs.io/en/coverage-5.2.1/).
 
 ## Authentication
 
