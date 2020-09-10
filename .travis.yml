@@ -7,7 +7,6 @@ python:
 branches:
   only:
   - master
-  - Dev
 
 before_install:
   - sudo pg_dropcluster --stop 12 main
