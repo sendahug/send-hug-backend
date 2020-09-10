@@ -129,12 +129,14 @@ Once you've completed the setup for whichever approach you've chosen, run the fo
 
 ```
 dropdb test-capstone && createdb test-capstone
+psql test-capstone < capstone_db.sql
 python test_app.py
 ```
 
 Or, if using MacOS:
 ```
 dropdb test-capstone && createdb test-capstone
+psql test-capstone < capstone_db.sql
 python3 test_app.py
 ```
 
