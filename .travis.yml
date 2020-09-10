@@ -27,7 +27,7 @@ install:
 
 before_script:
   - psql -c 'create database "test-capstone";' -U postgres
-  - pg_restore -d test-capstone capstone_db -Fc -c --no-owner
+  - psql test-capstone < capstone_db.sql
 
 script:
   - coverage run test_app.py
