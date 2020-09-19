@@ -227,10 +227,14 @@ def create_app(test_config=None):
         # If there's a blacklisted word / phrase, alert the user
         else:
             num_issues = len(blacklist_check['indexes'])
+            forbidden_words = ''.join([str(word['badword']) + ', ' for word in blacklist_check['indexes']])
             raise ValidationError({
                 'code': 400,
                 'description': 'Your text contains ' + str(num_issues) + ' \
-                                forbidden term(s). Please fix your post\'s \
+                                forbidden term(s). The following word(s) is/ \
+                                are not allowed: ' +
+                                forbidden_words[0:-2]
+                                + '. Please fix your post\'s \
                                 text and try again.'
             }, 400)
 
@@ -295,11 +299,15 @@ def create_app(test_config=None):
                     # If there's a blacklisted word / phrase, alert the user
                     else:
                         num_issues = len(blacklist_check['indexes'])
+                        forbidden_words = ''.join([str(word['badword']) + ', ' for word in blacklist_check['indexes']])
                         raise ValidationError({
                             'code': 400,
                             'description': 'Your text contains ' +
                                             str(num_issues) + ' forbidden \
-                                            term(s). Please fix your post\'s \
+                                            term(s). The following word(s) is/ \
+                                            are not allowed: ' +
+                                            forbidden_words[0:-2]
+                                            + '. Please fix your post\'s \
                                             text and try again.'
                         }, 400)
         # Otherwise, the user is allowed to edit any post, and thus text
@@ -318,11 +326,15 @@ def create_app(test_config=None):
                 # If there's a blacklisted word / phrase, alert the user
                 else:
                     num_issues = len(blacklist_check['indexes'])
+                    forbidden_words = ''.join([str(word['badword']) + ', ' for word in blacklist_check['indexes']])
                     raise ValidationError({
                         'code': 400,
                         'description': 'Your text contains ' +
                                         str(num_issues) + ' forbidden \
-                                        term(s). Please fix your post\'s \
+                                        term(s). The following word(s) is/ \
+                                        are not allowed: ' +
+                                        forbidden_words[0:-2]
+                                        + '. Please fix your post\'s \
                                         text and try again.'
                     }, 400)
 
@@ -1020,10 +1032,14 @@ def create_app(test_config=None):
         # If there's a blacklisted word / phrase, alert the user
         if(blacklist_check['blacklisted'] is True):
             num_issues = len(blacklist_check['indexes'])
+            forbidden_words = ''.join([str(word['badword']) + ', ' for word in blacklist_check['indexes']])
             raise ValidationError({
                 'code': 400,
                 'description': 'Your message contains ' + str(num_issues) + ' \
-                                forbidden term(s). Please fix your post\'s \
+                                forbidden term(s). The following word(s) is/ \
+                                are not allowed: ' +
+                                forbidden_words[0:-2]
+                                + '. Please fix your post\'s \
                                 text and try again.'
             }, 400)
 
