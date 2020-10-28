@@ -1606,14 +1606,15 @@ def create_app(test_config=None):
         # Try to add it to the database
         try:
             subscribed = user.display_name
-            db_add(subscription)
+            sub = db_add(subscription)['added']
         # If there's an error, abort
         except Exception as e:
             abort(500)
 
         return {
             'success': True,
-            'subscribed': subscribed
+            'subscribed': subscribed,
+            'subId': sub['id']
         }
 
     # Error Handlers
