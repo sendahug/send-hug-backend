@@ -1617,6 +1617,49 @@ def create_app(test_config=None):
             'subId': sub['id']
         }
 
+    # Endpoint: PATCH /notifications
+    # Description: Add a new PushSubscription to the database (for push
+    #              notifications).
+    # Parameters: None.
+    # Authorization: read:messages.
+    @app.route('/notifications/<sub_id>', methods=['POST'])
+    @requires_auth(['read:messages'])
+    def update_notification_subscription(token_payload, sub_id):
+        # if the request is empty, return 204. This happens due to a bug
+        # in the frontend that causes the request to be sent twice, once
+        # with subscription data and once with an empty object
+        if(not request.data):
+            return ('', 204)
+
+        subscription_json = request.data.decode('utf8').replace("'", '"')
+        subscription_data = json.loads(subscription_json)
+        user = User.query.filter(User.auth0_id == token_payload['sub']).\
+            one_or_none()
+        old_sub = NotificationSub.query.filter(NotificationSub.id == sub_id).\
+            one_or_none()
+
+        # If there's no user with that ID, abort
+        if(user is None or old_sub is None):
+            abort(404)
+
+        old_sub.endpoint = subscription_data['endpoint']
+        old_sub.subscription_data = json.dumps(subscription_data)
+
+        # Try to add it to the database
+        try:
+            subscribed = user.display_name
+            subId = old_sub.id
+            db_update(old_sub)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return {
+            'success': True,
+            'subscribed': subscribed,
+            'subId': subId
+        }
+
     # Error Handlers
     # -----------------------------------------------------------------
     # Bad request error handler
