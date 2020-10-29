@@ -34,6 +34,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 22. [DELETE /filters/<filter_id>](#delete-filtersfilter_id)
 23. [GET /notifications](#get-notifications)
 24. [POST /notifications](#post-notifications)
+25. [PATCH /notifications](#patch-notificationssub_id)
 
 **NOTE**: All sample curl requests are done via user 4; for your own tests, change the user ID and the user's display name.
 
@@ -1092,13 +1093,41 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - subscribed (String) - the display name of the newly subscribed user.
+  - subscribed (Number) - the display name of the newly subscribed user.
+  - subId (Number) - the ID of the newly added push subscription.
 
 **Expected Errors**:
   - 404 (Not Found) - In case there's no user with the given Auth0 ID.
   - 500 (Internal Server Error) - In case an error occurred while trying to add the new subscription to the database.
 
 **CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/filters -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '<PUSH_SUBSCRIPTION_OBJECT>'`
+
+**Response Example:**
+```
+
+```
+
+### PATCH /notifications/<sub_id>
+**Description**: Updates the details of a PushSubscription in the subscriptions table.
+
+**Handler Function**: update_notification_subscription.
+
+**Request Arguments**: None.
+
+**Required Data**: A PushSubscription data object, based on the Web Push Protocol. (For more information, check out [this link](https://www.w3.org/TR/push-api/#pushsubscription-interface)).
+
+**Required Permission:** 'read:messages'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - subscribed (Number) - the display name of the newly subscribed user.
+  - subId (Number) - the ID of the updated push subscription.
+
+**Expected Errors**:
+  - 404 (Not Found) - In case there's no user with the given Auth0 ID.
+  - 500 (Internal Server Error) - In case an error occurred while trying to add the new subscription to the database.
+
+**CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/notifications/sub_id -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '<PUSH_SUBSCRIPTION_OBJECT>'`
 
 **Response Example:**
 ```
