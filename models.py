@@ -241,6 +241,16 @@ class NotificationSub(db.Model):
             'subscription_data': self.subscription_data
         }
 
+# Filter
+class Filter(db.Model):
+    __tablename__ = 'filters'
+    id = db.Column(db.Integer, primary_key=True)
+    filter = db.Column(db.String(), nullable=False)
+
+    # Format method
+    def format(self):
+        return self.filter
+
 
 # Database management methods
 # -----------------------------------------------------------------
