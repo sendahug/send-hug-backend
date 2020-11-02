@@ -249,7 +249,10 @@ class Filter(db.Model):
 
     # Format method
     def format(self):
-        return self.filter
+        return {
+            'id': self.id,
+            'filter': self.filter
+        }
 
 
 # Database management methods
