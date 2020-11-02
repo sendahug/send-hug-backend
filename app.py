@@ -44,6 +44,7 @@ from models import (
     Report,
     Notification,
     NotificationSub,
+    Filter,
     add as db_add,
     update as db_update,
     delete_object as db_delete,
@@ -1469,12 +1470,17 @@ def create_app(test_config=None):
     @requires_auth(['read:admin-board'])
     def get_filters(token_payload):
         page = request.args.get('page', 1, type=int)
-        filtered_words = word_filter.get_words()
+        filtered_words = Filter.query.all()
+        filters = []
+
+        # Get the formatted words
+        for filter in filtered_words:
+            filters.append(filter.format())
 
         # Paginate the filtered words
         words_per_page = 10
         start_index = (page - 1) * words_per_page
-        paginated_words = filtered_words[start_index:(start_index+10)]
+        paginated_words = filters[start_index:(start_index+10)]
         total_pages = math.ceil(len(filtered_words) / 10)
 
         return jsonify({
@@ -1496,19 +1502,22 @@ def create_app(test_config=None):
         length_validated = validator.check_length(new_filter, 'Phrase to filter')
 
         # If the word already exists in the filters list, abort
-        if(new_filter in word_filter.get_full_list()):
+        existing_filter = Filter.query.filter(Filter.filter.lower() ==
+                                              new_filter).one_or_none()
+        if(existing_filter):
             abort(409)
 
         # Try to add the word to the filters list
         try:
-            word_filter.add_words(new_filter)
+            filter = Filter(filter=new_filter)
+            added = db_add(filter)
         # If there's an error, abort
         except Exception as e:
             abort(500)
 
         return jsonify({
             'success': True,
-            'added': new_filter
+            'added': added
         })
 
     # Endpoint: DELETE /filters/<filter_id>
@@ -1521,12 +1530,14 @@ def create_app(test_config=None):
         id_validated = validator.check_type(filter_id, 'Filter ID')
 
         # If there's no word in that index
-        if(len(word_filter.get_words()) < int(filter_id)):
+        to_delete = Filter.query.filter(Filter.id == filter_id).one_or_none()
+        if(to_delete is None):
             abort(404)
 
         # Otherwise, try to delete it
         try:
-            removed = word_filter.remove_word(filter_id)
+            removed = to_delete
+            db_delete(to_delete)
         # If there's an error, abort
         except Exception as e:
             abort(500)
