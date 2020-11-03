@@ -60,7 +60,7 @@ from auth import (
     AUTH0_DOMAIN,
     API_AUDIENCE
     )
-from filter import Filter
+from filter import WordFilter
 from validator import Validator, ValidationError
 
 def create_app(test_config=None):
@@ -68,7 +68,7 @@ def create_app(test_config=None):
     app = Flask(__name__)
     create_db(app)
     CORS(app, origins='')
-    word_filter = Filter()
+    word_filter = WordFilter()
     validator = Validator({
         'post': {
             'max': 480,

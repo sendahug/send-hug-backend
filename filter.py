@@ -29,7 +29,7 @@ from models import Filter
 
 # Filter class
 # inspired by Wordfilter: https://pypi.org/project/wordfilter/
-class Filter(Wordfilter):
+class WordFilter():
     # Check if there's a blacklisted word in the text
     def blacklisted(self, string):
         filtered_words = Filter.query.all()
