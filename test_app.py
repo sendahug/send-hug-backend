@@ -1977,10 +1977,11 @@ class TestHugApp(unittest.TestCase):
         # Delete the filter
         response = self.client().delete('/filters/1', headers=admin_header)
         response_data = json.loads(response.data)
+        deleted = response_data['deleted']
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], 'sample')
+        self.assertEqual(deleted['filter'], 'sample')
 
     # Attempt to delete a filter that doesn't exist with an admin's JWT
     def test_delete_nonexistent_filters_as_admin(self):
