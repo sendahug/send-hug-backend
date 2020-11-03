@@ -1090,6 +1090,18 @@ def create_app(test_config=None):
         # If there's a thread between the users
         else:
             thread_id = thread.id
+            # If one of the users deleted the thread, change it so that the
+            # thread once again shows up
+            if(thread.user_1_deleted is True or thread.user_2_deleted is True):
+                thread.user_1_deleted = False
+                thread.user_2_deleted = False
+                # Update the thread in the database
+                try:
+                    db_update(thread)
+                # If there's an error, abort
+                except Exception as e:
+                    abort(500)
+
 
         # If a new thread was created and the database session ended, we need
         # to get the logged user's data again.
