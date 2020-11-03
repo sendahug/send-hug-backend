@@ -266,9 +266,9 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertTrue(response_data['posts'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['post_results'], 9)
+        self.assertEqual(response_data['post_results'], 13)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(response_data['total_pages'], 3)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['user_results'], 0)
 
@@ -280,9 +280,9 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertTrue(response_data['posts'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['post_results'], 9)
+        self.assertEqual(response_data['post_results'], 13)
         self.assertEqual(len(response_data['posts']), 4)
-        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(response_data['total_pages'], 3)
         self.assertEqual(response_data['current_page'], 2)
         self.assertEqual(response_data['user_results'], 0)
 
@@ -601,7 +601,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 4)
+        self.assertEqual(response_data['total_pages'], 5)
 
     # Attempt to get page 2 of full new posts
     def test_get_full_new_posts_page_2(self):
@@ -611,7 +611,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 4)
+        self.assertEqual(response_data['total_pages'], 5)
 
     # Attempt to get page 1 of full suggested posts
     def test_get_full_suggested_posts(self):
@@ -621,7 +621,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 4)
+        self.assertEqual(response_data['total_pages'], 5)
 
     # Attempt to get page 2 of full suggested posts
     def test_get_full_suggested_posts_page_2(self):
@@ -631,7 +631,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 4)
+        self.assertEqual(response_data['total_pages'], 5)
 
     # Get Users by Type Tests ('/users/<type>', GET)
     # -------------------------------------------------------
@@ -1013,7 +1013,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['posts'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['page'], 1)
-        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(response_data['total_pages'], 3)
         self.assertEqual(len(response_data['posts']), 5)
 
     # Attempt to get a user's posts with an admin's JWT
@@ -1055,7 +1055,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], 9)
+        self.assertEqual(response_data['deleted'], 8)
 
     # Attempt to delete another user's posts (with user's JWT)
     def test_delete_other_users_posts_as_user(self):
@@ -1093,7 +1093,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], 6)
+        self.assertEqual(response_data['deleted'], 14)
 
     # Attempt to delete another user's posts (with admin's JWT)
     def test_delete_other_users_posts_as_admin(self):
@@ -2024,7 +2024,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 8)
+        self.assertEqual(len(response_data['notifications']), 10)
         self.assertEqual(pre_user_data['last_notifications_read'],
                          post_user_data['last_notifications_read'])
 
@@ -2044,7 +2044,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 8)
+        self.assertEqual(len(response_data['notifications']), 10)
         self.assertNotEqual(pre_user_data['last_notifications_read'],
                             post_user_data['last_notifications_read'])
 
