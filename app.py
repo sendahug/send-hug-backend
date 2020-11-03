@@ -1502,14 +1502,14 @@ def create_app(test_config=None):
         length_validated = validator.check_length(new_filter, 'Phrase to filter')
 
         # If the word already exists in the filters list, abort
-        existing_filter = Filter.query.filter(Filter.filter.lower() ==
-                                              new_filter).one_or_none()
+        existing_filter = Filter.query.filter(Filter.filter ==
+                                              new_filter.lower()).one_or_none()
         if(existing_filter):
             abort(409)
 
         # Try to add the word to the filters list
         try:
-            filter = Filter(filter=new_filter)
+            filter = Filter(filter=new_filter.lower())
             added = db_add(filter)
         # If there's an error, abort
         except Exception as e:
