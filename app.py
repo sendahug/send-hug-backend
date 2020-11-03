@@ -1510,7 +1510,7 @@ def create_app(test_config=None):
         # Try to add the word to the filters list
         try:
             filter = Filter(filter=new_filter.lower())
-            added = db_add(filter)
+            added = db_add(filter)['added']
         # If there's an error, abort
         except Exception as e:
             abort(500)
@@ -1536,7 +1536,7 @@ def create_app(test_config=None):
 
         # Otherwise, try to delete it
         try:
-            removed = to_delete
+            removed = to_delete.format()
             db_delete(to_delete)
         # If there's an error, abort
         except Exception as e:

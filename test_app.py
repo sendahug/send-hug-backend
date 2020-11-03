@@ -281,7 +281,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['posts'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['post_results'], 13)
-        self.assertEqual(len(response_data['posts']), 4)
+        self.assertEqual(len(response_data['posts']), 5)
         self.assertEqual(response_data['total_pages'], 3)
         self.assertEqual(response_data['current_page'], 2)
         self.assertEqual(response_data['user_results'], 0)
@@ -1929,10 +1929,11 @@ class TestHugApp(unittest.TestCase):
         response = self.client().post('/filters', headers=admin_header,
                                       data=json.dumps({"word":"sample"}))
         response_data = json.loads(response.data)
+        added_word = response_data['added']
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['added'], 'sample')
+        self.assertEqual(added_word['filter'], 'sample')
 
     # Delete Filters Tests ('/filters/<id>', DELETE)
     # -------------------------------------------------------
