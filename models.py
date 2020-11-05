@@ -338,7 +338,7 @@ def joined_query(target, params={}):
                 order_by(db.desc(Message.date)).all()
         # For threads, gets all threads' data
         elif(type == 'threads'):
-            # Get the thread ID, messages count, and users' names and IDs
+            # Get the thread ID, and users' names and IDs
             threads_messages = db.session.query(db.func.count(Message.id),
                                                 Message.thread,
                                                 from_user.display_name,
@@ -391,13 +391,21 @@ def joined_query(target, params={}):
         else:
             # Threads data formatting
             for index, thread in enumerate(threads_messages):
+                # Get the number of messages in the thread
+                thread_length = len(db.session.query(Message).\
+                    filter(((Message.for_id == user_id) &
+                            (Message.for_deleted == False)) |
+                           ((Message.from_id == user_id) &
+                            (Message.from_deleted == False))).\
+                    filter(Message.thread == thread[1]).all())
+                # Set up the thread
                 thread = {
                     'id': thread[1],
                     'user1': thread[2],
                     'user1Id': thread[4],
                     'user2': thread[3],
                     'user2Id': thread[5],
-                    'numMessages': thread[0],
+                    'numMessages': thread_length,
                     'latestMessage': latest_message[index][0]
                     }
                 return_obj.append(thread)
