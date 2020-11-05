@@ -1181,7 +1181,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 3)
+        self.assertEqual(len(response_data['messages']), 4)
 
     # Attempt to get another user's messages with a user's JWT
     def test_get_another_users_messages_as_user(self):
@@ -1203,7 +1203,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 3)
+        self.assertEqual(len(response_data['messages']), 5)
 
     # Attempt to get a user's outbox with a moderator's JWT
     def test_get_user_outbox_as_mod(self):
@@ -1251,8 +1251,8 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
-        self.assertEqual(response_data['total_pages'], 0)
-        self.assertEqual(len(response_data['messages']), 0)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['messages']), 1)
 
     # Attempt to get a user's outbox with an admin's JWT
     def test_get_user_outbox_as_admin(self):
@@ -1266,7 +1266,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 4)
+        self.assertEqual(len(response_data['messages']), 5)
 
     # Attempt to get a user's threads mailbox with an admin's JWT
     def test_get_user_threads_as_admin(self):
@@ -1280,7 +1280,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 1)
+        self.assertEqual(len(response_data['messages']), 3)
 
     # Attempt to get another user's messages with an admin's JWT
     def test_get_another_users_messages_as_admin(self):
@@ -1430,7 +1430,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response_message['messageText'],
                          message['messageText'])
         self.assertEqual(response_message['threadID'], 7)
-        self.assertEqual(len(new_thread_data['messages']), 1)
+        self.assertEqual(len(new_thread_data['messages']), 2)
 
     # Delete Message Route Tests ('/message/<message_id>', DELETE)
     # -------------------------------------------------------
@@ -1566,7 +1566,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], 6)
+        self.assertEqual(response_data['deleted'], 7)
         self.assertEqual(response_data['userID'], '1')
 
     # Attempt to empty another user's inbox (user JWT)
@@ -1608,7 +1608,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], 1)
+        self.assertEqual(response_data['deleted'], 2)
         self.assertEqual(response_data['userID'], '4')
 
     # Attempt to empty another user's threads mailbox (admin's JWT)
@@ -1975,7 +1975,7 @@ class TestHugApp(unittest.TestCase):
         self.client().post('/filters', headers=admin_header,
                                       data=json.dumps({"word":"sample"}))
         # Delete the filter
-        response = self.client().delete('/filters/1', headers=admin_header)
+        response = self.client().delete('/filters/2', headers=admin_header)
         response_data = json.loads(response.data)
         deleted = response_data['deleted']
 
@@ -2026,7 +2026,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 10)
+        self.assertEqual(len(response_data['notifications']), 11)
         self.assertEqual(pre_user_data['last_notifications_read'],
                          post_user_data['last_notifications_read'])
 
@@ -2046,7 +2046,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 10)
+        self.assertEqual(len(response_data['notifications']), 11)
         self.assertNotEqual(pre_user_data['last_notifications_read'],
                             post_user_data['last_notifications_read'])
 
@@ -2066,7 +2066,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 2)
+        self.assertEqual(len(response_data['notifications']), 4)
         self.assertEqual(pre_user_data['last_notifications_read'],
                          post_user_data['last_notifications_read'])
 
@@ -2086,7 +2086,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 2)
+        self.assertEqual(len(response_data['notifications']), 4)
         self.assertNotEqual(pre_user_data['last_notifications_read'],
                             post_user_data['last_notifications_read'])
 
