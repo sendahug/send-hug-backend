@@ -386,19 +386,20 @@ COPY public.filters (id, filter) FROM stdin;
 --
 
 COPY public.messages (id, from_id, for_id, text, date, thread, for_deleted, from_deleted) FROM stdin;
-18	4	4	Your post (ID 19) was deleted due to violating our community rules.	2020-06-22 14:32:38.056	4	t	f
 5	4	5	hellllllllo :)	2020-06-08 14:43:30.593	4	f	t
 8	5	4	hi there :)	2020-06-08 14:50:19.006	4	t	f
-10	4	1	hi :)	2020-06-14 14:07:37.49	4	f	t
-19	4	4	Your post (ID 20) was deleted due to violating our community rules.	2020-06-22 14:34:58.019	4	t	t
 1	1	1	hang in there :)	2020-06-02 10:39:56.337	1	f	f
 3	5	1	you'll be okay <3	2020-06-08 14:42:02.759	2	f	f
 7	1	5	more testing	2020-06-08 14:45:05.713	2	f	f
 9	4	1	hang in there	2020-06-08 14:43:15	3	f	f
 16	9	5	hiiiii	2020-06-14 14:25:37.569	6	f	f
-20	4	4	Your post (ID 21) was deleted due to violating our community rules.	2020-06-22 20:41:12.213	4	t	t
-21	4	1	hi	2020-07-06 17:33:55.712	4	f	f
-22	4	1	test	2020-07-06 17:40:51.288	4	f	f
+23	4	5	testing thread delete	2020-11-03 16:38:06.351	4	f	f
+24	4	5	test	2020-11-03 16:48:33.213	4	f	f
+10	4	1	hi :)	2020-06-14 14:07:37.49	3	f	t
+21	4	1	hi	2020-07-06 17:33:55.712	3	f	f
+25	20	4	hang in there <3	2020-11-03 20:16:58.027	7	f	f
+22	4	1	test	2020-07-06 17:40:51.288	3	f	f
+26	20	1	hiiii :)	2020-11-03 20:21:30.972	8	f	t
 \.
 
 
@@ -498,6 +499,10 @@ COPY public.notifications (id, for_id, from_id, type, text, date) FROM stdin;
 89	4	4	hug	You got a hug	2020-10-31 15:06:12.339448
 90	4	4	hug	You got a hug	2020-10-31 15:07:41.99315
 91	4	4	hug	You got a hug	2020-10-31 15:09:55.344578
+92	5	4	message	You have a new message	2020-11-03 16:38:06.351
+93	5	4	message	You have a new message	2020-11-03 16:48:33.213
+94	4	20	message	You have a new message	2020-11-03 20:16:58.027
+95	1	20	message	You have a new message	2020-11-03 20:21:30.972
 \.
 
 
@@ -590,7 +595,6 @@ COPY public.reports (id, type, user_id, post_id, reporter, report_reason, dismis
 --
 
 COPY public.subscriptions (id, "user", endpoint, subscription_data) FROM stdin;
-10	4	https://fcm.googleapis.com/fcm/send/c-HdLHq7O5k:APA91bEeWgEHLTYmcuSx-ylIMwK1x3VewDxCTFAodsT-mjgjNh6GkUw8zpHIK2MXMtF9PNxm1-u2aVwyCrqPP4mG-dvN-e4YN-fuTyLzOIDtALPlLHPdeji-xNdO_0NHnjgMG0SJeonV	{"endpoint": "https://fcm.googleapis.com/fcm/send/c-HdLHq7O5k:APA91bEeWgEHLTYmcuSx-ylIMwK1x3VewDxCTFAodsT-mjgjNh6GkUw8zpHIK2MXMtF9PNxm1-u2aVwyCrqPP4mG-dvN-e4YN-fuTyLzOIDtALPlLHPdeji-xNdO_0NHnjgMG0SJeonV", "expirationTime": null, "keys": {"p256dh": "BLv_LLsqdZSNBq9dFdp4wBSM8NXMaEVFvZXFybn-XilD8CI_RLENuzhHde79tY9jlKScdOCu-2sbaw_LlSrkOWU", "auth": "udYASEKaZheQjDejFlfaSQ"}}
 \.
 
 
@@ -603,7 +607,9 @@ COPY public.threads (id, user_1_id, user_2_id, user_1_deleted, user_2_deleted) F
 2	1	5	f	f
 3	1	4	f	f
 6	9	5	f	f
-4	4	5	t	f
+4	4	5	f	f
+7	20	4	f	f
+8	20	1	t	f
 \.
 
 
@@ -613,9 +619,9 @@ COPY public.threads (id, user_1_id, user_2_id, user_1_deleted, user_2_deleted) F
 
 COPY public.users (id, auth0_id, received_hugs, given_hugs, display_name, login_count, role, blocked, open_report, release_date, last_notifications_read, auto_refresh, push_enabled, refresh_rate) FROM stdin;
 9	auth0|5edf7b060793080013276746	0	1	user93	2	admin	f	f	\N	\N	\N	\N	\N
-20	auth0|5f4b9fd9915cd400670f4633	0	0	user24	2	user	t	f	2120-08-11 08:33:22.473	2020-09-04 11:19:24.680191	f	f	0
 1	auth0|5ed34765f0b8e60c8e87ca62	12	2	shirb	60	admin	f	f	\N	\N	\N	\N	\N
-4	auth0|5ed8e3d0def75d0befbc7e50	106	117	user14	50	admin	f	f	\N	2020-10-30 18:13:21.282054	f	t	\N
+20	auth0|5f4b9fd9915cd400670f4633	0	0	user24	4	user	t	f	2120-08-11 08:33:22.473	2020-11-03 20:21:13.399365	f	f	0
+4	auth0|5ed8e3d0def75d0befbc7e50	106	117	user14	52	admin	f	f	\N	2020-10-30 18:13:21.282054	f	t	\N
 5	auth0|5ede3e7a0793080013259050	2	0	user52	7	moderator	f	f	\N	\N	\N	\N	\N
 \.
 
@@ -624,21 +630,21 @@ COPY public.users (id, auth0_id, received_hugs, given_hugs, display_name, login_
 -- Name: filters_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.filters_id_seq', 1, false);
+SELECT pg_catalog.setval('public.filters_id_seq', 1, true);
 
 
 --
 -- Name: messages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.messages_id_seq', 22, true);
+SELECT pg_catalog.setval('public.messages_id_seq', 26, true);
 
 
 --
 -- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.notifications_id_seq', 91, true);
+SELECT pg_catalog.setval('public.notifications_id_seq', 95, true);
 
 
 --
@@ -666,7 +672,7 @@ SELECT pg_catalog.setval('public.subscriptions_id_seq', 10, true);
 -- Name: threads_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.threads_id_seq', 6, true);
+SELECT pg_catalog.setval('public.threads_id_seq', 8, true);
 
 
 --
