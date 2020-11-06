@@ -5,6 +5,8 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/sendahug/send-hug-backend/badge.svg)](https://snyk.io/test/github/sendahug/send-hug-backend)
 [![Updates](https://pyup.io/repos/github/sendahug/send-hug-backend/shield.svg)](https://pyup.io/repos/github/sendahug/send-hug-backend/)
 [![Python 3](https://pyup.io/repos/github/sendahug/send-hug-backend/python-3-shield.svg)](https://pyup.io/repos/github/sendahug/send-hug-backend/)
+![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/sendahug/send-hug-backend)
+![Website](https://img.shields.io/website?down_color=red&down_message=offline&up_color=blue&up_message=online&url=https%3A%2F%2Fsend-hug-server.herokuapp.com)
 
 ## Version
 
@@ -26,15 +28,20 @@ For full project information, check the [`main README file`](https://github.com/
 2. cd into the project directory.
 3. cd into backend.
 4. Run ```pip install -r requirements.txt``` to install dependencies.
-5. Update the database URI to match your system.
+5. Create a database for the app.
+6. Update the database URI to match your system.
   - The database URI comes from an environment variable named **DATABASE_URL**.
-6. Set Auth0 configuration variables:
+7. Set Auth0 configuration variables:
   - AUTH0_DOMAIN - environment variable containing your Auth0 domain.
   - API_AUDIENCE - environment variable containing your Auth0 API audience.
-7. Set up your frontend URI.
+  - CLIENT_ID - environment variable containing your Auth0 application's client ID.
+  - PRIVATE_KEY - environment variable containing your private VAPID key (required for push notifications).
+  - MGMT_API_TOKEN - environment variable containing your Auth0 Management API token (required for updating user roles on signup).
+  - CLIENT_SECRET - environment variable containing your Auth0 application's client secret (required for updating user roles on signup).
+8. Set up your frontend URI.
   - The frontend URI comes from an environment variable named **FRONTEND**.
-7. Update your database using ```flask migrate upgrade```
-8. Run flask with:
+9. Update your database using ```flask migrate upgrade```
+10. Run flask with:
   - ```export FLASK_APP=app.py```
   - ```export FLASK_ENV=development``` (Recommended)
   - ```flask run```
@@ -68,11 +75,11 @@ The site uses several tools to maximise compatibility:
 
 5. **Python-Jose** - This application uses Python-Jose in order to decode and verify the authenticity of a given JWT (see Contents -> auth.py). You can read more on the [Python-Jose](https://python-jose.readthedocs.io/en/latest/) website.
 
-6. **Wordfilter** - This application uses the Wordfilter module in order to handle word filtering. You can read about it more on the module's [PyPI page](https://pypi.org/project/wordfilter/).
+6. **PyWebPush** - This application uses pywebpush in order to handle push notifications. For more information, check their [GitHub repo](https://github.com/web-push-libs/pywebpush).
 
-7. **PyWebPush** - This application uses pywebpush in order to handle push notifications. For more information, check their [GitHub repo](https://github.com/web-push-libs/pywebpush).
+7. **sh** - This application uses sh during testing (in order to handle the database). For more information, check the [sh PyPi page](https://pypi.org/project/sh/).
 
-8. **sh** - This application uses sh during testing (in order to handle the database). For more information, check the [sh PyPi page](https://pypi.org/project/sh/).
+8. **Coverage** - This application uses coverage in order to provide code coverage for testing. For more information, check the [Coverage documentation](https://coverage.readthedocs.io/en/coverage-5.2.1/).
 
 ## Authentication
 
@@ -129,12 +136,14 @@ Once you've completed the setup for whichever approach you've chosen, run the fo
 
 ```
 dropdb test-capstone && createdb test-capstone
+psql test-capstone < capstone_db.sql
 python test_app.py
 ```
 
 Or, if using MacOS:
 ```
 dropdb test-capstone && createdb test-capstone
+psql test-capstone < capstone_db.sql
 python3 test_app.py
 ```
 

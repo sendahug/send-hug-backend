@@ -11,6 +11,19 @@
 #
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
+#
+# The provided Software is separate from the idea behind its website. The Send A Hug
+# website and its underlying design and ideas are owned by Send A Hug group and
+# may not be sold, sub-licensed or distributed in any way. The Software itself may
+# be adapted for any purpose and used freely under the given conditions.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 import unittest
 import json
@@ -253,9 +266,9 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertTrue(response_data['posts'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['post_results'], 9)
+        self.assertEqual(response_data['post_results'], 13)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(response_data['total_pages'], 3)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['user_results'], 0)
 
@@ -267,9 +280,9 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertTrue(response_data['posts'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['post_results'], 9)
-        self.assertEqual(len(response_data['posts']), 4)
-        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(response_data['post_results'], 13)
+        self.assertEqual(len(response_data['posts']), 5)
+        self.assertEqual(response_data['total_pages'], 3)
         self.assertEqual(response_data['current_page'], 2)
         self.assertEqual(response_data['user_results'], 0)
 
@@ -588,7 +601,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 4)
+        self.assertEqual(response_data['total_pages'], 5)
 
     # Attempt to get page 2 of full new posts
     def test_get_full_new_posts_page_2(self):
@@ -598,7 +611,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 4)
+        self.assertEqual(response_data['total_pages'], 5)
 
     # Attempt to get page 1 of full suggested posts
     def test_get_full_suggested_posts(self):
@@ -608,7 +621,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 4)
+        self.assertEqual(response_data['total_pages'], 5)
 
     # Attempt to get page 2 of full suggested posts
     def test_get_full_suggested_posts_page_2(self):
@@ -618,7 +631,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response_data['posts']), 5)
-        self.assertEqual(response_data['total_pages'], 4)
+        self.assertEqual(response_data['total_pages'], 5)
 
     # Get Users by Type Tests ('/users/<type>', GET)
     # -------------------------------------------------------
@@ -1000,7 +1013,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['posts'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['page'], 1)
-        self.assertEqual(response_data['total_pages'], 2)
+        self.assertEqual(response_data['total_pages'], 3)
         self.assertEqual(len(response_data['posts']), 5)
 
     # Attempt to get a user's posts with an admin's JWT
@@ -1042,7 +1055,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], 9)
+        self.assertEqual(response_data['deleted'], 8)
 
     # Attempt to delete another user's posts (with user's JWT)
     def test_delete_other_users_posts_as_user(self):
@@ -1080,7 +1093,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], 6)
+        self.assertEqual(response_data['deleted'], 14)
 
     # Attempt to delete another user's posts (with admin's JWT)
     def test_delete_other_users_posts_as_admin(self):
@@ -1168,7 +1181,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 3)
+        self.assertEqual(len(response_data['messages']), 4)
 
     # Attempt to get another user's messages with a user's JWT
     def test_get_another_users_messages_as_user(self):
@@ -1190,7 +1203,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 3)
+        self.assertEqual(len(response_data['messages']), 5)
 
     # Attempt to get a user's outbox with a moderator's JWT
     def test_get_user_outbox_as_mod(self):
@@ -1238,8 +1251,8 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
-        self.assertEqual(response_data['total_pages'], 0)
-        self.assertEqual(len(response_data['messages']), 0)
+        self.assertEqual(response_data['total_pages'], 1)
+        self.assertEqual(len(response_data['messages']), 1)
 
     # Attempt to get a user's outbox with an admin's JWT
     def test_get_user_outbox_as_admin(self):
@@ -1253,7 +1266,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 4)
+        self.assertEqual(len(response_data['messages']), 5)
 
     # Attempt to get a user's threads mailbox with an admin's JWT
     def test_get_user_threads_as_admin(self):
@@ -1267,7 +1280,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 1)
+        self.assertEqual(len(response_data['messages']), 3)
 
     # Attempt to get another user's messages with an admin's JWT
     def test_get_another_users_messages_as_admin(self):
@@ -1417,7 +1430,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response_message['messageText'],
                          message['messageText'])
         self.assertEqual(response_message['threadID'], 7)
-        self.assertEqual(len(new_thread_data['messages']), 1)
+        self.assertEqual(len(new_thread_data['messages']), 2)
 
     # Delete Message Route Tests ('/message/<message_id>', DELETE)
     # -------------------------------------------------------
@@ -1553,7 +1566,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], 6)
+        self.assertEqual(response_data['deleted'], 7)
         self.assertEqual(response_data['userID'], '1')
 
     # Attempt to empty another user's inbox (user JWT)
@@ -1595,7 +1608,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], 1)
+        self.assertEqual(response_data['deleted'], 2)
         self.assertEqual(response_data['userID'], '4')
 
     # Attempt to empty another user's threads mailbox (admin's JWT)
@@ -1916,10 +1929,11 @@ class TestHugApp(unittest.TestCase):
         response = self.client().post('/filters', headers=admin_header,
                                       data=json.dumps({"word":"sample"}))
         response_data = json.loads(response.data)
+        added_word = response_data['added']
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['added'], 'sample')
+        self.assertEqual(added_word['filter'], 'sample')
 
     # Delete Filters Tests ('/filters/<id>', DELETE)
     # -------------------------------------------------------
@@ -1961,12 +1975,13 @@ class TestHugApp(unittest.TestCase):
         self.client().post('/filters', headers=admin_header,
                                       data=json.dumps({"word":"sample"}))
         # Delete the filter
-        response = self.client().delete('/filters/1', headers=admin_header)
+        response = self.client().delete('/filters/2', headers=admin_header)
         response_data = json.loads(response.data)
+        deleted = response_data['deleted']
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_data['deleted'], 'sample')
+        self.assertEqual(deleted['filter'], 'sample')
 
     # Attempt to delete a filter that doesn't exist with an admin's JWT
     def test_delete_nonexistent_filters_as_admin(self):
@@ -2011,7 +2026,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 8)
+        self.assertEqual(len(response_data['notifications']), 11)
         self.assertEqual(pre_user_data['last_notifications_read'],
                          post_user_data['last_notifications_read'])
 
@@ -2031,7 +2046,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 8)
+        self.assertEqual(len(response_data['notifications']), 11)
         self.assertNotEqual(pre_user_data['last_notifications_read'],
                             post_user_data['last_notifications_read'])
 
@@ -2051,7 +2066,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 2)
+        self.assertEqual(len(response_data['notifications']), 4)
         self.assertEqual(pre_user_data['last_notifications_read'],
                          post_user_data['last_notifications_read'])
 
@@ -2071,7 +2086,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data['success'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_data['notifications']), 2)
+        self.assertEqual(len(response_data['notifications']), 4)
         self.assertNotEqual(pre_user_data['last_notifications_read'],
                             post_user_data['last_notifications_read'])
 

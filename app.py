@@ -11,6 +11,19 @@
 #
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
+#
+# The provided Software is separate from the idea behind its website. The Send A Hug
+# website and its underlying design and ideas are owned by Send A Hug group and
+# may not be sold, sub-licensed or distributed in any way. The Software itself may
+# be adapted for any purpose and used freely under the given conditions.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 import os
 import json
@@ -31,6 +44,7 @@ from models import (
     Report,
     Notification,
     NotificationSub,
+    Filter,
     add as db_add,
     update as db_update,
     delete_object as db_delete,
@@ -46,7 +60,7 @@ from auth import (
     AUTH0_DOMAIN,
     API_AUDIENCE
     )
-from filter import Filter
+from filter import WordFilter
 from validator import Validator, ValidationError
 
 def create_app(test_config=None):
@@ -54,7 +68,7 @@ def create_app(test_config=None):
     app = Flask(__name__)
     create_db(app)
     CORS(app, origins='')
-    word_filter = Filter()
+    word_filter = WordFilter()
     validator = Validator({
         'post': {
             'max': 480,
@@ -227,10 +241,14 @@ def create_app(test_config=None):
         # If there's a blacklisted word / phrase, alert the user
         else:
             num_issues = len(blacklist_check['indexes'])
+            forbidden_words = ''.join([str(word['badword']) + ', ' for word in blacklist_check['indexes']])
             raise ValidationError({
                 'code': 400,
                 'description': 'Your text contains ' + str(num_issues) + ' \
-                                forbidden term(s). Please fix your post\'s \
+                                forbidden term(s). The following word(s) is/ \
+                                are not allowed: ' +
+                                forbidden_words[0:-2]
+                                + '. Please fix your post\'s \
                                 text and try again.'
             }, 400)
 
@@ -295,11 +313,15 @@ def create_app(test_config=None):
                     # If there's a blacklisted word / phrase, alert the user
                     else:
                         num_issues = len(blacklist_check['indexes'])
+                        forbidden_words = ''.join([str(word['badword']) + ', ' for word in blacklist_check['indexes']])
                         raise ValidationError({
                             'code': 400,
                             'description': 'Your text contains ' +
                                             str(num_issues) + ' forbidden \
-                                            term(s). Please fix your post\'s \
+                                            term(s). The following word(s) is/ \
+                                            are not allowed: ' +
+                                            forbidden_words[0:-2]
+                                            + '. Please fix your post\'s \
                                             text and try again.'
                         }, 400)
         # Otherwise, the user is allowed to edit any post, and thus text
@@ -318,11 +340,15 @@ def create_app(test_config=None):
                 # If there's a blacklisted word / phrase, alert the user
                 else:
                     num_issues = len(blacklist_check['indexes'])
+                    forbidden_words = ''.join([str(word['badword']) + ', ' for word in blacklist_check['indexes']])
                     raise ValidationError({
                         'code': 400,
                         'description': 'Your text contains ' +
                                         str(num_issues) + ' forbidden \
-                                        term(s). Please fix your post\'s \
+                                        term(s). The following word(s) is/ \
+                                        are not allowed: ' +
+                                        forbidden_words[0:-2]
+                                        + '. Please fix your post\'s \
                                         text and try again.'
                     }, 400)
 
@@ -1020,10 +1046,14 @@ def create_app(test_config=None):
         # If there's a blacklisted word / phrase, alert the user
         if(blacklist_check['blacklisted'] is True):
             num_issues = len(blacklist_check['indexes'])
+            forbidden_words = ''.join([str(word['badword']) + ', ' for word in blacklist_check['indexes']])
             raise ValidationError({
                 'code': 400,
                 'description': 'Your message contains ' + str(num_issues) + ' \
-                                forbidden term(s). Please fix your post\'s \
+                                forbidden term(s). The following word(s) is/ \
+                                are not allowed: ' +
+                                forbidden_words[0:-2]
+                                + '. Please fix your post\'s \
                                 text and try again.'
             }, 400)
 
@@ -1060,6 +1090,18 @@ def create_app(test_config=None):
         # If there's a thread between the users
         else:
             thread_id = thread.id
+            # If one of the users deleted the thread, change it so that the
+            # thread once again shows up
+            if(thread.user_1_deleted is True or thread.user_2_deleted is True):
+                thread.user_1_deleted = False
+                thread.user_2_deleted = False
+                # Update the thread in the database
+                try:
+                    db_update(thread)
+                # If there's an error, abort
+                except Exception as e:
+                    abort(500)
+
 
         # If a new thread was created and the database session ended, we need
         # to get the logged user's data again.
@@ -1440,12 +1482,17 @@ def create_app(test_config=None):
     @requires_auth(['read:admin-board'])
     def get_filters(token_payload):
         page = request.args.get('page', 1, type=int)
-        filtered_words = word_filter.get_words()
+        filtered_words = Filter.query.all()
+        filters = []
+
+        # Get the formatted words
+        for filter in filtered_words:
+            filters.append(filter.format())
 
         # Paginate the filtered words
         words_per_page = 10
         start_index = (page - 1) * words_per_page
-        paginated_words = filtered_words[start_index:(start_index+10)]
+        paginated_words = filters[start_index:(start_index+10)]
         total_pages = math.ceil(len(filtered_words) / 10)
 
         return jsonify({
@@ -1467,19 +1514,22 @@ def create_app(test_config=None):
         length_validated = validator.check_length(new_filter, 'Phrase to filter')
 
         # If the word already exists in the filters list, abort
-        if(new_filter in word_filter.get_full_list()):
+        existing_filter = Filter.query.filter(Filter.filter ==
+                                              new_filter.lower()).one_or_none()
+        if(existing_filter):
             abort(409)
 
         # Try to add the word to the filters list
         try:
-            word_filter.add_words(new_filter)
+            filter = Filter(filter=new_filter.lower())
+            added = db_add(filter)['added']
         # If there's an error, abort
         except Exception as e:
             abort(500)
 
         return jsonify({
             'success': True,
-            'added': new_filter
+            'added': added
         })
 
     # Endpoint: DELETE /filters/<filter_id>
@@ -1492,12 +1542,14 @@ def create_app(test_config=None):
         id_validated = validator.check_type(filter_id, 'Filter ID')
 
         # If there's no word in that index
-        if(len(word_filter.get_words()) < int(filter_id)):
+        to_delete = Filter.query.filter(Filter.id == filter_id).one_or_none()
+        if(to_delete is None):
             abort(404)
 
         # Otherwise, try to delete it
         try:
-            removed = word_filter.remove_word(filter_id)
+            removed = to_delete.format()
+            db_delete(to_delete)
         # If there's an error, abort
         except Exception as e:
             abort(500)
@@ -1577,14 +1629,58 @@ def create_app(test_config=None):
         # Try to add it to the database
         try:
             subscribed = user.display_name
-            db_add(subscription)
+            sub = db_add(subscription)['added']
         # If there's an error, abort
         except Exception as e:
             abort(500)
 
         return {
             'success': True,
-            'subscribed': subscribed
+            'subscribed': subscribed,
+            'subId': sub['id']
+        }
+
+    # Endpoint: PATCH /notifications
+    # Description: Add a new PushSubscription to the database (for push
+    #              notifications).
+    # Parameters: None.
+    # Authorization: read:messages.
+    @app.route('/notifications/<sub_id>', methods=['POST'])
+    @requires_auth(['read:messages'])
+    def update_notification_subscription(token_payload, sub_id):
+        # if the request is empty, return 204. This happens due to a bug
+        # in the frontend that causes the request to be sent twice, once
+        # with subscription data and once with an empty object
+        if(not request.data):
+            return ('', 204)
+
+        subscription_json = request.data.decode('utf8').replace("'", '"')
+        subscription_data = json.loads(subscription_json)
+        user = User.query.filter(User.auth0_id == token_payload['sub']).\
+            one_or_none()
+        old_sub = NotificationSub.query.filter(NotificationSub.id == sub_id).\
+            one_or_none()
+
+        # If there's no user with that ID, abort
+        if(user is None or old_sub is None):
+            abort(404)
+
+        old_sub.endpoint = subscription_data['endpoint']
+        old_sub.subscription_data = json.dumps(subscription_data)
+
+        # Try to add it to the database
+        try:
+            subscribed = user.display_name
+            subId = old_sub.id
+            db_update(old_sub)
+        # If there's an error, abort
+        except Exception as e:
+            abort(500)
+
+        return {
+            'success': True,
+            'subscribed': subscribed,
+            'subId': subId
         }
 
     # Error Handlers

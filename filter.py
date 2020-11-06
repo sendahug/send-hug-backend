@@ -11,35 +11,35 @@
 #
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
+#
+# The provided Software is separate from the idea behind its website. The Send A Hug
+# website and its underlying design and ideas are owned by Send A Hug group and
+# may not be sold, sub-licensed or distributed in any way. The Software itself may
+# be adapted for any purpose and used freely under the given conditions.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
-from wordfilter import Wordfilter
+from models import Filter
 
-# Filter class, which extends Wordfilter
-class Filter(Wordfilter):
-    # Gets the list of blacklisted words, excluding the words
-    # built into the module
-    def get_words(self):
-        return self.blacklist[66:len(self.blacklist)]
-
-    # Gets the full list of blacklisted words
-    # Only to be used by the backend!
-    def get_full_list(self):
-        return self.blacklist
-
-    # Remove a word from the list
-    def remove_word(self, index):
-        remove_index = int(index) + 65
-        return self.blacklist.pop(remove_index)
-
+# Filter class
+# inspired by Wordfilter: https://pypi.org/project/wordfilter/
+class WordFilter():
     # Check if there's a blacklisted word in the text
     def blacklisted(self, string):
+        filtered_words = Filter.query.all()
         test_string = string.lower()
         badword_indexes = []
         is_blacklisted = False;
 
         # Check each word
-        for badword in self.blacklist:
-            if(badword in test_string):
+        for filter in filtered_words:
+            if(filter.filter in test_string):
                 is_blacklisted = True;
                 badword_indexes.append({
                     'badword': badword,

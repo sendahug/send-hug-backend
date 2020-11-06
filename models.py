@@ -11,6 +11,19 @@
 #
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
+#
+# The provided Software is separate from the idea behind its website. The Send A Hug
+# website and its underlying design and ideas are owned by Send A Hug group and
+# may not be sold, sub-licensed or distributed in any way. The Software itself may
+# be adapted for any purpose and used freely under the given conditions.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 import os
 from datetime import datetime
@@ -228,6 +241,19 @@ class NotificationSub(db.Model):
             'subscription_data': self.subscription_data
         }
 
+# Filter
+class Filter(db.Model):
+    __tablename__ = 'filters'
+    id = db.Column(db.Integer, primary_key=True)
+    filter = db.Column(db.String(), nullable=False)
+
+    # Format method
+    def format(self):
+        return {
+            'id': self.id,
+            'filter': self.filter
+        }
+
 
 # Database management methods
 # -----------------------------------------------------------------
@@ -299,7 +325,8 @@ def joined_query(target, params={}):
                 join(from_user, from_user.id == Message.from_id).\
                 join(for_user, for_user.id == Message.for_id).\
                 filter(Message.for_deleted == False).\
-                filter(Message.for_id == user_id).all()
+                filter(Message.for_id == user_id).\
+                order_by(db.desc(Message.date)).all()
         # For outbox, gets all outgoing messages
         elif(type == 'outbox'):
             user_messages = db.session.query(Message, from_user.display_name,
@@ -307,10 +334,11 @@ def joined_query(target, params={}):
                 join(from_user, from_user.id == Message.from_id).\
                 join(for_user, for_user.id == Message.for_id).\
                 filter(Message.from_deleted == False).\
-                filter(Message.from_id == user_id).all()
+                filter(Message.from_id == user_id).\
+                order_by(db.desc(Message.date)).all()
         # For threads, gets all threads' data
         elif(type == 'threads'):
-            # Get the thread ID, messages count, and users' names and IDs
+            # Get the thread ID, and users' names and IDs
             threads_messages = db.session.query(db.func.count(Message.id),
                                                 Message.thread,
                                                 from_user.display_name,
@@ -348,7 +376,8 @@ def joined_query(target, params={}):
                         (Message.for_deleted == False)) |
                        ((Message.from_id == user_id) &
                         (Message.from_deleted == False))).\
-                filter(Message.thread == thread).all()
+                filter(Message.thread == thread).\
+                order_by(db.desc(Message.date)).all()
 
         # If the mailbox type is outbox or inbox
         if((type == 'outbox') or (type == 'inbox') or (type == 'thread')):
@@ -362,13 +391,21 @@ def joined_query(target, params={}):
         else:
             # Threads data formatting
             for index, thread in enumerate(threads_messages):
+                # Get the number of messages in the thread
+                thread_length = len(db.session.query(Message).\
+                    filter(((Message.for_id == user_id) &
+                            (Message.for_deleted == False)) |
+                           ((Message.from_id == user_id) &
+                            (Message.from_deleted == False))).\
+                    filter(Message.thread == thread[1]).all())
+                # Set up the thread
                 thread = {
                     'id': thread[1],
                     'user1': thread[2],
                     'user1Id': thread[4],
                     'user2': thread[3],
                     'user2Id': thread[5],
-                    'numMessages': thread[0],
+                    'numMessages': thread_length,
                     'latestMessage': latest_message[index][0]
                     }
                 return_obj.append(thread)

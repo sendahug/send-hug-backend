@@ -21,7 +21,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: alembic_version; Type: TABLE; Schema: public; Owner: shirbarlev
+-- Name: alembic_version; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.alembic_version (
@@ -29,10 +29,38 @@ CREATE TABLE public.alembic_version (
 );
 
 
-ALTER TABLE public.alembic_version OWNER TO shirbarlev;
+--
+-- Name: filters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.filters (
+    id integer NOT NULL,
+    filter character varying NOT NULL
+);
+
 
 --
--- Name: messages; Type: TABLE; Schema: public; Owner: shirbarlev
+-- Name: filters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.filters_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: filters_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.filters_id_seq OWNED BY public.filters.id;
+
+
+--
+-- Name: messages; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.messages (
@@ -47,10 +75,8 @@ CREATE TABLE public.messages (
 );
 
 
-ALTER TABLE public.messages OWNER TO shirbarlev;
-
 --
--- Name: messages_id_seq; Type: SEQUENCE; Schema: public; Owner: shirbarlev
+-- Name: messages_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.messages_id_seq
@@ -62,17 +88,15 @@ CREATE SEQUENCE public.messages_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.messages_id_seq OWNER TO shirbarlev;
-
 --
--- Name: messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: shirbarlev
+-- Name: messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.messages_id_seq OWNED BY public.messages.id;
 
 
 --
--- Name: notifications; Type: TABLE; Schema: public; Owner: shirbarlev
+-- Name: notifications; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.notifications (
@@ -85,10 +109,8 @@ CREATE TABLE public.notifications (
 );
 
 
-ALTER TABLE public.notifications OWNER TO shirbarlev;
-
 --
--- Name: notifications_id_seq; Type: SEQUENCE; Schema: public; Owner: shirbarlev
+-- Name: notifications_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.notifications_id_seq
@@ -100,17 +122,15 @@ CREATE SEQUENCE public.notifications_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.notifications_id_seq OWNER TO shirbarlev;
-
 --
--- Name: notifications_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: shirbarlev
+-- Name: notifications_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.notifications_id_seq OWNED BY public.notifications.id;
 
 
 --
--- Name: posts; Type: TABLE; Schema: public; Owner: shirbarlev
+-- Name: posts; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.posts (
@@ -124,10 +144,8 @@ CREATE TABLE public.posts (
 );
 
 
-ALTER TABLE public.posts OWNER TO shirbarlev;
-
 --
--- Name: posts_id_seq; Type: SEQUENCE; Schema: public; Owner: shirbarlev
+-- Name: posts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.posts_id_seq
@@ -139,17 +157,15 @@ CREATE SEQUENCE public.posts_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.posts_id_seq OWNER TO shirbarlev;
-
 --
--- Name: posts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: shirbarlev
+-- Name: posts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.posts_id_seq OWNED BY public.posts.id;
 
 
 --
--- Name: reports; Type: TABLE; Schema: public; Owner: shirbarlev
+-- Name: reports; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.reports (
@@ -165,10 +181,8 @@ CREATE TABLE public.reports (
 );
 
 
-ALTER TABLE public.reports OWNER TO shirbarlev;
-
 --
--- Name: reports_id_seq; Type: SEQUENCE; Schema: public; Owner: shirbarlev
+-- Name: reports_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.reports_id_seq
@@ -180,17 +194,15 @@ CREATE SEQUENCE public.reports_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.reports_id_seq OWNER TO shirbarlev;
-
 --
--- Name: reports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: shirbarlev
+-- Name: reports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.reports_id_seq OWNED BY public.reports.id;
 
 
 --
--- Name: subscriptions; Type: TABLE; Schema: public; Owner: shirbarlev
+-- Name: subscriptions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.subscriptions (
@@ -201,10 +213,8 @@ CREATE TABLE public.subscriptions (
 );
 
 
-ALTER TABLE public.subscriptions OWNER TO shirbarlev;
-
 --
--- Name: subscriptions_id_seq; Type: SEQUENCE; Schema: public; Owner: shirbarlev
+-- Name: subscriptions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.subscriptions_id_seq
@@ -216,17 +226,15 @@ CREATE SEQUENCE public.subscriptions_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.subscriptions_id_seq OWNER TO shirbarlev;
-
 --
--- Name: subscriptions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: shirbarlev
+-- Name: subscriptions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.subscriptions_id_seq OWNED BY public.subscriptions.id;
 
 
 --
--- Name: threads; Type: TABLE; Schema: public; Owner: shirbarlev
+-- Name: threads; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.threads (
@@ -238,10 +246,8 @@ CREATE TABLE public.threads (
 );
 
 
-ALTER TABLE public.threads OWNER TO shirbarlev;
-
 --
--- Name: threads_id_seq; Type: SEQUENCE; Schema: public; Owner: shirbarlev
+-- Name: threads_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.threads_id_seq
@@ -253,17 +259,15 @@ CREATE SEQUENCE public.threads_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.threads_id_seq OWNER TO shirbarlev;
-
 --
--- Name: threads_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: shirbarlev
+-- Name: threads_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.threads_id_seq OWNED BY public.threads.id;
 
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: shirbarlev
+-- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.users (
@@ -284,10 +288,8 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO shirbarlev;
-
 --
--- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: shirbarlev
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.users_id_seq
@@ -299,96 +301,110 @@ CREATE SEQUENCE public.users_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.users_id_seq OWNER TO shirbarlev;
-
 --
--- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: shirbarlev
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
--- Name: messages id; Type: DEFAULT; Schema: public; Owner: shirbarlev
+-- Name: filters id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.filters ALTER COLUMN id SET DEFAULT nextval('public.filters_id_seq'::regclass);
+
+
+--
+-- Name: messages id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.messages ALTER COLUMN id SET DEFAULT nextval('public.messages_id_seq'::regclass);
 
 
 --
--- Name: notifications id; Type: DEFAULT; Schema: public; Owner: shirbarlev
+-- Name: notifications id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notifications ALTER COLUMN id SET DEFAULT nextval('public.notifications_id_seq'::regclass);
 
 
 --
--- Name: posts id; Type: DEFAULT; Schema: public; Owner: shirbarlev
+-- Name: posts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.posts ALTER COLUMN id SET DEFAULT nextval('public.posts_id_seq'::regclass);
 
 
 --
--- Name: reports id; Type: DEFAULT; Schema: public; Owner: shirbarlev
+-- Name: reports id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reports ALTER COLUMN id SET DEFAULT nextval('public.reports_id_seq'::regclass);
 
 
 --
--- Name: subscriptions id; Type: DEFAULT; Schema: public; Owner: shirbarlev
+-- Name: subscriptions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscriptions ALTER COLUMN id SET DEFAULT nextval('public.subscriptions_id_seq'::regclass);
 
 
 --
--- Name: threads id; Type: DEFAULT; Schema: public; Owner: shirbarlev
+-- Name: threads id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.threads ALTER COLUMN id SET DEFAULT nextval('public.threads_id_seq'::regclass);
 
 
 --
--- Name: users id; Type: DEFAULT; Schema: public; Owner: shirbarlev
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
 
 
 --
--- Data for Name: alembic_version; Type: TABLE DATA; Schema: public; Owner: shirbarlev
+-- Data for Name: alembic_version; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.alembic_version (version_num) FROM stdin;
-97ebcd9c039d
+5aa132f978ec
 \.
 
 
 --
--- Data for Name: messages; Type: TABLE DATA; Schema: public; Owner: shirbarlev
+-- Data for Name: filters; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.filters (id, filter) FROM stdin;
+\.
+
+
+--
+-- Data for Name: messages; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.messages (id, from_id, for_id, text, date, thread, for_deleted, from_deleted) FROM stdin;
-18	4	4	Your post (ID 19) was deleted due to violating our community rules.	2020-06-22 14:32:38.056	4	t	f
 5	4	5	hellllllllo :)	2020-06-08 14:43:30.593	4	f	t
 8	5	4	hi there :)	2020-06-08 14:50:19.006	4	t	f
-10	4	1	hi :)	2020-06-14 14:07:37.49	4	f	t
-19	4	4	Your post (ID 20) was deleted due to violating our community rules.	2020-06-22 14:34:58.019	4	t	t
 1	1	1	hang in there :)	2020-06-02 10:39:56.337	1	f	f
 3	5	1	you'll be okay <3	2020-06-08 14:42:02.759	2	f	f
 7	1	5	more testing	2020-06-08 14:45:05.713	2	f	f
 9	4	1	hang in there	2020-06-08 14:43:15	3	f	f
 16	9	5	hiiiii	2020-06-14 14:25:37.569	6	f	f
-20	4	4	Your post (ID 21) was deleted due to violating our community rules.	2020-06-22 20:41:12.213	4	t	t
-21	4	1	hi	2020-07-06 17:33:55.712	4	f	f
-22	4	1	test	2020-07-06 17:40:51.288	4	f	f
+23	4	5	testing thread delete	2020-11-03 16:38:06.351	4	f	f
+24	4	5	test	2020-11-03 16:48:33.213	4	f	f
+10	4	1	hi :)	2020-06-14 14:07:37.49	3	f	t
+21	4	1	hi	2020-07-06 17:33:55.712	3	f	f
+25	20	4	hang in there <3	2020-11-03 20:16:58.027	7	f	f
+22	4	1	test	2020-07-06 17:40:51.288	3	f	f
+26	20	1	hiiii :)	2020-11-03 20:21:30.972	8	f	t
 \.
 
 
 --
--- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: shirbarlev
+-- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.notifications (id, for_id, from_id, type, text, date) FROM stdin;
@@ -472,11 +488,26 @@ COPY public.notifications (id, for_id, from_id, type, text, date) FROM stdin;
 78	1	4	hug	You got a hug	2020-07-22 15:18:49.469451
 79	4	4	hug	You got a hug	2020-07-22 15:30:06.395028
 80	5	4	hug	You got a hug	2020-08-10 19:40:21.244178
+81	1	4	hug	You got a hug	2020-09-16 11:08:35.311236
+82	4	4	hug	You got a hug	2020-10-30 13:36:31.188385
+83	4	4	hug	You got a hug	2020-10-31 14:01:09.923613
+84	4	4	hug	You got a hug	2020-10-31 14:19:46.89522
+85	4	4	hug	You got a hug	2020-10-31 14:26:04.690362
+86	1	4	hug	You got a hug	2020-10-31 14:44:07.598229
+87	4	4	hug	You got a hug	2020-10-31 14:46:21.747038
+88	4	4	hug	You got a hug	2020-10-31 14:59:11.313138
+89	4	4	hug	You got a hug	2020-10-31 15:06:12.339448
+90	4	4	hug	You got a hug	2020-10-31 15:07:41.99315
+91	4	4	hug	You got a hug	2020-10-31 15:09:55.344578
+92	5	4	message	You have a new message	2020-11-03 16:38:06.351
+93	5	4	message	You have a new message	2020-11-03 16:48:33.213
+94	4	20	message	You have a new message	2020-11-03 20:16:58.027
+95	1	20	message	You have a new message	2020-11-03 20:21:30.972
 \.
 
 
 --
--- Data for Name: posts; Type: TABLE DATA; Schema: public; Owner: shirbarlev
+-- Data for Name: posts; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.posts (id, user_id, text, date, given_hugs, open_report, sent_hugs) FROM stdin;
@@ -488,20 +519,27 @@ COPY public.posts (id, user_id, text, date, given_hugs, open_report, sent_hugs) 
 22	4	testing service worker	2020-06-27 10:31:24.915	1	f	4 
 13	5	2nd post	2020-06-08 14:30:58.88	1	f	4 
 10	1	cutie baby lee	2020-06-04 07:56:09.791	1	f	4 
-5	1	testing update	2020-06-01 15:18:37.305	1	f	4 
 7	1	testing #2	2020-06-01 15:20:11.927	1	f	4 
 2	1	test	2020-06-01 15:10:59.898	2	f	4 
 4	1	test	2020-06-01 15:17:56.294	2	f	4 
 23	4	post	2020-06-27 19:17:31.072	2	f	4 
 12	5	new user	2020-06-08 14:07:25.297	1	f	4 
-1	1	test	2020-06-01 15:05:01.966	1	f	
-9	1	leeeeeee b :))	2020-06-03 07:11:40.421	0	f	
-25	4	for report	2020-07-06 08:02:02.184	66	f	
+9	1	leeeeeee b :))	2020-06-03 07:11:40.421	1	f	4 
+35	4	testing new rule	2020-10-24 12:19:24.199	1	f	4 
+36	4	post	2020-10-31 14:00:58.851	1	f	4 
+25	4	for report	2020-07-06 08:02:02.184	67	f	4 
+1	1	test	2020-06-01 15:05:01.966	2	f	4 
+38	4	test	2020-10-31 14:46:11.378	1	f	4 
+39	4	testing	2020-10-31 14:59:05.703	1	f	4 
+42	4	test 2	2020-10-31 15:09:50.26	1	f	4 
+43	4	test button	2020-10-31 15:20:45.636	0	f	
+44	4	button	2020-10-31 15:25:18.172	0	f	
+45	4	button 2	2020-10-31 15:26:48.043	0	f	
 \.
 
 
 --
--- Data for Name: reports; Type: TABLE DATA; Schema: public; Owner: shirbarlev
+-- Data for Name: reports; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.reports (id, type, user_id, post_id, reporter, report_reason, dismissed, closed, date) FROM stdin;
@@ -553,7 +591,7 @@ COPY public.reports (id, type, user_id, post_id, reporter, report_reason, dismis
 
 
 --
--- Data for Name: subscriptions; Type: TABLE DATA; Schema: public; Owner: shirbarlev
+-- Data for Name: subscriptions; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.subscriptions (id, "user", endpoint, subscription_data) FROM stdin;
@@ -561,7 +599,7 @@ COPY public.subscriptions (id, "user", endpoint, subscription_data) FROM stdin;
 
 
 --
--- Data for Name: threads; Type: TABLE DATA; Schema: public; Owner: shirbarlev
+-- Data for Name: threads; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.threads (id, user_1_id, user_2_id, user_1_deleted, user_2_deleted) FROM stdin;
@@ -569,74 +607,83 @@ COPY public.threads (id, user_1_id, user_2_id, user_1_deleted, user_2_deleted) F
 2	1	5	f	f
 3	1	4	f	f
 6	9	5	f	f
-4	4	5	t	f
+4	4	5	f	f
+7	20	4	f	f
+8	20	1	t	f
 \.
 
 
 --
--- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: shirbarlev
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.users (id, auth0_id, received_hugs, given_hugs, display_name, login_count, role, blocked, open_report, release_date, last_notifications_read, auto_refresh, push_enabled, refresh_rate) FROM stdin;
 9	auth0|5edf7b060793080013276746	0	1	user93	2	admin	f	f	\N	\N	\N	\N	\N
-4	auth0|5ed8e3d0def75d0befbc7e50	97	106	user14	32	admin	f	f	\N	2020-09-04 12:43:11.613438	f	t	\N
-20	auth0|5f4b9fd9915cd400670f4633	0	0	user24	2	user	t	f	2120-08-11 08:33:22.473	2020-09-04 11:19:24.680191	f	f	0
-1	auth0|5ed34765f0b8e60c8e87ca62	10	2	shirb	60	admin	f	f	\N	\N	\N	\N	\N
+1	auth0|5ed34765f0b8e60c8e87ca62	12	2	shirb	60	admin	f	f	\N	\N	\N	\N	\N
+20	auth0|5f4b9fd9915cd400670f4633	0	0	user24	4	user	t	f	2120-08-11 08:33:22.473	2020-11-03 20:21:13.399365	f	f	0
+4	auth0|5ed8e3d0def75d0befbc7e50	106	117	user14	52	admin	f	f	\N	2020-10-30 18:13:21.282054	f	t	\N
 5	auth0|5ede3e7a0793080013259050	2	0	user52	7	moderator	f	f	\N	\N	\N	\N	\N
 \.
 
 
 --
--- Name: messages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: shirbarlev
+-- Name: filters_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.messages_id_seq', 22, true);
-
-
---
--- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: shirbarlev
---
-
-SELECT pg_catalog.setval('public.notifications_id_seq', 80, true);
+SELECT pg_catalog.setval('public.filters_id_seq', 1, true);
 
 
 --
--- Name: posts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: shirbarlev
+-- Name: messages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.posts_id_seq', 31, true);
+SELECT pg_catalog.setval('public.messages_id_seq', 26, true);
 
 
 --
--- Name: reports_id_seq; Type: SEQUENCE SET; Schema: public; Owner: shirbarlev
+-- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.notifications_id_seq', 95, true);
+
+
+--
+-- Name: posts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.posts_id_seq', 45, true);
+
+
+--
+-- Name: reports_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.reports_id_seq', 44, true);
 
 
 --
--- Name: subscriptions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: shirbarlev
+-- Name: subscriptions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.subscriptions_id_seq', 9, true);
-
-
---
--- Name: threads_id_seq; Type: SEQUENCE SET; Schema: public; Owner: shirbarlev
---
-
-SELECT pg_catalog.setval('public.threads_id_seq', 6, true);
+SELECT pg_catalog.setval('public.subscriptions_id_seq', 10, true);
 
 
 --
--- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: shirbarlev
+-- Name: threads_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.threads_id_seq', 8, true);
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.users_id_seq', 20, true);
 
 
 --
--- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.alembic_version
@@ -644,7 +691,15 @@ ALTER TABLE ONLY public.alembic_version
 
 
 --
--- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: filters filters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.filters
+    ADD CONSTRAINT filters_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.messages
@@ -652,7 +707,7 @@ ALTER TABLE ONLY public.messages
 
 
 --
--- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notifications
@@ -660,7 +715,7 @@ ALTER TABLE ONLY public.notifications
 
 
 --
--- Name: posts posts_pkey; Type: CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: posts posts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.posts
@@ -668,7 +723,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: reports reports_pkey; Type: CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: reports reports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reports
@@ -676,7 +731,7 @@ ALTER TABLE ONLY public.reports
 
 
 --
--- Name: subscriptions subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: subscriptions subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscriptions
@@ -684,7 +739,7 @@ ALTER TABLE ONLY public.subscriptions
 
 
 --
--- Name: threads threads_pkey; Type: CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: threads threads_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.threads
@@ -692,7 +747,7 @@ ALTER TABLE ONLY public.threads
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -700,7 +755,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: messages messages_for_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: messages messages_for_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.messages
@@ -708,7 +763,7 @@ ALTER TABLE ONLY public.messages
 
 
 --
--- Name: messages messages_from_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: messages messages_from_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.messages
@@ -716,7 +771,7 @@ ALTER TABLE ONLY public.messages
 
 
 --
--- Name: messages messages_thread_fkey; Type: FK CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: messages messages_thread_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.messages
@@ -724,7 +779,7 @@ ALTER TABLE ONLY public.messages
 
 
 --
--- Name: notifications notifications_for_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: notifications notifications_for_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notifications
@@ -732,7 +787,7 @@ ALTER TABLE ONLY public.notifications
 
 
 --
--- Name: notifications notifications_from_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: notifications notifications_from_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notifications
@@ -740,7 +795,7 @@ ALTER TABLE ONLY public.notifications
 
 
 --
--- Name: posts posts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: posts posts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.posts
@@ -748,7 +803,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: reports reports_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: reports reports_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reports
@@ -756,7 +811,7 @@ ALTER TABLE ONLY public.reports
 
 
 --
--- Name: reports reports_reporter_fkey; Type: FK CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: reports reports_reporter_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reports
@@ -764,7 +819,7 @@ ALTER TABLE ONLY public.reports
 
 
 --
--- Name: reports reports_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: reports reports_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reports
@@ -772,7 +827,7 @@ ALTER TABLE ONLY public.reports
 
 
 --
--- Name: subscriptions subscriptions_user_fkey; Type: FK CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: subscriptions subscriptions_user_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscriptions
@@ -780,7 +835,7 @@ ALTER TABLE ONLY public.subscriptions
 
 
 --
--- Name: threads threads_user_1_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: threads threads_user_1_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.threads
@@ -788,7 +843,7 @@ ALTER TABLE ONLY public.threads
 
 
 --
--- Name: threads threads_user_2_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: shirbarlev
+-- Name: threads threads_user_2_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.threads
