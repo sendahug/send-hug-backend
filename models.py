@@ -278,7 +278,7 @@ def joined_query(target, params={}):
     # if the target is the suggested_posts array in the main page endpoint
     elif(target.lower() == 'main suggested'):
         sug_posts = db.session.query(Post, User.display_name).join(User).\
-                    order_by(Post.given_hugs).\
+                    order_by(Post.given_hugs, Post.date).\
                     filter(Post.open_report == False).limit(10).all()
 
         # formats each post in the list
@@ -300,7 +300,7 @@ def joined_query(target, params={}):
     # If the target is the full list of suggested items
     elif(target.lower() == 'full suggested'):
         full_sug_posts = db.session.query(Post, User.display_name).join(User).\
-                    order_by(Post.given_hugs).\
+                    order_by(Post.given_hugs, Post.date).\
                     filter(Post.open_report == False).all()
 
         # formats each post in the list
