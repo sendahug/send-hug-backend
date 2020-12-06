@@ -38,7 +38,7 @@ jobs:
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
       - run:
           name: Restore database
-          command: psql test-capstone < capstone_db.sql
+          command: psql -h localhost -p 5432 test-capstone < capstone_db.sql
       - save_cache:
           key: deps1-{{ .Branch }}-{{ checksum "requirements/dev.txt" }}
           paths:
