@@ -1,0 +1,40 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.8
+        auth:
+          username: mydockerhub-user
+          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
+        environment:
+          FLASK_CONFIG: testing
+          TEST_DATABASE_URL: postgresql://postgres@localhost/test-capstone?sslmode=disable
+      - image: circleci/postgres:12.5
+        auth:
+          username: mydockerhub-user
+          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test-capstone
+          POSTGRES_PASSWORD: ""
+    steps:
+      - checkout
+      - restore_cache:
+          key: deps1-{{ .Branch }}-{{ checksum "requirements/dev.txt" }}
+      - run:
+          name: Install Python deps in a venv
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements/dev.txt
+      - run:
+          name: Restore database
+          command: psql test-capstone < capstone_db.sql
+      - save_cache:
+          key: deps1-{{ .Branch }}-{{ checksum "requirements/dev.txt" }}
+          paths:
+            - "venv"
+      - run:
+          command: |
+            coverage run test_app.py
+      - run: codecov
