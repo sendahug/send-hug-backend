@@ -27,6 +27,7 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
+      - run: apt-get install -y postgresql-client
       - run:
           name: Restore database
           command: psql test-capstone < capstone_db.sql
