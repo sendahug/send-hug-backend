@@ -2,13 +2,10 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: circleci/python:3.8
-        auth:
-          username: mydockerhub-user
-          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
+      - image: cimg/python:3.9.0
         environment:
           FLASK_CONFIG: testing
-          TEST_DATABASE_URL: postgresql://postgres:password@localhost/test-capstone?sslmode=disable
+          TEST_DATABASE_URL: postgresql://postgres:password@localhost:5432/test-capstone?sslmode=disable
       - image: circleci/postgres:12.5
         auth:
           username: mydockerhub-user
@@ -38,6 +35,9 @@ jobs:
       - run:
           name: Wait for db
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
+      - run:
+          name: create database
+          command: psql -h localhost -p 5432 -c 'create database "test-capstone";' -U postgres
       - run:
           name: Restore database
           command: psql test-capstone < capstone_db.sql
