@@ -18,21 +18,19 @@ jobs:
       - checkout
       - restore_cache:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
-      - run:
-          name: Install Python deps in a venv
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements.txt
-            python3 -m pip install --upgrade pip
       - run: sudo apt-get update
+      - run: sudo apt-get install -y postgresql-client
+      - run:
+          name: Install Python deps
+          command: |
+            pip3 install -r requirements.txt
+            python3 -m pip install --upgrade pip
       - run:
           name: Install coverage and codecov
           command: |
             sudo apt-get install -y python3-pip
             sudo pip3 install coverage
             sudo pip3 install codecov
-      - run: sudo apt-get install -y postgresql-client
       # Dockerize installation to wait for the database to load
       # Taken from: https://support.circleci.com/hc/en-us/articles/360006773953-Race-Conditions-Wait-For-Database
       - run:
@@ -48,10 +46,7 @@ jobs:
           command: psql -h localhost -p 5432 -U postgres test-capstone < capstone_db.sql
       - save_cache:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
-          paths:
-            - "venv"
       - run:
           command: |
-            . venv/bin/activate
             coverage run test_app.py
       - run: codecov
