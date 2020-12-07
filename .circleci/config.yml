@@ -24,8 +24,9 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
-            sudo python3 -m pip install coverage
-            sudo python3 -m pip install codecov
+            sudo python3 -m pip install --upgrade pip
+            sudo pip3 install coverage
+            sudo pip3 install codecov
       - run: sudo apt-get update
       - run: sudo apt-get install -y postgresql-client
       # Dockerize installation to wait for the database to load
