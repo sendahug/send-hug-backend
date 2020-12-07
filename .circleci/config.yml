@@ -25,6 +25,10 @@ jobs:
             . venv/bin/activate
             pip install -r requirements.txt
             python3 -m pip install --upgrade pip
+      - run:
+          name: Install coverage and codecov
+          command: |
+            sudo apt-get install python3-pip
             sudo pip3 install coverage
             sudo pip3 install codecov
       - run: sudo apt-get update
