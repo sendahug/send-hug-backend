@@ -31,6 +31,7 @@ import os
 import urllib.request
 import base64
 import time
+import sys
 from flask_sqlalchemy import SQLAlchemy
 from sh import pg_restore
 
@@ -208,8 +209,8 @@ class TestHugApp(unittest.TestCase):
     def setUpClass(cls):
         try:
             get_user_tokens()
-        except urllib.error.URLError as e:
-            print(e)
+        except Exception as e:
+            print(sys.exc_info())
 
     # Setting up each test
     def setUp(self):
