@@ -206,7 +206,10 @@ class TestHugApp(unittest.TestCase):
     # Setting up the suite
     @classmethod
     def setUpClass(cls):
-        get_user_tokens()
+        try:
+            get_user_tokens()
+        except urllib.error.URLError as e:
+            print(e)
 
     # Setting up each test
     def setUp(self):
