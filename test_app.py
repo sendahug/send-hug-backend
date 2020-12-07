@@ -85,7 +85,6 @@ def get_user_tokens():
     roles = ['user', 'moderator', 'admin', 'blocked']
     for role in roles:
         url = "https://" + AUTH0_DOMAIN + "/oauth/token"
-        print(url)
 
         # Get the user's username and password
         role_username = os.environ.get(role.upper() + '_USERNAME')
@@ -220,7 +219,7 @@ class TestHugApp(unittest.TestCase):
         self.database_path = 'postgresql://localhost:5432/test-capstone'
 
         create_db(self.app, self.database_path)
-        pg_restore('-d', 'test-capstone', 'capstone_db', '-Fc', '-c', '--no-owner')
+        pg_restore('-d', 'test-capstone', 'capstone_db', '-Fc', '-c', '--no-owner', '-h', 'localhost', '-p', '5432')
 
         # binds the app to the current context
         with self.app.app_context():
