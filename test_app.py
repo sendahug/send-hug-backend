@@ -216,7 +216,7 @@ class TestHugApp(unittest.TestCase):
     def setUp(self):
         self.app = create_app()
         self.client = self.app.test_client
-        self.database_path = 'postgresql://localhost:5432/test-capstone'
+        self.database_path = 'postgresql://postgres:password@localhost:5432/test-capstone'
 
         create_db(self.app, self.database_path)
         pg_restore('-d', 'test-capstone', 'capstone_db', '-Fc', '-c', '--no-owner', '-h', 'localhost', '-p', '5432', '-U', 'postgres')
