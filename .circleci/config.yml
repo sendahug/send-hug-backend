@@ -52,5 +52,6 @@ jobs:
             - "venv"
       - run:
           command: |
+            . venv/bin/activate
             coverage run -m test_app.py
       - run: codecov
