@@ -219,7 +219,7 @@ class TestHugApp(unittest.TestCase):
         self.database_path = 'postgresql://localhost:5432/test-capstone'
 
         create_db(self.app, self.database_path)
-        pg_restore('-d', 'test-capstone', 'capstone_db', '-Fc', '-c', '--no-owner', '-h', 'localhost', '-p', '5432')
+        pg_restore('-d', 'test-capstone', 'capstone_db', '-Fc', '-c', '--no-owner', '-h', 'localhost', '-p', '5432', '-U', 'postgres')
 
         # binds the app to the current context
         with self.app.app_context():
