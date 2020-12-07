@@ -84,7 +84,7 @@ def get_user_tokens():
 
     roles = ['user', 'moderator', 'admin', 'blocked']
     for role in roles:
-        url = AUTH0_DOMAIN + "/oauth/token"
+        url = "https://" + AUTH0_DOMAIN + "/oauth/token"
         print(url)
 
         # Get the user's username and password
