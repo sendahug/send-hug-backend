@@ -1,4 +1,5 @@
 version: 2.1
+
 jobs:
   build:
     docker:
@@ -51,4 +52,18 @@ jobs:
       - run:
           command: |
             coverage run test_app.py
-      - run: codecov
+
+# Conditionally run testing depending on branch
+# Once it's done, run codecov to upload test coverage
+workflows:
+  test:
+    jobs:
+      - build
+          filters:
+            branches:
+              only:
+                - master
+                - Dev
+          post-steps:
+            - run:
+                command: codecov
