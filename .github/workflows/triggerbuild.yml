@@ -1,0 +1,18 @@
+# Trigger CircleCI build
+name: Trigger Build
+
+# Controls when the action will run. Triggers the workflow on pull request
+# events but only for the master branch
+on:
+  pull_request:
+    branches: [ master, Dev ]
+
+# Trigger CircleCI build via the API
+jobs:
+  curl:
+    runs-on: ubuntu-latest
+    steps:
+    - name: curl
+      uses: wei/curl@master
+      with:
+        args: -X POST https://circleci.com/api/v1.1/project/gh/sendahug/send-hug-backend/tree/$GITHUB_HEAD_REF?circle-token=$CIRCLE_CI_ACCESS_TOKEN -H "Content-Type:application/json"
