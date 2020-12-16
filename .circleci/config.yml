@@ -61,7 +61,7 @@ jobs:
 # Once it's done, run codecov to upload test coverage
 workflows:
   test:
-  when: << pipeline.parameters.run_workflow_build >>
+    when: << pipeline.parameters.run_workflow_build >>
     jobs:
       - build: 
           filters:
