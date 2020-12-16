@@ -16,7 +16,7 @@ jobs:
     steps:
       - run: >- 
             curl -X POST "https://circleci.com/api/v2/project/gh/sendahug/send-hug-backend/pipeline"
-            --header 'authorization: Circle-Token ${{ secrets.CIRCLE_CI_ACCESS_TOKEN }}'
+            --header 'Circle-Token: ${{ secrets.CIRCLE_CI_ACCESS_TOKEN }}'
             --header 'content-type: application/json'
             --header 'x-attribution-actor-id: ${{ github.actor }}'
             --header 'x-attribution-login: ${{ github.actor }}'
