@@ -20,4 +20,4 @@ jobs:
             --header 'content-type: application/json'
             --header 'x-attribution-actor-id: ${{ github.actor }}'
             --header 'x-attribution-login: ${{ github.actor }}'
-            --data '{"branch": "pull/${{ github.event.pull_request.number }}/head", "tag":"PR-CI", "parameters":{"run_workflow_build":true}}'
+            --data '{"branch": "pull/${{ github.event.pull_request.number }}/head", "parameters":{"run_workflow_build":true}}'
