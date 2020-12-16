@@ -1,4 +1,8 @@
 version: 2.1
+parameters:
+  run_workflow_build:
+    default: false
+    type: boolean
 
 jobs:
   build:
@@ -57,13 +61,13 @@ jobs:
 # Once it's done, run codecov to upload test coverage
 workflows:
   test:
+    when:
+      or:
+        - << pipeline.parameters.run_workflow_build >>
+        - equal: [ master, << pipeline.git.branch >> ]
+        - equal: [ Dev, << pipeline.git.branch >> ]
     jobs:
-      - build:
-          filters:
-            branches:
-              only:
-                - master
-                - Dev
+      - build: 
           post-steps:
             - run:
                 command: codecov
