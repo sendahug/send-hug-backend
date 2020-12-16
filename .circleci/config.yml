@@ -1,4 +1,8 @@
 version: 2.1
+parameters:
+  run_workflow_build:
+    default: true
+    type: boolean
 
 jobs:
   build:
@@ -59,6 +63,7 @@ workflows:
   test:
     jobs:
       - build:
+          when: << pipeline.parameters.run_workflow_build >>
           filters:
             branches:
               only:
