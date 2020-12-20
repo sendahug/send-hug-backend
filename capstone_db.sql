@@ -284,7 +284,9 @@ CREATE TABLE public.users (
     last_notifications_read timestamp without time zone,
     auto_refresh boolean,
     push_enabled boolean,
-    refresh_rate integer
+    refresh_rate integer,
+    icon_colours character varying,
+    selected_character character varying(6)
 );
 
 
@@ -369,7 +371,7 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.alembic_version (version_num) FROM stdin;
-5aa132f978ec
+d8921945f241
 \.
 
 
@@ -617,12 +619,12 @@ COPY public.threads (id, user_1_id, user_2_id, user_1_deleted, user_2_deleted) F
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.users (id, auth0_id, received_hugs, given_hugs, display_name, login_count, role, blocked, open_report, release_date, last_notifications_read, auto_refresh, push_enabled, refresh_rate) FROM stdin;
-9	auth0|5edf7b060793080013276746	0	1	user93	2	admin	f	f	\N	\N	\N	\N	\N
-1	auth0|5ed34765f0b8e60c8e87ca62	12	2	shirb	60	admin	f	f	\N	\N	\N	\N	\N
-20	auth0|5f4b9fd9915cd400670f4633	0	0	user24	4	user	t	f	2120-08-11 08:33:22.473	2020-11-03 20:21:13.399365	f	f	0
-4	auth0|5ed8e3d0def75d0befbc7e50	106	117	user14	52	admin	f	f	\N	2020-10-30 18:13:21.282054	f	t	\N
-5	auth0|5ede3e7a0793080013259050	2	0	user52	7	moderator	f	f	\N	\N	\N	\N	\N
+COPY public.users (id, auth0_id, received_hugs, given_hugs, display_name, login_count, role, blocked, open_report, release_date, last_notifications_read, auto_refresh, push_enabled, refresh_rate, icon_colours, selected_character) FROM stdin;
+9	auth0|5edf7b060793080013276746	0	1	user93	2	admin	f	f	\N	\N	\N	\N	\N	{"character":"#BA9F93", "leftbg":"#f4b56a", "rightbg":"#e2a275", "item":"#f8eee4"}	kitty
+1	auth0|5ed34765f0b8e60c8e87ca62	12	2	shirb	60	admin	f	f	\N	\N	\N	\N	\N	{"character":"#BA9F93", "leftbg":"#f4b56a", "rightbg":"#e2a275", "item":"#f8eee4"}	kitty
+20	auth0|5f4b9fd9915cd400670f4633	0	0	user24	4	user	t	f	2120-08-11 08:33:22.473	2020-11-03 20:21:13.399365	f	f	0	{"character":"#BA9F93", "leftbg":"#f4b56a", "rightbg":"#e2a275", "item":"#f8eee4"}	kitty
+4	auth0|5ed8e3d0def75d0befbc7e50	106	117	user14	52	admin	f	f	\N	2020-10-30 18:13:21.282054	f	t	\N	{"character":"#BA9F93", "leftbg":"#f4b56a", "rightbg":"#e2a275", "item":"#f8eee4"}	kitty
+5	auth0|5ede3e7a0793080013259050	2	0	user52	7	moderator	f	f	\N	\N	\N	\N	\N	{"character":"#BA9F93", "leftbg":"#f4b56a", "rightbg":"#e2a275", "item":"#f8eee4"}	kitty
 \.
 
 
