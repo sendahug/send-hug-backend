@@ -91,10 +91,10 @@ class User(db.Model):
     refresh_rate = db.Column(db.Integer, default=20)
     push_enabled = db.Column(db.Boolean, default=False)
     selected_character = db.Column(db.String(6), default='kitty')
-    icon_colours = db.Column(db.String(), default='{"character":"", \
-                                                    "leftbg":"", \
-                                                    "rightbg":"", \
-                                                    "item":""}')
+    icon_colours = db.Column(db.String(), default='{"character":"#BA9F93", \
+                                                    "leftbg":"#f4b56a", \
+                                                    "rightbg":"#e2a275", \
+                                                    "item":"#f8eee4"}')
     posts = db.relationship('Post', backref='user')
 
     # Format method
