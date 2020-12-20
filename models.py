@@ -26,6 +26,7 @@
 # SOFTWARE.
 
 import os
+import json
 from datetime import datetime
 from flask import abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -89,6 +90,11 @@ class User(db.Model):
     auto_refresh = db.Column(db.Boolean, default=True)
     refresh_rate = db.Column(db.Integer, default=20)
     push_enabled = db.Column(db.Boolean, default=False)
+    selected_character = db.Column(db.String(6), default='kitty')
+    icon_colours = db.Column(db.String(), default='{"character":"", \
+                                                    "leftbg":"", \
+                                                    "rightbg":"", \
+                                                    "item":""}')
     posts = db.relationship('Post', backref='user')
 
     # Format method
@@ -107,7 +113,9 @@ class User(db.Model):
             'autoRefresh': self.auto_refresh,
             'refreshRate': self.refresh_rate,
             'pushEnabled': self.push_enabled,
-            'last_notifications_read': self.last_notifications_read
+            'last_notifications_read': self.last_notifications_read,
+            'selectedIcon': self.selected_character,
+            'iconColours': json.loads(self.icon_colours)
         }
 
 
