@@ -816,6 +816,14 @@ def create_app(test_config=None):
         if('refreshRate' in updated_user):
             original_user.refresh_rate = updated_user['refreshRate']
 
+        # If the user is changing their selected character
+        if('selectedIcon' in updated_user):
+            original_user.selected_character = updated_user['selectedIcon']
+
+        # If the user is changing their character colours
+        if('iconColours' in updated_user):
+            original_user.icon_colours = json.dumps(updated_user['iconColours'])
+
         # Checks if the user's role is updated based on the
         # permissions in the JWT
         # Checks whether the user has 'patch:any-post' permission, which
