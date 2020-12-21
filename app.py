@@ -640,9 +640,9 @@ def create_app(test_config=None):
                         login_count=0,blocked=False,open_report=False,
                         auto_refresh=True,refresh_rate=20,push_enabled=False,
                         selected_character='kitty',
-                        icon_colours='{"character":"#BA9F93", \
-                                       "leftbg":"#f4b56a", \
-                                       "rightbg":"#e2a275", "item":"#f8eee4"}')
+                        icon_colours='{"character":"#BA9F93",\
+                                       "leftbg":"#f4b56a","rightbg":"#e2a275",\
+                                       "item":"#f8eee4"}')
 
         # Try to add the post to the database
         try:
