@@ -395,13 +395,13 @@ COPY public.messages (id, from_id, for_id, text, date, thread, for_deleted, from
 7	1	5	more testing	2020-06-08 14:45:05.713	2	f	f
 9	4	1	hang in there	2020-06-08 14:43:15	3	f	f
 16	9	5	hiiiii	2020-06-14 14:25:37.569	6	f	f
-23	4	5	testing thread delete	2020-11-03 16:38:06.351	4	f	f
-24	4	5	test	2020-11-03 16:48:33.213	4	f	f
 10	4	1	hi :)	2020-06-14 14:07:37.49	3	f	t
 21	4	1	hi	2020-07-06 17:33:55.712	3	f	f
 25	20	4	hang in there <3	2020-11-03 20:16:58.027	7	f	f
 22	4	1	test	2020-07-06 17:40:51.288	3	f	f
 26	20	1	hiiii :)	2020-11-03 20:21:30.972	8	f	t
+23	4	5	testing thread delete	2020-11-03 16:38:06.351	4	f	t
+24	4	5	test	2020-11-03 16:48:33.213	4	f	t
 \.
 
 
@@ -609,9 +609,9 @@ COPY public.threads (id, user_1_id, user_2_id, user_1_deleted, user_2_deleted) F
 2	1	5	f	f
 3	1	4	f	f
 6	9	5	f	f
-4	4	5	f	f
 7	20	4	f	f
 8	20	1	t	f
+4	4	5	t	f
 \.
 
 
@@ -620,11 +620,11 @@ COPY public.threads (id, user_1_id, user_2_id, user_1_deleted, user_2_deleted) F
 --
 
 COPY public.users (id, auth0_id, received_hugs, given_hugs, display_name, login_count, role, blocked, open_report, release_date, last_notifications_read, auto_refresh, push_enabled, refresh_rate, icon_colours, selected_character) FROM stdin;
-9	auth0|5edf7b060793080013276746	0	1	user93	2	admin	f	f	\N	\N	\N	\N	\N	{"character":"#BA9F93", "leftbg":"#f4b56a", "rightbg":"#e2a275", "item":"#f8eee4"}	kitty
-1	auth0|5ed34765f0b8e60c8e87ca62	12	2	shirb	60	admin	f	f	\N	\N	\N	\N	\N	{"character":"#BA9F93", "leftbg":"#f4b56a", "rightbg":"#e2a275", "item":"#f8eee4"}	kitty
-20	auth0|5f4b9fd9915cd400670f4633	0	0	user24	4	user	t	f	2120-08-11 08:33:22.473	2020-11-03 20:21:13.399365	f	f	0	{"character":"#BA9F93", "leftbg":"#f4b56a", "rightbg":"#e2a275", "item":"#f8eee4"}	kitty
-4	auth0|5ed8e3d0def75d0befbc7e50	106	117	user14	52	admin	f	f	\N	2020-10-30 18:13:21.282054	f	t	\N	{"character":"#BA9F93", "leftbg":"#f4b56a", "rightbg":"#e2a275", "item":"#f8eee4"}	kitty
-5	auth0|5ede3e7a0793080013259050	2	0	user52	7	moderator	f	f	\N	\N	\N	\N	\N	{"character":"#BA9F93", "leftbg":"#f4b56a", "rightbg":"#e2a275", "item":"#f8eee4"}	kitty
+9	auth0|5edf7b060793080013276746	0	1	user93	2	admin	f	f	\N	\N	\N	\N	\N	{"character": "#ba9f93", "lbg": "#e2a275", "rbg": "#f8eee4", "item": "#f4b56a"}	kitty
+1	auth0|5ed34765f0b8e60c8e87ca62	12	2	shirb	60	admin	f	f	\N	\N	\N	\N	\N	{"character": "#ba9f93", "lbg": "#e2a275", "rbg": "#f8eee4", "item": "#f4b56a"}	kitty
+20	auth0|5f4b9fd9915cd400670f4633	0	0	user24	4	user	t	f	2120-08-11 08:33:22.473	2020-11-03 20:21:13.399365	f	f	0	{"character": "#ba9f93", "lbg": "#e2a275", "rbg": "#f8eee4", "item": "#f4b56a"}	kitty
+5	auth0|5ede3e7a0793080013259050	2	0	user52	7	moderator	f	f	\N	\N	\N	\N	\N	{"character": "#ba9f93", "lbg": "#e2a275", "rbg": "#f8eee4", "item": "#f4b56a"}	kitty
+4	auth0|5ed8e3d0def75d0befbc7e50	106	117	user14	55	admin	f	f	\N	2020-10-30 18:13:21.282054	f	t	\N	{"character": "#ba9f93", "lbg": "#e2a275", "rbg": "#f8eee4", "item": "#f4b56a"}	kitty
 \.
 
 
