@@ -92,8 +92,8 @@ class User(db.Model):
     push_enabled = db.Column(db.Boolean, default=False)
     selected_character = db.Column(db.String(6), default='kitty')
     icon_colours = db.Column(db.String(), default='{"character":"#BA9F93", \
-                                                    "leftbg":"#e2a275", \
-                                                    "rightbg":"#f8eee4", \
+                                                    "lbg":"#e2a275", \
+                                                    "rbg":"#f8eee4", \
                                                     "item":"#f4b56a"}')
     posts = db.relationship('Post', backref='user')
 
