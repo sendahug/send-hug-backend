@@ -1270,7 +1270,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 5)
+        self.assertEqual(len(response_data['messages']), 3)
 
     # Attempt to get a user's threads mailbox with an admin's JWT
     def test_get_user_threads_as_admin(self):
@@ -1284,7 +1284,7 @@ class TestHugApp(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['current_page'], 1)
         self.assertEqual(response_data['total_pages'], 1)
-        self.assertEqual(len(response_data['messages']), 3)
+        self.assertEqual(len(response_data['messages']), 2)
 
     # Attempt to get another user's messages with an admin's JWT
     def test_get_another_users_messages_as_admin(self):
