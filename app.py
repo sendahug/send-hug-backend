@@ -638,7 +638,11 @@ def create_app(test_config=None):
                         display_name=user_data['displayName'],
                         role='user',last_notifications_read=datetime.now(),
                         login_count=0,blocked=False,open_report=False,
-                        auto_refresh=True,refresh_rate=20,push_enabled=False)
+                        auto_refresh=True,refresh_rate=20,push_enabled=False,
+                        selected_character='kitty',
+                        icon_colours='{"character":"#BA9F93",\
+                                       "lbg":"#e2a275","rbg":"#f8eee4",\
+                                       "item":"#f4b56a"}')
 
         # Try to add the post to the database
         try:
@@ -811,6 +815,14 @@ def create_app(test_config=None):
         # If the user is changing their auto-refresh settings
         if('refreshRate' in updated_user):
             original_user.refresh_rate = updated_user['refreshRate']
+
+        # If the user is changing their selected character
+        if('selectedIcon' in updated_user):
+            original_user.selected_character = updated_user['selectedIcon']
+
+        # If the user is changing their character colours
+        if('iconColours' in updated_user):
+            original_user.icon_colours = json.dumps(updated_user['iconColours'])
 
         # Checks if the user's role is updated based on the
         # permissions in the JWT

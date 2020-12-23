@@ -1,6 +1,6 @@
 # Send A Hug
 
-[![Build Status](https://travis-ci.com/sendahug/send-hug-backend.svg?branch=Dev)](https://travis-ci.com/sendahug/send-hug-backend)
+[![CircleCI](https://circleci.com/gh/sendahug/send-hug-backend.svg?style=shield)](https://circleci.com/gh/sendahug/send-hug-backend)
 [![codecov](https://codecov.io/gh/sendahug/send-hug-backend/graph/badge.svg)](https://codecov.io/gh/sendahug/send-hug-backend)
 [![Known Vulnerabilities](https://snyk.io/test/github/sendahug/send-hug-backend/badge.svg)](https://snyk.io/test/github/sendahug/send-hug-backend)
 [![Updates](https://pyup.io/repos/github/sendahug/send-hug-backend/shield.svg)](https://pyup.io/repos/github/sendahug/send-hug-backend/)
@@ -30,21 +30,21 @@ For full project information, check the [`main README file`](https://github.com/
 4. Run ```pip install -r requirements.txt``` to install dependencies.
 5. Create a database for the app.
 6. Update the database URI to match your system.
-  - The database URI comes from an environment variable named **DATABASE_URL**.
+    - The database URI comes from an environment variable named **DATABASE_URL**.
 7. Set Auth0 configuration variables:
-  - AUTH0_DOMAIN - environment variable containing your Auth0 domain.
-  - API_AUDIENCE - environment variable containing your Auth0 API audience.
-  - CLIENT_ID - environment variable containing your Auth0 application's client ID.
-  - PRIVATE_KEY - environment variable containing your private VAPID key (required for push notifications).
-  - MGMT_API_TOKEN - environment variable containing your Auth0 Management API token (required for updating user roles on signup).
-  - CLIENT_SECRET - environment variable containing your Auth0 application's client secret (required for updating user roles on signup).
+    - AUTH0_DOMAIN - environment variable containing your Auth0 domain.
+    - API_AUDIENCE - environment variable containing your Auth0 API audience.
+    - CLIENT_ID - environment variable containing your Auth0 application's client ID.
+    - PRIVATE_KEY - environment variable containing your private VAPID key (required for push notifications).
+    - MGMT_API_TOKEN - environment variable containing your Auth0 Management API token (required for updating user roles on signup).
+    - CLIENT_SECRET - environment variable containing your Auth0 application's client secret (required for updating user roles on signup).
 8. Set up your frontend URI.
-  - The frontend URI comes from an environment variable named **FRONTEND**.
+    - The frontend URI comes from an environment variable named **FRONTEND**.
 9. Update your database using ```flask migrate upgrade```
 10. Run flask with:
-  - ```export FLASK_APP=app.py```
-  - ```export FLASK_ENV=development``` (Recommended)
-  - ```flask run```
+    - ```export FLASK_APP=app.py```
+    - ```export FLASK_ENV=development``` (Recommended)
+    - ```flask run```
 
 ### Users
 

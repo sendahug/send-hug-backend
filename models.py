@@ -26,6 +26,7 @@
 # SOFTWARE.
 
 import os
+import json
 from datetime import datetime
 from flask import abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -89,6 +90,11 @@ class User(db.Model):
     auto_refresh = db.Column(db.Boolean, default=True)
     refresh_rate = db.Column(db.Integer, default=20)
     push_enabled = db.Column(db.Boolean, default=False)
+    selected_character = db.Column(db.String(6), default='kitty')
+    icon_colours = db.Column(db.String(), default='{"character":"#BA9F93", \
+                                                    "lbg":"#e2a275", \
+                                                    "rbg":"#f8eee4", \
+                                                    "item":"#f4b56a"}')
     posts = db.relationship('Post', backref='user')
 
     # Format method
@@ -107,7 +113,9 @@ class User(db.Model):
             'autoRefresh': self.auto_refresh,
             'refreshRate': self.refresh_rate,
             'pushEnabled': self.push_enabled,
-            'last_notifications_read': self.last_notifications_read
+            'last_notifications_read': self.last_notifications_read,
+            'selectedIcon': self.selected_character,
+            'iconColours': json.loads(self.icon_colours)
         }
 
 
@@ -278,7 +286,7 @@ def joined_query(target, params={}):
     # if the target is the suggested_posts array in the main page endpoint
     elif(target.lower() == 'main suggested'):
         sug_posts = db.session.query(Post, User.display_name).join(User).\
-                    order_by(Post.given_hugs).\
+                    order_by(Post.given_hugs, Post.date).\
                     filter(Post.open_report == False).limit(10).all()
 
         # formats each post in the list
@@ -300,7 +308,7 @@ def joined_query(target, params={}):
     # If the target is the full list of suggested items
     elif(target.lower() == 'full suggested'):
         full_sug_posts = db.session.query(Post, User.display_name).join(User).\
-                    order_by(Post.given_hugs).\
+                    order_by(Post.given_hugs, Post.date).\
                     filter(Post.open_report == False).all()
 
         # formats each post in the list
@@ -321,7 +329,9 @@ def joined_query(target, params={}):
         # For inbox, gets all incoming messages
         if(type == 'inbox'):
             user_messages = db.session.query(Message, from_user.display_name,
-                                             for_user.display_name).\
+                                             for_user.display_name,
+                                             from_user.selected_character,
+                                             from_user.icon_colours).\
                 join(from_user, from_user.id == Message.from_id).\
                 join(for_user, for_user.id == Message.for_id).\
                 filter(Message.for_deleted == False).\
@@ -330,7 +340,9 @@ def joined_query(target, params={}):
         # For outbox, gets all outgoing messages
         elif(type == 'outbox'):
             user_messages = db.session.query(Message, from_user.display_name,
-                                             for_user.display_name).\
+                                             for_user.display_name,
+                                             for_user.selected_character,
+                                             for_user.icon_colours).\
                 join(from_user, from_user.id == Message.from_id).\
                 join(for_user, for_user.id == Message.for_id).\
                 filter(Message.from_deleted == False).\
@@ -342,7 +354,11 @@ def joined_query(target, params={}):
             threads_messages = db.session.query(db.func.count(Message.id),
                                                 Message.thread,
                                                 from_user.display_name,
+                                                from_user.selected_character,
+                                                from_user.icon_colours,
                                                 for_user.display_name,
+                                                for_user.selected_character,
+                                                for_user.icon_colours,
                                                 Thread.user_1_id,
                                                 Thread.user_2_id).\
                 join(Thread, Message.thread == Thread.id).\
@@ -350,7 +366,10 @@ def joined_query(target, params={}):
                 join(for_user, for_user.id == Thread.user_2_id).\
                 group_by(Message.thread, from_user.display_name,
                          for_user.display_name, Thread.user_1_id,
-                         Thread.user_2_id, Thread.id).order_by(Thread.id).\
+                         Thread.user_2_id, Thread.id,
+                         from_user.selected_character,
+                         from_user.icon_colours, for_user.selected_character,
+                         for_user.icon_colours).order_by(Thread.id).\
                 filter(((Thread.user_1_id == user_id) &
                         (Thread.user_1_deleted == False)) |
                        ((Thread.user_2_id == user_id) &
@@ -369,7 +388,11 @@ def joined_query(target, params={}):
         # Gets a specific thread's messages
         elif(type == 'thread'):
             user_messages = db.session.query(Message, from_user.display_name,
-                                             for_user.display_name).\
+                                             for_user.display_name,
+                                             from_user.selected_character,
+                                             from_user.icon_colours,
+                                             for_user.selected_character,
+                                             for_user.icon_colours).\
                 join(from_user, from_user.id == Message.from_id).\
                 join(for_user, for_user.id == Message.for_id).\
                 filter(((Message.for_id == user_id) &
@@ -384,8 +407,29 @@ def joined_query(target, params={}):
             # formats each message in the list
             for message in user_messages:
                 user_message = message[0].format()
-                user_message['from'] = message[1]
-                user_message['for'] = message[2]
+                user_message['from'] = {
+                    'displayName': message[1]
+                }
+                user_message['for'] = {
+                    'displayName': message[2]
+                }
+
+                # If it's the inbox, add the sending user's profile pic
+                if(type == 'inbox'):
+                    user_message['from']['selectedIcon'] = message[3]
+                    user_message['from']['iconColours'] = json.loads(message[4])
+                # If it's the outbox, add the profile pic of the user getting
+                # the message
+                elif(type == 'outbox'):
+                    user_message['for']['selectedIcon'] = message[3]
+                    user_message['for']['iconColours'] = json.loads(message[4])
+                # If it's a thread, add both
+                else:
+                    user_message['from']['selectedIcon'] = message[3]
+                    user_message['from']['iconColours'] = json.loads(message[4])
+                    user_message['for']['selectedIcon'] = message[5]
+                    user_message['for']['iconColours'] = json.loads(message[6])
+
                 return_obj.append(user_message)
         # Otherwise the type is threads
         else:
@@ -401,10 +445,18 @@ def joined_query(target, params={}):
                 # Set up the thread
                 thread = {
                     'id': thread[1],
-                    'user1': thread[2],
-                    'user1Id': thread[4],
-                    'user2': thread[3],
-                    'user2Id': thread[5],
+                    'user1': {
+                        'displayName': thread[2],
+                        'selectedIcon': thread[3],
+                        'iconColours': json.loads(thread[4])
+                    },
+                    'user1Id': thread[8],
+                    'user2': {
+                        'displayName': thread[5],
+                        'selectedIcon': thread[6],
+                        'iconColours': json.loads(thread[7])
+                    },
+                    'user2Id': thread[9],
                     'numMessages': thread_length,
                     'latestMessage': latest_message[index][0]
                     }
