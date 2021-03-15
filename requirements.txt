@@ -23,7 +23,7 @@ MarkupSafe==1.1.1
 psycopg2-binary==2.8.6
 py-vapid==1.7.1
 pyasn1==0.4.8
-pycodestyle==2.6.0
+pycodestyle==2.7.0
 pycparser==2.20
 pycryptodome==3.10.1
 pyOpenSSL==20.0.1
