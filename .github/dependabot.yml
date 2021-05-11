@@ -17,4 +17,4 @@ updates:
     - 3.4.1
     - 3.4.4
     - 3.4.5
-  rebase-strategy: disabled
+  rebase-strategy: auto
