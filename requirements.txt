@@ -19,7 +19,7 @@ idna==3.1
 itsdangerous==2.0.1
 Jinja2==3.0.0
 Mako==1.1.4
-MarkupSafe==2.0.0
+MarkupSafe==2.0.1
 psycopg2-binary==2.8.6
 py-vapid==1.8.2
 pyasn1==0.4.8
