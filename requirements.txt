@@ -15,7 +15,7 @@ Flask-SQLAlchemy==2.5.1
 future==0.18.2
 gunicorn==20.1.0
 http-ece==1.1.0
-idna==3.1
+idna==3.2
 itsdangerous==2.0.1
 Jinja2==3.0.1
 Mako==1.1.4
