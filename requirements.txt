@@ -36,5 +36,5 @@ rsa==4.7.2
 sh==1.14.2
 six==1.16.0
 SQLAlchemy==1.4.19
-urllib3==1.26.5
+urllib3==1.26.6
 Werkzeug==2.0.1
