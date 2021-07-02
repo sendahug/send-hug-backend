@@ -1,10 +1,10 @@
 name: Update Superproject
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push events for the Dev branch
   push:
-    branches: [ master ]
+    branches: [ live ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -15,19 +15,19 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # 
+      #
       - name: Clone superproject repo
         run: git clone --recursive https://github.com/sendahug/sendahug
-      
+
       - name: Update backend
         run: |
           cd sendahug
           cd send-hug-backend
           git checkout master
           git pull origin master
-          
+
       - run: cd ..
-      
+
       - name: Commit & push updates
         run: |
           if [ -n "$(git status --porcelain)" ];

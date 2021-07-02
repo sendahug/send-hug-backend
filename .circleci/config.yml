@@ -64,10 +64,11 @@ workflows:
     when:
       or:
         - << pipeline.parameters.run_workflow_build >>
-        - equal: [ master, << pipeline.git.branch >> ]
-        - equal: [ Dev, << pipeline.git.branch >> ]
+        - equal: [ live, << pipeline.git.branch >> ]
+        - equal: [ staging, << pipeline.git.branch >> ]
+        - equal: [ dev, << pipeline.git.branch >> ]
     jobs:
-      - build: 
+      - build:
           post-steps:
             - run:
                 command: codecov
