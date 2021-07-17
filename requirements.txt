@@ -27,7 +27,7 @@ pycodestyle==2.7.0
 pycparser==2.20
 pycryptodome==3.10.1
 pyOpenSSL==20.0.1
-python-dateutil==2.8.1
+python-dateutil==2.8.2
 python-editor==1.0.4
 python-jose==3.3.0
 pywebpush==1.13.0
