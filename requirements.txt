@@ -3,7 +3,7 @@ certifi==2021.5.30
 cffi==1.14.6
 chardet==4.0.0
 click==8.0.1
-codecov==2.1.11
+codecov==2.1.12
 coverage==5.5
 cryptography==3.4.7
 ecdsa==0.17.0
