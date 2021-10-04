@@ -4,7 +4,7 @@ cffi==1.14.6
 chardet==4.0.0
 click==8.0.1
 codecov==2.1.12
-coverage==5.5
+coverage==6.0
 cryptography==3.4.8
 ecdsa==0.17.0
 Flask==2.0.1
