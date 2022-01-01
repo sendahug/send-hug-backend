@@ -20,7 +20,7 @@ itsdangerous==2.0.1
 Jinja2==3.0.3
 Mako==1.1.6
 MarkupSafe==2.0.1
-psycopg2-binary==2.9.2
+psycopg2-binary==2.9.3
 py-vapid==1.8.2
 pyasn1==0.4.8
 pycodestyle==2.8.0
