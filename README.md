@@ -164,7 +164,7 @@ The project is hosted live on Heroku. You can view the live version [here](https
     - CLIENT_ID - set with your own client ID from Auth0
     - FRONTEND - set with your own frontend URL (necessary for setting up CORS!)
     - PRIVATE_KEY - The private VAPID key (required for sending push notifications).
-  9. Enter `heroku run python manage.py db upgrade --app <APP_NAME>` to trigger database migrations and bring your live database up to date.
+  9. Enter `flask db upgrade` to trigger database migrations and bring your live database up to date.
   10. All done! Now you can visit your <GIT_URL> to see the live app.
 
 ## Known Issues
