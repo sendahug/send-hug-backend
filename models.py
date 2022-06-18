@@ -115,7 +115,7 @@ class User(db.Model):
             'pushEnabled': self.push_enabled,
             'last_notifications_read': self.last_notifications_read,
             'selectedIcon': self.selected_character,
-            'iconColours': json.loads(self.icon_colours)
+            'iconColours': json.loads(self.icon_colours) if self.icon_colours else self.icon_colours
         }
 
 
