@@ -3,8 +3,6 @@
 [![CircleCI](https://circleci.com/gh/sendahug/send-hug-backend.svg?style=shield)](https://circleci.com/gh/sendahug/send-hug-backend)
 [![codecov](https://codecov.io/gh/sendahug/send-hug-backend/graph/badge.svg)](https://codecov.io/gh/sendahug/send-hug-backend)
 [![Known Vulnerabilities](https://snyk.io/test/github/sendahug/send-hug-backend/badge.svg)](https://snyk.io/test/github/sendahug/send-hug-backend)
-[![Updates](https://pyup.io/repos/github/sendahug/send-hug-backend/shield.svg)](https://pyup.io/repos/github/sendahug/send-hug-backend/)
-[![Python 3](https://pyup.io/repos/github/sendahug/send-hug-backend/python-3-shield.svg)](https://pyup.io/repos/github/sendahug/send-hug-backend/)
 ![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/sendahug/send-hug-backend)
 ![Website](https://img.shields.io/website?down_color=red&down_message=offline&up_color=blue&up_message=online&url=https%3A%2F%2Fsend-hug-server.herokuapp.com)
 
