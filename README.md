@@ -38,11 +38,10 @@ For full project information, check the [`main README file`](https://github.com/
     - CLIENT_SECRET - environment variable containing your Auth0 application's client secret (required for updating user roles on signup).
 8. Set up your frontend URI.
     - The frontend URI comes from an environment variable named **FRONTEND**.
-9. Update your database using ```flask migrate upgrade```
+9. Update your database using ```flask db upgrade```
 10. Run flask with:
     - ```export FLASK_APP=app.py```
-    - ```export FLASK_ENV=development``` (Recommended)
-    - ```flask run```
+    - ```flask --debug run```
 
 ### Users
 
