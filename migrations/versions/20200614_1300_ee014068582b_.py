@@ -31,18 +31,18 @@ def upgrade():
                               sa.PrimaryKeyConstraint('id')
                               )
     op.add_column('messages', sa.Column('thread', sa.Integer(), nullable=True))
-    op.execute('UPDATE messages SET thread = 1 WHERE id = 1;')
+    # op.execute('UPDATE messages SET thread = 1 WHERE id = 1;')
     # ENABLE IF USING THE SAMPLE DATABASE,
     # OTHERWISE LEAVE AS COMMENTS
     # op.execute('UPDATE messages SET thread = 2 WHERE id = 3 OR id = 7;')
     # op.execute('UPDATE messages SET thread = 3 WHERE id = 4 OR id = 9;')
     # op.execute('UPDATE messages SET thread = 4 WHERE id = 5 OR id = 8;')
-    op.bulk_insert(threads, [
-        {'id': 1, 'user_1_id': 1, 'user_2_id': 3}  # ,
-        # {'id': 2, 'user_1_id': 1, 'user_2_id': 5},
-        # {'id': 3, 'user_1_id': 1, 'user_2_id': 4},
-        # {'id': 4, 'user_1_id': 4, 'user_2_id': 5}
-    ])
+    # op.bulk_insert(threads, [
+    #     {'id': 1, 'user_1_id': 1, 'user_2_id': 3}  # ,
+    #     # {'id': 2, 'user_1_id': 1, 'user_2_id': 5},
+    #     # {'id': 3, 'user_1_id': 1, 'user_2_id': 4},
+    #     # {'id': 4, 'user_1_id': 4, 'user_2_id': 5}
+    # ])
     op.create_foreign_key(None, 'messages', 'threads', ['thread'], ['id'])
     op.alter_column('messages', 'thread', nullable=False)
     # ### end Alembic commands ###
