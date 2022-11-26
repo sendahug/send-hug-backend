@@ -37,3 +37,4 @@ six==1.16.0
 SQLAlchemy==1.4.44
 urllib3==1.26.12
 Werkzeug==2.2.2
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
