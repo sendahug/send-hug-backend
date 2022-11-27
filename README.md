@@ -4,7 +4,6 @@
 [![codecov](https://codecov.io/gh/sendahug/send-hug-backend/graph/badge.svg)](https://codecov.io/gh/sendahug/send-hug-backend)
 [![Known Vulnerabilities](https://snyk.io/test/github/sendahug/send-hug-backend/badge.svg)](https://snyk.io/test/github/sendahug/send-hug-backend)
 ![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/sendahug/send-hug-backend)
-![Website](https://img.shields.io/website?down_color=red&down_message=offline&up_color=blue&up_message=online&url=https%3A%2F%2Fsend-hug-server.herokuapp.com)
 
 ## Version
 
@@ -14,11 +13,17 @@ For full API documentation, check the [`API Docs`](./api_docs.md).
 
 For full project information, check the [`main README file`](https://github.com/sendahug/sendahug/blob/master/README.md).
 
-## Requirements
+## Code Usage and Contribution
 
-- Python 3
+If you want to contribute to the project, you should start by reading the [contribution guidelines](https://github.com/sendahug/send-hug-backend/blob/dev/CONTRIBUTING.md) and the [code of conduct](https://github.com/sendahug/send-hug-backend/blob/dev/CODE_OF_CONDUCT.md).
+
+The project is open source, so feel free to use parts of the code. However, the full project itself is **not** meant to be reused. The design, the concept and the project itself are personal and belong to the Send A Hug group.
 
 ## Installation and Usage (Local Development)
+
+### Requirements
+
+- Python 3
 
 ### Developers
 
@@ -146,7 +151,7 @@ python3 test_app.py
 
 ## Hosting
 
-The project is hosted live on Heroku. You can view the live version [here](https://send-hug-server.herokuapp.com/). If you want to clone and host your own version, you can do so by using the following guide (the following commands are for Heroku, but they can be adjusted depending on your host):
+The project was hosted live on Heroku (we're currently looking at alternatives, due to Heroku removing their free tier). If you want to clone and host your own version, you can do so by using the following guide (the following commands are for Heroku, but they can be adjusted depending on your host):
 
   1. Create a Heroku account (skip this step if you already have an account).
   2. Install the Heroku command line interface.
