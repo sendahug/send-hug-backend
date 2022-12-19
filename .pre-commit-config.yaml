@@ -13,3 +13,5 @@ repos:
     rev: 22.12.0
     hooks:
     -   id: black
+        args:
+            - --force-exclude=capstone_db.sql
