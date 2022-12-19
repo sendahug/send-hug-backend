@@ -79,8 +79,7 @@ workflows:
         - equal: [ staging, << pipeline.git.branch >> ]
         - equal: [ dev, << pipeline.git.branch >> ]
     jobs:
-      # TODO: Re-enable linting
-      # - lint
+      - lint
       - build:
           post-steps:
             - run:
