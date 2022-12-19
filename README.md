@@ -31,20 +31,21 @@ The project is open source, so feel free to use parts of the code. However, the 
 2. cd into the project directory.
 3. cd into backend.
 4. Run ```pip install -r requirements.txt``` to install dependencies.
-5. Create a database for the app.
-6. Update the database URI to match your system.
+5. Run ```pip install pre-commit``` and ```pre-commit install``` to install and initialise pre-commit.
+6. Create a database for the app.
+7. Update the database URI to match your system.
     - The database URI comes from an environment variable named **DATABASE_URL**.
-7. Set Auth0 configuration variables:
+8. Set Auth0 configuration variables:
     - AUTH0_DOMAIN - environment variable containing your Auth0 domain.
     - API_AUDIENCE - environment variable containing your Auth0 API audience.
     - CLIENT_ID - environment variable containing your Auth0 application's client ID.
     - PRIVATE_KEY - environment variable containing your private VAPID key (required for push notifications).
     - MGMT_API_TOKEN - environment variable containing your Auth0 Management API token (required for updating user roles on signup).
     - CLIENT_SECRET - environment variable containing your Auth0 application's client secret (required for updating user roles on signup).
-8. Set up your frontend URI.
+9. Set up your frontend URI.
     - The frontend URI comes from an environment variable named **FRONTEND**.
-9. Update your database using ```flask db upgrade```
-10. Run flask with:
+10. Update your database using ```flask db upgrade```
+11. Run flask with:
     - ```export FLASK_APP=app.py```
     - ```flask --debug run```
 

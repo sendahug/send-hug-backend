@@ -4,7 +4,7 @@
 
 ### Found a bug?
 
-- **Found a bug?** You can start by searching for it in our repo's open [issues](https://github.com/sendahug/send-hug-backend/issues). 
+- **Found a bug?** You can start by searching for it in our repo's open [issues](https://github.com/sendahug/send-hug-backend/issues).
 - **Haven't found a bug report?** Feel free to [open an issue](https://github.com/sendahug/send-hug-backend/issues/new?assignees=&labels=&template=bug_report.md&title=). Be sure to include as much information about the bug itself, the behaviour you expected, the circumstances around the appearance of this bug, and anything else that's relevant to your bug report.
 
 ### Before you work on a fix

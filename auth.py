@@ -34,11 +34,11 @@ from functools import wraps
 from flask import request
 
 # Auth0 Configuration
-AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN')
-API_AUDIENCE = os.environ.get('API_AUDIENCE')
-CLIENT_ID = os.environ.get('CLIENT_ID')
-CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
-ALGORITHMS = ['RS256']
+AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
+API_AUDIENCE = os.environ.get("API_AUDIENCE")
+CLIENT_ID = os.environ.get("CLIENT_ID")
+CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+ALGORITHMS = ["RS256"]
 
 
 # Authentication Error
@@ -57,11 +57,10 @@ class AuthError(Exception):
 # Returns: split_auth_header[1] - The JSON web token.
 def get_auth_header():
     # If there's no auth header, raise an error
-    if('Authorization' not in request.headers):
-        raise AuthError({
-            'code': 401,
-            'description': 'Unauthorised. No Authorization header.'
-        }, 401)
+    if "Authorization" not in request.headers:
+        raise AuthError(
+            {"code": 401, "description": "Unauthorised. No Authorization header."}, 401
+        )
 
     # Gets the auth header and splits it
     auth_header = request.headers.get("Authorization")
@@ -69,12 +68,14 @@ def get_auth_header():
 
     # Checks that there are two parts to the header value and that the first
     # part is 'bearer'
-    if((split_auth_header[0].lower() != 'bearer') or
-       (len(split_auth_header) != 2)):
-        raise AuthError({
-            'code': 401,
-            'description': 'Unauthorised. Malformed Authorization header.'
-        }, 401)
+    if (split_auth_header[0].lower() != "bearer") or (len(split_auth_header) != 2):
+        raise AuthError(
+            {
+                "code": 401,
+                "description": "Unauthorised. Malformed Authorization header.",
+            },
+            401,
+        )
 
     return split_auth_header[1]
 
@@ -87,67 +88,72 @@ def get_auth_header():
 # Returns: payload - The payload from the decoded token.
 def verify_jwt(token):
     # Gets the JWKS from Auth0
-    auth_json = urlopen('https://' + AUTH0_DOMAIN + '/.well-known/jwks.json')
+    auth_json = urlopen("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json")
     jwks = json.loads(auth_json.read())
 
     # Tries to get the token header
     try:
         token_header = jwt.get_unverified_header(token)
     # If there's an error, raise an AuthError
-    except Exception as e:
-        raise AuthError({
-            'code': 401,
-            'description': 'Unauthorised. Malformed Authorization header.'
-        }, 401)
+    except Exception:
+        raise AuthError(
+            {
+                "code": 401,
+                "description": "Unauthorised. Malformed Authorization header.",
+            },
+            401,
+        )
 
     rsa_key = {}
 
     # If the 'kid' key doesn't exist in the token header
-    for key in jwks['keys']:
-        if(key['kid'] == token_header['kid']):
+    for key in jwks["keys"]:
+        if key["kid"] == token_header["kid"]:
             rsa_key = {
                 "kty": key["kty"],
                 "kid": key["kid"],
                 "use": key["use"],
                 "n": key["n"],
-                "e": key["e"]
+                "e": key["e"],
             }
 
     # Try to decode and validate the token
-    if(rsa_key):
+    if rsa_key:
         try:
             payload = jwt.decode(
                 token,
                 rsa_key,
                 algorithms=ALGORITHMS,
                 audience=API_AUDIENCE,
-                issuer="https://" + AUTH0_DOMAIN + "/"
+                issuer="https://" + AUTH0_DOMAIN + "/",
             )
         # If the signature is invalid
         except jwt.JWTError:
-            raise AuthError({
-                'code': 401,
-                'description': 'Unauthorised. Your token is invalid.'
-            }, 401)
+            raise AuthError(
+                {"code": 401, "description": "Unauthorised. Your token is invalid."},
+                401,
+            )
         # If the token expired
         except jwt.ExpiredSignatureError:
-            raise AuthError({
-                'code': 401,
-                'description': 'Unauthorised. Your token has expired.'
-            }, 401)
+            raise AuthError(
+                {"code": 401, "description": "Unauthorised. Your token has expired."},
+                401,
+            )
         # If any claim in the token is invalid
         except jwt.JWTClaimsError:
-            raise AuthError({
-                'code': 401,
-                'description': 'Unauthorised. Your token contains invalid \
-                                claims.'
-            }, 401)
+            raise AuthError(
+                {
+                    "code": 401,
+                    "description": "Unauthorised. Your token contains invalid \
+                                claims.",
+                },
+                401,
+            )
         # If there's any other error
-        except Exception as e:
-            raise AuthError({
-                'code': 401,
-                'description': 'Unauthorised. Invalid token.'
-            }, 401)
+        except Exception:
+            raise AuthError(
+                {"code": 401, "description": "Unauthorised. Invalid token."}, 401
+            )
 
     return payload
 
@@ -164,32 +170,43 @@ def verify_jwt(token):
 # Returns: True - Boolean confirming the user has the required permission.
 def check_permissions(permission, payload):
     # Check whether permissions are included in the token payload
-    if('permissions' not in payload):
-        raise AuthError({
-            'code': 403,
-            'description': 'Unauthorised. You do not have permission to \
-                            perform this action.'
-        }, 403)
+    if "permissions" not in payload:
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "Unauthorised. You do not have permission to \
+                            perform this action.",
+            },
+            403,
+        )
 
     # If there are two possibilities for permissions
-    if(len(permission) == 2):
+    if len(permission) == 2:
         # Check whether the user has that permission
-        if(permission[0] not in payload['permissions'] and
-           permission[1] not in payload['permissions']):
-            raise AuthError({
-                'code': 403,
-                'description': 'Unauthorised. You do not have permission to \
-                                perform this action.'
-            }, 403)
+        if (
+            permission[0] not in payload["permissions"]
+            and permission[1] not in payload["permissions"]
+        ):
+            raise AuthError(
+                {
+                    "code": 403,
+                    "description": "Unauthorised. You do not have permission to \
+                                perform this action.",
+                },
+                403,
+            )
     # If there's only one possibility
     else:
         # Check whether the user has that permission
-        if(permission[0] not in payload['permissions']):
-            raise AuthError({
-                'code': 403,
-                'description': 'Unauthorised. You do not have permission to \
-                                perform this action.'
-            }, 403)
+        if permission[0] not in payload["permissions"]:
+            raise AuthError(
+                {
+                    "code": 403,
+                    "description": "Unauthorised. You do not have permission to \
+                                perform this action.",
+                },
+                403,
+            )
 
     return True
 
@@ -199,7 +216,7 @@ def check_permissions(permission, payload):
 #              the user has the required permissions using the functions above.
 # Parameters: permission (list) - The resource's required permission(s).
 # Returns: @requires_auth decorator.
-def requires_auth(permission=['']):
+def requires_auth(permission=[""]):
     def requires_auth_decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -209,6 +226,7 @@ def requires_auth(permission=['']):
             return f(payload, *args, **kwargs)
 
         return wrapper
+
     return requires_auth_decorator
 
 
@@ -219,37 +237,37 @@ def requires_auth(permission=['']):
 # Returns: Either the verified token's payload (payload) or a 'token expired'
 #          message if the token expired.
 def check_mgmt_api_token():
-    token = os.environ.get('MGMT_API_TOKEN')
+    token = os.environ.get("MGMT_API_TOKEN")
     token_header = jwt.get_unverified_header(token)
 
     # Gets the JWKS from Auth0
-    auth_json = urlopen('https://' + AUTH0_DOMAIN + '/.well-known/jwks.json')
+    auth_json = urlopen("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json")
     jwks = json.loads(auth_json.read())
 
     # If the 'kid' key doesn't exist in the token header
-    for key in jwks['keys']:
-        if(key['kid'] == token_header['kid']):
+    for key in jwks["keys"]:
+        if key["kid"] == token_header["kid"]:
             rsa_key = {
                 "kty": key["kty"],
                 "kid": key["kid"],
                 "use": key["use"],
                 "n": key["n"],
-                "e": key["e"]
+                "e": key["e"],
             }
 
     # Try to decode and validate the token
-    if(rsa_key):
+    if rsa_key:
         try:
-            payload = jwt.decode(
+            jwt.decode(
                 token,
                 rsa_key,
                 algorithms=ALGORITHMS,
                 audience=API_AUDIENCE,
-                issuer="https://" + AUTH0_DOMAIN + "/"
+                issuer="https://" + AUTH0_DOMAIN + "/",
             )
         # If the token expired
         except jwt.ExpiredSignatureError:
-            return 'token expired'
+            return "token expired"
         # If there's any other error
         except Exception as e:
             print(e)
@@ -265,18 +283,22 @@ def check_mgmt_api_token():
 def get_management_api_token():
     # General variables for establishing an HTTPS connection to Auth0
     connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
-    headers = {
-        'content-type': "application/x-www-form-urlencoded"
-    }
-    data = "grant_type=client_credentials&client_id=" + CLIENT_ID + \
-            "&client_secret=" + CLIENT_SECRET + "&audience=https%3A%2F%2F" + \
-            AUTH0_DOMAIN + "%2Fapi%2Fv2%2F"
+    headers = {"content-type": "application/x-www-form-urlencoded"}
+    data = (
+        "grant_type=client_credentials&client_id="
+        + CLIENT_ID
+        + "&client_secret="
+        + CLIENT_SECRET
+        + "&audience=https%3A%2F%2F"
+        + AUTH0_DOMAIN
+        + "%2Fapi%2Fv2%2F"
+    )
 
     # Then add the 'user' role to the user's payload
     connection.request("POST", "/oauth/token", data, headers)
     response = connection.getresponse()
     response_data = response.read()
-    token_data = response_data.decode('utf8').replace("'", '"')
-    token = json.loads(token_data)['access_token']
+    token_data = response_data.decode("utf8").replace("'", '"')
+    token = json.loads(token_data)["access_token"]
 
-    os.environ['MGMT_API_TOKEN'] = token
+    os.environ["MGMT_API_TOKEN"] = token

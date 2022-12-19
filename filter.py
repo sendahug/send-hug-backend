@@ -27,27 +27,27 @@
 
 from models import Filter
 
+
 # Filter class
 # inspired by Wordfilter: https://pypi.org/project/wordfilter/
-class WordFilter():
+class WordFilter:
     # Check if there's a blacklisted word in the text
     def blacklisted(self, string):
         filtered_words = Filter.query.all()
         test_string = string.lower()
         badword_indexes = []
-        is_blacklisted = False;
+        is_blacklisted = False
 
         # Check each word
         for filter in filtered_words:
-            if(filter.filter in test_string):
-                is_blacklisted = True;
-                badword_indexes.append({
-                    'badword': badword,
-                    'index': test_string.index(badword)
-                })
+            if filter.filter in test_string:
+                is_blacklisted = True
+                badword_indexes.append(
+                    {
+                        "badword": filter.filter,
+                        "index": test_string.index(filter.filter),
+                    }
+                )
 
         # return
-        return {
-            'blacklisted': is_blacklisted,
-            'indexes': badword_indexes
-        }
+        return {"blacklisted": is_blacklisted, "indexes": badword_indexes}
