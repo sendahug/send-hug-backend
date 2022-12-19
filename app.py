@@ -62,6 +62,7 @@ from auth import (
     )
 from filter import WordFilter
 from validator import Validator, ValidationError
+from utils.push_notifications import generate_push_data, generate_vapid_claims
 
 def create_app(test_config=None):
     # create and configure the app
@@ -112,18 +113,10 @@ def create_app(test_config=None):
     # Send push notification
     def send_push_notification(user_id, data):
         vapid_key = os.environ.get('PRIVATE_KEY')
-        expiry_time = datetime.timestamp(datetime.utcnow() +
-                                         timedelta(hours=12))
-        vapid_claims = {
-            'sub': 'mailto:theobjectivistb@gmail.com',
-            'exp': expiry_time
-        }
+        notification_data = generate_push_data(data)
+        vapid_claims = generate_vapid_claims()
         subscriptions = NotificationSub.query.filter(NotificationSub.user ==
                                                      user_id).all()
-        notification_data = {
-            'title': 'New ' + data['type'],
-            'body': data['text']
-        }
 
         # Try to send the push notification
         try:
