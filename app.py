@@ -59,8 +59,8 @@ from auth import (
     get_management_api_token,
     AUTH0_DOMAIN,
 )
-from filter import WordFilter
-from validator import Validator, ValidationError
+from utils.filter import WordFilter
+from utils.validator import Validator, ValidationError
 from utils.push_notifications import generate_push_data, generate_vapid_claims
 
 
