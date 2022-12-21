@@ -35,7 +35,7 @@ from .models import (
     NotificationSub,
     Filter,
     db,
-    create_db,
+    initialise_db,
     database_path,
 )
 from .db_helpers import (

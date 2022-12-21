@@ -37,7 +37,7 @@ from pywebpush import webpush, WebPushException
 
 from models import (
     database_path,
-    create_db,
+    initialise_db,
     Post,
     User,
     Message,
@@ -71,7 +71,7 @@ def create_app(test_config=None, db_path=database_path):
     # Flask-SQLAlchemy Setup
     app.config["SQLALCHEMY_DATABASE_URI"] = db_path
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    create_db(app)
+    initialise_db(app)
     # Utilities
     CORS(app, origins="")
     word_filter = WordFilter()
