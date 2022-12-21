@@ -37,9 +37,7 @@ db = SQLAlchemy()
 
 
 # Database setup
-def create_db(app, db_path=database_path):
-    app.config["SQLALCHEMY_DATABASE_URI"] = db_path
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+def create_db(app):
     db.init_app(app)
     migrate = Migrate(app, db)  # NOQA - required by flask-migrate
 
@@ -91,10 +89,8 @@ class User(db.Model):
     selected_character = db.Column(db.String(6), default="kitty")
     icon_colours = db.Column(
         db.String(),
-        default='{"character":"#BA9F93", \
-                                                    "lbg":"#e2a275", \
-                                                    "rbg":"#f8eee4", \
-                                                    "item":"#f4b56a"}',
+        default='{"character":"#BA9F93", "lbg":"#e2a275", \
+                "rbg":"#f8eee4", "item":"#f4b56a"}',
     )
     posts = db.relationship("Post", backref="user")
 

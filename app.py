@@ -36,6 +36,7 @@ from flask_cors import CORS
 from pywebpush import webpush, WebPushException
 
 from models import (
+    database_path,
     create_db,
     Post,
     User,
@@ -64,10 +65,14 @@ from utils.validator import Validator, ValidationError
 from utils.push_notifications import generate_push_data, generate_vapid_claims
 
 
-def create_app(test_config=None):
+def create_app(test_config=None, db_path=database_path):
     # create and configure the app
     app = Flask(__name__)
+    # Flask-SQLAlchemy Setup
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_path
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     create_db(app)
+    # Utilities
     CORS(app, origins="")
     word_filter = WordFilter()
     validator = Validator(
