@@ -42,57 +42,32 @@ class Validator:
 
     # Checks the length according to the given types
     def check_length(self, data, objType):
-        if objType.lower() == "post":
-            # Check if the post is too long; if it is, abort
-            if len(data) > self.constraints["post"]["max"]:
+        too_long_error = "Your {} is too long! Please shorten it and then try again."
+        too_short_error = (
+            "Your {} cannot be empty. Please write something and then try again."
+        )
+
+        if objType.lower() in [self.constraints.keys()]:
+            # Check if the item is too long; if it is, abort
+            if len(data) > self.constraints[objType.lower()]["max"]:
                 raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": "Your post is too long! Please shorten \
-                                    it and try to post it again.",
-                    },
+                    {"code": 400, "description": too_long_error.format(objType)},
                     400,
                 )
-            # Check if the post is empty; if it is, abort
-            elif len(data) < self.constraints["post"]["min"]:
+            # Check if the item is empty; if it is, abort
+            elif len(data) < self.constraints[objType.lower()]["min"]:
                 raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": "You cannot post an empty post. Please \
-                                    write something and try to send it again.",
-                    },
+                    {"code": 400, "description": too_short_error.format(objType)},
                     400,
                 )
-        elif objType.lower() == "message":
-            # Check if the message is too long; if it is, abort
-            if len(data) > self.constraints["message"]["max"]:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": "Your message is too long! Please shorten \
-                                    it and try to send it again.",
-                    },
-                    400,
-                )
-            # Check if the message is empty; if it is, abort
-            elif len(data) < self.constraints["message"]["min"]:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": "You cannot send an empty message. Please \
-                                    write something and try to send it again.",
-                    },
-                    400,
-                )
+
         elif objType.lower() == "display name":
             # Check if the name is too long; if it is, abort
             if len(data) > self.constraints["user"]["max"]:
                 raise ValidationError(
                     {
                         "code": 400,
-                        "description": "Your new display name is \
-                                    too long! Please shorten \
-                                    it and try again.",
+                        "description": too_long_error.format("new display name"),
                     },
                     400,
                 )
@@ -101,20 +76,18 @@ class Validator:
                 raise ValidationError(
                     {
                         "code": 400,
-                        "description": "Your display name cannot be \
-                                    empty. Please add text and \
-                                    try again.",
+                        "description": too_short_error.format("display name"),
                     },
                     400,
                 )
+
         elif objType.lower() == "report":
             # Check if the report reason is too long; if it is, abort
             if len(data) > self.constraints["report"]["max"]:
                 raise ValidationError(
                     {
                         "code": 400,
-                        "description": "Your report reason is too long! Please \
-                                    shorten it and try to send it again.",
+                        "description": too_long_error.format("report reason"),
                     },
                     400,
                 )
@@ -129,14 +102,14 @@ class Validator:
                     },
                     400,
                 )
+
         else:
             # Check if the data is empty
             if len(data) < 1:
                 raise ValidationError(
                     {
                         "code": 400,
-                        "description": objType
-                        + " cannot be empty. Please write \
+                        "description": f"{objType} cannot be empty. Please write \
                                     something and try again.",
                     },
                     400,
@@ -146,34 +119,32 @@ class Validator:
 
     # Checks the type of the given item
     def check_type(self, data, objType):
+        text_types = [
+            "post text",
+            "message text",
+            "display name",
+            "report reason",
+            "search query",
+        ]
+        error_message = (
+            "{} must be of type '{}'. Please correct the error and try again."
+        )
+
         # If the type is one of the free text types, check that it's a
         # string
-        if (
-            objType.lower() == "post text"
-            or objType.lower() == "message text"
-            or objType.lower() == "display name"
-            or objType.lower() == "report reason"
-            or objType.lower() == "search query"
-        ):
+        if objType.lower() in text_types:
             # If it's not a string, raise a validation error
             if type(data) is not str:
                 raise ValidationError(
                     {
                         "code": 400,
-                        "description": objType
-                        + " must be of type 'String'. \
-                                    Please correct the error and try again.",
+                        "description": error_message.format(objType, "String"),
                     },
                     400,
                 )
+
         # If the type is one of the ID types, check that it's an integer
-        elif (
-            objType.lower() == "post id"
-            or objType.lower() == "user id"
-            or objType.lower() == "message id"
-            or objType.lower() == "report id"
-            or objType.lower() == "filter id"
-        ):
+        elif "id" in objType.lower():
             # Try to convert the data to int
             try:
                 int(data)
@@ -183,9 +154,7 @@ class Validator:
                 raise ValidationError(
                     {
                         "code": 400,
-                        "description": objType
-                        + " must be of type 'Integer'. \
-                                    Please correct the error and try again.",
+                        "description": error_message.format(objType, "Integer"),
                     },
                     400,
                 )
