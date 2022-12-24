@@ -34,7 +34,6 @@ from flask_sqlalchemy import SQLAlchemy
 from sh import pg_restore
 
 from app import create_app
-from models import create_db
 
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
 API_AUDIENCE = os.environ.get("API_AUDIENCE")
@@ -212,13 +211,10 @@ class TestHugApp(unittest.TestCase):
 
     # Setting up each test
     def setUp(self):
-        self.app = create_app()
+        test_db_path = "postgresql://postgres:password@localhost:5432/test-capstone"
+        self.app = create_app(db_path=test_db_path)
         self.client = self.app.test_client
-        self.database_path = (
-            "postgresql://postgres:password@localhost:5432/test-capstone"
-        )
 
-        create_db(self.app, self.database_path)
         pg_restore(
             "-d",
             "test-capstone",

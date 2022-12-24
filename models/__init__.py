@@ -1,6 +1,3 @@
-"""
-Push notifications related methods.
-"""
 # MIT License
 #
 # Copyright (c) 2020-2023 Send A Hug
@@ -27,25 +24,25 @@ Push notifications related methods.
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from typing import Dict, Union
-from datetime import datetime, timedelta
 
-
-def generate_push_data(data: Dict) -> Dict[str, str]:
-    """
-    Generates the push notification's data from the
-    given raw data.
-    """
-    notification_data = {"title": "New " + data["type"], "body": data["text"]}
-
-    return notification_data
-
-
-def generate_vapid_claims() -> Dict[str, Union[str, float]]:
-    """
-    Generates the VAPID claims dictionary.
-    """
-    expiry_time = datetime.timestamp(datetime.utcnow() + timedelta(hours=12))
-    vapid_claims = {"sub": "mailto:theobjectivistb@gmail.com", "exp": expiry_time}
-
-    return vapid_claims
+from .models import (
+    Post,
+    User,
+    Message,
+    Thread,
+    Report,
+    Notification,
+    NotificationSub,
+    Filter,
+    db,
+    initialise_db,
+    database_path,
+)
+from .db_helpers import (
+    joined_query,
+    add,
+    update,
+    update_multiple,
+    delete_object,
+    delete_all,
+)
