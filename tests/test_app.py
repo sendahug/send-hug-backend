@@ -218,7 +218,7 @@ class TestHugApp(unittest.TestCase):
         pg_restore(
             "-d",
             "test-capstone",
-            "capstone_db",
+            "tests/capstone_db",
             "-Fc",
             "-c",
             "--no-owner",

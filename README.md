@@ -139,15 +139,15 @@ Once you've completed the setup for whichever approach you've chosen, run the fo
 
 ```
 dropdb test-capstone && createdb test-capstone
-psql test-capstone < capstone_db.sql
-python test_app.py
+psql test-capstone < tests/capstone_db.sql
+python -m unittest tests/test_app.py
 ```
 
-Or, if using MacOS:
+Or, if using macOS:
 ```
 dropdb test-capstone && createdb test-capstone
-psql test-capstone < capstone_db.sql
-python3 test_app.py
+psql test-capstone < tests/capstone_db.sql
+python3 -m unittest tests/test_app.py
 ```
 
 ## Hosting
