@@ -90,13 +90,11 @@ def create_app(test_config=None, db_path=database_path):
         response.headers.add("Access-Control-Allow-Origin", os.environ.get("FRONTEND"))
         response.headers.add(
             "Access-Control-Allow-Methods",
-            "GET, POST,\
-                              PATCH, DELETE, OPTIONS",
+            "GET, POST, PATCH, DELETE, OPTIONS",
         )
         response.headers.add(
             "Access-Control-Allow-Headers",
-            "Authorization,\
-                              Content-Type",
+            "Authorization, Content-Type",
         )
 
         return response
@@ -163,10 +161,7 @@ def create_app(test_config=None, db_path=database_path):
             post_instances = posts_query.limit(10).all()
 
             # formats each post in the list
-            for post in post_instances:
-                new_post = post[0].format()
-                new_post["user"] = post[1]
-                posts[target].append(new_post)
+            posts[target] = [post[0].format(user=post[1]) for post in post_instances]
 
         return jsonify(
             {
@@ -216,10 +211,7 @@ def create_app(test_config=None, db_path=database_path):
             formatted_users.append(user.format())
 
         # Formats the posts
-        for post in posts:
-            searched_post = post[0].format()
-            searched_post["user"] = post[1]
-            formatted_posts.append(searched_post)
+        formatted_posts = [post[0].format(user=post[1]) for post in posts]
 
         # Paginates posts
         paginated_data = paginate(formatted_posts, current_page)
@@ -582,12 +574,7 @@ def create_app(test_config=None, db_path=database_path):
         full_posts = full_posts_query.all()
         paginated_data = paginate(full_posts, page)
         paginated_posts = paginated_data[0]
-
-        # formats each post in the list
-        for post in paginated_posts:
-            formatted_post = post[0].format()
-            formatted_post["user"] = post[1]
-            formatted_posts.append(formatted_post)
+        formatted_posts = [post[0].format(user=post[1]) for post in paginated_posts]
 
         total_pages = paginated_data[1]
 
@@ -608,9 +595,7 @@ def create_app(test_config=None, db_path=database_path):
         if type.lower() == "blocked":
             # Get all blocked users
             users = (
-                # TODO: Replace the True + NOQA with db.true()
-                # Requires passing the db object back to the app
-                User.query.filter(User.blocked == True)  # NOQA
+                User.query.filter(User.blocked == db.true())
                 .order_by(User.release_date)
                 .all()
             )
@@ -697,9 +682,9 @@ def create_app(test_config=None, db_path=database_path):
                     abort(500)
 
         formatted_user_data = user_data.format()
-        formatted_user_data["posts"] = len(
-            Post.query.filter(Post.user_id == user_data.id).all()
-        )
+        formatted_user_data["posts"] = Post.query.filter(
+            Post.user_id == user_data.id
+        ).count()
 
         return jsonify({"success": True, "user": formatted_user_data})
 
@@ -1019,20 +1004,9 @@ def create_app(test_config=None, db_path=database_path):
         user_posts = (
             Post.query.filter(Post.user_id == user_id).order_by(Post.date).all()
         )
-        user_posts_array = []
-
-        # If there are no posts, returns an empty array
-        if user_posts is None:
-            user_posts_array = []
-        # If the user has written posts, formats each post and adds it
-        # to the posts array
-        else:
-            for post in user_posts:
-                user_posts_array.append(post.format())
-
-            paginated_data = paginate(user_posts_array, page)
-            paginated_posts = paginated_data[0]
-            total_pages = paginated_data[1]
+        paginated_data = paginate(user_posts, page)
+        paginated_posts = [post.format() for post in paginated_data[0]]
+        total_pages = paginated_data[1]
 
         return jsonify(
             {
@@ -1126,32 +1100,30 @@ def create_app(test_config=None, db_path=database_path):
         for_user = db.aliased(User)
 
         if type in ["inbox", "outbox", "thread"]:
+            messages_query = (
+                db.session.query(
+                    Message,
+                    from_user.display_name,
+                    for_user.display_name,
+                    from_user.selected_character,
+                    from_user.icon_colours,
+                    for_user.selected_character,
+                    for_user.icon_colours,
+                )
+                .join(from_user, from_user.id == Message.from_id)
+                .join(for_user, for_user.id == Message.for_id)
+            )
+
             # For inbox, gets all incoming messages
             if type == "inbox":
-                messages_query = (
-                    db.session.query(
-                        Message,
-                        from_user.display_name,
-                        for_user.display_name,
-                        from_user.selected_character,
-                        from_user.icon_colours,
-                    )
-                    .filter(Message.for_deleted == db.false())
-                    .filter(Message.for_id == user_id)
-                )
+                messages_query = messages_query.filter(
+                    Message.for_deleted == db.false()
+                ).filter(Message.for_id == user_id)
             # For outbox, gets all outgoing messages
             elif type == "outbox":
-                messages_query = (
-                    db.session.query(
-                        Message,
-                        from_user.display_name,
-                        for_user.display_name,
-                        for_user.selected_character,
-                        for_user.icon_colours,
-                    )
-                    .filter(Message.from_deleted == db.false())
-                    .filter(Message.from_id == user_id)
-                )
+                messages_query = messages_query.filter(
+                    Message.from_deleted == db.false()
+                ).filter(Message.from_id == user_id)
             # Gets a specific thread's messages
             else:
                 message = Thread.query.filter(Thread.id == thread_id).one_or_none()
@@ -1173,63 +1145,30 @@ def create_app(test_config=None, db_path=database_path):
                 else:
                     abort(404)
 
-                messages_query = (
-                    db.session.query(
-                        Message,
-                        from_user.display_name,
-                        for_user.display_name,
-                        from_user.selected_character,
-                        from_user.icon_colours,
-                        for_user.selected_character,
-                        for_user.icon_colours,
+                messages_query = messages_query.filter(
+                    ((Message.for_id == user_id) & (Message.for_deleted == db.false()))
+                    | (
+                        (Message.from_id == user_id)
+                        & (Message.from_deleted == db.false())
                     )
-                    .filter(
-                        (
-                            (Message.for_id == user_id)
-                            & (Message.for_deleted == db.false())
-                        )
-                        | (
-                            (Message.from_id == user_id)
-                            & (Message.from_deleted == db.false())
-                        )
-                    )
-                    .filter(Message.thread == thread_id)
-                )
+                ).filter(Message.thread == thread_id)
 
-            messages = (
-                messages_query.join(from_user, from_user.id == Message.from_id)
-                .join(for_user, for_user.id == Message.for_id)
-                .order_by(db.desc(Message.date))
-                .all()
-            )
+            messages = messages_query.order_by(db.desc(Message.date)).all()
 
             paginated_messages = paginate(messages, page)
-            formatted_messages = []
-            total_pages = paginated_messages[1]
-
             # formats each message in the list
-            for message in paginated_messages[0]:
-                user_message = message[0].format()
-                user_message["from"] = {"displayName": message[1]}
-                user_message["for"] = {"displayName": message[2]}
-
-                # If it's the inbox, add the sending user's profile pic
-                if type == "inbox":
-                    user_message["from"]["selectedIcon"] = message[3]
-                    user_message["from"]["iconColours"] = json.loads(message[4])
-                # If it's the outbox, add the profile pic of the user getting
-                # the message
-                elif type == "outbox":
-                    user_message["for"]["selectedIcon"] = message[3]
-                    user_message["for"]["iconColours"] = json.loads(message[4])
-                # If it's a thread, add both
-                else:
-                    user_message["from"]["selectedIcon"] = message[3]
-                    user_message["from"]["iconColours"] = json.loads(message[4])
-                    user_message["for"]["selectedIcon"] = message[5]
-                    user_message["for"]["iconColours"] = json.loads(message[6])
-
-                formatted_messages.append(user_message)
+            formatted_messages = [
+                message[0].format(
+                    from_name=message[1],
+                    from_icon=message[3],
+                    from_colous=json.loads(message[4]),
+                    for_name=message[2],
+                    for_icon=message[5],
+                    for_colours=json.loads(message[6]),
+                )
+                for message in paginated_messages[0]
+            ]
+            total_pages = paginated_messages[1]
 
         # For threads, gets all threads' data
         else:
@@ -1277,7 +1216,7 @@ def create_app(test_config=None, db_path=database_path):
             )
 
             # Get the date of the latest message in the thread
-            latest_message = (
+            latest_messages = (
                 db.session.query(db.func.max(Message.date), Message.thread)
                 .join(Thread, Message.thread == Thread.id)
                 .group_by(Message.thread, Thread.user_1_id, Thread.user_2_id)
@@ -1296,11 +1235,12 @@ def create_app(test_config=None, db_path=database_path):
             )
 
             paginated_threads = paginate(threads_messages, page)
+            paginated_messages = paginate(latest_messages, page)
             formatted_messages = []
             total_pages = paginated_threads[1]
 
             # Threads data formatting
-            for index, thread in enumerate(threads_messages):
+            for thread, latest_message in zip(paginated_threads, paginated_messages):
                 # Set up the thread
                 thread = {
                     "id": thread[1],
@@ -1317,7 +1257,7 @@ def create_app(test_config=None, db_path=database_path):
                     },
                     "user2Id": thread[9],
                     "numMessages": thread[0],
-                    "latestMessage": latest_message[index][0],
+                    "latestMessage": latest_message,
                 }
                 formatted_messages.append(thread)
 
@@ -1841,11 +1781,7 @@ def create_app(test_config=None, db_path=database_path):
     def get_filters(token_payload):
         page = request.args.get("page", 1, type=int)
         filtered_words = Filter.query.all()
-        filters = []
-
-        # Get the formatted words
-        for filter in filtered_words:
-            filters.append(filter.format())
+        filters = [filter.format() for filter in filtered_words]
 
         # Paginate the filtered words
         words_per_page = 10
@@ -1919,7 +1855,6 @@ def create_app(test_config=None, db_path=database_path):
     def get_latest_notifications(token_payload):
         silent_refresh = request.args.get("silentRefresh", True)
         user = User.query.filter(User.auth0_id == token_payload["sub"]).one_or_none()
-        formatted_notifications = []
 
         # If there's no user with that ID, abort
         if user is None:
@@ -1949,12 +1884,10 @@ def create_app(test_config=None, db_path=database_path):
             .all()
         )
 
-        # Formats all new messages
-        for notification in notifications:
-            user_notification = notification[0].format()
-            user_notification["from"] = notification[1]
-            user_notification["for"] = notification[2]
-            formatted_notifications.append(user_notification)
+        formatted_notifications = [
+            notification[0].format(from_name=notification[1], for_name=notification[2])
+            for notification in notifications
+        ]
 
         # Updates the user's 'last read' time only if this fetch was
         # triggered by the user (meaning, they're looking at the
