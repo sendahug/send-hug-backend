@@ -1171,6 +1171,7 @@ def create_app(test_config=None, db_path=database_path):
                     for_user.icon_colours,
                     Thread.user_1_id,
                     Thread.user_2_id,
+                    db.func.max(Message.date),
                 )
                 .join(Thread, Message.thread == Thread.id)
                 .join(from_user, from_user.id == Thread.user_1_id)
@@ -1201,34 +1202,12 @@ def create_app(test_config=None, db_path=database_path):
                 .all()
             )
 
-            # Get the date of the latest message in the thread
-            latest_messages = (
-                db.session.query(db.func.max(Message.date))
-                .join(Thread, Message.thread == Thread.id)
-                .group_by(Message.thread, Thread.user_1_id, Thread.user_2_id)
-                .order_by(Message.thread)
-                .filter(
-                    (
-                        (Thread.user_1_id == user_id)
-                        & (Thread.user_1_deleted == db.false())
-                    )
-                    | (
-                        (Thread.user_2_id == user_id)
-                        & (Thread.user_2_deleted == db.false())
-                    )
-                )
-                .all()
-            )
-
             paginated_threads = paginate(threads_messages, page)
-            paginated_messages = paginate(latest_messages, page)
             formatted_messages = []
             total_pages = paginated_threads[1]
 
             # Threads data formatting
-            for thread, latest_message in zip(
-                paginated_threads[0], paginated_messages[0]
-            ):
+            for thread in paginated_threads[0]:
                 # Set up the thread
                 thread_json = {
                     "id": thread[1],
@@ -1249,7 +1228,7 @@ def create_app(test_config=None, db_path=database_path):
                     },
                     "user2Id": thread[9],
                     "numMessages": thread[0],
-                    "latestMessage": latest_message[0],
+                    "latestMessage": thread[10],
                 }
                 formatted_messages.append(thread_json)
 
