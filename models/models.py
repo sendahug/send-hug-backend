@@ -37,9 +37,11 @@ db = SQLAlchemy()
 
 
 # Database setup
-def initialise_db(app):
+def initialise_db(app) -> SQLAlchemy:
     db.init_app(app)
     migrate = Migrate(app, db)  # NOQA - required by flask-migrate
+
+    return db
 
 
 # Models

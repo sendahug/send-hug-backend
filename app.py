@@ -30,6 +30,7 @@ import json
 import math
 import sys
 import http.client
+from typing import Dict, List, Any
 from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
@@ -71,7 +72,7 @@ def create_app(test_config=None, db_path=database_path):
     # Flask-SQLAlchemy Setup
     app.config["SQLALCHEMY_DATABASE_URI"] = db_path
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    initialise_db(app)
+    db = initialise_db(app)
     # Utilities
     CORS(app, origins="")
     word_filter = WordFilter()
@@ -141,14 +142,39 @@ def create_app(test_config=None, db_path=database_path):
     # Authorization: None.
     @app.route("/")
     def index():
-        # Gets the ten most recent posts
-        recent_posts = joined_query("main new")["return"]
+        posts: Dict[str, List[Dict[str, Any]]] = {
+            "recent": [],
+            "suggested": [],
+        }
 
-        # Gets the ten posts with the least hugs
-        suggested_posts = joined_query("main suggested")["return"]
+        for target in posts.keys():
+            posts_query = (
+                db.session.query(Post, User.display_name)
+                .join(User)
+                .filter(Post.open_report == db.false())
+            )
+
+            # Gets the ten most recent posts
+            if target == "recent":
+                posts_query = posts_query.order_by(db.desc(Post.date))
+            # Gets the ten posts with the least hugs
+            else:
+                posts_query = posts_query.order_by(Post.given_hugs, Post.date)
+
+            post_instances = posts_query.limit(10).all()
+
+            # formats each post in the list
+            for post in post_instances:
+                new_post = post[0].format()
+                new_post["user"] = post[1]
+                posts[target].append(new_post)
 
         return jsonify(
-            {"success": True, "recent": recent_posts, "suggested": suggested_posts}
+            {
+                "success": True,
+                "recent": posts["recent"],
+                "suggested": posts["suggested"],
+            }
         )
 
     # Endpoint: POST /

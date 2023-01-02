@@ -41,40 +41,7 @@ from .models import Post, User, Message, Thread, Report, Notification, db
 def joined_query(target, params={}):
     return_obj = []
 
-    # if the target is the recent_posts array in the main page endpoint
-    if target.lower() == "main new":
-        new_posts = (
-            db.session.query(Post, User.display_name)
-            .join(User)
-            .order_by(db.desc(Post.date))
-            .filter(Post.open_report == db.false())
-            .limit(10)
-            .all()
-        )
-
-        # formats each post in the list
-        for post in new_posts:
-            new_post = post[0].format()
-            new_post["user"] = post[1]
-            return_obj.append(new_post)
-    # if the target is the suggested_posts array in the main page endpoint
-    elif target.lower() == "main suggested":
-        sug_posts = (
-            db.session.query(Post, User.display_name)
-            .join(User)
-            .order_by(Post.given_hugs, Post.date)
-            .filter(Post.open_report == db.false())
-            .limit(10)
-            .all()
-        )
-
-        # formats each post in the list
-        for post in sug_posts:
-            sug_post = post[0].format()
-            sug_post["user"] = post[1]
-            return_obj.append(sug_post)
-    # If the target is the full list of new items
-    elif target.lower() == "full new":
+    if target.lower() == "full new":
         full_new_posts = (
             db.session.query(Post, User.display_name)
             .join(User)
