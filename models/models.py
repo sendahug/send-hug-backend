@@ -93,8 +93,8 @@ class User(db.Model):
     selected_character = db.Column(db.String(6), default="kitty")
     icon_colours = db.Column(
         db.String(),
-        default='{"character":"#BA9F93", "lbg":"#e2a275", \
-                "rbg":"#f8eee4", "item":"#f4b56a"}',
+        default='{"character":"#BA9F93", "lbg":"#e2a275",'
+        '"rbg":"#f8eee4", "item":"#f4b56a"}',
     )
     posts = db.relationship("Post", backref="user")
 

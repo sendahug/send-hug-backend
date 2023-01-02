@@ -284,14 +284,10 @@ def create_app(test_config=None, db_path=database_path):
             raise ValidationError(
                 {
                     "code": 400,
-                    "description": "Your text contains "
-                    + str(num_issues)
-                    + " \
-                                forbidden term(s). The following word(s) is/ \
-                                are not allowed: "
-                    + forbidden_words[0:-2]
-                    + ". Please fix your post's \
-                                text and try again.",
+                    "description": f"Your text contains {str(num_issues)}"
+                    " forbidden term(s). The following word(s) is/"
+                    f"are not allowed: {forbidden_words[0:-2]}."
+                    "Please fix your post's text and try again.",
                 },
                 400,
             )
@@ -336,8 +332,8 @@ def create_app(test_config=None, db_path=database_path):
                     raise AuthError(
                         {
                             "code": 403,
-                            "description": "You do not have permission to edit \
-                                        this post.",
+                            "description": "You do not have permission to edit "
+                            "this post.",
                         },
                         403,
                     )
@@ -366,14 +362,10 @@ def create_app(test_config=None, db_path=database_path):
                         raise ValidationError(
                             {
                                 "code": 400,
-                                "description": "Your text contains "
-                                + str(num_issues)
-                                + " forbidden \
-                                            term(s). The following word(s) is/ \
-                                            are not allowed: "
-                                + forbidden_words[0:-2]
-                                + ". Please fix your post's \
-                                            text and try again.",
+                                "description": f"Your text contains {str(num_issues)}"
+                                " forbidden term(s). The following word(s) is/"
+                                f"are not allowed: {forbidden_words[0:-2]}."
+                                "Please fix your post's text and try again.",
                             },
                             400,
                         )
@@ -402,14 +394,10 @@ def create_app(test_config=None, db_path=database_path):
                     raise ValidationError(
                         {
                             "code": 400,
-                            "description": "Your text contains "
-                            + str(num_issues)
-                            + " forbidden \
-                                        term(s). The following word(s) is/ \
-                                        are not allowed: "
-                            + forbidden_words[0:-2]
-                            + ". Please fix your post's \
-                                        text and try again.",
+                            "description": f"Your text contains {str(num_issues)}"
+                            " forbidden term(s). The following word(s) is/"
+                            f"are not allowed: {forbidden_words[0:-2]}."
+                            "Please fix your post's text and try again.",
                         },
                         400,
                     )
@@ -459,8 +447,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to close \
-                                    this post's report.",
+                        "description": "You do not have permission to close "
+                        "this post's report.",
                     },
                     403,
                 )
@@ -533,8 +521,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to delete \
-                                    this post.",
+                        "description": "You do not have permission to delete "
+                        "this post.",
                     },
                     403,
                 )
@@ -723,9 +711,8 @@ def create_app(test_config=None, db_path=database_path):
             refresh_rate=20,
             push_enabled=False,
             selected_character="kitty",
-            icon_colours='{"character":"#BA9F93",\
-                                       "lbg":"#e2a275","rbg":"#f8eee4",\
-                                       "item":"#f4b56a"}',
+            icon_colours='{"character":"#BA9F93",lbg":"#e2a275",'
+            '"rbg":"#f8eee4","item":"#f4b56a"}',
         )
 
         # Try to add the post to the database
@@ -842,8 +829,8 @@ def create_app(test_config=None, db_path=database_path):
                         raise AuthError(
                             {
                                 "code": 403,
-                                "description": "You do not have permission to \
-                                            edit this user's display name.",
+                                "description": "You do not have permission to "
+                                "edit this user's display name.",
                             },
                             403,
                         )
@@ -874,8 +861,7 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to block \
-                                    this user.",
+                        "description": "You do not have permission to block this user.",
                     },
                     403,
                 )
@@ -908,8 +894,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to \
-                                    edit another user's settings.",
+                        "description": "You do not have permission to edit "
+                        "another user's settings.",
                     },
                     403,
                 )
@@ -1038,8 +1024,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to delete \
-                                    another user's posts.",
+                        "description": "You do not have permission to delete "
+                        "another user's posts.",
                     },
                     403,
                 )
@@ -1090,8 +1076,8 @@ def create_app(test_config=None, db_path=database_path):
             raise AuthError(
                 {
                     "code": 403,
-                    "description": "You do not have permission to view another\
-                                user's messages.",
+                    "description": "You do not have permission to view "
+                    "another user's messages.",
                 },
                 403,
             )
@@ -1137,8 +1123,8 @@ def create_app(test_config=None, db_path=database_path):
                         raise AuthError(
                             {
                                 "code": 403,
-                                "description": "You do not have permission to view \
-                                            another user's messages.",
+                                "description": "You do not have permission "
+                                "to view another user's messages.",
                             },
                             403,
                         )
@@ -1289,8 +1275,8 @@ def create_app(test_config=None, db_path=database_path):
             raise AuthError(
                 {
                     "code": 403,
-                    "description": "You do not have permission to send a message\
-                                on behalf of another user.",
+                    "description": "You do not have permission to "
+                    "send a message on behalf of another user.",
                 },
                 403,
             )
@@ -1306,14 +1292,10 @@ def create_app(test_config=None, db_path=database_path):
             raise ValidationError(
                 {
                     "code": 400,
-                    "description": "Your message contains "
-                    + str(num_issues)
-                    + " \
-                                forbidden term(s). The following word(s) is/ \
-                                are not allowed: "
-                    + forbidden_words[0:-2]
-                    + ". Please fix your post's \
-                                text and try again.",
+                    "description": f"Your message contains {str(num_issues)}"
+                    " forbidden term(s). The following word(s) is/"
+                    f"are not allowed: {forbidden_words[0:-2]}."
+                    "Please fix your post's text and try again.",
                 },
                 400,
             )
@@ -1452,8 +1434,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to delete \
-                                    another user's messages.",
+                        "description": "You do not have permission to "
+                        "delete another user's messages.",
                     },
                     403,
                 )
@@ -1467,8 +1449,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to delete \
-                                    another user's messages.",
+                        "description": "You do not have permission to "
+                        "delete another user's messages.",
                     },
                     403,
                 )
@@ -1484,8 +1466,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to delete\
-                                    another user's messages.",
+                        "description": "You do not have permission to "
+                        "delete another user's messages.",
                     },
                     403,
                 )
@@ -1555,8 +1537,8 @@ def create_app(test_config=None, db_path=database_path):
             raise AuthError(
                 {
                     "code": 403,
-                    "description": "You do not have permission to delete another\
-                                user's messages.",
+                    "description": "You do not have permission "
+                    "to delete another user's messages.",
                 },
                 403,
             )
@@ -2033,8 +2015,8 @@ def create_app(test_config=None, db_path=database_path):
                 {
                     "success": False,
                     "code": 409,
-                    "message": "Conflict. The resource you were trying to create \
-                        already exists.",
+                    "message": "Conflict. The resource you were trying to create"
+                    "already exists.",
                 }
             ),
             409,
