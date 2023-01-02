@@ -1203,7 +1203,7 @@ def create_app(test_config=None, db_path=database_path):
 
             # Get the date of the latest message in the thread
             latest_messages = (
-                db.session.query(db.func.max(Message.date), Message.thread)
+                db.session.query(db.func.max(Message.date))
                 .join(Thread, Message.thread == Thread.id)
                 .group_by(Message.thread, Thread.user_1_id, Thread.user_2_id)
                 .order_by(Message.thread)
@@ -1220,32 +1220,38 @@ def create_app(test_config=None, db_path=database_path):
                 .all()
             )
 
-            formatted_threads = []
+            paginated_threads = paginate(threads_messages, page)
+            paginated_messages = paginate(latest_messages, page)
+            formatted_messages = []
+            total_pages = paginated_threads[1]
 
             # Threads data formatting
-            for thread, latest_message in zip(threads_messages, latest_messages):
+            for thread, latest_message in zip(
+                paginated_threads[0], paginated_messages[0]
+            ):
                 # Set up the thread
-                thread = {
+                thread_json = {
                     "id": thread[1],
                     "user1": {
                         "displayName": thread[2],
                         "selectedIcon": thread[3],
-                        "iconColours": json.loads(thread[4]),
+                        "iconColours": json.loads(thread[4])
+                        if thread[4]
+                        else thread[4],
                     },
                     "user1Id": thread[8],
                     "user2": {
                         "displayName": thread[5],
                         "selectedIcon": thread[6],
-                        "iconColours": json.loads(thread[7]),
+                        "iconColours": json.loads(thread[7])
+                        if thread[7]
+                        else thread[7],
                     },
                     "user2Id": thread[9],
                     "numMessages": thread[0],
-                    "latestMessage": latest_message,
+                    "latestMessage": latest_message[0],
                 }
-                formatted_threads.append(thread)
-
-            formatted_messages = paginate(formatted_threads, page)
-            total_pages = formatted_messages[1]
+                formatted_messages.append(thread_json)
 
         return jsonify(
             {
