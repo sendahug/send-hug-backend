@@ -1147,10 +1147,10 @@ def create_app(test_config=None, db_path=database_path):
                 message[0].format(
                     from_name=message[1],
                     from_icon=message[3],
-                    from_colous=json.loads(message[4]),
+                    from_colous=json.loads(message[4]) if message[4] else message[4],
                     for_name=message[2],
                     for_icon=message[5],
-                    for_colours=json.loads(message[6]),
+                    for_colours=json.loads(message[6]) if message[6] else message[6],
                 )
                 for message in paginated_messages[0]
             ]
