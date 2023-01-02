@@ -52,7 +52,6 @@ from models import (
     delete_object as db_delete,
     delete_all as db_delete_all,
     update_multiple as db_update_multi,
-    joined_query,
 )
 from auth import (
     AuthError,
@@ -195,8 +194,18 @@ def create_app(test_config=None, db_path=database_path):
         users = User.query.filter(
             User.display_name.ilike("%" + search_query + "%")
         ).all()
-        posts = joined_query("post search", {"query": search_query})["return"]
+
+        posts = (
+            db.session.query(Post, User.display_name)
+            .join(User)
+            .order_by(db.desc(Post.date))
+            .filter(Post.text.like("%" + search_query + "%"))
+            .filter(Post.open_report == db.false())
+            .all()
+        )
+
         formatted_users = []
+        formatted_posts = []
 
         # Get the total number of items
         user_results = len(users)
@@ -206,8 +215,14 @@ def create_app(test_config=None, db_path=database_path):
         for user in users:
             formatted_users.append(user.format())
 
+        # Formats the posts
+        for post in posts:
+            searched_post = post[0].format()
+            searched_post["user"] = post[1]
+            formatted_posts.append(searched_post)
+
         # Paginates posts
-        paginated_data = paginate(posts, current_page)
+        paginated_data = paginate(formatted_posts, current_page)
         paginated_posts = paginated_data[0]
         total_pages = paginated_data[1]
 
@@ -551,14 +566,33 @@ def create_app(test_config=None, db_path=database_path):
     def get_new_posts(type):
         page = request.args.get("page", 1, type=int)
 
-        # Gets the recent posts and paginates them
-        full_posts = joined_query("full " + type)["return"]
+        formatted_posts = []
+
+        full_posts_query = (
+            db.session.query(Post, User.display_name)
+            .join(User)
+            .filter(Post.open_report == db.false())
+        )
+
+        if type == "new":
+            full_posts_query = full_posts_query.order_by(db.desc(Post.date))
+        else:
+            full_posts_query = full_posts_query.order_by(Post.given_hugs, Post.date)
+
+        full_posts = full_posts_query.all()
         paginated_data = paginate(full_posts, page)
         paginated_posts = paginated_data[0]
+
+        # formats each post in the list
+        for post in paginated_posts:
+            formatted_post = post[0].format()
+            formatted_post["user"] = post[1]
+            formatted_posts.append(formatted_post)
+
         total_pages = paginated_data[1]
 
         return jsonify(
-            {"success": True, "posts": paginated_posts, "total_pages": total_pages}
+            {"success": True, "posts": formatted_posts, "total_pages": total_pages}
         )
 
     # Endpoint: GET /users/<type>
@@ -1088,52 +1122,209 @@ def create_app(test_config=None, db_path=database_path):
                 403,
             )
 
-        # Checks which mailbox the user is requesting
-        if type == "inbox":
-            message = Message.query.filter(Message.for_id == user_id).all()
-        elif type == "outbox":
-            message = Message.query.filter(Message.from_id == user_id).all()
-        elif type == "threads":
-            message = Message.query.filter(
-                (Message.from_id == user_id) | (Message.for_id == user_id)
-            ).all()
-        elif type == "thread":
-            message = Thread.query.filter(Thread.id == thread_id).one_or_none()
-            # Check if there's a thread with that ID at all
-            if message:
-                # If the user is trying to view a thread that belongs to other
-                # users, raise an AuthError
-                if (message.user_1_id != requesting_user.id) and (
-                    message.user_2_id != requesting_user.id
-                ):
-                    raise AuthError(
-                        {
-                            "code": 403,
-                            "description": "You do not have permission to view \
-                                        another user's messages.",
-                        },
-                        403,
-                    )
+        from_user = db.aliased(User)
+        for_user = db.aliased(User)
 
-        # If there are no messages for the user, return an empty array
-        if not message:
-            user_messages = []
-            paginated_messages = []
-            total_pages = 0
-        # If there are messages, get the user's messages and format them
+        if type in ["inbox", "outbox", "thread"]:
+            # For inbox, gets all incoming messages
+            if type == "inbox":
+                messages_query = (
+                    db.session.query(
+                        Message,
+                        from_user.display_name,
+                        for_user.display_name,
+                        from_user.selected_character,
+                        from_user.icon_colours,
+                    )
+                    .filter(Message.for_deleted == db.false())
+                    .filter(Message.for_id == user_id)
+                )
+            # For outbox, gets all outgoing messages
+            elif type == "outbox":
+                messages_query = (
+                    db.session.query(
+                        Message,
+                        from_user.display_name,
+                        for_user.display_name,
+                        for_user.selected_character,
+                        for_user.icon_colours,
+                    )
+                    .filter(Message.from_deleted == db.false())
+                    .filter(Message.from_id == user_id)
+                )
+            # Gets a specific thread's messages
+            else:
+                message = Thread.query.filter(Thread.id == thread_id).one_or_none()
+                # Check if there's a thread with that ID at all
+                if message:
+                    # If the user is trying to view a thread that belongs to other
+                    # users, raise an AuthError
+                    if (message.user_1_id != requesting_user.id) and (
+                        message.user_2_id != requesting_user.id
+                    ):
+                        raise AuthError(
+                            {
+                                "code": 403,
+                                "description": "You do not have permission to view \
+                                            another user's messages.",
+                            },
+                            403,
+                        )
+                else:
+                    abort(404)
+
+                messages_query = (
+                    db.session.query(
+                        Message,
+                        from_user.display_name,
+                        for_user.display_name,
+                        from_user.selected_character,
+                        from_user.icon_colours,
+                        for_user.selected_character,
+                        for_user.icon_colours,
+                    )
+                    .filter(
+                        (
+                            (Message.for_id == user_id)
+                            & (Message.for_deleted == db.false())
+                        )
+                        | (
+                            (Message.from_id == user_id)
+                            & (Message.from_deleted == db.false())
+                        )
+                    )
+                    .filter(Message.thread == thread_id)
+                )
+
+            messages = (
+                messages_query.join(from_user, from_user.id == Message.from_id)
+                .join(for_user, for_user.id == Message.for_id)
+                .order_by(db.desc(Message.date))
+                .all()
+            )
+
+            paginated_messages = paginate(messages, page)
+            formatted_messages = []
+            total_pages = paginated_messages[1]
+
+            # formats each message in the list
+            for message in paginated_messages[0]:
+                user_message = message[0].format()
+                user_message["from"] = {"displayName": message[1]}
+                user_message["for"] = {"displayName": message[2]}
+
+                # If it's the inbox, add the sending user's profile pic
+                if type == "inbox":
+                    user_message["from"]["selectedIcon"] = message[3]
+                    user_message["from"]["iconColours"] = json.loads(message[4])
+                # If it's the outbox, add the profile pic of the user getting
+                # the message
+                elif type == "outbox":
+                    user_message["for"]["selectedIcon"] = message[3]
+                    user_message["for"]["iconColours"] = json.loads(message[4])
+                # If it's a thread, add both
+                else:
+                    user_message["from"]["selectedIcon"] = message[3]
+                    user_message["from"]["iconColours"] = json.loads(message[4])
+                    user_message["for"]["selectedIcon"] = message[5]
+                    user_message["for"]["iconColours"] = json.loads(message[6])
+
+                formatted_messages.append(user_message)
+
+        # For threads, gets all threads' data
         else:
-            # Gets the user's messages
-            user_messages = joined_query(
-                "messages", {"user_id": user_id, "type": type, "thread_id": thread_id}
-            )["return"]
-            paginated_data = paginate(user_messages, page)
-            paginated_messages = paginated_data[0]
-            total_pages = paginated_data[1]
+            # Get the thread ID, and users' names and IDs
+            threads_messages = (
+                db.session.query(
+                    db.func.count(Message.id),
+                    Message.thread,
+                    from_user.display_name,
+                    from_user.selected_character,
+                    from_user.icon_colours,
+                    for_user.display_name,
+                    for_user.selected_character,
+                    for_user.icon_colours,
+                    Thread.user_1_id,
+                    Thread.user_2_id,
+                )
+                .join(Thread, Message.thread == Thread.id)
+                .join(from_user, from_user.id == Thread.user_1_id)
+                .join(for_user, for_user.id == Thread.user_2_id)
+                .group_by(
+                    Message.thread,
+                    from_user.display_name,
+                    for_user.display_name,
+                    Thread.user_1_id,
+                    Thread.user_2_id,
+                    Thread.id,
+                    from_user.selected_character,
+                    from_user.icon_colours,
+                    for_user.selected_character,
+                    for_user.icon_colours,
+                )
+                .order_by(Thread.id)
+                .filter(
+                    (
+                        (Thread.user_1_id == user_id)
+                        & (Thread.user_1_deleted == db.false())
+                    )
+                    | (
+                        (Thread.user_2_id == user_id)
+                        & (Thread.user_2_deleted == db.false())
+                    )
+                )
+                .all()
+            )
+
+            # Get the date of the latest message in the thread
+            latest_message = (
+                db.session.query(db.func.max(Message.date), Message.thread)
+                .join(Thread, Message.thread == Thread.id)
+                .group_by(Message.thread, Thread.user_1_id, Thread.user_2_id)
+                .order_by(Message.thread)
+                .filter(
+                    (
+                        (Thread.user_1_id == user_id)
+                        & (Thread.user_1_deleted == db.false())
+                    )
+                    | (
+                        (Thread.user_2_id == user_id)
+                        & (Thread.user_2_deleted == db.false())
+                    )
+                )
+                .all()
+            )
+
+            paginated_threads = paginate(threads_messages, page)
+            formatted_messages = []
+            total_pages = paginated_threads[1]
+
+            # Threads data formatting
+            for index, thread in enumerate(threads_messages):
+                # Set up the thread
+                thread = {
+                    "id": thread[1],
+                    "user1": {
+                        "displayName": thread[2],
+                        "selectedIcon": thread[3],
+                        "iconColours": json.loads(thread[4]),
+                    },
+                    "user1Id": thread[8],
+                    "user2": {
+                        "displayName": thread[5],
+                        "selectedIcon": thread[6],
+                        "iconColours": json.loads(thread[7]),
+                    },
+                    "user2Id": thread[9],
+                    "numMessages": thread[0],
+                    "latestMessage": latest_message[index][0],
+                }
+                formatted_messages.append(thread)
 
         return jsonify(
             {
                 "success": True,
-                "messages": paginated_messages,
+                "messages": formatted_messages,
                 "current_page": page,
                 "total_pages": total_pages,
             }
@@ -1469,28 +1660,48 @@ def create_app(test_config=None, db_path=database_path):
     @app.route("/reports")
     @requires_auth(["read:admin-board"])
     def get_open_reports(token_payload):
-        user_reports_page = request.args.get("userPage", 1, type=int)
-        post_reports_page = request.args.get("postPage", 1, type=int)
+        reports: Dict[str, List[Dict[str, Any]]] = {
+            "User": [],
+            "Post": [],
+        }
 
-        # Get the user and post reports
-        user_reports = joined_query("user reports")["return"]
-        post_reports = joined_query("post reports")["return"]
+        total_pages: Dict[str, int] = {
+            "User": 0,
+            "Post": 0,
+        }
 
-        # Paginate user and posts reports
-        paginated_user_data = paginate(user_reports, user_reports_page)
-        paginated_user_reports = paginated_user_data[0]
-        total_user_pages = paginated_user_data[1]
-        paginated_post_data = paginate(post_reports, post_reports_page)
-        paginated_post_reports = paginated_post_data[0]
-        total_post_pages = paginated_post_data[1]
+        for report_type in reports.keys():
+            if report_type == "User":
+                report_query = db.session.query(Report, User.display_name).join(
+                    User, User.id == Report.user_id
+                )
+            else:
+                report_query = db.session.query(Report, Post.text).join(Post)
+
+            report_instances = (
+                report_query.filter(Report.closed == db.false())
+                .filter(Report.type == report_type)
+                .order_by(db.desc(Report.date))
+                .all()
+            )
+
+            reports_page = request.args.get(f"{report_type.lower()}Page", 1, type=int)
+            paginated_reports = paginate(report_instances, reports_page)
+            total_pages[report_type] = paginated_reports[1]
+
+            # Formats the reports
+            for report in paginated_reports[0]:
+                formatted_report = report[0].format()
+                formatted_report["displayName"] = report[1]
+                reports[report_type].append(formatted_report)
 
         return jsonify(
             {
                 "success": True,
-                "userReports": paginated_user_reports,
-                "totalUserPages": total_user_pages,
-                "postReports": paginated_post_reports,
-                "totalPostPages": total_post_pages,
+                "userReports": reports["User"],
+                "totalUserPages": total_pages["User"],
+                "postReports": reports["Post"],
+                "totalPostPages": total_pages["Post"],
             }
         )
 
@@ -1708,16 +1919,42 @@ def create_app(test_config=None, db_path=database_path):
     def get_latest_notifications(token_payload):
         silent_refresh = request.args.get("silentRefresh", True)
         user = User.query.filter(User.auth0_id == token_payload["sub"]).one_or_none()
+        formatted_notifications = []
 
         # If there's no user with that ID, abort
         if user is None:
             abort(404)
 
-        # Get user notifications
-        notifications = joined_query(
-            "notifications",
-            {"user_id": user.id, "last_read": user.last_notifications_read},
-        )["return"]
+        user_id = user.id
+        last_read = user.last_notifications_read
+
+        # If there's no last_read date, it means the user never checked
+        # their notifications, so set it to the time this feature was added
+        if last_read is None:
+            last_read = datetime(2020, 7, 1, 12, 00)
+
+        from_user = db.aliased(User)
+        for_user = db.aliased(User)
+
+        # Gets all new notifications
+        notifications = (
+            db.session.query(
+                Notification, from_user.display_name, for_user.display_name
+            )
+            .join(from_user, from_user.id == Notification.from_id)
+            .join(for_user, for_user.id == Notification.for_id)
+            .filter(Notification.for_id == user_id)
+            .filter(Notification.date > last_read)
+            .order_by(Notification.date)
+            .all()
+        )
+
+        # Formats all new messages
+        for notification in notifications:
+            user_notification = notification[0].format()
+            user_notification["from"] = notification[1]
+            user_notification["for"] = notification[2]
+            formatted_notifications.append(user_notification)
 
         # Updates the user's 'last read' time only if this fetch was
         # triggered by the user (meaning, they're looking at the
@@ -1731,7 +1968,7 @@ def create_app(test_config=None, db_path=database_path):
             except Exception:
                 abort(500)
 
-        return jsonify({"success": True, "notifications": notifications})
+        return jsonify({"success": True, "notifications": formatted_notifications})
 
     # Endpoint: POST /notifications
     # Description: Add a new PushSubscription to the database (for push
