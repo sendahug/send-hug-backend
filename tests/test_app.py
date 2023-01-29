@@ -30,10 +30,29 @@ import json
 import os
 import urllib.request
 import sys
-from flask_sqlalchemy import SQLAlchemy
 from sh import pg_restore
 
-from app import create_app
+from create_app import create_app
+from models import db
+from tests.dummy_data import (
+    sample_admin_auth0_id,
+    sample_admin_id,
+    sample_moderator_auth0_id,
+    sample_moderator_id,
+    sample_user_auth0_id,
+    sample_user_id,
+    new_message,
+    new_post,
+    new_report,
+    new_subscription,
+    new_user,
+    updated_display,
+    updated_post,
+    updated_unblock_user,
+    updated_user,
+    blocked_user_id,
+    report_post,
+)
 
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
 API_AUDIENCE = os.environ.get("API_AUDIENCE")
@@ -111,94 +130,6 @@ def get_user_tokens():
     blocked_header["Authorization"] = "Bearer " + access_tokens["blocked_jwt"]
 
 
-# Sample users data
-sample_user_id = str(1)
-sample_user_auth0_id = "auth0|5ed34765f0b8e60c8e87ca62"
-sample_moderator_id = str(5)
-sample_moderator_auth0_id = "auth0|5ede3e7a0793080013259050"
-sample_admin_id = str(4)
-sample_admin_auth0_id = "auth0|5ed8e3d0def75d0befbc7e50"
-blocked_user_id = str(20)
-
-# Item Samples
-new_post = {
-    "userId": 0,
-    "text": "test post",
-    "date": "Sun Jun 07 2020 15:57:45",
-    "givenHugs": 0,
-}
-
-updated_post = {
-    "userId": 0,
-    "text": "test post",
-    "date": "Sun Jun 07 2020 15:57:45",
-    "givenHugs": 0,
-}
-
-report_post = {
-    "user_id": 0,
-    "text": "test post",
-    "date": "Sun Jun 07 2020 15:57:45",
-    "givenHugs": 0,
-    "closeReport": 1,
-}
-
-new_user = '{\
-"id": "auth0|5edf778e56d062001335196e",\
-"displayName": "user",\
-"receivedH": 0,\
-"givenH": 0,\
-"loginCount": 0 }'
-
-updated_user = {
-    "id": 0,
-    "displayName": "",
-    "receivedH": 0,
-    "givenH": 0,
-    "loginCount": 0,
-}
-
-updated_unblock_user = {
-    "id": 0,
-    "displayName": "hello",
-    "receivedH": 0,
-    "givenH": 0,
-    "loginCount": 0,
-    "blocked": False,
-    "releaseDate": None,
-}
-
-updated_display = {
-    "id": 0,
-    "displayName": "meow",
-    "receivedH": 0,
-    "givenH": 0,
-    "loginCount": 0,
-}
-
-new_message = {
-    "fromId": 0,
-    "forId": 0,
-    "messageText": "meow",
-    "date": "Sun Jun 07 2020 15:57:45",
-}
-
-new_report = {
-    "type": "Post",
-    "userID": 0,
-    "postID": 0,
-    "reporter": 0,
-    "reportReason": "It is inappropriate",
-    "date": "Sun Jun 07 2020 15:57:45",
-}
-
-new_subscription = {
-    "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",
-    "expirationTime": None,
-    "keys": {"p256dh": "fdsfd", "auth": "dfs"},
-}
-
-
 # App testing
 class TestHugApp(unittest.TestCase):
     # Setting up the suite
@@ -211,16 +142,18 @@ class TestHugApp(unittest.TestCase):
 
     # Setting up each test
     def setUp(self):
-        test_db_path = "postgresql://postgres:password@localhost:5432/test-capstone"
+        test_db_path = "postgresql://postgres:password@localhost:5432/test_sah"
         self.app = create_app(db_path=test_db_path)
         self.client = self.app.test_client
+        self.db = db
 
         pg_restore(
             "-d",
-            "test-capstone",
+            "test_sah",
             "tests/capstone_db",
+            "--clean",
+            "--if-exists",
             "-Fc",
-            "-c",
             "--no-owner",
             "-h",
             "localhost",
@@ -232,8 +165,6 @@ class TestHugApp(unittest.TestCase):
 
         # binds the app to the current context
         with self.app.app_context():
-            self.db = SQLAlchemy()
-            self.db.init_app(self.app)
             # create all tables
             self.db.create_all()
 

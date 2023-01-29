@@ -139,15 +139,13 @@ The recommended structure is:
 Once you've completed the setup for whichever approach you've chosen, run the following commands:
 
 ```
-dropdb test-capstone && createdb test-capstone
-psql test-capstone < tests/capstone_db.sql
+"CREATE DATABASE test_sah;" | sudo -u postgres psql
 python -m unittest tests/test_app.py
 ```
 
 Or, if using macOS:
 ```
-dropdb test-capstone && createdb test-capstone
-psql test-capstone < tests/capstone_db.sql
+dropdb test_sah && createdb test_sah
 python3 -m unittest tests/test_app.py
 ```
 
