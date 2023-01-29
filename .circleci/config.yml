@@ -59,7 +59,7 @@ jobs:
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
       - run:
           name: Restore database
-          command: echo "CREATE DATABASE test-capstone;" | psql
+          command: psql -c "CREATE DATABASE test-capstone;"
       - save_cache:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
           paths:
