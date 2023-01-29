@@ -83,6 +83,7 @@ def create_app(test_config=None, db_path=database_path):
             "report": {"max": 120, "min": 1},
         }
     )
+    ITEMS_PER_PAGE = 5
 
     # CORS Setup
     @app.after_request
@@ -99,14 +100,10 @@ def create_app(test_config=None, db_path=database_path):
 
         return response
 
-    # Paginates posts / messages
-    def paginate(items, page):
-        items_per_page = 5
-        start_index = (page - 1) * items_per_page
-        paginated_items = items[start_index : (start_index + 5)]
-        total_pages = math.ceil(len(items) / 5)
-
-        return [paginated_items, total_pages]
+    # TODO: Replace with an internal pagination mechanism
+    def calculate_total_pages(items_count: int) -> int:
+        """Caculates the number of pages for the query"""
+        return math.ceil(items_count / ITEMS_PER_PAGE)
 
     # Send push notification
     def send_push_notification(user_id, data):
@@ -196,37 +193,28 @@ def create_app(test_config=None, db_path=database_path):
             .order_by(db.desc(Post.date))
             .filter(Post.text.like("%" + search_query + "%"))
             .filter(Post.open_report == db.false())
-            .all()
+            .paginate(page=current_page, per_page=ITEMS_PER_PAGE)
         )
 
         formatted_users = []
         formatted_posts = []
-
-        # Get the total number of items
-        user_results = len(users)
-        post_results = len(posts)
 
         # Formats the users' data
         for user in users:
             formatted_users.append(user.format())
 
         # Formats the posts
-        formatted_posts = [post[0].format(user=post[1]) for post in posts]
-
-        # Paginates posts
-        paginated_data = paginate(formatted_posts, current_page)
-        paginated_posts = paginated_data[0]
-        total_pages = paginated_data[1]
+        formatted_posts = [post[0].format(user=post[1]) for post in posts.items]
 
         return jsonify(
             {
                 "success": True,
                 "users": formatted_users,
-                "posts": paginated_posts,
-                "user_results": user_results,
-                "post_results": post_results,
+                "posts": formatted_posts,
+                "user_results": len(users),
+                "post_results": posts.total,
                 "current_page": current_page,
-                "total_pages": total_pages,
+                "total_pages": calculate_total_pages(posts.total),
             }
         )
 
@@ -559,15 +547,17 @@ def create_app(test_config=None, db_path=database_path):
         else:
             full_posts_query = full_posts_query.order_by(Post.given_hugs, Post.date)
 
-        full_posts = full_posts_query.all()
-        paginated_data = paginate(full_posts, page)
-        paginated_posts = paginated_data[0]
-        formatted_posts = [post[0].format(user=post[1]) for post in paginated_posts]
-
-        total_pages = paginated_data[1]
+        paginated_posts = full_posts_query.paginate(page=page, per_page=ITEMS_PER_PAGE)
+        formatted_posts = [
+            post[0].format(user=post[1]) for post in paginated_posts.items
+        ]
 
         return jsonify(
-            {"success": True, "posts": formatted_posts, "total_pages": total_pages}
+            {
+                "success": True,
+                "posts": formatted_posts,
+                "total_pages": calculate_total_pages(paginated_posts.total),
+            }
         )
 
     # Endpoint: GET /users/<type>
@@ -582,45 +572,33 @@ def create_app(test_config=None, db_path=database_path):
         # If the type of users to fetch is blocked users
         if type.lower() == "blocked":
             # Get all blocked users
-            users = (
+            paginated_users = (
                 User.query.filter(User.blocked == db.true())
                 .order_by(User.release_date)
-                .all()
+                .paginate(page=page, per_page=ITEMS_PER_PAGE)
             )
 
-            # If there are no blocked users
-            if users is None:
-                paginated_users = []
-                total_pages = 1
-            # Otherwise, filter and paginate blocked users
-            else:
-                formatted_users = []
+            # Check which users need to be unblocked
+            current_date = datetime.now()
+            users_to_unblock = User.query.filter(User.release_date < current_date).all()
 
-                # Format users data
-                for user in users:
-                    # If it's past the user's release date, unblock them
-                    current_date = datetime.now()
-                    if user.release_date < current_date:
-                        user.blocked = False
-                        user.release_date = None
+            for user in users_to_unblock:
+                user.blocked = False
+                user.release_date = None
 
-                        # Try to update the database
-                        try:
-                            db_update(user)
-                        # If there's an error, abort
-                        except Exception:
-                            abort(500)
-                    # Otherwise, format the user's data
-                    else:
-                        formatted_users.append(user.format())
+                # Try to update the database
+                try:
+                    db_update(user)
+                # If there's an error, abort
+                except Exception:
+                    abort(500)
 
-                # Paginate users
-                paginated_data = paginate(formatted_users, page)
-                paginated_users = paginated_data[0]
-                total_pages = paginated_data[1]
+            # Paginate users
+            formatted_users = [user.format() for user in paginated_users.items]
+            total_pages = calculate_total_pages(paginated_users.total)
 
         return jsonify(
-            {"success": True, "users": paginated_users, "total_pages": total_pages}
+            {"success": True, "users": formatted_users, "total_pages": total_pages}
         )
 
     # Endpoint: GET /users/all/<user_id>
@@ -988,18 +966,18 @@ def create_app(test_config=None, db_path=database_path):
 
         # Gets all posts written by the given user
         user_posts = (
-            Post.query.filter(Post.user_id == user_id).order_by(Post.date).all()
+            Post.query.filter(Post.user_id == user_id)
+            .order_by(Post.date)
+            .paginate(page=page, per_page=ITEMS_PER_PAGE)
         )
-        paginated_data = paginate(user_posts, page)
-        paginated_posts = [post.format() for post in paginated_data[0]]
-        total_pages = paginated_data[1]
+        paginated_posts = [post.format() for post in user_posts.items]
 
         return jsonify(
             {
                 "success": True,
                 "posts": paginated_posts,
                 "page": page,
-                "total_pages": total_pages,
+                "total_pages": calculate_total_pages(user_posts.total),
             }
         )
 
@@ -1139,9 +1117,10 @@ def create_app(test_config=None, db_path=database_path):
                     )
                 ).filter(Message.thread == thread_id)
 
-            messages = messages_query.order_by(db.desc(Message.date)).all()
+            messages = messages_query.order_by(db.desc(Message.date)).paginate(
+                page=page, per_page=ITEMS_PER_PAGE
+            )
 
-            paginated_messages = paginate(messages, page)
             # formats each message in the list
             formatted_messages = [
                 message[0].format(
@@ -1152,9 +1131,9 @@ def create_app(test_config=None, db_path=database_path):
                     for_icon=message[5],
                     for_colours=json.loads(message[6]) if message[6] else message[6],
                 )
-                for message in paginated_messages[0]
+                for message in messages.items
             ]
-            total_pages = paginated_messages[1]
+            total_pages = calculate_total_pages(messages.total)
 
         # For threads, gets all threads' data
         else:
@@ -1199,15 +1178,14 @@ def create_app(test_config=None, db_path=database_path):
                         & (Thread.user_2_deleted == db.false())
                     )
                 )
-                .all()
+                .paginate(page=page, per_page=ITEMS_PER_PAGE)
             )
 
-            paginated_threads = paginate(threads_messages, page)
             formatted_messages = []
-            total_pages = paginated_threads[1]
+            total_pages = calculate_total_pages(threads_messages.total)
 
             # Threads data formatting
-            for thread in paginated_threads[0]:
+            for thread in threads_messages.items:
                 # Set up the thread
                 thread_json = {
                     "id": thread[1],
@@ -1578,6 +1556,8 @@ def create_app(test_config=None, db_path=database_path):
         }
 
         for report_type in reports.keys():
+            reports_page = request.args.get(f"{report_type.lower()}Page", 1, type=int)
+
             if report_type == "User":
                 report_query = db.session.query(Report, User.display_name).join(
                     User, User.id == Report.user_id
@@ -1589,15 +1569,13 @@ def create_app(test_config=None, db_path=database_path):
                 report_query.filter(Report.closed == db.false())
                 .filter(Report.type == report_type)
                 .order_by(db.desc(Report.date))
-                .all()
+                .paginate(page=reports_page, per_page=ITEMS_PER_PAGE)
             )
 
-            reports_page = request.args.get(f"{report_type.lower()}Page", 1, type=int)
-            paginated_reports = paginate(report_instances, reports_page)
-            total_pages[report_type] = paginated_reports[1]
+            total_pages[report_type] = calculate_total_pages(report_instances.total)
 
             # Formats the reports
-            for report in paginated_reports[0]:
+            for report in report_instances.items:
                 formatted_report = report[0].format()
                 formatted_report["displayName"] = report[1]
                 reports[report_type].append(formatted_report)
