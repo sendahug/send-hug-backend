@@ -1164,7 +1164,9 @@ def create_app(db_path: str = database_path) -> Flask:
                         & (Thread.user_2_deleted == db.false())
                     )
                 )
-                .paginate(page=page, per_page=ITEMS_PER_PAGE)
+                .paginate(  # type: ignore[attr-defined]
+                    page=page, per_page=ITEMS_PER_PAGE
+                )
             )
 
             formatted_messages = []
@@ -1688,18 +1690,12 @@ def create_app(db_path: str = database_path) -> Flask:
     @requires_auth(["read:admin-board"])
     def get_filters(token_payload):
         page = request.args.get("page", 1, type=int)
-        filtered_words = Filter.query.all()
-        filters = [filter.format() for filter in filtered_words]
-
-        # Paginate the filtered words
         words_per_page = 10
-        start_index = (page - 1) * words_per_page
-        paginated_words = filters[start_index : (start_index + 10)]
-        total_pages = math.ceil(len(filtered_words) / 10)
+        filtered_words = Filter.query.paginate(page=page, per_page=words_per_page)
+        filters = [filter.format() for filter in filtered_words.items]
+        total_pages = calculate_total_pages(items_count=filtered_words.total)
 
-        return jsonify(
-            {"success": True, "words": paginated_words, "total_pages": total_pages}
-        )
+        return jsonify({"success": True, "words": filters, "total_pages": total_pages})
 
     # Endpoint: POST /filters
     # Description: Add a word or phrase to the list of filtered words.

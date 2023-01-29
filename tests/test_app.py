@@ -1529,7 +1529,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data["success"])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data["deleted"], 7)
-        self.assertEqual(response_data["userID"], "1")
+        self.assertEqual(response_data["userID"], 1)
 
     # Attempt to empty another user's inbox (user JWT)
     def test_empty_other_users_mailbox_as_user(self):
@@ -1549,7 +1549,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data["success"])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data["deleted"], 2)
-        self.assertEqual(response_data["userID"], "5")
+        self.assertEqual(response_data["userID"], 5)
 
     # Attempt to empty another user's outbox (moderator's JWT)
     def test_empty_other_users_mailbox_as_mod(self):
@@ -1571,7 +1571,7 @@ class TestHugApp(unittest.TestCase):
         self.assertTrue(response_data["success"])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data["deleted"], 2)
-        self.assertEqual(response_data["userID"], "4")
+        self.assertEqual(response_data["userID"], 4)
 
     # Attempt to empty another user's threads mailbox (admin's JWT)
     def test_empty_other_users_mailbox_as_admin(self):
