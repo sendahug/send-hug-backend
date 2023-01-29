@@ -23,15 +23,16 @@ The project is open source, so feel free to use parts of the code. However, the 
 
 ### Requirements
 
-- Python 3
+- Python 3.8+
+- Postgres 13+
 
 ### Developers
 
 1. Download or clone the repo.
 2. cd into the project directory.
 3. cd into backend.
-4. Run ```pip install -r requirements.txt``` to install dependencies.
-5. Run ```pip install pre-commit``` and ```pre-commit install``` to install and initialise pre-commit.
+4. Run ```pip install -r requirements.txt -r dev_requirements.txt``` to install dependencies.
+5. Run ```pre-commit install``` to install and initialise pre-commit.
 6. Create a database for the app.
 7. Update the database URI to match your system.
     - The database URI comes from an environment variable named **DATABASE_URL**.
