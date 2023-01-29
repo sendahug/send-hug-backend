@@ -1362,7 +1362,7 @@ def create_app(test_config=None, db_path=database_path):
     def delete_thread(token_payload, mailbox_type, item_id):
         # Variable indicating whether to delete the message from the databse
         # or leave it in it (for the other user)
-        delete_message = False
+        delete_message: bool = False
 
         # If there's no thread ID, abort
         if item_id is None:
@@ -1372,11 +1372,7 @@ def create_app(test_config=None, db_path=database_path):
 
         # If the mailbox type is inbox or outbox, search for a message
         # with that ID
-        if (
-            mailbox_type == "inbox"
-            or mailbox_type == "outbox"
-            or mailbox_type == "thread"
-        ):
+        if mailbox_type in ["inbox", "outbox", "thread"]:
             delete_item = Message.query.filter(Message.id == item_id).one_or_none()
         # If the mailbox type is threads, search for a thread with that ID
         elif mailbox_type == "threads":
@@ -1390,53 +1386,36 @@ def create_app(test_config=None, db_path=database_path):
             User.auth0_id == token_payload["sub"]
         ).one_or_none()
 
+        # If the user is attempting to delete another user's messages
+        if (
+            (mailbox_type == "inbox" and request_user.id != delete_item.for_id)
+            or (mailbox_type == "outbox" and request_user.id != delete_item.from_id)
+            or (
+                mailbox_type == "threads"
+                and (request_user.id != delete_item.user_1_id)
+                and (request_user.id != delete_item.user_2_id)
+            )
+        ):
+            raise AuthError(
+                {
+                    "code": 403,
+                    "description": "You do not have permission to "
+                    "delete another user's messages.",
+                },
+                403,
+            )
+
         # If the mailbox type is inbox
         if mailbox_type == "inbox":
-            # If the user is attempting to delete another user's messages
-            if request_user.id != delete_item.for_id:
-                raise AuthError(
-                    {
-                        "code": 403,
-                        "description": "You do not have permission to "
-                        "delete another user's messages.",
-                    },
-                    403,
-                )
-            # Otherwise, set the appropriate deleted property
-            else:
-                delete_item.for_deleted = True
+            delete_item.for_deleted = True
         # If the mailbox type is outbox
         elif mailbox_type == "outbox":
-            # If the user is attempting to delete another user's messages
-            if request_user.id != delete_item.from_id:
-                raise AuthError(
-                    {
-                        "code": 403,
-                        "description": "You do not have permission to "
-                        "delete another user's messages.",
-                    },
-                    403,
-                )
-            # Otherwise, set the appropriate deleted property
-            else:
-                delete_item.from_deleted = True
+            delete_item.from_deleted = True
         # If the mailbox type is threads
         elif mailbox_type == "threads":
-            # If the user is attempting to delete another user's thread
-            if (request_user.id != delete_item.user_1_id) and (
-                request_user.id != delete_item.user_2_id
-            ):
-                raise AuthError(
-                    {
-                        "code": 403,
-                        "description": "You do not have permission to "
-                        "delete another user's messages.",
-                    },
-                    403,
-                )
             # Otherwise, if the current user is the thread's user_1, set
             # the appropriate deleted property
-            elif request_user.id == delete_item.user_1_id:
+            if request_user.id == delete_item.user_1_id:
                 delete_item.user_1_deleted = True
             # Or, if the current user is the thread's user_2, set
             # the appropriate deleted property
@@ -1444,18 +1423,20 @@ def create_app(test_config=None, db_path=database_path):
                 delete_item.user_2_deleted = True
 
         # Check the type of item and which user deleted the message/thread
-        if type(delete_item) is Message:
-            # Check if both users deleted the message
-            if delete_item.for_deleted and delete_item.from_deleted:
-                delete_message = True
-            else:
-                delete_message = False
-        elif type(delete_item) is Thread:
-            # Check if both users deleted the thread
-            if delete_item.user_1_deleted and delete_item.user_2_deleted:
-                delete_message = True
-            else:
-                delete_message = False
+        if (
+            type(delete_item) is Message
+            and delete_item.for_deleted
+            and delete_item.from_deleted
+        ):
+            delete_message = True
+        elif (
+            type(delete_item) is Thread
+            and delete_item.user_1_deleted
+            and delete_item.user_2_deleted
+        ):
+            delete_message = True
+        else:
+            delete_message = False
 
         # Try to delete the thread
         try:
@@ -1508,23 +1489,21 @@ def create_app(test_config=None, db_path=database_path):
 
         # If the user is trying to clear their inbox
         if mailbox_type == "inbox":
-            num_messages = len(Message.query.filter(Message.for_id == user_id).all())
+            num_messages = Message.query.filter(Message.for_id == user_id).count()
             # If there are no messages, abort
             if num_messages == 0:
                 abort(404)
         # If the user is trying to clear their outbox
         if mailbox_type == "outbox":
-            num_messages = len(Message.query.filter(Message.from_id == user_id).all())
+            num_messages = Message.query.filter(Message.from_id == user_id).count()
             # If there are no messages, abort
             if num_messages == 0:
                 abort(404)
         # If the user is trying to clear their threads mailbox
         if mailbox_type == "threads":
-            num_messages = len(
-                Thread.query.filter(
-                    (Thread.user_1_id == user_id) or (Thread.user_2_id == user_id)
-                ).all()
-            )
+            num_messages = Thread.query.filter(
+                (Thread.user_1_id == user_id) or (Thread.user_2_id == user_id)
+            ).count()
             # If there are no messages, abort
             if num_messages == 0:
                 abort(404)
