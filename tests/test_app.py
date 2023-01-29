@@ -151,6 +151,8 @@ class TestHugApp(unittest.TestCase):
             "-d",
             "test_sah",
             "tests/capstone_db",
+            "--clean",
+            "--if-exists",
             "-Fc",
             "--no-owner",
             "-h",

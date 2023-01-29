@@ -57,9 +57,6 @@ jobs:
       - run:
           name: Wait for db
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
-      - run:
-          name: Restore database
-          command: psql -c "CREATE DATABASE test_sah;" -h localhost -p 5432 -U postgres
       - save_cache:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
           paths:
