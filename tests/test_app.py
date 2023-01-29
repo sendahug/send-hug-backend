@@ -1512,7 +1512,6 @@ class TestHugApp(unittest.TestCase):
             headers=user_header,
         )
         thread_data = json.loads(get_thread.data)
-        print(thread_data)
 
         self.assertTrue(response_data["success"])
         self.assertEqual(response.status_code, 200)
