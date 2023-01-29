@@ -96,9 +96,8 @@ class Validator:
                 raise ValidationError(
                     {
                         "code": 400,
-                        "description": "You cannot send a report without a reason. \
-                                    Please write something and try to send it \
-                                    again.",
+                        "description": "You cannot send a report without a reason. "
+                        "Please write something and try to send it again.",
                     },
                     400,
                 )
@@ -109,8 +108,8 @@ class Validator:
                 raise ValidationError(
                     {
                         "code": 400,
-                        "description": f"{objType} cannot be empty. Please write \
-                                    something and try again.",
+                        "description": f"{objType} cannot be empty. "
+                        "Please write something and try again.",
                     },
                     400,
                 )

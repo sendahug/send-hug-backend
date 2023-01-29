@@ -30,6 +30,7 @@ import json
 import math
 import sys
 import http.client
+from typing import Dict, List, Any
 from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
@@ -51,7 +52,6 @@ from models import (
     delete_object as db_delete,
     delete_all as db_delete_all,
     update_multiple as db_update_multi,
-    joined_query,
 )
 from auth import (
     AuthError,
@@ -71,7 +71,7 @@ def create_app(test_config=None, db_path=database_path):
     # Flask-SQLAlchemy Setup
     app.config["SQLALCHEMY_DATABASE_URI"] = db_path
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    initialise_db(app)
+    db = initialise_db(app)
     # Utilities
     CORS(app, origins="")
     word_filter = WordFilter()
@@ -90,13 +90,11 @@ def create_app(test_config=None, db_path=database_path):
         response.headers.add("Access-Control-Allow-Origin", os.environ.get("FRONTEND"))
         response.headers.add(
             "Access-Control-Allow-Methods",
-            "GET, POST,\
-                              PATCH, DELETE, OPTIONS",
+            "GET, POST, PATCH, DELETE, OPTIONS",
         )
         response.headers.add(
             "Access-Control-Allow-Headers",
-            "Authorization,\
-                              Content-Type",
+            "Authorization, Content-Type",
         )
 
         return response
@@ -141,14 +139,36 @@ def create_app(test_config=None, db_path=database_path):
     # Authorization: None.
     @app.route("/")
     def index():
-        # Gets the ten most recent posts
-        recent_posts = joined_query("main new")["return"]
+        posts: Dict[str, List[Dict[str, Any]]] = {
+            "recent": [],
+            "suggested": [],
+        }
 
-        # Gets the ten posts with the least hugs
-        suggested_posts = joined_query("main suggested")["return"]
+        for target in posts.keys():
+            posts_query = (
+                db.session.query(Post, User.display_name)
+                .join(User)
+                .filter(Post.open_report == db.false())
+            )
+
+            # Gets the ten most recent posts
+            if target == "recent":
+                posts_query = posts_query.order_by(db.desc(Post.date))
+            # Gets the ten posts with the least hugs
+            else:
+                posts_query = posts_query.order_by(Post.given_hugs, Post.date)
+
+            post_instances = posts_query.limit(10).all()
+
+            # formats each post in the list
+            posts[target] = [post[0].format(user=post[1]) for post in post_instances]
 
         return jsonify(
-            {"success": True, "recent": recent_posts, "suggested": suggested_posts}
+            {
+                "success": True,
+                "recent": posts["recent"],
+                "suggested": posts["suggested"],
+            }
         )
 
     # Endpoint: POST /
@@ -169,8 +189,18 @@ def create_app(test_config=None, db_path=database_path):
         users = User.query.filter(
             User.display_name.ilike("%" + search_query + "%")
         ).all()
-        posts = joined_query("post search", {"query": search_query})["return"]
+
+        posts = (
+            db.session.query(Post, User.display_name)
+            .join(User)
+            .order_by(db.desc(Post.date))
+            .filter(Post.text.like("%" + search_query + "%"))
+            .filter(Post.open_report == db.false())
+            .all()
+        )
+
         formatted_users = []
+        formatted_posts = []
 
         # Get the total number of items
         user_results = len(users)
@@ -180,8 +210,11 @@ def create_app(test_config=None, db_path=database_path):
         for user in users:
             formatted_users.append(user.format())
 
+        # Formats the posts
+        formatted_posts = [post[0].format(user=post[1]) for post in posts]
+
         # Paginates posts
-        paginated_data = paginate(posts, current_page)
+        paginated_data = paginate(formatted_posts, current_page)
         paginated_posts = paginated_data[0]
         total_pages = paginated_data[1]
 
@@ -251,14 +284,10 @@ def create_app(test_config=None, db_path=database_path):
             raise ValidationError(
                 {
                     "code": 400,
-                    "description": "Your text contains "
-                    + str(num_issues)
-                    + " \
-                                forbidden term(s). The following word(s) is/ \
-                                are not allowed: "
-                    + forbidden_words[0:-2]
-                    + ". Please fix your post's \
-                                text and try again.",
+                    "description": f"Your text contains {str(num_issues)}"
+                    " forbidden term(s). The following word(s) is/"
+                    f"are not allowed: {forbidden_words[0:-2]}."
+                    "Please fix your post's text and try again.",
                 },
                 400,
             )
@@ -303,8 +332,8 @@ def create_app(test_config=None, db_path=database_path):
                     raise AuthError(
                         {
                             "code": 403,
-                            "description": "You do not have permission to edit \
-                                        this post.",
+                            "description": "You do not have permission to edit "
+                            "this post.",
                         },
                         403,
                     )
@@ -333,14 +362,10 @@ def create_app(test_config=None, db_path=database_path):
                         raise ValidationError(
                             {
                                 "code": 400,
-                                "description": "Your text contains "
-                                + str(num_issues)
-                                + " forbidden \
-                                            term(s). The following word(s) is/ \
-                                            are not allowed: "
-                                + forbidden_words[0:-2]
-                                + ". Please fix your post's \
-                                            text and try again.",
+                                "description": f"Your text contains {str(num_issues)}"
+                                " forbidden term(s). The following word(s) is/"
+                                f"are not allowed: {forbidden_words[0:-2]}."
+                                "Please fix your post's text and try again.",
                             },
                             400,
                         )
@@ -369,14 +394,10 @@ def create_app(test_config=None, db_path=database_path):
                     raise ValidationError(
                         {
                             "code": 400,
-                            "description": "Your text contains "
-                            + str(num_issues)
-                            + " forbidden \
-                                        term(s). The following word(s) is/ \
-                                        are not allowed: "
-                            + forbidden_words[0:-2]
-                            + ". Please fix your post's \
-                                        text and try again.",
+                            "description": f"Your text contains {str(num_issues)}"
+                            " forbidden term(s). The following word(s) is/"
+                            f"are not allowed: {forbidden_words[0:-2]}."
+                            "Please fix your post's text and try again.",
                         },
                         400,
                     )
@@ -426,8 +447,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to close \
-                                    this post's report.",
+                        "description": "You do not have permission to close "
+                        "this post's report.",
                     },
                     403,
                 )
@@ -500,8 +521,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to delete \
-                                    this post.",
+                        "description": "You do not have permission to delete "
+                        "this post.",
                     },
                     403,
                 )
@@ -525,14 +546,28 @@ def create_app(test_config=None, db_path=database_path):
     def get_new_posts(type):
         page = request.args.get("page", 1, type=int)
 
-        # Gets the recent posts and paginates them
-        full_posts = joined_query("full " + type)["return"]
+        formatted_posts = []
+
+        full_posts_query = (
+            db.session.query(Post, User.display_name)
+            .join(User)
+            .filter(Post.open_report == db.false())
+        )
+
+        if type == "new":
+            full_posts_query = full_posts_query.order_by(db.desc(Post.date))
+        else:
+            full_posts_query = full_posts_query.order_by(Post.given_hugs, Post.date)
+
+        full_posts = full_posts_query.all()
         paginated_data = paginate(full_posts, page)
         paginated_posts = paginated_data[0]
+        formatted_posts = [post[0].format(user=post[1]) for post in paginated_posts]
+
         total_pages = paginated_data[1]
 
         return jsonify(
-            {"success": True, "posts": paginated_posts, "total_pages": total_pages}
+            {"success": True, "posts": formatted_posts, "total_pages": total_pages}
         )
 
     # Endpoint: GET /users/<type>
@@ -548,9 +583,7 @@ def create_app(test_config=None, db_path=database_path):
         if type.lower() == "blocked":
             # Get all blocked users
             users = (
-                # TODO: Replace the True + NOQA with db.true()
-                # Requires passing the db object back to the app
-                User.query.filter(User.blocked == True)  # NOQA
+                User.query.filter(User.blocked == db.true())
                 .order_by(User.release_date)
                 .all()
             )
@@ -637,9 +670,9 @@ def create_app(test_config=None, db_path=database_path):
                     abort(500)
 
         formatted_user_data = user_data.format()
-        formatted_user_data["posts"] = len(
-            Post.query.filter(Post.user_id == user_data.id).all()
-        )
+        formatted_user_data["posts"] = Post.query.filter(
+            Post.user_id == user_data.id
+        ).count()
 
         return jsonify({"success": True, "user": formatted_user_data})
 
@@ -678,9 +711,8 @@ def create_app(test_config=None, db_path=database_path):
             refresh_rate=20,
             push_enabled=False,
             selected_character="kitty",
-            icon_colours='{"character":"#BA9F93",\
-                                       "lbg":"#e2a275","rbg":"#f8eee4",\
-                                       "item":"#f4b56a"}',
+            icon_colours='{"character":"#BA9F93",lbg":"#e2a275",'
+            '"rbg":"#f8eee4","item":"#f4b56a"}',
         )
 
         # Try to add the post to the database
@@ -797,8 +829,8 @@ def create_app(test_config=None, db_path=database_path):
                         raise AuthError(
                             {
                                 "code": 403,
-                                "description": "You do not have permission to \
-                                            edit this user's display name.",
+                                "description": "You do not have permission to "
+                                "edit this user's display name.",
                             },
                             403,
                         )
@@ -829,8 +861,7 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to block \
-                                    this user.",
+                        "description": "You do not have permission to block this user.",
                     },
                     403,
                 )
@@ -863,8 +894,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to \
-                                    edit another user's settings.",
+                        "description": "You do not have permission to edit "
+                        "another user's settings.",
                     },
                     403,
                 )
@@ -959,20 +990,9 @@ def create_app(test_config=None, db_path=database_path):
         user_posts = (
             Post.query.filter(Post.user_id == user_id).order_by(Post.date).all()
         )
-        user_posts_array = []
-
-        # If there are no posts, returns an empty array
-        if user_posts is None:
-            user_posts_array = []
-        # If the user has written posts, formats each post and adds it
-        # to the posts array
-        else:
-            for post in user_posts:
-                user_posts_array.append(post.format())
-
-            paginated_data = paginate(user_posts_array, page)
-            paginated_posts = paginated_data[0]
-            total_pages = paginated_data[1]
+        paginated_data = paginate(user_posts, page)
+        paginated_posts = [post.format() for post in paginated_data[0]]
+        total_pages = paginated_data[1]
 
         return jsonify(
             {
@@ -1004,8 +1024,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to delete \
-                                    another user's posts.",
+                        "description": "You do not have permission to delete "
+                        "another user's posts.",
                     },
                     403,
                 )
@@ -1056,58 +1076,166 @@ def create_app(test_config=None, db_path=database_path):
             raise AuthError(
                 {
                     "code": 403,
-                    "description": "You do not have permission to view another\
-                                user's messages.",
+                    "description": "You do not have permission to view "
+                    "another user's messages.",
                 },
                 403,
             )
 
-        # Checks which mailbox the user is requesting
-        if type == "inbox":
-            message = Message.query.filter(Message.for_id == user_id).all()
-        elif type == "outbox":
-            message = Message.query.filter(Message.from_id == user_id).all()
-        elif type == "threads":
-            message = Message.query.filter(
-                (Message.from_id == user_id) | (Message.for_id == user_id)
-            ).all()
-        elif type == "thread":
-            message = Thread.query.filter(Thread.id == thread_id).one_or_none()
-            # Check if there's a thread with that ID at all
-            if message:
-                # If the user is trying to view a thread that belongs to other
-                # users, raise an AuthError
-                if (message.user_1_id != requesting_user.id) and (
-                    message.user_2_id != requesting_user.id
-                ):
-                    raise AuthError(
-                        {
-                            "code": 403,
-                            "description": "You do not have permission to view \
-                                        another user's messages.",
-                        },
-                        403,
-                    )
+        from_user = db.aliased(User)
+        for_user = db.aliased(User)
 
-        # If there are no messages for the user, return an empty array
-        if not message:
-            user_messages = []
-            paginated_messages = []
-            total_pages = 0
-        # If there are messages, get the user's messages and format them
+        if type in ["inbox", "outbox", "thread"]:
+            messages_query = (
+                db.session.query(
+                    Message,
+                    from_user.display_name,
+                    for_user.display_name,
+                    from_user.selected_character,
+                    from_user.icon_colours,
+                    for_user.selected_character,
+                    for_user.icon_colours,
+                )
+                .join(from_user, from_user.id == Message.from_id)
+                .join(for_user, for_user.id == Message.for_id)
+            )
+
+            # For inbox, gets all incoming messages
+            if type == "inbox":
+                messages_query = messages_query.filter(
+                    Message.for_deleted == db.false()
+                ).filter(Message.for_id == user_id)
+            # For outbox, gets all outgoing messages
+            elif type == "outbox":
+                messages_query = messages_query.filter(
+                    Message.from_deleted == db.false()
+                ).filter(Message.from_id == user_id)
+            # Gets a specific thread's messages
+            else:
+                message = Thread.query.filter(Thread.id == thread_id).one_or_none()
+                # Check if there's a thread with that ID at all
+                if message:
+                    # If the user is trying to view a thread that belongs to other
+                    # users, raise an AuthError
+                    if (message.user_1_id != requesting_user.id) and (
+                        message.user_2_id != requesting_user.id
+                    ):
+                        raise AuthError(
+                            {
+                                "code": 403,
+                                "description": "You do not have permission "
+                                "to view another user's messages.",
+                            },
+                            403,
+                        )
+                else:
+                    abort(404)
+
+                messages_query = messages_query.filter(
+                    ((Message.for_id == user_id) & (Message.for_deleted == db.false()))
+                    | (
+                        (Message.from_id == user_id)
+                        & (Message.from_deleted == db.false())
+                    )
+                ).filter(Message.thread == thread_id)
+
+            messages = messages_query.order_by(db.desc(Message.date)).all()
+
+            paginated_messages = paginate(messages, page)
+            # formats each message in the list
+            formatted_messages = [
+                message[0].format(
+                    from_name=message[1],
+                    from_icon=message[3],
+                    from_colous=json.loads(message[4]) if message[4] else message[4],
+                    for_name=message[2],
+                    for_icon=message[5],
+                    for_colours=json.loads(message[6]) if message[6] else message[6],
+                )
+                for message in paginated_messages[0]
+            ]
+            total_pages = paginated_messages[1]
+
+        # For threads, gets all threads' data
         else:
-            # Gets the user's messages
-            user_messages = joined_query(
-                "messages", {"user_id": user_id, "type": type, "thread_id": thread_id}
-            )["return"]
-            paginated_data = paginate(user_messages, page)
-            paginated_messages = paginated_data[0]
-            total_pages = paginated_data[1]
+            # Get the thread ID, and users' names and IDs
+            threads_messages = (
+                db.session.query(
+                    db.func.count(Message.id),
+                    Message.thread,
+                    from_user.display_name,
+                    from_user.selected_character,
+                    from_user.icon_colours,
+                    for_user.display_name,
+                    for_user.selected_character,
+                    for_user.icon_colours,
+                    Thread.user_1_id,
+                    Thread.user_2_id,
+                    db.func.max(Message.date),
+                )
+                .join(Thread, Message.thread == Thread.id)
+                .join(from_user, from_user.id == Thread.user_1_id)
+                .join(for_user, for_user.id == Thread.user_2_id)
+                .group_by(
+                    Message.thread,
+                    from_user.display_name,
+                    for_user.display_name,
+                    Thread.user_1_id,
+                    Thread.user_2_id,
+                    Thread.id,
+                    from_user.selected_character,
+                    from_user.icon_colours,
+                    for_user.selected_character,
+                    for_user.icon_colours,
+                )
+                .order_by(Thread.id)
+                .filter(
+                    (
+                        (Thread.user_1_id == user_id)
+                        & (Thread.user_1_deleted == db.false())
+                    )
+                    | (
+                        (Thread.user_2_id == user_id)
+                        & (Thread.user_2_deleted == db.false())
+                    )
+                )
+                .all()
+            )
+
+            paginated_threads = paginate(threads_messages, page)
+            formatted_messages = []
+            total_pages = paginated_threads[1]
+
+            # Threads data formatting
+            for thread in paginated_threads[0]:
+                # Set up the thread
+                thread_json = {
+                    "id": thread[1],
+                    "user1": {
+                        "displayName": thread[2],
+                        "selectedIcon": thread[3],
+                        "iconColours": json.loads(thread[4])
+                        if thread[4]
+                        else thread[4],
+                    },
+                    "user1Id": thread[8],
+                    "user2": {
+                        "displayName": thread[5],
+                        "selectedIcon": thread[6],
+                        "iconColours": json.loads(thread[7])
+                        if thread[7]
+                        else thread[7],
+                    },
+                    "user2Id": thread[9],
+                    "numMessages": thread[0],
+                    "latestMessage": thread[10],
+                }
+                formatted_messages.append(thread_json)
 
         return jsonify(
             {
                 "success": True,
-                "messages": paginated_messages,
+                "messages": formatted_messages,
                 "current_page": page,
                 "total_pages": total_pages,
             }
@@ -1132,8 +1260,8 @@ def create_app(test_config=None, db_path=database_path):
             raise AuthError(
                 {
                     "code": 403,
-                    "description": "You do not have permission to send a message\
-                                on behalf of another user.",
+                    "description": "You do not have permission to "
+                    "send a message on behalf of another user.",
                 },
                 403,
             )
@@ -1149,14 +1277,10 @@ def create_app(test_config=None, db_path=database_path):
             raise ValidationError(
                 {
                     "code": 400,
-                    "description": "Your message contains "
-                    + str(num_issues)
-                    + " \
-                                forbidden term(s). The following word(s) is/ \
-                                are not allowed: "
-                    + forbidden_words[0:-2]
-                    + ". Please fix your post's \
-                                text and try again.",
+                    "description": f"Your message contains {str(num_issues)}"
+                    " forbidden term(s). The following word(s) is/"
+                    f"are not allowed: {forbidden_words[0:-2]}."
+                    "Please fix your post's text and try again.",
                 },
                 400,
             )
@@ -1295,8 +1419,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to delete \
-                                    another user's messages.",
+                        "description": "You do not have permission to "
+                        "delete another user's messages.",
                     },
                     403,
                 )
@@ -1310,8 +1434,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to delete \
-                                    another user's messages.",
+                        "description": "You do not have permission to "
+                        "delete another user's messages.",
                     },
                     403,
                 )
@@ -1327,8 +1451,8 @@ def create_app(test_config=None, db_path=database_path):
                 raise AuthError(
                     {
                         "code": 403,
-                        "description": "You do not have permission to delete\
-                                    another user's messages.",
+                        "description": "You do not have permission to "
+                        "delete another user's messages.",
                     },
                     403,
                 )
@@ -1398,8 +1522,8 @@ def create_app(test_config=None, db_path=database_path):
             raise AuthError(
                 {
                     "code": 403,
-                    "description": "You do not have permission to delete another\
-                                user's messages.",
+                    "description": "You do not have permission "
+                    "to delete another user's messages.",
                 },
                 403,
             )
@@ -1443,28 +1567,48 @@ def create_app(test_config=None, db_path=database_path):
     @app.route("/reports")
     @requires_auth(["read:admin-board"])
     def get_open_reports(token_payload):
-        user_reports_page = request.args.get("userPage", 1, type=int)
-        post_reports_page = request.args.get("postPage", 1, type=int)
+        reports: Dict[str, List[Dict[str, Any]]] = {
+            "User": [],
+            "Post": [],
+        }
 
-        # Get the user and post reports
-        user_reports = joined_query("user reports")["return"]
-        post_reports = joined_query("post reports")["return"]
+        total_pages: Dict[str, int] = {
+            "User": 0,
+            "Post": 0,
+        }
 
-        # Paginate user and posts reports
-        paginated_user_data = paginate(user_reports, user_reports_page)
-        paginated_user_reports = paginated_user_data[0]
-        total_user_pages = paginated_user_data[1]
-        paginated_post_data = paginate(post_reports, post_reports_page)
-        paginated_post_reports = paginated_post_data[0]
-        total_post_pages = paginated_post_data[1]
+        for report_type in reports.keys():
+            if report_type == "User":
+                report_query = db.session.query(Report, User.display_name).join(
+                    User, User.id == Report.user_id
+                )
+            else:
+                report_query = db.session.query(Report, Post.text).join(Post)
+
+            report_instances = (
+                report_query.filter(Report.closed == db.false())
+                .filter(Report.type == report_type)
+                .order_by(db.desc(Report.date))
+                .all()
+            )
+
+            reports_page = request.args.get(f"{report_type.lower()}Page", 1, type=int)
+            paginated_reports = paginate(report_instances, reports_page)
+            total_pages[report_type] = paginated_reports[1]
+
+            # Formats the reports
+            for report in paginated_reports[0]:
+                formatted_report = report[0].format()
+                formatted_report["displayName"] = report[1]
+                reports[report_type].append(formatted_report)
 
         return jsonify(
             {
                 "success": True,
-                "userReports": paginated_user_reports,
-                "totalUserPages": total_user_pages,
-                "postReports": paginated_post_reports,
-                "totalPostPages": total_post_pages,
+                "userReports": reports["User"],
+                "totalUserPages": total_pages["User"],
+                "postReports": reports["Post"],
+                "totalPostPages": total_pages["Post"],
             }
         )
 
@@ -1604,11 +1748,7 @@ def create_app(test_config=None, db_path=database_path):
     def get_filters(token_payload):
         page = request.args.get("page", 1, type=int)
         filtered_words = Filter.query.all()
-        filters = []
-
-        # Get the formatted words
-        for filter in filtered_words:
-            filters.append(filter.format())
+        filters = [filter.format() for filter in filtered_words]
 
         # Paginate the filtered words
         words_per_page = 10
@@ -1687,11 +1827,34 @@ def create_app(test_config=None, db_path=database_path):
         if user is None:
             abort(404)
 
-        # Get user notifications
-        notifications = joined_query(
-            "notifications",
-            {"user_id": user.id, "last_read": user.last_notifications_read},
-        )["return"]
+        user_id = user.id
+        last_read = user.last_notifications_read
+
+        # If there's no last_read date, it means the user never checked
+        # their notifications, so set it to the time this feature was added
+        if last_read is None:
+            last_read = datetime(2020, 7, 1, 12, 00)
+
+        from_user = db.aliased(User)
+        for_user = db.aliased(User)
+
+        # Gets all new notifications
+        notifications = (
+            db.session.query(
+                Notification, from_user.display_name, for_user.display_name
+            )
+            .join(from_user, from_user.id == Notification.from_id)
+            .join(for_user, for_user.id == Notification.for_id)
+            .filter(Notification.for_id == user_id)
+            .filter(Notification.date > last_read)
+            .order_by(Notification.date)
+            .all()
+        )
+
+        formatted_notifications = [
+            notification[0].format(from_name=notification[1], for_name=notification[2])
+            for notification in notifications
+        ]
 
         # Updates the user's 'last read' time only if this fetch was
         # triggered by the user (meaning, they're looking at the
@@ -1705,7 +1868,7 @@ def create_app(test_config=None, db_path=database_path):
             except Exception:
                 abort(500)
 
-        return jsonify({"success": True, "notifications": notifications})
+        return jsonify({"success": True, "notifications": formatted_notifications})
 
     # Endpoint: POST /notifications
     # Description: Add a new PushSubscription to the database (for push
@@ -1837,8 +2000,8 @@ def create_app(test_config=None, db_path=database_path):
                 {
                     "success": False,
                     "code": 409,
-                    "message": "Conflict. The resource you were trying to create \
-                        already exists.",
+                    "message": "Conflict. The resource you were trying to create"
+                    "already exists.",
                 }
             ),
             409,

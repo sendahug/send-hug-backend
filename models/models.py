@@ -27,6 +27,7 @@
 
 import os
 import json
+from typing import Dict
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -37,9 +38,11 @@ db = SQLAlchemy()
 
 
 # Database setup
-def initialise_db(app):
+def initialise_db(app) -> SQLAlchemy:
     db.init_app(app)
     migrate = Migrate(app, db)  # NOQA - required by flask-migrate
+
+    return db
 
 
 # Models
@@ -58,10 +61,11 @@ class Post(db.Model):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self):
+    def format(self, user: str = ""):
         return {
             "id": self.id,
             "userId": self.user_id,
+            "user": user,
             "text": self.text,
             "date": self.date,
             "givenHugs": self.given_hugs,
@@ -89,8 +93,8 @@ class User(db.Model):
     selected_character = db.Column(db.String(6), default="kitty")
     icon_colours = db.Column(
         db.String(),
-        default='{"character":"#BA9F93", "lbg":"#e2a275", \
-                "rbg":"#f8eee4", "item":"#f4b56a"}',
+        default='{"character":"#BA9F93", "lbg":"#e2a275",'
+        '"rbg":"#f8eee4", "item":"#f4b56a"}',
     )
     posts = db.relationship("Post", backref="user")
 
@@ -132,11 +136,29 @@ class Message(db.Model):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self):
+    def format(
+        self,
+        from_name: str = "",
+        from_icon: str = "",
+        from_colous: Dict[str, str] = {},
+        for_name: str = "",
+        for_icon: str = "",
+        for_colours: Dict[str, str] = {},
+    ):
         return {
             "id": self.id,
             "fromId": self.from_id,
+            "from": {
+                "displayName": from_name,
+                "selectedIcon": from_icon,
+                "iconColours": from_colous,
+            },
             "forId": self.for_id,
+            "for": {
+                "displayName": for_name,
+                "selectedIcon": for_icon,
+                "iconColours": for_colours,
+            },
             "messageText": self.text,
             "date": self.date,
             "threadID": self.thread,
@@ -215,11 +237,13 @@ class Notification(db.Model):
     date = db.Column(db.DateTime, nullable=False)
 
     # Format method
-    def format(self):
+    def format(self, from_name: str = "", for_name: str = ""):
         return {
             "id": self.id,
             "fromId": self.from_id,
+            "from": from_name,
             "forId": self.for_id,
+            "for": for_name,
             "type": self.type,
             "text": self.text,
             "date": self.date,

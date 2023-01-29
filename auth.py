@@ -144,8 +144,7 @@ def verify_jwt(token):
             raise AuthError(
                 {
                     "code": 401,
-                    "description": "Unauthorised. Your token contains invalid \
-                                claims.",
+                    "description": "Unauthorised. Your token contains invalid claims.",
                 },
                 401,
             )
@@ -174,8 +173,8 @@ def check_permissions(permission, payload):
         raise AuthError(
             {
                 "code": 403,
-                "description": "Unauthorised. You do not have permission to \
-                            perform this action.",
+                "description": "Unauthorised. You do not have permission "
+                "to perform this action.",
             },
             403,
         )
@@ -190,8 +189,8 @@ def check_permissions(permission, payload):
             raise AuthError(
                 {
                     "code": 403,
-                    "description": "Unauthorised. You do not have permission to \
-                                perform this action.",
+                    "description": "Unauthorised. You do not have permission "
+                    "to perform this action.",
                 },
                 403,
             )
@@ -202,8 +201,8 @@ def check_permissions(permission, payload):
             raise AuthError(
                 {
                     "code": 403,
-                    "description": "Unauthorised. You do not have permission to \
-                                perform this action.",
+                    "description": "Unauthorised. You do not have permission "
+                    "to perform this action.",
                 },
                 403,
             )

@@ -39,7 +39,6 @@ from .models import (
     database_path,
 )
 from .db_helpers import (
-    joined_query,
     add,
     update,
     update_multiple,
