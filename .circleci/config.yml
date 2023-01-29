@@ -64,7 +64,7 @@ jobs:
             - "/usr/local/lib/python3.9/site-packages"
       - run:
           command: |
-            coverage run -W always::DeprecationWarning -m unittest tests/test_app.py
+            python3 -W always::DeprecationWarning -m unittest tests/test_app.py
 
 # Conditionally run testing depending on branch
 # Once it's done, run codecov to upload test coverage
@@ -78,7 +78,8 @@ workflows:
         - equal: [ dev, << pipeline.git.branch >> ]
     jobs:
       - lint
-      - build:
-          post-steps:
-            - run:
-                command: codecov
+      - build
+      # - build:
+      #     post-steps:
+      #       - run:
+      #           command: codecov
