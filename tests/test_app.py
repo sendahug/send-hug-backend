@@ -32,7 +32,7 @@ import urllib.request
 import sys
 from sh import pg_restore
 
-from app import create_app
+from create_app import create_app
 from models import db
 
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
