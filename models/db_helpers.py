@@ -25,7 +25,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from flask import jsonify
+from typing import Literal, Any, Union
+
+from flask import jsonify, Response
 
 from .models import Post, Message, Thread, db
 
@@ -35,7 +37,9 @@ from .models import Post, Message, Thread, db
 # Method: Add
 # Description: Inserts a new record into the database.
 # Parameters: Object to insert (User, Post or Message).
-def add(obj):
+def add(
+    obj: db.Model,  # type: ignore[name-defined]
+) -> dict[str, Union[bool, dict[str, Any]]]:
     return_object = {}
 
     # Try to add the object to the database
@@ -56,7 +60,7 @@ def add(obj):
 # Method: Update
 # Description: Updates an existing record.
 # Parameters: Updated object (User, Post or Message).
-def update(obj, params={}):
+def update(obj: db.Model, params={}) -> Response:  # type: ignore[name-defined]
     updated_object = {}
 
     # Try to update the object in the database
@@ -109,7 +113,9 @@ def update(obj, params={}):
 # Method: Update Multiple
 # Description: Updates multiple records.
 # Parameters: A list with all objects to update.
-def update_multiple(objs=[]):
+def update_multiple(
+    objs: list[db.Model] = [],  # type: ignore[name-defined]
+) -> Response:
     updated_objects = []
 
     # Try to update the object in the database
@@ -130,7 +136,7 @@ def update_multiple(objs=[]):
 # Method: Delete Object
 # Description: Deletes an existing record.
 # Parameters: Object (User, Post or Message) to delete.
-def delete_object(obj):
+def delete_object(obj: db.Model) -> Response:  # type: ignore[name-defined]
     deleted = None
 
     # Try to delete the record from the database
@@ -157,7 +163,9 @@ def delete_object(obj):
 # Description: Deletes all records that match a condition.
 # Parameters: Type - type of item to delete (posts or messages)
 #             ID - ID of the user whose posts or messages need to be deleted.
-def delete_all(type, id):
+def delete_all(
+    type: Literal["posts", "inbox", "outbox", "threads"], id: int
+) -> Response:
     # Try to delete the records
     try:
         # If the type of objects to delete is posts, the ID is the

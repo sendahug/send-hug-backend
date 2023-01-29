@@ -29,16 +29,17 @@ import os
 import json
 from typing import Dict
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+from flask_migrate import Migrate  # type: ignore
+from flask import Flask
 
 # Database configuration
-database_path = os.environ.get("DATABASE_URL")
+database_path = os.environ.get("DATABASE_URL", "")
 
 db = SQLAlchemy()
 
 
 # Database setup
-def initialise_db(app) -> SQLAlchemy:
+def initialise_db(app: Flask) -> SQLAlchemy:
     db.init_app(app)
     migrate = Migrate(app, db)  # NOQA - required by flask-migrate
 
@@ -48,7 +49,7 @@ def initialise_db(app) -> SQLAlchemy:
 # Models
 # -----------------------------------------------------------------
 # Post Model
-class Post(db.Model):
+class Post(db.Model):  # type: ignore[name-defined]
     __tablename__ = "posts"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -74,7 +75,7 @@ class Post(db.Model):
 
 
 # User Model
-class User(db.Model):
+class User(db.Model):  # type: ignore[name-defined]
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     display_name = db.Column(db.String(60), nullable=False)
@@ -123,7 +124,7 @@ class User(db.Model):
 
 
 # Message Model
-class Message(db.Model):
+class Message(db.Model):  # type: ignore[name-defined]
     __tablename__ = "messages"
     id = db.Column(db.Integer, primary_key=True)
     from_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -166,7 +167,7 @@ class Message(db.Model):
 
 
 # Thread Model
-class Thread(db.Model):
+class Thread(db.Model):  # type: ignore[name-defined]
     __tablename__ = "threads"
     id = db.Column(db.Integer, primary_key=True)
     user_1_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -182,7 +183,7 @@ class Thread(db.Model):
 
 
 # Report Model
-class Report(db.Model):
+class Report(db.Model):  # type: ignore[name-defined]
     __tablename__ = "reports"
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String(10), nullable=False)
@@ -227,7 +228,7 @@ class Report(db.Model):
 
 
 # Notification Model
-class Notification(db.Model):
+class Notification(db.Model):  # type: ignore[name-defined]
     __tablename__ = "notifications"
     id = db.Column(db.Integer, primary_key=True)
     for_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -251,7 +252,7 @@ class Notification(db.Model):
 
 
 # Notification Subscription Model
-class NotificationSub(db.Model):
+class NotificationSub(db.Model):  # type: ignore[name-defined]
     __tablename__ = "subscriptions"
     id = db.Column(db.Integer, primary_key=True)
     user = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -269,7 +270,7 @@ class NotificationSub(db.Model):
 
 
 # Filter
-class Filter(db.Model):
+class Filter(db.Model):  # type: ignore[name-defined]
     __tablename__ = "filters"
     id = db.Column(db.Integer, primary_key=True)
     filter = db.Column(db.String(), nullable=False)

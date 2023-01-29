@@ -30,7 +30,7 @@ import json
 import os
 import urllib.request
 import sys
-from sh import pg_restore
+from sh import pg_restore  # type: ignore
 
 from create_app import create_app
 from models import db
@@ -54,10 +54,10 @@ from tests.dummy_data import (
     report_post,
 )
 
-AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
-API_AUDIENCE = os.environ.get("API_AUDIENCE")
-TEST_CLIENT_ID = os.environ.get("TEST_CLIENT_ID")
-TEST_CLIENT_SECRET = os.environ.get("TEST_CLIENT_SECRET")
+AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
+API_AUDIENCE = os.environ.get("API_AUDIENCE", "")
+TEST_CLIENT_ID = os.environ.get("TEST_CLIENT_ID", "")
+TEST_CLIENT_SECRET = os.environ.get("TEST_CLIENT_SECRET", "")
 
 # Tokens
 access_tokens = {
@@ -98,8 +98,8 @@ def get_user_tokens():
         url = "https://" + AUTH0_DOMAIN + "/oauth/token"
 
         # Get the user's username and password
-        role_username = os.environ.get(role.upper() + "_USERNAME")
-        role_password = os.environ.get(role.upper() + "_PASSWORD")
+        role_username = os.environ.get(role.upper() + "_USERNAME", "")
+        role_password = os.environ.get(role.upper() + "_PASSWORD", "")
 
         data = (
             "grant_type=password&username="
@@ -909,7 +909,7 @@ class TestHugApp(unittest.TestCase):
 
         self.assertTrue(response_data["success"])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(updated["id"], int(user["id"]))
+        self.assertEqual(updated["id"], int(sample_user_id))
 
     # Attempt to update another user's settings (admin's JWT)
     def test_update_user_settings_as_admin(self):

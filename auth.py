@@ -27,17 +27,19 @@
 
 import json
 import os
-from jose import jwt
+from typing import Any, cast
+
+from jose import jwt, exceptions
 from urllib.request import urlopen
 import http.client
 from functools import wraps
 from flask import request
 
 # Auth0 Configuration
-AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
-API_AUDIENCE = os.environ.get("API_AUDIENCE")
-CLIENT_ID = os.environ.get("CLIENT_ID")
-CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
+API_AUDIENCE = os.environ.get("API_AUDIENCE", "")
+CLIENT_ID = os.environ.get("CLIENT_ID", "")
+CLIENT_SECRET = os.environ.get("CLIENT_SECRET", "")
 ALGORITHMS = ["RS256"]
 
 
@@ -55,7 +57,7 @@ class AuthError(Exception):
 #              preliminary verification that the JWT is in the correct form.
 # Parameters: None
 # Returns: split_auth_header[1] - The JSON web token.
-def get_auth_header():
+def get_auth_header() -> str:
     # If there's no auth header, raise an error
     if "Authorization" not in request.headers:
         raise AuthError(
@@ -63,7 +65,7 @@ def get_auth_header():
         )
 
     # Gets the auth header and splits it
-    auth_header = request.headers.get("Authorization")
+    auth_header: str = cast(str, request.headers.get("Authorization"))
     split_auth_header = auth_header.split(" ")
 
     # Checks that there are two parts to the header value and that the first
@@ -86,7 +88,7 @@ def get_auth_header():
 #              authentic, still valid and hasn't been tampered with.
 # Parameters: token - a JSON Web Token.
 # Returns: payload - The payload from the decoded token.
-def verify_jwt(token):
+def verify_jwt(token: str) -> dict[str, Any]:
     # Gets the JWKS from Auth0
     auth_json = urlopen("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json")
     jwks = json.loads(auth_json.read())
@@ -127,25 +129,25 @@ def verify_jwt(token):
                 audience=API_AUDIENCE,
                 issuer="https://" + AUTH0_DOMAIN + "/",
             )
-        # If the signature is invalid
-        except jwt.JWTError:
-            raise AuthError(
-                {"code": 401, "description": "Unauthorised. Your token is invalid."},
-                401,
-            )
         # If the token expired
-        except jwt.ExpiredSignatureError:
+        except exceptions.ExpiredSignatureError:
             raise AuthError(
                 {"code": 401, "description": "Unauthorised. Your token has expired."},
                 401,
             )
         # If any claim in the token is invalid
-        except jwt.JWTClaimsError:
+        except exceptions.JWTClaimsError:
             raise AuthError(
                 {
                     "code": 401,
                     "description": "Unauthorised. Your token contains invalid claims.",
                 },
+                401,
+            )
+        # If the signature is invalid
+        except exceptions.JWTError:
+            raise AuthError(
+                {"code": 401, "description": "Unauthorised. Your token is invalid."},
                 401,
             )
         # If there's any other error
@@ -167,7 +169,7 @@ def verify_jwt(token):
 #                                 of permissions.
 #             payload - The payload from the decoded, verified JWT.
 # Returns: True - Boolean confirming the user has the required permission.
-def check_permissions(permission, payload):
+def check_permissions(permission: list[str], payload: dict[str, Any]) -> bool:
     # Check whether permissions are included in the token payload
     if "permissions" not in payload:
         raise AuthError(
@@ -235,8 +237,8 @@ def requires_auth(permission=[""]):
 # Parameters: None.
 # Returns: Either the verified token's payload (payload) or a 'token expired'
 #          message if the token expired.
-def check_mgmt_api_token():
-    token = os.environ.get("MGMT_API_TOKEN")
+def check_mgmt_api_token() -> str:
+    token = os.environ.get("MGMT_API_TOKEN", "")
     token_header = jwt.get_unverified_header(token)
 
     # Gets the JWKS from Auth0
@@ -265,7 +267,7 @@ def check_mgmt_api_token():
                 issuer="https://" + AUTH0_DOMAIN + "/",
             )
         # If the token expired
-        except jwt.ExpiredSignatureError:
+        except exceptions.ExpiredSignatureError:
             return "token expired"
         # If there's any other error
         except Exception as e:

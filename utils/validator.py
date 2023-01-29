@@ -25,6 +25,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from typing import Union
+
+
 # Validation Error
 class ValidationError(Exception):
     def __init__(self, error, status_code):
@@ -34,14 +37,14 @@ class ValidationError(Exception):
 
 # Validator
 class Validator:
-    constraints = {}
+    constraints: dict[str, dict[str, int]] = {}
 
     # INIT
-    def __init__(self, types):
+    def __init__(self, types: dict[str, dict[str, int]]):
         self.constraints = types
 
     # Checks the length according to the given types
-    def check_length(self, data, objType):
+    def check_length(self, data: str, objType: str):
         too_long_error = "Your {} is too long! Please shorten it and then try again."
         too_short_error = (
             "Your {} cannot be empty. Please write something and then try again."
@@ -117,7 +120,7 @@ class Validator:
         return True
 
     # Checks the type of the given item
-    def check_type(self, data, objType):
+    def check_type(self, data: Union[str, int], objType: str):
         text_types = [
             "post text",
             "message text",

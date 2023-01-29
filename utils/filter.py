@@ -25,17 +25,32 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from dataclasses import dataclass
+
 from models import Filter
+
+
+@dataclass(init=True)
+class BadWordData:
+    badword: str
+    index: int
+
+
+@dataclass(init=True)
+class Blacklisted:
+    is_blacklisted: bool
+    badword_indexes: list[BadWordData]
+    forbidden_words: str
 
 
 # Filter class
 # inspired by Wordfilter: https://pypi.org/project/wordfilter/
 class WordFilter:
     # Check if there's a blacklisted word in the text
-    def blacklisted(self, string):
+    def blacklisted(self, string: str) -> Blacklisted:
         filtered_words = Filter.query.all()
         test_string = string.lower()
-        badword_indexes = []
+        badword_indexes: list[BadWordData] = []
         is_blacklisted = False
 
         # Check each word
@@ -43,11 +58,14 @@ class WordFilter:
             if filter.filter in test_string:
                 is_blacklisted = True
                 badword_indexes.append(
-                    {
-                        "badword": filter.filter,
-                        "index": test_string.index(filter.filter),
-                    }
+                    BadWordData(
+                        badword=filter.filter, index=test_string.index(filter.filter)
+                    )
                 )
 
         # return
-        return {"blacklisted": is_blacklisted, "indexes": badword_indexes}
+        return Blacklisted(
+            is_blacklisted=is_blacklisted,
+            badword_indexes=badword_indexes,
+            forbidden_words=",".join([word.badword for word in badword_indexes]),
+        )

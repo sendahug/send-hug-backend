@@ -23,8 +23,8 @@ The project is open source, so feel free to use parts of the code. However, the 
 
 ### Requirements
 
-- Python 3.8+
-- Postgres 13+
+- Python 3.9+
+- Postgres 13
 
 ### Developers
 

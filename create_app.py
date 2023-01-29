@@ -30,11 +30,11 @@ import json
 import math
 import sys
 import http.client
-from typing import Dict, List, Any
+from typing import Dict, List, Any, cast
 from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
-from pywebpush import webpush, WebPushException
+from pywebpush import webpush, WebPushException  # type: ignore
 
 from models import (
     database_path,
@@ -65,7 +65,7 @@ from utils.validator import Validator, ValidationError
 from utils.push_notifications import generate_push_data, generate_vapid_claims
 
 
-def create_app(test_config=None, db_path=database_path):
+def create_app(db_path: str = database_path) -> Flask:
     # create and configure the app
     app = Flask(__name__)
     # Flask-SQLAlchemy Setup
@@ -243,7 +243,7 @@ def create_app(test_config=None, db_path=database_path):
         blacklist_check = word_filter.blacklisted(new_post_data["text"])
 
         # If there's no blacklisted word, add the new post to the database
-        if blacklist_check["blacklisted"] is False:
+        if blacklist_check.is_blacklisted is False:
             # Check the length adn  type of the post's text
             validator.check_length(new_post_data["text"], "post")
             validator.check_type(new_post_data["text"], "post text")
@@ -265,16 +265,13 @@ def create_app(test_config=None, db_path=database_path):
                 abort(500)
         # If there's a blacklisted word / phrase, alert the user
         else:
-            num_issues = len(blacklist_check["indexes"])
-            forbidden_words = "".join(
-                [str(word["badword"]) + ", " for word in blacklist_check["indexes"]]
-            )
+            num_issues = len(blacklist_check.badword_indexes)
             raise ValidationError(
                 {
                     "code": 400,
                     "description": f"Your text contains {str(num_issues)}"
                     " forbidden term(s). The following word(s) is/"
-                    f"are not allowed: {forbidden_words[0:-2]}."
+                    f"are not allowed: {blacklist_check.forbidden_words}."
                     "Please fix your post's text and try again.",
                 },
                 400,
@@ -332,7 +329,7 @@ def create_app(test_config=None, db_path=database_path):
                 if original_post.text != updated_post["text"]:
                     blacklist_check = word_filter.blacklisted(updated_post["text"])
                     # If there's no blacklisted word, add the new post to the database
-                    if blacklist_check["blacklisted"] is False:
+                    if blacklist_check.is_blacklisted is False:
                         # Check the length adn  type of the post's text
                         validator.check_length(updated_post["text"], "post")
                         validator.check_type(updated_post["text"], "post text")
@@ -340,19 +337,13 @@ def create_app(test_config=None, db_path=database_path):
                         original_post.text = updated_post["text"]
                     # If there's a blacklisted word / phrase, alert the user
                     else:
-                        num_issues = len(blacklist_check["indexes"])
-                        forbidden_words = "".join(
-                            [
-                                str(word["badword"]) + ", "
-                                for word in blacklist_check["indexes"]
-                            ]
-                        )
+                        num_issues = len(blacklist_check.badword_indexes)
                         raise ValidationError(
                             {
                                 "code": 400,
                                 "description": f"Your text contains {str(num_issues)}"
                                 " forbidden term(s). The following word(s) is/"
-                                f"are not allowed: {forbidden_words[0:-2]}."
+                                f"are not allowed: {blacklist_check.forbidden_words}."
                                 "Please fix your post's text and try again.",
                             },
                             400,
@@ -364,7 +355,7 @@ def create_app(test_config=None, db_path=database_path):
             if original_post.text != updated_post["text"]:
                 blacklist_check = word_filter.blacklisted(updated_post["text"])
                 # If there's no blacklisted word, add the new post to the database
-                if blacklist_check["blacklisted"] is False:
+                if blacklist_check.is_blacklisted is False:
                     # Check the length adn  type of the post's text
                     validator.check_length(updated_post["text"], "post")
                     validator.check_type(updated_post["text"], "post text")
@@ -372,19 +363,14 @@ def create_app(test_config=None, db_path=database_path):
                     original_post.text = updated_post["text"]
                 # If there's a blacklisted word / phrase, alert the user
                 else:
-                    num_issues = len(blacklist_check["indexes"])
-                    forbidden_words = "".join(
-                        [
-                            str(word["badword"]) + ", "
-                            for word in blacklist_check["indexes"]
-                        ]
-                    )
+                    num_issues = len(blacklist_check.badword_indexes)
+
                     raise ValidationError(
                         {
                             "code": 400,
                             "description": f"Your text contains {str(num_issues)}"
                             " forbidden term(s). The following word(s) is/"
-                            f"are not allowed: {forbidden_words[0:-2]}."
+                            f"are not allowed: {blacklist_check.forbidden_words}."
                             "Please fix your post's text and try again.",
                         },
                         400,
@@ -1247,17 +1233,15 @@ def create_app(test_config=None, db_path=database_path):
         blacklist_check = word_filter.blacklisted(message_data["messageText"])
 
         # If there's a blacklisted word / phrase, alert the user
-        if blacklist_check["blacklisted"] is True:
-            num_issues = len(blacklist_check["indexes"])
-            forbidden_words = "".join(
-                [str(word["badword"]) + ", " for word in blacklist_check["indexes"]]
-            )
+        if blacklist_check.is_blacklisted:
+            num_issues = len(blacklist_check.badword_indexes)
+
             raise ValidationError(
                 {
                     "code": 400,
                     "description": f"Your message contains {str(num_issues)}"
                     " forbidden term(s). The following word(s) is/"
-                    f"are not allowed: {forbidden_words[0:-2]}."
+                    f"are not allowed: {blacklist_check.forbidden_words}."
                     "Please fix your post's text and try again.",
                 },
                 400,
@@ -1293,7 +1277,7 @@ def create_app(test_config=None, db_path=database_path):
             # Try to create the new thread
             try:
                 data = db_add(new_thread)
-                thread_id = data["added"]["id"]
+                thread_id = cast(dict[str, Any], data["added"])["id"]
             # If there's an error, abort
             except Exception:
                 abort(500)
@@ -1462,7 +1446,7 @@ def create_app(test_config=None, db_path=database_path):
     @app.route("/messages/<mailbox_type>", methods=["DELETE"])
     @requires_auth(["delete:messages"])
     def clear_mailbox(token_payload, mailbox_type):
-        user_id = request.args.get("userID")
+        user_id = request.args.get("userID", type=int)
 
         # If there's no specified mailbox, abort
         if mailbox_type is None:
@@ -1864,7 +1848,11 @@ def create_app(test_config=None, db_path=database_path):
         except Exception:
             abort(500)
 
-        return {"success": True, "subscribed": subscribed, "subId": sub["id"]}
+        return {
+            "success": True,
+            "subscribed": subscribed,
+            "subId": cast(dict[str, Any], sub)["id"],
+        }
 
     # Endpoint: PATCH /notifications
     # Description: Add a new PushSubscription to the database (for push
