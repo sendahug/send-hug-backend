@@ -22,7 +22,6 @@ jobs:
         environment:
           FLASK_CONFIG: testing
           TEST_DATABASE_URL: postgresql://postgres:password@localhost:5432/test_sah?sslmode=disable
-          SQLALCHEMY_WARN_20: 1
       - image: cimg/postgres:13.8
         auth:
           username: mydockerhub-user
@@ -64,7 +63,7 @@ jobs:
             - "/usr/local/lib/python3.9/site-packages"
       - run:
           command: |
-            python3 -W always::DeprecationWarning -m unittest tests/test_app.py
+            coverage run -m unittest tests/test_app.py
 
 # Conditionally run testing depending on branch
 # Once it's done, run codecov to upload test coverage
@@ -78,8 +77,7 @@ workflows:
         - equal: [ dev, << pipeline.git.branch >> ]
     jobs:
       - lint
-      - build
-      # - build:
-      #     post-steps:
-      #       - run:
-      #           command: codecov
+      - build:
+          post-steps:
+            - run:
+                command: codecov
