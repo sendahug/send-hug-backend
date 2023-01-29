@@ -59,7 +59,7 @@ jobs:
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
       - run:
           name: Restore database
-          command: psql -h localhost -p 5432 -U postgres test-capstone < tests/capstone_db.sql
+          command: echo "CREATE DATABASE test-capstone;" | sudo -u postgres psql
       - save_cache:
           key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
           paths:

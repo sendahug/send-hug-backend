@@ -152,7 +152,6 @@ class TestHugApp(unittest.TestCase):
             "test-capstone",
             "tests/capstone_db",
             "-Fc",
-            "-c",
             "--no-owner",
             "-h",
             "localhost",
