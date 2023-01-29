@@ -142,14 +142,14 @@ class TestHugApp(unittest.TestCase):
 
     # Setting up each test
     def setUp(self):
-        test_db_path = "postgresql://postgres:password@localhost:5432/test-capstone"
+        test_db_path = "postgresql://postgres:password@localhost:5432/test_sah"
         self.app = create_app(db_path=test_db_path)
         self.client = self.app.test_client
         self.db = db
 
         pg_restore(
             "-d",
-            "test-capstone",
+            "test_sah",
             "tests/capstone_db",
             "-Fc",
             "--no-owner",
