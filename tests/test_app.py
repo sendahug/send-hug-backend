@@ -102,16 +102,9 @@ def get_user_tokens():
         role_password = os.environ.get(role.upper() + "_PASSWORD", "")
 
         data = (
-            "grant_type=password&username="
-            + role_username
-            + "&password="
-            + role_password
-            + "&audience="
-            + API_AUDIENCE
-            + "&client_id="
-            + TEST_CLIENT_ID
-            + "&client_secret="
-            + TEST_CLIENT_SECRET
+            f"grant_type=password&username={role_username}"
+            f"&password={role_password}&audience={API_AUDIENCE}"
+            f"&client_id={TEST_CLIENT_ID}&client_secret={TEST_CLIENT_SECRET}"
         )
 
         # make the request and get the token

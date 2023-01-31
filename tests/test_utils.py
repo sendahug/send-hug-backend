@@ -1,6 +1,3 @@
-"""
-Push notifications related methods.
-"""
 # MIT License
 #
 # Copyright (c) 2020-2023 Send A Hug
@@ -27,28 +24,23 @@ Push notifications related methods.
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from typing import Dict, Union, Any
-from datetime import datetime, timedelta
+
+import unittest
+
+from utils.push_notifications import generate_push_data, generate_vapid_claims
 
 
-def generate_push_data(data: Dict[str, Any]) -> Dict[str, str]:
-    """
-    Generates the push notification's data from the
-    given raw data.
-    """
-    notification_data = {"title": "New " + data["type"], "body": data["text"]}
+# App testing
+class TestHugApp(unittest.TestCase):
+    def test_generate_push_data(self):
+        base_data = {"type": "Kitty", "text": "Meow"}
+        push_data = generate_push_data(base_data)
 
-    return notification_data
+        self.assertEqual(push_data["title"], "New Kitty")
+        self.assertEqual(push_data["body"], "Meow")
 
+    def test_generate_vapid_claims(self):
+        vapid_claims = generate_vapid_claims()
 
-def generate_vapid_claims() -> Dict[str, Union[str, float]]:
-    """
-    Generates the VAPID claims dictionary.
-    """
-    expiry_time = datetime.timestamp(datetime.utcnow() + timedelta(hours=12))
-    vapid_claims: Dict[str, Union[str, float]] = {
-        "sub": "mailto:sendahugcom@gmail.com",
-        "exp": expiry_time,
-    }
-
-    return vapid_claims
+        # TODO: Add check for the expiry time
+        self.assertEqual(vapid_claims["sub"], "mailto:sendahugcom@gmail.com")
