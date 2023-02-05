@@ -60,7 +60,6 @@ from auth import (
     get_management_api_token,
     AUTH0_DOMAIN,
 )
-from utils.filter import WordFilter
 from utils.validator import Validator, ValidationError
 from utils.push_notifications import (
     generate_push_data,
@@ -78,7 +77,6 @@ def create_app(db_path: str = database_path) -> Flask:
     db = initialise_db(app)
     # Utilities
     CORS(app, origins="")
-    word_filter = WordFilter()
     validator = Validator(
         {
             "post": {"max": 480, "min": 1},
@@ -187,15 +185,13 @@ def create_app(db_path: str = database_path) -> Flask:
         validator.check_type(search_query, "Search query")
 
         # Get the users with the search query in their display name
-        users = User.query.filter(
-            User.display_name.ilike("%" + search_query + "%")
-        ).all()
+        users = User.query.filter(User.display_name.ilike(f"%{search_query}%")).all()
 
         posts = (
             db.session.query(Post, User.display_name)
             .join(User)
             .order_by(db.desc(Post.date))
-            .filter(Post.text.like("%" + search_query + "%"))
+            .filter(Post.text.like(f"%{search_query}%"))
             .filter(Post.open_report == db.false())
             .paginate(page=current_page, per_page=ITEMS_PER_PAGE)
         )
@@ -244,42 +240,23 @@ def create_app(db_path: str = database_path) -> Flask:
             )
 
         new_post_data = json.loads(request.data)
-        blacklist_check = word_filter.blacklisted(new_post_data["text"])
+        validator.validate_post_or_message(text=new_post_data["text"], type="post")
 
-        # If there's no blacklisted word, add the new post to the database
-        if blacklist_check.is_blacklisted is False:
-            # Check the length adn  type of the post's text
-            validator.check_length(new_post_data["text"], "post")
-            validator.check_type(new_post_data["text"], "post text")
+        # Create a new post object
+        new_post = Post(
+            user_id=new_post_data["userId"],
+            text=new_post_data["text"],
+            date=new_post_data["date"],
+            given_hugs=new_post_data["givenHugs"],
+            sent_hugs="",
+        )
 
-            # Create a new post object
-            new_post = Post(
-                user_id=new_post_data["userId"],
-                text=new_post_data["text"],
-                date=new_post_data["date"],
-                given_hugs=new_post_data["givenHugs"],
-                sent_hugs="",
-            )
-
-            # Try to add the post to the database
-            try:
-                added_post = db_add(new_post)["added"]
-            # If there's an error, abort
-            except Exception:
-                abort(500)
-        # If there's a blacklisted word / phrase, alert the user
-        else:
-            num_issues = len(blacklist_check.badword_indexes)
-            raise ValidationError(
-                {
-                    "code": 400,
-                    "description": f"Your text contains {str(num_issues)}"
-                    " forbidden term(s). The following word(s) is/"
-                    f"are not allowed: {blacklist_check.forbidden_words}."
-                    "Please fix your post's text and try again.",
-                },
-                400,
-            )
+        # Try to add the post to the database
+        try:
+            added_post = db_add(new_post)["added"]
+        # If there's an error, abort
+        except Exception:
+            abort(500)
 
         return jsonify({"success": True, "posts": added_post})
 
@@ -331,54 +308,19 @@ def create_app(db_path: str = database_path) -> Flask:
             else:
                 # If the text was changed
                 if original_post.text != updated_post["text"]:
-                    blacklist_check = word_filter.blacklisted(updated_post["text"])
-                    # If there's no blacklisted word, add the new post to the database
-                    if blacklist_check.is_blacklisted is False:
-                        # Check the length adn  type of the post's text
-                        validator.check_length(updated_post["text"], "post")
-                        validator.check_type(updated_post["text"], "post text")
-
-                        original_post.text = updated_post["text"]
-                    # If there's a blacklisted word / phrase, alert the user
-                    else:
-                        num_issues = len(blacklist_check.badword_indexes)
-                        raise ValidationError(
-                            {
-                                "code": 400,
-                                "description": f"Your text contains {str(num_issues)}"
-                                " forbidden term(s). The following word(s) is/"
-                                f"are not allowed: {blacklist_check.forbidden_words}."
-                                "Please fix your post's text and try again.",
-                            },
-                            400,
-                        )
+                    validator.validate_post_or_message(
+                        text=updated_post["text"], type="post"
+                    )
+                    original_post.text = updated_post["text"]
         # Otherwise, the user is allowed to edit any post, and thus text
         # editing is allowed
         else:
             # If the text was changed
             if original_post.text != updated_post["text"]:
-                blacklist_check = word_filter.blacklisted(updated_post["text"])
-                # If there's no blacklisted word, add the new post to the database
-                if blacklist_check.is_blacklisted is False:
-                    # Check the length adn  type of the post's text
-                    validator.check_length(updated_post["text"], "post")
-                    validator.check_type(updated_post["text"], "post text")
-
-                    original_post.text = updated_post["text"]
-                # If there's a blacklisted word / phrase, alert the user
-                else:
-                    num_issues = len(blacklist_check.badword_indexes)
-
-                    raise ValidationError(
-                        {
-                            "code": 400,
-                            "description": f"Your text contains {str(num_issues)}"
-                            " forbidden term(s). The following word(s) is/"
-                            f"are not allowed: {blacklist_check.forbidden_words}."
-                            "Please fix your post's text and try again.",
-                        },
-                        400,
-                    )
+                validator.validate_post_or_message(
+                    text=updated_post["text"], type="post"
+                )
+                original_post.text = updated_post["text"]
 
         # If a hug was added
         # Since anyone can give hugs, this doesn't require a permissions check
@@ -1236,26 +1178,9 @@ def create_app(db_path: str = database_path) -> Flask:
                 403,
             )
 
-        blacklist_check = word_filter.blacklisted(message_data["messageText"])
-
-        # If there's a blacklisted word / phrase, alert the user
-        if blacklist_check.is_blacklisted:
-            num_issues = len(blacklist_check.badword_indexes)
-
-            raise ValidationError(
-                {
-                    "code": 400,
-                    "description": f"Your message contains {str(num_issues)}"
-                    " forbidden term(s). The following word(s) is/"
-                    f"are not allowed: {blacklist_check.forbidden_words}."
-                    "Please fix your post's text and try again.",
-                },
-                400,
-            )
-
-        # Check the length adn  type of the message text
-        validator.check_length(message_data["messageText"], "message")
-        validator.check_type(message_data["messageText"], "message text")
+        validator.validate_post_or_message(
+            text=message_data["messageText"], type="message"
+        )
 
         # Checks if there's an existing thread between the users (with user 1
         # being the sender and user 2 being the recipient)

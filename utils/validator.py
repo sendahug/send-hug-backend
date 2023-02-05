@@ -25,7 +25,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Union, Optional
+from typing import Union, Optional, Literal
+
+from .filter import WordFilter
 
 
 # Validation Error
@@ -38,6 +40,7 @@ class ValidationError(Exception):
 # Validator
 class Validator:
     constraints: dict[str, dict[str, int]] = {}
+    word_filter: WordFilter = WordFilter()
 
     # INIT
     def __init__(self, types: dict[str, dict[str, int]]):
@@ -152,3 +155,28 @@ class Validator:
                 )
 
         return True
+
+    def validate_post_or_message(self, text: str, type: Literal["post", "message"]):
+        """
+        Validates a post/message
+        """
+        blacklist_check = self.word_filter.blacklisted(text)
+
+        # If there's no blacklisted word, check the length and type
+        if blacklist_check.is_blacklisted is False:
+            # Check the length and type of the post's text
+            self.check_length(text, type)
+            self.check_type(text, f"{type} text")
+        # If there's a blacklisted word / phrase, alert the user
+        else:
+            num_issues = len(blacklist_check.badword_indexes)
+            raise ValidationError(
+                {
+                    "code": 400,
+                    "description": f"Your text contains {str(num_issues)}"
+                    " forbidden term(s). The following word(s) is/"
+                    f"are not allowed: {blacklist_check.forbidden_words}."
+                    f"Please fix your {type}'s text and try again.",
+                },
+                400,
+            )

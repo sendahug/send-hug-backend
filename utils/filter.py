@@ -46,8 +46,12 @@ class Blacklisted:
 # Filter class
 # inspired by Wordfilter: https://pypi.org/project/wordfilter/
 class WordFilter:
-    # Check if there's a blacklisted word in the text
     def blacklisted(self, string: str) -> Blacklisted:
+        """
+        Check if there's a blacklisted word in the text
+
+        param string: The string to check for blacklisted words
+        """
         filtered_words = Filter.query.all()
         test_string = string.lower()
         badword_indexes: list[BadWordData] = []
