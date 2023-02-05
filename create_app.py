@@ -35,6 +35,7 @@ from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
 from pywebpush import webpush, WebPushException  # type: ignore
+from sqlalchemy import and_, or_
 
 from models import (
     database_path,
@@ -1184,21 +1185,18 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Checks if there's an existing thread between the users (with user 1
         # being the sender and user 2 being the recipient)
-        thread = (
-            Thread.query.filter(Thread.user_1_id == message_data["fromId"])
-            .filter(Thread.user_2_id == message_data["forId"])
-            .one_or_none()
-        )
-
-        # Checks if there's an existing thread between the users (in the
-        # opposite order - with user 1 being the recipient and user 2 being
-        # the sender)
-        if thread is None:
-            thread = (
-                Thread.query.filter(Thread.user_1_id == message_data["forId"])
-                .filter(Thread.user_2_id == message_data["fromId"])
-                .one_or_none()
+        thread = Thread.query.filter(
+            or_(
+                and_(
+                    Thread.user_1_id == message_data["fromId"],
+                    Thread.user_2_id == message_data["forId"],
+                ),
+                and_(
+                    Thread.user_1_id == message_data["forId"],
+                    Thread.user_2_id == message_data["fromId"],
+                ),
             )
+        ).one_or_none()
 
         # If there's no thread between the users
         if thread is None:
