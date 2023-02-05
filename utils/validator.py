@@ -25,7 +25,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Union
+from typing import Union, Optional
 
 
 # Validation Error
@@ -49,73 +49,52 @@ class Validator:
         too_short_error = (
             "Your {} cannot be empty. Please write something and then try again."
         )
+        error_message: Optional[str] = None
 
         if objType.lower() in [self.constraints.keys()]:
-            # Check if the item is too long; if it is, abort
+            # Check if the item is too long
             if len(data) > self.constraints[objType.lower()]["max"]:
-                raise ValidationError(
-                    {"code": 400, "description": too_long_error.format(objType)},
-                    400,
-                )
-            # Check if the item is empty; if it is, abort
+                error_message = too_long_error.format(objType)
+            # Check if the item is empty
             elif len(data) < self.constraints[objType.lower()]["min"]:
-                raise ValidationError(
-                    {"code": 400, "description": too_short_error.format(objType)},
-                    400,
-                )
+                error_message = too_short_error.format(objType)
 
         elif objType.lower() == "display name":
-            # Check if the name is too long; if it is, abort
+            # Check if the name is too long
             if len(data) > self.constraints["user"]["max"]:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": too_long_error.format("new display name"),
-                    },
-                    400,
-                )
-            # Check if the name is empty; if it is, abort
+                error_message = too_long_error.format("new display name")
+            # Check if the name is empty
             elif len(data) < self.constraints["user"]["min"]:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": too_short_error.format("display name"),
-                    },
-                    400,
-                )
+                error_message = too_short_error.format("display name")
 
         elif objType.lower() == "report":
-            # Check if the report reason is too long; if it is, abort
+            # Check if the report reason is too long
             if len(data) > self.constraints["report"]["max"]:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": too_long_error.format("report reason"),
-                    },
-                    400,
-                )
-            # Check if the report reason is empty; if it is, abort
+                error_message = too_long_error.format("report reason")
+            # Check if the report reason is empty
             elif len(data) < self.constraints["report"]["min"]:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": "You cannot send a report without a reason. "
-                        "Please write something and try to send it again.",
-                    },
-                    400,
+                error_message = (
+                    "You cannot send a report without a reason. "
+                    "Please write something and try to send it again."
                 )
 
         else:
             # Check if the data is empty
             if len(data) < 1:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": f"{objType} cannot be empty. "
-                        "Please write something and try again.",
-                    },
-                    400,
+                error_message = (
+                    f"{objType} cannot be empty. "
+                    "Please write something and try again."
                 )
+
+        # if anything failed validation, raise an error
+        if error_message:
+            raise ValidationError(
+                {
+                    "code": 400,
+                    "description": error_message,
+                },
+                400,
+            )
 
         return True
 
@@ -134,16 +113,15 @@ class Validator:
 
         # If the type is one of the free text types, check that it's a
         # string
-        if objType.lower() in text_types:
+        if objType.lower() in text_types and type(data) is not str:
             # If it's not a string, raise a validation error
-            if type(data) is not str:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": error_message.format(objType, "String"),
-                    },
-                    400,
-                )
+            raise ValidationError(
+                {
+                    "code": 400,
+                    "description": error_message.format(objType, "String"),
+                },
+                400,
+            )
 
         # If the type is one of the ID types, check that it's an integer
         elif "id" in objType.lower():
