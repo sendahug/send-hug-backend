@@ -44,22 +44,28 @@ class Validator:
         self.constraints = types
 
     # Checks the length according to the given types
-    def check_length(self, data: str, objType: str):
+    def check_length(self, data: str, obj_type: str):
+        """
+        Checks the length of the data according to the object type.
+
+        param data: The string to check
+        param obj_type: The type of object to test by
+        """
         too_long_error = "Your {} is too long! Please shorten it and then try again."
         too_short_error = (
             "Your {} cannot be empty. Please write something and then try again."
         )
         error_message: Optional[str] = None
 
-        if objType.lower() in [self.constraints.keys()]:
+        if obj_type.lower() in [self.constraints.keys()]:
             # Check if the item is too long
-            if len(data) > self.constraints[objType.lower()]["max"]:
-                error_message = too_long_error.format(objType)
+            if len(data) > self.constraints[obj_type.lower()]["max"]:
+                error_message = too_long_error.format(obj_type)
             # Check if the item is empty
-            elif len(data) < self.constraints[objType.lower()]["min"]:
-                error_message = too_short_error.format(objType)
+            elif len(data) < self.constraints[obj_type.lower()]["min"]:
+                error_message = too_short_error.format(obj_type)
 
-        elif objType.lower() == "display name":
+        elif obj_type.lower() == "display name":
             # Check if the name is too long
             if len(data) > self.constraints["user"]["max"]:
                 error_message = too_long_error.format("new display name")
@@ -67,7 +73,7 @@ class Validator:
             elif len(data) < self.constraints["user"]["min"]:
                 error_message = too_short_error.format("display name")
 
-        elif objType.lower() == "report":
+        elif obj_type.lower() == "report":
             # Check if the report reason is too long
             if len(data) > self.constraints["report"]["max"]:
                 error_message = too_long_error.format("report reason")
@@ -82,7 +88,7 @@ class Validator:
             # Check if the data is empty
             if len(data) < 1:
                 error_message = (
-                    f"{objType} cannot be empty. "
+                    f"{obj_type} cannot be empty. "
                     "Please write something and try again."
                 )
 
@@ -99,7 +105,13 @@ class Validator:
         return True
 
     # Checks the type of the given item
-    def check_type(self, data: Union[str, int], objType: str):
+    def check_type(self, data: Union[str, int], obj_type: str):
+        """
+        Checks the type of the data matches the expected type.
+
+        param data: The item to check
+        param obj_type: The type of object to test by
+        """
         text_types = [
             "post text",
             "message text",
@@ -113,18 +125,18 @@ class Validator:
 
         # If the type is one of the free text types, check that it's a
         # string
-        if objType.lower() in text_types and type(data) is not str:
+        if obj_type.lower() in text_types and type(data) is not str:
             # If it's not a string, raise a validation error
             raise ValidationError(
                 {
                     "code": 400,
-                    "description": error_message.format(objType, "String"),
+                    "description": error_message.format(obj_type, "String"),
                 },
                 400,
             )
 
         # If the type is one of the ID types, check that it's an integer
-        elif "id" in objType.lower():
+        elif "id" in obj_type.lower():
             # Try to convert the data to int
             try:
                 int(data)
@@ -134,7 +146,7 @@ class Validator:
                 raise ValidationError(
                     {
                         "code": 400,
-                        "description": error_message.format(objType, "Integer"),
+                        "description": error_message.format(obj_type, "Integer"),
                     },
                     400,
                 )
