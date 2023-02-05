@@ -62,7 +62,11 @@ from auth import (
 )
 from utils.filter import WordFilter
 from utils.validator import Validator, ValidationError
-from utils.push_notifications import generate_push_data, generate_vapid_claims
+from utils.push_notifications import (
+    generate_push_data,
+    generate_vapid_claims,
+    RawPushData,
+)
 
 
 def create_app(db_path: str = database_path) -> Flask:
@@ -106,7 +110,7 @@ def create_app(db_path: str = database_path) -> Flask:
         return math.ceil(items_count / ITEMS_PER_PAGE)
 
     # Send push notification
-    def send_push_notification(user_id, data):
+    def send_push_notification(user_id: int, data: RawPushData):
         vapid_key = os.environ.get("PRIVATE_KEY")
         notification_data = generate_push_data(data)
         vapid_claims = generate_vapid_claims()
