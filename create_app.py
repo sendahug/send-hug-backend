@@ -689,7 +689,8 @@ def create_app(db_path: str = database_path) -> Flask:
     def edit_user(token_payload, user_id):
         # if there's no user ID provided, abort with 'Bad Request'
         if user_id is None:
-            abort(404)
+            abort(400)
+
         # Check if the user ID isn't an integer; if it isn't, abort
         validator.check_type(user_id, "User ID")
 
@@ -731,39 +732,28 @@ def create_app(db_path: str = database_path) -> Flask:
         # If the user is attempting to change a user's display name, check
         # their permissions
         if "displayName" in updated_user:
-            if updated_user["displayName"] != original_user.display_name:
-                # if the user is only allowed to change their own name
-                # (user / mod)
-                if "patch:user" in token_payload["permissions"]:
-                    # If it's not the current user, abort
-                    if token_payload["sub"] != original_user.auth0_id:
-                        raise AuthError(
-                            {
-                                "code": 403,
-                                "description": "You do not have permission to "
-                                "edit this user's display name.",
-                            },
-                            403,
-                        )
-                    # If it is, let them update user data
-                    else:
-                        # Check the length and type of the user's display name
-                        validator.check_length(
-                            updated_user["displayName"], "display name"
-                        )
-                        validator.check_type(
-                            updated_user["displayName"], "display name"
-                        )
+            # if the name changed and the user is only allowed to
+            # change their own name (user / mod)
+            if (
+                updated_user["displayName"] != original_user.display_name
+                and "patch:user" in token_payload["permissions"]
+            ):
+                # If it's not the current user, abort
+                if token_payload["sub"] != original_user.auth0_id:
+                    raise AuthError(
+                        {
+                            "code": 403,
+                            "description": "You do not have permission to "
+                            "edit this user's display name.",
+                        },
+                        403,
+                    )
 
-                        original_user.display_name = updated_user["displayName"]
-                # if the user can edit anyone or the user is trying to
-                # update their own name
-                else:
-                    # Check the length adn  type of the user's display name
-                    validator.check_length(updated_user["displayName"], "display name")
-                    validator.check_type(updated_user["displayName"], "display name")
+                # Otherwise, check the length and type of the user's display name
+                validator.check_length(updated_user["displayName"], "display name")
+                validator.check_type(updated_user["displayName"], "display name")
 
-                    original_user.display_name = updated_user["displayName"]
+                original_user.display_name = updated_user["displayName"]
 
         # If the request was in done in order to block or unlock a user
         if "blocked" in updated_user:
@@ -776,11 +766,11 @@ def create_app(db_path: str = database_path) -> Flask:
                     },
                     403,
                 )
+
             # Otherwise, the user is a manager, so they can block a user.
             # In that case, block / unblock the user as requested.
-            else:
-                original_user.blocked = updated_user["blocked"]
-                original_user.release_date = updated_user["releaseDate"]
+            original_user.blocked = updated_user["blocked"]
+            original_user.release_date = updated_user["releaseDate"]
 
         # If there's a 'closeReport' value, this update is the result of
         # a report, which means the report with the given ID needs to be
@@ -833,29 +823,14 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Checks if the user's role is updated based on the
         # permissions in the JWT
-        # Checks whether the user has 'patch:any-post' permission, which
-        # if given to moderators and admins
-        if "patch:any-post" in token_payload["permissions"]:
-            # Checks whether the user has 'delete:any-post' permission, which
-            # is given only to admins, and whether the user is already
-            # marked as an admin in the database; if the user isn't an admin
-            # in the database, changes their role to admin. If they are,
-            # there's no need to update their role.
-            if (
-                "delete:any-post" in token_payload["permissions"]
-                and original_user.role != "admin"
-            ):
-                original_user.role = "admin"
-            # If the user doesn't have that permission but they have the
-            # permission to edit any post, they're moderators. Checks whether
-            # the user is marked as a mod in the database; if the user isn't,
-            # changes their role to moderator. If they are, there's no need to
-            # update their role.
-            elif (
-                "delete:any-post" not in token_payload["permissions"]
-                and original_user.role != "moderator"
-            ):
-                original_user.role = "moderator"
+        # Checks whether the user has 'delete:any-post' permission, which
+        # is given only to admins
+        if "delete:any-post" in token_payload["permissions"]:
+            original_user.role = "admin"
+        # If the user doesn't have that permission but they have the
+        # permission to edit any post, they're moderators
+        elif "patch:any-post" in token_payload["permissions"]:
+            original_user.role = "moderator"
         # Otherwise, the user's role is a user, so make sure to mark it
         # as such.
         else:
