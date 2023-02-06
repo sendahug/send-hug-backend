@@ -42,12 +42,6 @@ jobs:
           command: |
             pip3 install -r requirements.txt -r dev_requirements.txt
             python3 -m pip install --upgrade pip
-      - run:
-          name: Install coverage and codecov
-          command: |
-            sudo apt-get install -y python3-pip
-            sudo pip3 install coverage
-            sudo pip3 install codecov
       # Dockerize installation to wait for the database to load
       # Taken from: https://support.circleci.com/hc/en-us/articles/360006773953-Race-Conditions-Wait-For-Database
       - run:
