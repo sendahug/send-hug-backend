@@ -30,6 +30,7 @@ import json
 import math
 import sys
 import http.client
+
 from typing import Dict, List, Any, Literal, Union, cast
 from datetime import datetime
 from flask import Flask, request, abort, jsonify
@@ -129,7 +130,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 )
         # If there's an error, print the details
         except WebPushException as e:
-            print(e)
+            app.logger.error(e)
 
     # Routes
     # -----------------------------------------------------------------
@@ -393,7 +394,7 @@ def create_app(db_path: str = database_path) -> Flask:
             db_updated_post = data[0]
         # If there's an error, abort
         except Exception:
-            print(sys.exc_info())
+            app.logger.error(sys.exc_info())
             abort(500)
 
         return jsonify({"success": True, "updated": db_updated_post})
@@ -643,7 +644,7 @@ def create_app(db_path: str = database_path) -> Flask:
             )
             delete_response = connection.getresponse()
             delete_response_data = delete_response.read()
-            print(delete_response_data)
+            app.logger.debug(delete_response_data)
 
             # Then add the 'user' role to the user's payload
             create_payload = '{ "roles": [ "rol_BhidDxUqlXDx8qIr" ] }'
@@ -655,10 +656,10 @@ def create_app(db_path: str = database_path) -> Flask:
             )
             create_response = connection.getresponse()
             create_response_data = create_response.read()
-            print(create_response_data)
+            app.logger.debug(create_response_data)
         # If there's an error, print it
         except Exception as e:
-            print(e)
+            app.logger.error(e)
 
         return jsonify({"success": True, "user": added_user})
 
