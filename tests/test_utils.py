@@ -37,10 +37,10 @@ from utils.push_notifications import (
 # App testing
 class TestHugApp(unittest.TestCase):
     def test_generate_push_data(self):
-        base_data: RawPushData = {"type": "Kitty", "text": "Meow"}
+        base_data: RawPushData = {"type": "hug", "text": "Meow"}
         push_data = generate_push_data(base_data)
 
-        self.assertEqual(push_data["title"], "New Kitty")
+        self.assertEqual(push_data["title"], "New hug")
         self.assertEqual(push_data["body"], "Meow")
 
     def test_generate_vapid_claims(self):

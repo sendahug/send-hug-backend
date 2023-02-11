@@ -164,7 +164,7 @@ def delete_object(obj: db.Model) -> Response:  # type: ignore[name-defined]
 # Parameters: Type - type of item to delete (posts or messages)
 #             ID - ID of the user whose posts or messages need to be deleted.
 def delete_all(
-    type: Literal["inbox", "outbox", "thread", "threads"], id: int
+    type: Literal["posts", "inbox", "outbox", "thread", "threads"], id: int
 ) -> Response:
     # Try to delete the records
     try:
