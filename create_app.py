@@ -30,7 +30,7 @@ import json
 import math
 import sys
 import http.client
-from typing import Dict, List, Any, cast
+from typing import Dict, List, Any, Literal, Union, cast
 from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
@@ -268,7 +268,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: patch:my-post or patch:any-post.
     @app.route("/posts/<post_id>", methods=["PATCH"])
     @requires_auth(["patch:my-post", "patch:any-post"])
-    def edit_post(token_payload, post_id):
+    def edit_post(token_payload, post_id: int):
         # If there's no ID provided
         if post_id is None:
             abort(404)
@@ -404,7 +404,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: delete:my-post or delete:any-post.
     @app.route("/posts/<post_id>", methods=["DELETE"])
     @requires_auth(["delete:my-post", "delete:any-post"])
-    def delete_post(token_payload, post_id):
+    def delete_post(token_payload, post_id: int):
         # If there's no ID provided
         if post_id is None:
             abort(404)
@@ -452,7 +452,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Parameters: type - Type of posts (new or suggested) to fetch.
     # Authorization: None.
     @app.route("/posts/<type>")
-    def get_new_posts(type):
+    def get_new_posts(type: Literal["new", "suggested"]):
         page = request.args.get("page", 1, type=int)
 
         formatted_posts = []
@@ -487,7 +487,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/users/<type>")
     @requires_auth(["read:admin-board"])
-    def get_users_by_type(token_payload, type):
+    def get_users_by_type(token_payload, type: str):
         page = request.args.get("page", 1, type=int)
 
         # If the type of users to fetch is blocked users
@@ -528,29 +528,23 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:user.
     @app.route("/users/all/<user_id>")
     @requires_auth(["read:user"])
-    def get_user_data(token_payload, user_id):
+    def get_user_data(token_payload, user_id: Union[int, str]):
         # If there's no ID provided
         if user_id is None:
             abort(404)
 
-        user_data = User.query.filter(User.auth0_id == user_id).one_or_none()
+        # Try to convert it to a number; if it's a number, it's a
+        # regular ID, so try to find the user with that ID
+        try:
+            int(user_id)
+            user_data = User.query.filter(User.id == int(user_id)).one_or_none()
+        # Otherwise, it's an Auth0 ID
+        except Exception:
+            user_data = User.query.filter(User.auth0_id == user_id).one_or_none()
 
-        # If there's no user with that Auth0 ID, try to find a user with that
-        # ID; the user might be trying to view user profile
+        # If there's no user with that Auth0 ID, abort
         if user_data is None:
-            # Try to convert it to a number; if it's a number, it's a
-            # regular ID, so try to find the user with that ID
-            try:
-                int(user_id)
-                user_data = User.query.filter(User.id == user_id).one_or_none()
-
-                # If there's no user with that ID either, abort
-                if user_data is None:
-                    abort(404)
-            # Otherwise, it's an Auth0 ID and it's the user's first login,
-            # so just return a 'not found' message
-            except Exception:
-                abort(404)
+            abort(404)
 
         # If the user is currently blocked, compare their release date to
         # the current date and time.
@@ -674,7 +668,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: patch:user or patch:any-user.
     @app.route("/users/all/<user_id>", methods=["PATCH"])
     @requires_auth(["patch:user", "patch:any-user"])
-    def edit_user(token_payload, user_id):
+    def edit_user(token_payload, user_id: int):
         # if there's no user ID provided, abort with 'Bad Request'
         if user_id is None:
             abort(400)
@@ -883,7 +877,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: delete:my-post or delete:any-post
     @app.route("/users/all/<user_id>/posts", methods=["DELETE"])
     @requires_auth(["delete:my-post", "delete:any-post"])
-    def delete_user_posts(token_payload, user_id):
+    def delete_user_posts(token_payload, user_id: int):
         validator.check_type(user_id, "User ID")
         current_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
@@ -1237,7 +1231,11 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>/<item_id>", methods=["DELETE"])
     @requires_auth(["delete:messages"])
-    def delete_thread(token_payload, mailbox_type, item_id):
+    def delete_thread(
+        token_payload,
+        mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
+        item_id: int,
+    ):
         # Variable indicating whether to delete the message from the databse
         # or leave it in it (for the other user)
         delete_message: bool = False
@@ -1339,7 +1337,9 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>", methods=["DELETE"])
     @requires_auth(["delete:messages"])
-    def clear_mailbox(token_payload, mailbox_type):
+    def clear_mailbox(
+        token_payload, mailbox_type: Literal["inbox", "outbox", "thread", "threads"]
+    ):
         user_id = request.args.get("userID", type=int)
 
         # If there's no specified mailbox, abort
@@ -1528,7 +1528,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/reports/<report_id>", methods=["PATCH"])
     @requires_auth(["read:admin-board"])
-    def update_report_status(token_payload, report_id):
+    def update_report_status(token_payload, report_id: int):
         updated_report = json.loads(request.data)
         report = Report.query.filter(Report.id == report_id).one_or_none()
 
@@ -1624,7 +1624,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/filters/<filter_id>", methods=["DELETE"])
     @requires_auth(["read:admin-board"])
-    def delete_filter(token_payload, filter_id):
+    def delete_filter(token_payload, filter_id: int):
         validator.check_type(filter_id, "Filter ID")
 
         # If there's no word in that index
@@ -1749,7 +1749,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications/<sub_id>", methods=["POST"])
     @requires_auth(["read:messages"])
-    def update_notification_subscription(token_payload, sub_id):
+    def update_notification_subscription(token_payload, sub_id: int):
         # if the request is empty, return 204. This happens due to a bug
         # in the frontend that causes the request to be sent twice, once
         # with subscription data and once with an empty object
