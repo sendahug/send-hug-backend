@@ -31,7 +31,7 @@ import math
 import sys
 import http.client
 
-from typing import Dict, List, Any, Literal, Union, cast
+from typing import Dict, List, Any, Literal, Union
 from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
@@ -255,7 +255,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Try to add the post to the database
         try:
-            added_post = db_add(new_post)["added"]
+            added_post = db_add(new_post)["resource"]
         # If there's an error, abort
         except Exception:
             abort(500)
@@ -380,7 +380,7 @@ def create_app(db_path: str = database_path) -> Flask:
             if "closeReport" in updated_post:
                 to_update.append(open_report)
             # Update users' and post's data
-            updated_res = db_update_multi(to_update)
+            updated = db_update_multi(to_update)
 
             # If there was an added hug, add the new notification
             if "givenHugs" in updated_post:
@@ -390,7 +390,7 @@ def create_app(db_path: str = database_path) -> Flask:
                     )
                     db_add(notification)
 
-            data = json.loads(updated_res.data)["updated"]
+            data = updated["resource"]
             db_updated_post = data[0]
         # If there's an error, abort
         except Exception:
@@ -611,7 +611,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Try to add the post to the database
         try:
-            added_user = db_add(new_user)["added"]
+            added_user = db_add(new_user)["resource"]
         # If there's an error, abort
         except Exception:
             abort(500)
@@ -1166,7 +1166,7 @@ def create_app(db_path: str = database_path) -> Flask:
             # Try to create the new thread
             try:
                 data = db_add(new_thread)
-                thread_id = cast(dict[str, Any], data["added"])["id"]
+                thread_id = data["resource"]["id"]
             # If there's an error, abort
             except Exception:
                 abort(500)
@@ -1216,7 +1216,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Try to add the message to the database
         try:
-            sent_message = db_add(new_message)["added"]
+            sent_message = db_add(new_message)["resource"]
             db_add(notification)
             send_push_notification(user_id=notification_for, data=push_notification)
         # If there's an error, abort
@@ -1515,7 +1515,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Try to add the report to the database
         try:
-            added_report = db_add(report)["added"]
+            added_report = db_add(report)["resource"]
             db_update(reported_item)
         # If there's an error, abort
         except Exception:
@@ -1612,7 +1612,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # Try to add the word to the filters list
         try:
             filter = Filter(filter=new_filter.lower())
-            added = db_add(filter)["added"]
+            added = db_add(filter)["resource"]
         # If there's an error, abort
         except Exception:
             abort(500)
@@ -1732,7 +1732,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # Try to add it to the database
         try:
             subscribed = user.display_name
-            sub = db_add(subscription)["added"]
+            sub = db_add(subscription)["resource"]
         # If there's an error, abort
         except Exception:
             abort(500)
@@ -1740,7 +1740,7 @@ def create_app(db_path: str = database_path) -> Flask:
         return {
             "success": True,
             "subscribed": subscribed,
-            "subId": cast(dict[str, Any], sub)["id"],
+            "subId": sub["id"],
         }
 
     # Endpoint: PATCH /notifications

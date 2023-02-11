@@ -25,11 +25,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Literal, Any, Union
-
-from flask import jsonify, Response
+from typing import Literal, Any, TypedDict, Union
 
 from .models import Post, Message, Thread, db
+
+
+class DBReturnModel(TypedDict):
+    success: bool
+    resource: dict[str, Any]
+
+
+class DBBulkModel(TypedDict):
+    success: bool
+    resource: list[dict[str, Any]]
+
+
+class DBDeleteModel(TypedDict):
+    success: bool
+    deleted: Union[int, str]
 
 
 # Database management methods
@@ -37,9 +50,7 @@ from .models import Post, Message, Thread, db
 # Method: Add
 # Description: Inserts a new record into the database.
 # Parameters: Object to insert (User, Post or Message).
-def add(
-    obj: db.Model,  # type: ignore[name-defined]
-) -> dict[str, Union[bool, dict[str, Any]]]:
+def add(obj: db.Model) -> DBReturnModel:  # type: ignore[name-defined]
     return_object = {}
 
     # Try to add the object to the database
@@ -54,13 +65,13 @@ def add(
     finally:
         db.session.close()
 
-    return {"success": True, "added": return_object}
+    return {"success": True, "resource": return_object}
 
 
 # Method: Update
 # Description: Updates an existing record.
 # Parameters: Updated object (User, Post or Message).
-def update(obj: db.Model, params={}) -> Response:  # type: ignore[name-defined]
+def update(obj: db.Model, params={}) -> DBReturnModel:  # type: ignore[name-defined]
     updated_object = {}
 
     # Try to update the object in the database
@@ -107,7 +118,7 @@ def update(obj: db.Model, params={}) -> Response:  # type: ignore[name-defined]
     finally:
         db.session.close()
 
-    return jsonify({"success": True, "updated": updated_object})
+    return {"success": True, "resource": updated_object}
 
 
 # Method: Update Multiple
@@ -115,7 +126,7 @@ def update(obj: db.Model, params={}) -> Response:  # type: ignore[name-defined]
 # Parameters: A list with all objects to update.
 def update_multiple(
     objs: list[db.Model] = [],  # type: ignore[name-defined]
-) -> Response:
+) -> DBBulkModel:
     updated_objects = []
 
     # Try to update the object in the database
@@ -130,13 +141,13 @@ def update_multiple(
     finally:
         db.session.close()
 
-    return jsonify({"success": True, "updated": updated_objects})
+    return {"success": True, "resource": updated_objects}
 
 
 # Method: Delete Object
 # Description: Deletes an existing record.
 # Parameters: Object (User, Post or Message) to delete.
-def delete_object(obj: db.Model) -> Response:  # type: ignore[name-defined]
+def delete_object(obj: db.Model) -> DBDeleteModel:  # type: ignore[name-defined]
     deleted = None
 
     # Try to delete the record from the database
@@ -156,7 +167,7 @@ def delete_object(obj: db.Model) -> Response:  # type: ignore[name-defined]
     finally:
         db.session.close()
 
-    return jsonify({"success": True, "deleted": deleted})
+    return {"success": True, "deleted": deleted}
 
 
 # Method: Delete All
@@ -165,7 +176,7 @@ def delete_object(obj: db.Model) -> Response:  # type: ignore[name-defined]
 #             ID - ID of the user whose posts or messages need to be deleted.
 def delete_all(
     type: Literal["posts", "inbox", "outbox", "thread", "threads"], id: int
-) -> Response:
+) -> DBDeleteModel:
     # Try to delete the records
     try:
         # If the type of objects to delete is posts, the ID is the
@@ -311,4 +322,4 @@ def delete_all(
     finally:
         db.session.close()
 
-    return jsonify({"success": True, "deleted": type})
+    return {"success": True, "deleted": type}
