@@ -340,7 +340,7 @@ def create_app(db_path: str = database_path) -> Flask:
                     text="You got a hug",
                     date=today,
                 )
-                push_notification = {
+                push_notification: RawPushData = {
                     "type": "hug",
                     "text": current_user.display_name + " sent you a hug",
                 }
@@ -696,7 +696,7 @@ def create_app(db_path: str = database_path) -> Flask:
                     text="You got a hug",
                     date=today,
                 )
-                push_notification = {
+                push_notification: RawPushData = {
                     "type": "hug",
                     "text": current_user.display_name + " sent you a hug",
                 }
@@ -1207,7 +1207,7 @@ def create_app(db_path: str = database_path) -> Flask:
             text="You have a new message",
             date=message_data["date"],
         )
-        push_notification = {
+        push_notification: RawPushData = {
             "type": "message",
             "text": logged_user.display_name + " sent you a message",
         }

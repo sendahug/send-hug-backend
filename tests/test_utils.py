@@ -27,13 +27,17 @@
 
 import unittest
 
-from utils.push_notifications import generate_push_data, generate_vapid_claims
+from utils.push_notifications import (
+    generate_push_data,
+    generate_vapid_claims,
+    RawPushData,
+)
 
 
 # App testing
 class TestHugApp(unittest.TestCase):
     def test_generate_push_data(self):
-        base_data = {"type": "Kitty", "text": "Meow"}
+        base_data: RawPushData = {"type": "Kitty", "text": "Meow"}
         push_data = generate_push_data(base_data)
 
         self.assertEqual(push_data["title"], "New Kitty")
