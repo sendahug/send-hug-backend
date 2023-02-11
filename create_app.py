@@ -289,39 +289,27 @@ def create_app(db_path: str = database_path) -> Flask:
         post_author = User.query.filter(User.id == original_post.user_id).one_or_none()
 
         # If the user's permission is 'patch my' the user can only edit
-        # their own posts.
-        if "patch:my-post" in token_payload["permissions"]:
-            # Compares the user's ID to the user_id of the post
-            if original_post.user_id != current_user.id:
-                # If the user attempted to edit the text of a post that doesn't
-                # belong to them, throws an auth error
-                if original_post.text != updated_post["text"]:
-                    raise AuthError(
-                        {
-                            "code": 403,
-                            "description": "You do not have permission to edit "
-                            "this post.",
-                        },
-                        403,
-                    )
-            # Otherwise, the user attempted to edit their own post, which
-            # is allowed
-            else:
-                # If the text was changed
-                if original_post.text != updated_post["text"]:
-                    validator.validate_post_or_message(
-                        text=updated_post["text"], type="post"
-                    )
-                    original_post.text = updated_post["text"]
-        # Otherwise, the user is allowed to edit any post, and thus text
-        # editing is allowed
-        else:
-            # If the text was changed
-            if original_post.text != updated_post["text"]:
-                validator.validate_post_or_message(
-                    text=updated_post["text"], type="post"
-                )
-                original_post.text = updated_post["text"]
+        # their own posts. If it's a user trying to edit the text
+        # of a post that doesn't belong to them, throw an auth error
+        if (
+            "patch:my-post" in token_payload["permissions"]
+            and original_post.user_id != current_user.id
+            and original_post.text != updated_post["text"]
+        ):
+            raise AuthError(
+                {
+                    "code": 403,
+                    "description": "You do not have permission to edit " "this post.",
+                },
+                403,
+            )
+
+        # Otherwise, the user either attempted to edit their own post, or
+        # they're allowed to edit any post, so let them update the post
+        # If the text was changed
+        if original_post.text != updated_post["text"]:
+            validator.validate_post_or_message(text=updated_post["text"], type="post")
+            original_post.text = updated_post["text"]
 
         # If a hug was added
         # Since anyone can give hugs, this doesn't require a permissions check
@@ -749,11 +737,11 @@ def create_app(db_path: str = database_path) -> Flask:
                         403,
                     )
 
-                # Otherwise, check the length and type of the user's display name
-                validator.check_length(updated_user["displayName"], "display name")
-                validator.check_type(updated_user["displayName"], "display name")
+            # Otherwise, check the length and type of the user's display name
+            validator.check_length(updated_user["displayName"], "display name")
+            validator.check_type(updated_user["displayName"], "display name")
 
-                original_user.display_name = updated_user["displayName"]
+            original_user.display_name = updated_user["displayName"]
 
         # If the request was in done in order to block or unlock a user
         if "blocked" in updated_user:
@@ -903,18 +891,20 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # If the user making the request isn't the same as the user
         # whose posts should be deleted
-        if current_user.id != int(user_id):
-            # If the user can only delete their own posts, they're not
-            # allowed to delete others' posts, so raise an AuthError
-            if "delete:my-post" in token_payload["permissions"]:
-                raise AuthError(
-                    {
-                        "code": 403,
-                        "description": "You do not have permission to delete "
-                        "another user's posts.",
-                    },
-                    403,
-                )
+        # If the user can only delete their own posts, they're not
+        # allowed to delete others' posts, so raise an AuthError
+        if (
+            current_user.id != int(user_id)
+            and "delete:my-post" in token_payload["permissions"]
+        ):
+            raise AuthError(
+                {
+                    "code": 403,
+                    "description": "You do not have permission to delete "
+                    "another user's posts.",
+                },
+                403,
+            )
 
         # Otherwise, the user is either trying to delete their own posts or
         # they're allowed to delete others' posts, so let them continue
