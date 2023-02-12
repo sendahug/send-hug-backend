@@ -28,10 +28,9 @@
 import os
 import json
 import math
-import sys
 import http.client
 
-from typing import Dict, List, Any, Literal, Union
+from typing import Dict, List, Any, Literal, Optional, Union
 from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
@@ -54,6 +53,7 @@ from models import (
     delete_object as db_delete,
     delete_all as db_delete_all,
     update_multiple as db_update_multi,
+    add_or_update_multiple as db_bulk_insert_update,
 )
 from auth import (
     AuthError,
@@ -266,6 +266,8 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/posts/<post_id>", methods=["PATCH"])
     @requires_auth(["patch:my-post", "patch:any-post"])
     def edit_post(token_payload, post_id: int):
+        push_notification: Optional[RawPushData] = None
+
         # If there's no ID provided
         if post_id is None:
             abort(404)
@@ -337,7 +339,7 @@ def create_app(db_path: str = database_path) -> Flask:
                     text="You got a hug",
                     date=today,
                 )
-                push_notification: RawPushData = {
+                push_notification = {
                     "type": "hug",
                     "text": current_user.display_name + " sent you a hug",
                 }
@@ -368,30 +370,26 @@ def create_app(db_path: str = database_path) -> Flask:
             original_post.open_report = False
 
         # Try to update the database
-        try:
-            # Objects to update
-            to_update = [original_post, current_user, post_author]
-            # If there's a report to close, add it to the list of objects
-            # to update.
-            if "closeReport" in updated_post:
-                to_update.append(open_report)
-            # Update users' and post's data
-            updated = db_update_multi(to_update)
+        # Objects to update
+        to_update = [original_post, current_user, post_author]
+        to_add = []
+        # If there's a report to close, add it to the list of objects
+        # to update.
+        if "closeReport" in updated_post:
+            to_update.append(open_report)
 
-            # If there was an added hug, add the new notification
-            if "givenHugs" in updated_post:
-                if original_hugs != updated_post["givenHugs"]:
-                    send_push_notification(
-                        user_id=notification_for, data=push_notification
-                    )
-                    db_add(notification)
+        # If there was an added hug, add the new notification
+        if "givenHugs" in updated_post:
+            if original_hugs != updated_post["givenHugs"]:
 
-            data = updated["resource"]
-            db_updated_post = data[0]
-        # If there's an error, abort
-        except Exception:
-            app.logger.error(sys.exc_info())
-            abort(500)
+                to_add.append(notification)
+
+        updated = db_bulk_insert_update(add_objs=to_add, update_objs=to_update)
+        data = [item for item in updated["resource"] if "sentHugs" in item.keys()]
+        db_updated_post = data[0]
+
+        if push_notification:
+            send_push_notification(user_id=notification_for, data=push_notification)
 
         return jsonify({"success": True, "updated": db_updated_post})
 
@@ -650,6 +648,8 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/users/all/<user_id>", methods=["PATCH"])
     @requires_auth(["patch:user", "patch:any-user"])
     def edit_user(token_payload, user_id: int):
+        push_notification: Optional[RawPushData] = None
+
         # if there's no user ID provided, abort with 'Bad Request'
         if user_id is None:
             abort(400)
@@ -677,7 +677,7 @@ def create_app(db_path: str = database_path) -> Flask:
                     text="You got a hug",
                     date=today,
                 )
-                push_notification: RawPushData = {
+                push_notification = {
                     "type": "hug",
                     "text": current_user.display_name + " sent you a hug",
                 }
@@ -800,23 +800,24 @@ def create_app(db_path: str = database_path) -> Flask:
             original_user.role = "user"
 
         # Try to update it in the database
-        try:
-            # Update users' data
-            db_update(original_user)
-            db_update(current_user)
-            if "closeReport" in updated_user:
-                db_update(open_report)
-            # If the user was given a hug, add a new notification
-            if "receivedH" in updated_user and "givenH" in updated_user:
-                if original_hugs != updated_user["receivedH"]:
-                    send_push_notification(
-                        user_id=notification_for, data=push_notification
-                    )
-                    db_add(notification)
-            updated_user = original_user.format()
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        # Update users' data
+        to_update = [original_user, current_user]
+        to_add = []
+        if "closeReport" in updated_user:
+            to_update.append(open_report)
+        # If the user was given a hug, add a new notification
+        if "receivedH" in updated_user and "givenH" in updated_user:
+            if original_hugs != updated_user["receivedH"]:
+                to_add.append(notification)
+
+        updated = db_bulk_insert_update(add_objs=to_add, update_objs=to_update)
+        updated_original_user = [
+            item for item in updated["resource"] if item["id"] == original_user.id
+        ]
+        updated_user = updated_original_user[0]
+
+        if push_notification:
+            send_push_notification(user_id=notification_for, data=push_notification)
 
         return jsonify({"success": True, "updated": updated_user})
 
@@ -1183,15 +1184,11 @@ def create_app(db_path: str = database_path) -> Flask:
         notification_for = message_data["forId"]
 
         # Try to add the message to the database
-        try:
-            sent_message = db_add(new_message)["resource"]
-            db_add(notification)
-            send_push_notification(user_id=notification_for, data=push_notification)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        added = db_bulk_insert_update(add_objs=[new_message, notification])
+        sent_message = [item for item in added["resource"] if "threadID" in item.keys()]
+        send_push_notification(user_id=notification_for, data=push_notification)
 
-        return jsonify({"success": True, "message": sent_message})
+        return jsonify({"success": True, "message": sent_message[0]})
 
     # Endpoint: DELETE /messages/<mailbox_type>/<item_id>
     # Description: Deletes a message/thread from the database.
@@ -1472,10 +1469,12 @@ def create_app(db_path: str = database_path) -> Flask:
             reported_item.open_report = True
 
         # Try to add the report to the database
-        added_report = db_add(report)["resource"]
-        db_update(reported_item)
+        updated = db_bulk_insert_update(add_objs=[report], update_objs=[reported_item])
+        added_report = [
+            item for item in updated["resource"] if "reporter" in item.keys()
+        ]
 
-        return jsonify({"success": True, "report": added_report})
+        return jsonify({"success": True, "report": added_report[0]})
 
     # Endpoint: PATCH /reports/<report_id>
     # Description: Update the status of the report with the given ID.
@@ -1507,21 +1506,21 @@ def create_app(db_path: str = database_path) -> Flask:
         # Set the dismissed and closed values to those of the updated report
         report.dismissed = updated_report["dismissed"]
         report.closed = updated_report["closed"]
+        to_update = [report]
 
         # If the item wasn't deleted, set the post/user's open_report
         # value to false
         if reported_item:
             reported_item.open_report = False
+            to_update.append(reported_item)
 
         # Try to update the report in the database
-        return_report = db_update(report)
+        updated = db_update_multi(objs=to_update)
+        return_report = [
+            item for item in updated["resource"] if "reporter" in item.keys()
+        ]
 
-        # If the item wasn't deleted, set the post/user's open_report
-        # value to false
-        if reported_item:
-            db_update(reported_item)
-
-        return jsonify({"success": True, "updated": return_report})
+        return jsonify({"success": True, "updated": return_report[0]})
 
     # Endpoint: GET /filters
     # Description: Get a paginated list of filtered words.
