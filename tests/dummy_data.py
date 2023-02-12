@@ -25,6 +25,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from datetime import datetime
+
+DATETIME_PATTERN = "%Y-%m-%d %H:%M:%S.%f"
+
+# test_app data
+# ==========================================================
 # Sample users data
 sample_user_id = str(1)
 sample_user_auth0_id = "auth0|5ed34765f0b8e60c8e87ca62"
@@ -110,4 +116,16 @@ new_subscription = {
     "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",
     "expirationTime": None,
     "keys": {"p256dh": "fdsfd", "auth": "dfs"},
+}
+
+# test_db_helpers data
+# ==========================================================
+updated_post_1 = {
+    "id": 1,
+    "userId": 1,
+    "user": "",
+    "text": "new test",
+    "date": datetime.strptime("2020-06-01 15:05:01.966", DATETIME_PATTERN),
+    "givenHugs": 2,
+    "sentHugs": ["4"],
 }
