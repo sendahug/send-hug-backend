@@ -32,10 +32,25 @@ from utils.push_notifications import (
     generate_vapid_claims,
     RawPushData,
 )
+from utils.validator import Validator, ValidationError
 
 
 # App testing
 class TestHugApp(unittest.TestCase):
+    # Setting up the suite
+    @classmethod
+    def setUpClass(cls):
+        cls.validator = Validator(
+            {
+                "post": {"max": 480, "min": 1},
+                "message": {"max": 480, "min": 1},
+                "user": {"max": 60, "min": 1},
+                "report": {"max": 120, "min": 1},
+            }
+        )
+
+    # Push notification tests
+    # =====================================================
     def test_generate_push_data(self):
         base_data: RawPushData = {"type": "hug", "text": "Meow"}
         push_data = generate_push_data(base_data)
@@ -48,3 +63,193 @@ class TestHugApp(unittest.TestCase):
 
         # TODO: Add check for the expiry time
         self.assertEqual(vapid_claims["sub"], "mailto:sendahugcom@gmail.com")
+
+    # Validator tests
+    # =====================================================
+    # TODO: These tests are really better done with parameterization...
+    # but this requires switching to pytest, which is fine but a project in itself
+    def test_validator_too_long_post(self):
+        too_long_post = "xy" * 450
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_length(data=too_long_post, obj_type="Post")
+
+        self.assertIn(
+            "Your Post is too long! Please shorten it and then try again.",
+            str(exc.exception),
+        )
+
+    def test_validator_too_short_post(self):
+        too_short_post = ""
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_length(data=too_short_post, obj_type="Post")
+
+        self.assertIn(
+            "Your Post cannot be empty. Please write something and then try again.",
+            str(exc.exception),
+        )
+
+    def test_validator_too_long_name(self):
+        too_long_name = "xy" * 450
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_length(data=too_long_name, obj_type="Display name")
+
+        self.assertIn(
+            "Your new display name is too long! Please shorten it and then try again.",
+            str(exc.exception),
+        )
+
+    def test_validator_too_short_name(self):
+        too_short_name = ""
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_length(data=too_short_name, obj_type="Display name")
+
+        self.assertIn(
+            "Your display name cannot be empty. "
+            "Please write something and then try again.",
+            str(exc.exception),
+        )
+
+    def test_validator_too_long_report_reason(self):
+        too_long_report_reason = "xy" * 450
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_length(data=too_long_report_reason, obj_type="report")
+
+        self.assertIn(
+            "Your report reason is too long! Please shorten it and then try again.",
+            str(exc.exception),
+        )
+
+    def test_validator_too_short_report_reason(self):
+        too_short_report_reason = ""
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_length(data=too_short_report_reason, obj_type="report")
+
+        self.assertIn(
+            "You cannot send a report without a reason. "
+            "Please write something and try to send it again.",
+            str(exc.exception),
+        )
+
+    def test_too_short(self):
+        too_short_text = ""
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_length(data=too_short_text, obj_type="anything")
+
+        self.assertIn(
+            "anything cannot be empty. Please write something and try again.",
+            str(exc.exception),
+        )
+
+    def test_just_right(self):
+        post = "hi"
+        res = self.validator.check_length(data=post, obj_type="Post")
+        self.assertTrue(res)
+
+    def test_correct_string_type_post(self):
+        text = "hello"
+        res = self.validator.check_type(data=text, obj_type="post text")
+        self.assertTrue(res)
+
+    def test_incorrect_type_post(self):
+        text = 3
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_type(data=text, obj_type="post text")
+
+        self.assertIn(
+            "post text must be of type 'String'. "
+            "Please correct the error and try again.",
+            str(exc.exception),
+        )
+
+    def test_correct_string_type_message(self):
+        text = "hello"
+        res = self.validator.check_type(data=text, obj_type="message text")
+        self.assertTrue(res)
+
+    def test_incorrect_type_message(self):
+        text = 3
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_type(data=text, obj_type="message text")
+
+        self.assertIn(
+            "message text must be of type 'String'. "
+            "Please correct the error and try again.",
+            str(exc.exception),
+        )
+
+    def test_correct_string_type_name(self):
+        text = "hello"
+        res = self.validator.check_type(data=text, obj_type="display name")
+        self.assertTrue(res)
+
+    def test_incorrect_type_name(self):
+        text = 3
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_type(data=text, obj_type="display name")
+
+        self.assertIn(
+            "display name must be of type 'String'. "
+            "Please correct the error and try again.",
+            str(exc.exception),
+        )
+
+    def test_correct_string_type_report(self):
+        text = "hello"
+        res = self.validator.check_type(data=text, obj_type="report reason")
+        self.assertTrue(res)
+
+    def test_incorrect_type_report(self):
+        text = 3
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_type(data=text, obj_type="report reason")
+
+        self.assertIn(
+            "report reason must be of type 'String'. "
+            "Please correct the error and try again.",
+            str(exc.exception),
+        )
+
+    def test_correct_string_type_search(self):
+        text = "hello"
+        res = self.validator.check_type(data=text, obj_type="search query")
+        self.assertTrue(res)
+
+    def test_incorrect_type_search(self):
+        text = 3
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_type(data=text, obj_type="search query")
+
+        self.assertIn(
+            "search query must be of type 'String'. "
+            "Please correct the error and try again.",
+            str(exc.exception),
+        )
+
+    def test_correct_number_type_id(self):
+        obj_id = 3
+        res = self.validator.check_type(data=obj_id, obj_type="user ID")
+        self.assertTrue(res)
+
+    def test_incorrect_type_id(self):
+        obj_id = "h"
+
+        with self.assertRaises(ValidationError) as exc:
+            self.validator.check_type(data=obj_id, obj_type="user ID")
+
+        self.assertIn(
+            "user ID must be of type 'Integer'. "
+            "Please correct the error and try again.",
+            str(exc.exception),
+        )

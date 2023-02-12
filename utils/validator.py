@@ -47,7 +47,7 @@ class Validator:
         self.constraints = types
 
     # Checks the length according to the given types
-    def check_length(self, data: str, obj_type: str):
+    def check_length(self, data: str, obj_type: str) -> bool:
         """
         Checks the length of the data according to the object type.
 
@@ -60,13 +60,24 @@ class Validator:
         )
         error_message: Optional[str] = None
 
-        if obj_type.lower() in [self.constraints.keys()]:
-            # Check if the item is too long
-            if len(data) > self.constraints[obj_type.lower()]["max"]:
-                error_message = too_long_error.format(obj_type)
-            # Check if the item is empty
-            elif len(data) < self.constraints[obj_type.lower()]["min"]:
-                error_message = too_short_error.format(obj_type)
+        if obj_type.lower() in self.constraints.keys():
+            if obj_type.lower() == "report":
+                # Check if the report reason is too long
+                if len(data) > self.constraints["report"]["max"]:
+                    error_message = too_long_error.format("report reason")
+                # Check if the report reason is empty
+                elif len(data) < self.constraints["report"]["min"]:
+                    error_message = (
+                        "You cannot send a report without a reason. "
+                        "Please write something and try to send it again."
+                    )
+            else:
+                # Check if the item is too long
+                if len(data) > self.constraints[obj_type.lower()]["max"]:
+                    error_message = too_long_error.format(obj_type)
+                # Check if the item is empty
+                elif len(data) < self.constraints[obj_type.lower()]["min"]:
+                    error_message = too_short_error.format(obj_type)
 
         elif obj_type.lower() == "display name":
             # Check if the name is too long
@@ -75,17 +86,6 @@ class Validator:
             # Check if the name is empty
             elif len(data) < self.constraints["user"]["min"]:
                 error_message = too_short_error.format("display name")
-
-        elif obj_type.lower() == "report":
-            # Check if the report reason is too long
-            if len(data) > self.constraints["report"]["max"]:
-                error_message = too_long_error.format("report reason")
-            # Check if the report reason is empty
-            elif len(data) < self.constraints["report"]["min"]:
-                error_message = (
-                    "You cannot send a report without a reason. "
-                    "Please write something and try to send it again."
-                )
 
         else:
             # Check if the data is empty
@@ -108,7 +108,7 @@ class Validator:
         return True
 
     # Checks the type of the given item
-    def check_type(self, data: Union[str, int], obj_type: str):
+    def check_type(self, data: Union[str, int], obj_type: str) -> bool:
         """
         Checks the type of the data matches the expected type.
 
