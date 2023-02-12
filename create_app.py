@@ -493,17 +493,22 @@ def create_app(db_path: str = database_path) -> Flask:
             # Check which users need to be unblocked
             current_date = datetime.now()
             users_to_unblock = User.query.filter(User.release_date < current_date).all()
+            to_unblock = []
 
             for user in users_to_unblock:
                 user.blocked = False
                 user.release_date = None
+                to_unblock.append(user)
 
-                # Try to update the database
-                db_update(user)
+            # Try to update the database
+            db_update_multi(objs=to_unblock)
 
             # Paginate users
             formatted_users = [user.format() for user in paginated_users.items]
             total_pages = calculate_total_pages(paginated_users.total)
+
+        else:
+            abort(500, "This isn't supported right now")
 
         return jsonify(
             {"success": True, "users": formatted_users, "total_pages": total_pages}
