@@ -52,7 +52,11 @@ def initialise_db(app: Flask) -> SQLAlchemy:
 class Post(db.Model):  # type: ignore[name-defined]
     __tablename__ = "posts"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=False,
+    )
     text = db.Column(db.String(480), nullable=False)
     date = db.Column(db.DateTime)
     given_hugs = db.Column(db.Integer, default=0)
@@ -127,11 +131,23 @@ class User(db.Model):  # type: ignore[name-defined]
 class Message(db.Model):  # type: ignore[name-defined]
     __tablename__ = "messages"
     id = db.Column(db.Integer, primary_key=True)
-    from_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    for_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    from_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=False,
+    )
+    for_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=False,
+    )
     text = db.Column(db.String(480), nullable=False)
     date = db.Column(db.DateTime)
-    thread = db.Column(db.Integer, db.ForeignKey("threads.id"), nullable=False)
+    thread = db.Column(
+        db.Integer,
+        db.ForeignKey("threads.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+    )
     from_deleted = db.Column(db.Boolean, nullable=False, default=False)
     for_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -170,8 +186,16 @@ class Message(db.Model):  # type: ignore[name-defined]
 class Thread(db.Model):  # type: ignore[name-defined]
     __tablename__ = "threads"
     id = db.Column(db.Integer, primary_key=True)
-    user_1_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    user_2_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user_1_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=False,
+    )
+    user_2_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=False,
+    )
     user_1_deleted = db.Column(db.Boolean, nullable=False, default=False)
     user_2_deleted = db.Column(db.Boolean, nullable=False, default=False)
     messages = db.relationship("Message", backref="threads")
@@ -187,9 +211,19 @@ class Report(db.Model):  # type: ignore[name-defined]
     __tablename__ = "reports"
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String(10), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    post_id = db.Column(db.Integer, db.ForeignKey("posts.id"))
-    reporter = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=False,
+    )
+    post_id = db.Column(
+        db.Integer, db.ForeignKey("posts.id", onupdate="CASCADE", ondelete="SET NULL")
+    )
+    reporter = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=False,
+    )
     report_reason = db.Column(db.String(120), nullable=False)
     date = db.Column(db.DateTime)
     dismissed = db.Column(db.Boolean, nullable=False, default=False)
@@ -231,8 +265,16 @@ class Report(db.Model):  # type: ignore[name-defined]
 class Notification(db.Model):  # type: ignore[name-defined]
     __tablename__ = "notifications"
     id = db.Column(db.Integer, primary_key=True)
-    for_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    from_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    for_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+    )
+    from_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=False,
+    )
     type = db.Column(db.String(), nullable=False)
     text = db.Column(db.String(), nullable=False)
     date = db.Column(db.DateTime, nullable=False)
@@ -255,7 +297,11 @@ class Notification(db.Model):  # type: ignore[name-defined]
 class NotificationSub(db.Model):  # type: ignore[name-defined]
     __tablename__ = "subscriptions"
     id = db.Column(db.Integer, primary_key=True)
-    user = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+    )
     endpoint = db.Column(db.String(), nullable=False)
     subscription_data = db.Column(db.Text, nullable=False)
 
