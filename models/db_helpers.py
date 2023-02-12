@@ -50,10 +50,12 @@ class DBDeleteModel(TypedDict):
 
 # Database management methods
 # -----------------------------------------------------------------
-# Method: Add
-# Description: Inserts a new record into the database.
-# Parameters: Object to insert (User, Post or Message).
 def add(obj: db.Model) -> DBReturnModel:  # type: ignore[name-defined]
+    """
+    Inserts a new record into the database.
+
+    param obj: Object to insert (User, Post or Message).
+    """
     return_object = {}
 
     # Try to add the object to the database
@@ -76,10 +78,13 @@ def add(obj: db.Model) -> DBReturnModel:  # type: ignore[name-defined]
     return {"success": True, "resource": return_object}
 
 
-# Method: Update
-# Description: Updates an existing record.
-# Parameters: Updated object (User, Post or Message).
 def update(obj: db.Model, params={}) -> DBReturnModel:  # type: ignore[name-defined]
+    """
+    Updates an existing record.
+
+    param obj: Updated object (User, Post or Message).
+    param params: dictionary of extra params for handling related objects
+    """
     updated_object = {}
 
     # Try to update the object in the database
@@ -134,12 +139,14 @@ def update(obj: db.Model, params={}) -> DBReturnModel:  # type: ignore[name-defi
     return {"success": True, "resource": updated_object}
 
 
-# Method: Update Multiple
-# Description: Updates multiple records.
-# Parameters: A list with all objects to update.
 def update_multiple(
     objs: list[db.Model] = [],  # type: ignore[name-defined]
 ) -> DBBulkModel:
+    """
+    Updates multiple records.
+
+    param objs: A list with all objects to update.
+    """
     updated_objects = []
 
     # Try to update the object in the database
@@ -162,10 +169,12 @@ def update_multiple(
     return {"success": True, "resource": updated_objects}
 
 
-# Method: Delete Object
-# Description: Deletes an existing record.
-# Parameters: Object (User, Post or Message) to delete.
 def delete_object(obj: db.Model) -> DBDeleteModel:  # type: ignore[name-defined]
+    """
+    Deletes an existing record.
+
+    param obj: Object (User, Post or Message) to delete.
+    """
     # Try to delete the record from the database
     try:
         # If the object to delete is a thread, delete all associated
@@ -191,13 +200,15 @@ def delete_object(obj: db.Model) -> DBDeleteModel:  # type: ignore[name-defined]
     return {"success": True, "deleted": deleted}
 
 
-# Method: Delete All
-# Description: Deletes all records that match a condition.
-# Parameters: Type - type of item to delete (posts or messages)
-#             ID - ID of the user whose posts or messages need to be deleted.
 def delete_all(
     type: Literal["posts", "inbox", "outbox", "thread", "threads"], id: int
 ) -> DBDeleteModel:
+    """
+    Deletes all records that match a condition.
+
+    param type: type of item to delete (posts or messages)
+    param id: ID of the user whose posts or messages need to be deleted.
+    """
     # Try to delete the records
     try:
         # If the type of objects to delete is posts, the ID is the
