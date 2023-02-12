@@ -169,6 +169,43 @@ def update_multiple(
     return {"success": True, "resource": updated_objects}
 
 
+def add_or_update_multiple(
+    add_objs: list[db.Model] = [],  # type: ignore[name-defined]
+    update_objs: list[db.Model] = [],  # type: ignore[name-defined]
+) -> DBBulkModel:
+    """
+    Inserts or updates multiple records at once.
+
+    param add_objs: Objects to add to the database.
+    param update_objs: Objects to update in the database.
+    """
+    updated_or_added_objects = []
+
+    # Try to update the object in the database
+    try:
+        db.session.add_all(add_objs)
+        db.session.commit()
+
+        for obj in update_objs:
+            updated_or_added_objects.append(obj.format())
+
+        for obj in add_objs:
+            updated_or_added_objects.append(obj.format())
+    # If there's a database error
+    except (DataError, IntegrityError) as err:
+        db.session.rollback()
+        abort(422, str(err.orig))
+    # If there's an error, rollback
+    except Exception as err:
+        db.session.rollback()
+        abort(500, str(err))
+    # Close the connection once the attempt is complete
+    finally:
+        db.session.close()
+
+    return {"success": True, "resource": updated_or_added_objects}
+
+
 def delete_object(obj: db.Model) -> DBDeleteModel:  # type: ignore[name-defined]
     """
     Deletes an existing record.
