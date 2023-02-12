@@ -27,6 +27,9 @@
 
 from typing import Literal, Any, TypedDict, Union
 
+from flask import abort
+from sqlalchemy.exc import DataError, IntegrityError  # type: ignore
+
 from .models import Post, Message, Thread, db
 
 
@@ -58,9 +61,14 @@ def add(obj: db.Model) -> DBReturnModel:  # type: ignore[name-defined]
         db.session.add(obj)
         db.session.commit()
         return_object = obj.format()
-    # If there's an error, rollback
-    except Exception:
+    # If there's a database error
+    except (DataError, IntegrityError) as err:
         db.session.rollback()
+        abort(422, str(err.orig))
+    # If there's an error, rollback
+    except Exception as err:
+        db.session.rollback()
+        abort(500, str(err))
     # Close the connection once the attempt is complete
     finally:
         db.session.close()
@@ -111,9 +119,14 @@ def update(obj: db.Model, params={}) -> DBReturnModel:  # type: ignore[name-defi
 
         db.session.commit()
         updated_object = obj.format()
-    # If there's an error, rollback
-    except Exception:
+    # If there's a database error
+    except (DataError, IntegrityError) as err:
         db.session.rollback()
+        abort(422, str(err.orig))
+    # If there's an error, rollback
+    except Exception as err:
+        db.session.rollback()
+        abort(500, str(err))
     # Close the connection once the attempt is complete
     finally:
         db.session.close()
@@ -134,9 +147,14 @@ def update_multiple(
         for obj in objs:
             db.session.commit()
             updated_objects.append(obj.format())
-    # If there's an error, rollback
-    except Exception:
+    # If there's a database error
+    except (DataError, IntegrityError) as err:
         db.session.rollback()
+        abort(422, str(err.orig))
+    # If there's an error, rollback
+    except Exception as err:
+        db.session.rollback()
+        abort(500, str(err))
     # Close the connection once the attempt is complete
     finally:
         db.session.close()
@@ -148,8 +166,6 @@ def update_multiple(
 # Description: Deletes an existing record.
 # Parameters: Object (User, Post or Message) to delete.
 def delete_object(obj: db.Model) -> DBDeleteModel:  # type: ignore[name-defined]
-    deleted = None
-
     # Try to delete the record from the database
     try:
         # If the object to delete is a thread, delete all associated
@@ -159,10 +175,15 @@ def delete_object(obj: db.Model) -> DBDeleteModel:  # type: ignore[name-defined]
 
         db.session.delete(obj)
         db.session.commit()
-        deleted = obj.id
-    # If there's an error, rollback
-    except Exception:
+        deleted: int = obj.id
+    # If there's a database error
+    except (DataError, IntegrityError) as err:
         db.session.rollback()
+        abort(422, str(err.orig))
+    # If there's an error, rollback
+    except Exception as err:
+        db.session.rollback()
+        abort(500, str(err))
     # Close the connection once the attempt is complete
     finally:
         db.session.close()
@@ -315,9 +336,14 @@ def delete_all(
                 db.session.query(Thread).filter(Thread.id == thread).delete()
 
         db.session.commit()
-    # If there's an error, rollback
-    except Exception:
+    # If there's a database error
+    except (DataError, IntegrityError) as err:
         db.session.rollback()
+        abort(422, str(err.orig))
+    # If there's an error, rollback
+    except Exception as err:
+        db.session.rollback()
+        abort(500, str(err))
     # Close the connection once the attempt is complete
     finally:
         db.session.close()

@@ -254,11 +254,7 @@ def create_app(db_path: str = database_path) -> Flask:
         )
 
         # Try to add the post to the database
-        try:
-            added_post = db_add(new_post)["resource"]
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        added_post = db_add(new_post)["resource"]
 
         return jsonify({"success": True, "posts": added_post})
 
@@ -440,11 +436,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # Otherwise, it's either their post or they're allowed to delete any
         # post.
         # Try to delete the post
-        try:
-            db_delete(post_data)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        db_delete(post_data)
 
         return jsonify({"success": True, "deleted": post_id})
 
@@ -509,11 +501,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 user.release_date = None
 
                 # Try to update the database
-                try:
-                    db_update(user)
-                # If there's an error, abort
-                except Exception:
-                    abort(500)
+                db_update(user)
 
             # Paginate users
             formatted_users = [user.format() for user in paginated_users.items]
@@ -557,11 +545,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 user_data.release_date = None
 
                 # Try to update the database
-                try:
-                    db_update(user_data)
-                # If there's an error, abort
-                except Exception:
-                    abort(500)
+                db_update(user_data)
 
         formatted_user_data = user_data.format()
         formatted_user_data["posts"] = Post.query.filter(
@@ -609,12 +593,8 @@ def create_app(db_path: str = database_path) -> Flask:
             '"rbg":"#f8eee4","item":"#f4b56a"}',
         )
 
-        # Try to add the post to the database
-        try:
-            added_user = db_add(new_user)["resource"]
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        # Try to add the user to the database
+        added_user = db_add(new_user)["resource"]
 
         # Get the Management API token and check that it's valid
         MGMT_API_TOKEN = check_mgmt_api_token()
@@ -911,11 +891,7 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(404)
 
         # Try to delete
-        try:
-            db_delete_all("posts", user_id)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        db_delete_all("posts", user_id)
 
         return jsonify({"success": True, "userID": user_id, "deleted": num_deleted})
 
@@ -1164,12 +1140,8 @@ def create_app(db_path: str = database_path) -> Flask:
                 user_1_id=message_data["fromId"], user_2_id=message_data["forId"]
             )
             # Try to create the new thread
-            try:
-                data = db_add(new_thread)
-                thread_id = data["resource"]["id"]
-            # If there's an error, abort
-            except Exception:
-                abort(500)
+            data = db_add(new_thread)
+            thread_id = data["resource"]["id"]
         # If there's a thread between the users
         else:
             thread_id = thread.id
@@ -1179,11 +1151,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 thread.user_1_deleted = False
                 thread.user_2_deleted = False
                 # Update the thread in the database
-                try:
-                    db_update(thread)
-                # If there's an error, abort
-                except Exception:
-                    abort(500)
+                db_update(thread)
 
         # If a new thread was created and the database session ended, we need
         # to get the logged user's data again.
@@ -1316,19 +1284,13 @@ def create_app(db_path: str = database_path) -> Flask:
             delete_message = False
 
         # Try to delete the thread
-        try:
-            # If both users deleted the message/thread, delete it from
-            # the database entirely
-            if delete_message:
-                db_delete(delete_item)
-            # Otherwise, just update the appropriate deleted property
-            else:
-                db_update(
-                    delete_item, {"set_deleted": True, "user_id": request_user.id}
-                )
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        # If both users deleted the message/thread, delete it from
+        # the database entirely
+        if delete_message:
+            db_delete(delete_item)
+        # Otherwise, just update the appropriate deleted property
+        else:
+            db_update(delete_item, {"set_deleted": True, "user_id": request_user.id})
 
         return jsonify({"success": True, "deleted": item_id})
 
@@ -1388,11 +1350,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 abort(404)
 
         # Try to clear the mailbox
-        try:
-            db_delete_all(mailbox_type, user_id)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        db_delete_all(mailbox_type, user_id)
 
         return jsonify({"success": True, "userID": user_id, "deleted": num_messages})
 
@@ -1514,12 +1472,8 @@ def create_app(db_path: str = database_path) -> Flask:
             reported_item.open_report = True
 
         # Try to add the report to the database
-        try:
-            added_report = db_add(report)["resource"]
-            db_update(reported_item)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        added_report = db_add(report)["resource"]
+        db_update(reported_item)
 
         return jsonify({"success": True, "report": added_report})
 
@@ -1560,18 +1514,12 @@ def create_app(db_path: str = database_path) -> Flask:
             reported_item.open_report = False
 
         # Try to update the report in the database
-        try:
-            db_update(report)
+        return_report = db_update(report)
 
-            # If the item wasn't deleted, set the post/user's open_report
-            # value to false
-            if reported_item:
-                db_update(reported_item)
-
-            return_report = report.format()
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        # If the item wasn't deleted, set the post/user's open_report
+        # value to false
+        if reported_item:
+            db_update(reported_item)
 
         return jsonify({"success": True, "updated": return_report})
 
@@ -1610,12 +1558,8 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(409)
 
         # Try to add the word to the filters list
-        try:
-            filter = Filter(filter=new_filter.lower())
-            added = db_add(filter)["resource"]
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        filter = Filter(filter=new_filter.lower())
+        added = db_add(filter)["resource"]
 
         return jsonify({"success": True, "added": added})
 
@@ -1634,12 +1578,8 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(404)
 
         # Otherwise, try to delete it
-        try:
-            removed = to_delete.format()
-            db_delete(to_delete)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        removed = to_delete.format()
+        db_delete(to_delete)
 
         return jsonify({"success": True, "deleted": removed})
 
@@ -1691,12 +1631,8 @@ def create_app(db_path: str = database_path) -> Flask:
         # notifications tab right now).
         if silent_refresh == "false":
             # Update the user's last-read date
-            try:
-                user.last_notifications_read = datetime.now()
-                db_update(user)
-            # If there's an error, abort
-            except Exception:
-                abort(500)
+            user.last_notifications_read = datetime.now()
+            db_update(user)
 
         return jsonify({"success": True, "notifications": formatted_notifications})
 
@@ -1730,12 +1666,8 @@ def create_app(db_path: str = database_path) -> Flask:
         )
 
         # Try to add it to the database
-        try:
-            subscribed = user.display_name
-            sub = db_add(subscription)["resource"]
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        subscribed = user.display_name
+        sub = db_add(subscription)["resource"]
 
         return {
             "success": True,
@@ -1772,13 +1704,9 @@ def create_app(db_path: str = database_path) -> Flask:
         old_sub.subscription_data = json.dumps(subscription_data)
 
         # Try to add it to the database
-        try:
-            subscribed = user.display_name
-            subId = old_sub.id
-            db_update(old_sub)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        subscribed = user.display_name
+        subId = old_sub.id
+        db_update(old_sub)
 
         return {"success": True, "subscribed": subscribed, "subId": subId}
 
@@ -1846,7 +1774,11 @@ def create_app(db_path: str = database_path) -> Flask:
     def unprocessable(error):
         return (
             jsonify(
-                {"success": False, "code": 422, "message": "Unprocessable request."}
+                {
+                    "success": False,
+                    "code": 422,
+                    "message": f"Unprocessable request. {error.description}",
+                }
             ),
             422,
         )
@@ -1859,7 +1791,8 @@ def create_app(db_path: str = database_path) -> Flask:
                 {
                     "success": False,
                     "code": 500,
-                    "message": "An internal server error occurred.",
+                    "message": "An internal server error occurred. "
+                    f"{error.description}",
                 }
             ),
             500,
