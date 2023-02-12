@@ -28,7 +28,7 @@
 from typing import Literal, Any, TypedDict, Union
 
 from flask import abort
-from sqlalchemy.exc import DataError, IntegrityError  # type: ignore
+from sqlalchemy.exc import DataError, IntegrityError
 
 from .models import Post, Message, Thread, db
 

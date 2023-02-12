@@ -127,6 +127,10 @@ class TestHugApp(unittest.TestCase):
 
         with self.app.app_context():
             post = self.db.session.get(Post, 1)
+
+            if not post:
+                self.fail("The post doesn't exist! Check the test database")
+
             original_text = post.text
             post.text = "new test"
             actual_return = update(obj=post)
@@ -137,6 +141,10 @@ class TestHugApp(unittest.TestCase):
     def test_update_integrity_error(self):
         with self.app.app_context():
             post = self.db.session.get(Post, 1)
+
+            if not post:
+                self.fail("The post doesn't exist! Check the test database")
+
             post.text = None
 
             with self.assertRaises(HTTPException) as exc:
@@ -190,6 +198,10 @@ class TestHugApp(unittest.TestCase):
 
             # Make sure the post that's right wasn't updated either
             post = self.db.session.get(Post, 1)
+
+            if not post:
+                self.fail("The post doesn't exist! Check the test database")
+
             self.assertNotEqual(post.text, "hello")
 
     def test_add_or_update_no_errors(self):
@@ -217,6 +229,10 @@ class TestHugApp(unittest.TestCase):
                 sent_hugs="",
             )
             post_to_update = self.db.session.get(Post, 1)
+
+            if not post_to_update:
+                self.fail("The post doesn't exist! Check the test database")
+
             original_post_text = post_to_update.text
             post_to_update.text = "new test"
             actual_return = add_or_update_multiple(
@@ -241,6 +257,10 @@ class TestHugApp(unittest.TestCase):
                 sent_hugs="",
             )
             post_to_update = self.db.session.get(Post, 1)
+
+            if not post_to_update:
+                self.fail("The post doesn't exist! Check the test database")
+
             post_to_update.text = "new test"
 
             with self.assertRaises(HTTPException) as exc:
@@ -253,4 +273,8 @@ class TestHugApp(unittest.TestCase):
 
             # Make sure the post that's right wasn't updated either
             post = self.db.session.get(Post, 1)
+
+            if not post:
+                self.fail("The post doesn't exist! Check the test database")
+
             self.assertNotEqual(post.text, "new test")
