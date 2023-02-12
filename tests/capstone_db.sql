@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.2
--- Dumped by pg_dump version 12.2
+-- Dumped from database version 14.6
+-- Dumped by pg_dump version 14.6
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -174,7 +174,7 @@ CREATE TABLE public.reports (
     user_id integer NOT NULL,
     post_id integer,
     reporter integer NOT NULL,
-    report_reason character varying(480) NOT NULL,
+    report_reason character varying(120) NOT NULL,
     dismissed boolean NOT NULL,
     closed boolean NOT NULL,
     date timestamp without time zone
@@ -371,7 +371,7 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.alembic_version (version_num) FROM stdin;
-d8921945f241
+812b00a075e3
 \.
 
 
@@ -761,7 +761,7 @@ ALTER TABLE ONLY public.users
 --
 
 ALTER TABLE ONLY public.messages
-    ADD CONSTRAINT messages_for_id_fkey FOREIGN KEY (for_id) REFERENCES public.users(id);
+    ADD CONSTRAINT messages_for_id_fkey FOREIGN KEY (for_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -769,7 +769,7 @@ ALTER TABLE ONLY public.messages
 --
 
 ALTER TABLE ONLY public.messages
-    ADD CONSTRAINT messages_from_id_fkey FOREIGN KEY (from_id) REFERENCES public.users(id);
+    ADD CONSTRAINT messages_from_id_fkey FOREIGN KEY (from_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -777,7 +777,7 @@ ALTER TABLE ONLY public.messages
 --
 
 ALTER TABLE ONLY public.messages
-    ADD CONSTRAINT messages_thread_fkey FOREIGN KEY (thread) REFERENCES public.threads(id);
+    ADD CONSTRAINT messages_thread_fkey FOREIGN KEY (thread) REFERENCES public.threads(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -785,7 +785,7 @@ ALTER TABLE ONLY public.messages
 --
 
 ALTER TABLE ONLY public.notifications
-    ADD CONSTRAINT notifications_for_id_fkey FOREIGN KEY (for_id) REFERENCES public.users(id);
+    ADD CONSTRAINT notifications_for_id_fkey FOREIGN KEY (for_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -793,7 +793,7 @@ ALTER TABLE ONLY public.notifications
 --
 
 ALTER TABLE ONLY public.notifications
-    ADD CONSTRAINT notifications_from_id_fkey FOREIGN KEY (from_id) REFERENCES public.users(id);
+    ADD CONSTRAINT notifications_from_id_fkey FOREIGN KEY (from_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -801,7 +801,7 @@ ALTER TABLE ONLY public.notifications
 --
 
 ALTER TABLE ONLY public.posts
-    ADD CONSTRAINT posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+    ADD CONSTRAINT posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -809,7 +809,7 @@ ALTER TABLE ONLY public.posts
 --
 
 ALTER TABLE ONLY public.reports
-    ADD CONSTRAINT reports_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id);
+    ADD CONSTRAINT reports_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -817,7 +817,7 @@ ALTER TABLE ONLY public.reports
 --
 
 ALTER TABLE ONLY public.reports
-    ADD CONSTRAINT reports_reporter_fkey FOREIGN KEY (reporter) REFERENCES public.users(id);
+    ADD CONSTRAINT reports_reporter_fkey FOREIGN KEY (reporter) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -825,7 +825,7 @@ ALTER TABLE ONLY public.reports
 --
 
 ALTER TABLE ONLY public.reports
-    ADD CONSTRAINT reports_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+    ADD CONSTRAINT reports_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -833,7 +833,7 @@ ALTER TABLE ONLY public.reports
 --
 
 ALTER TABLE ONLY public.subscriptions
-    ADD CONSTRAINT subscriptions_user_fkey FOREIGN KEY ("user") REFERENCES public.users(id);
+    ADD CONSTRAINT subscriptions_user_fkey FOREIGN KEY ("user") REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -841,7 +841,7 @@ ALTER TABLE ONLY public.subscriptions
 --
 
 ALTER TABLE ONLY public.threads
-    ADD CONSTRAINT threads_user_1_id_fkey FOREIGN KEY (user_1_id) REFERENCES public.users(id);
+    ADD CONSTRAINT threads_user_1_id_fkey FOREIGN KEY (user_1_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -849,9 +849,10 @@ ALTER TABLE ONLY public.threads
 --
 
 ALTER TABLE ONLY public.threads
-    ADD CONSTRAINT threads_user_2_id_fkey FOREIGN KEY (user_2_id) REFERENCES public.users(id);
+    ADD CONSTRAINT threads_user_2_id_fkey FOREIGN KEY (user_2_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
 -- PostgreSQL database dump complete
 --
+
