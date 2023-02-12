@@ -43,7 +43,7 @@ from .dummy_data import updated_post_1, DATETIME_PATTERN
 
 
 # App testing
-class TestHugApp(unittest.TestCase):
+class TestDBHelpers(unittest.TestCase):
     # Setting up each test
     def setUp(self):
         test_db_path = "postgresql://postgres:password@localhost:5432/test_sah"

@@ -36,7 +36,7 @@ from utils.validator import Validator, ValidationError
 
 
 # App testing
-class TestHugApp(unittest.TestCase):
+class TestHugUtils(unittest.TestCase):
     validator: Validator
 
     # Setting up the suite
