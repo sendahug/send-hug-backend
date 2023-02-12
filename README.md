@@ -140,13 +140,13 @@ Once you've completed the setup for whichever approach you've chosen, run the fo
 
 ```
 "CREATE DATABASE test_sah;" | sudo -u postgres psql
-python -m unittest tests/test_app.py
+python -m unittest discover --pattern=test_*.py
 ```
 
 Or, if using macOS:
 ```
 dropdb test_sah && createdb test_sah
-python3 -m unittest tests/test_app.py
+python3 -m unittest discover --pattern=test_*.py
 ```
 
 ## Hosting

@@ -27,26 +27,31 @@ Push notifications related methods.
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from typing import Dict, Union, Any
+from typing import TypedDict, Literal
 from datetime import datetime, timedelta
 
 
-def generate_push_data(data: Dict[str, Any]) -> Dict[str, str]:
+RawPushData = TypedDict("RawPushData", {"type": Literal["hug", "message"], "text": str})
+PushData = TypedDict("PushData", {"title": str, "body": str})
+VapidClaims = TypedDict("VapidClaims", {"sub": str, "exp": float})
+
+
+def generate_push_data(data: RawPushData) -> PushData:
     """
     Generates the push notification's data from the
     given raw data.
     """
-    notification_data = {"title": "New " + data["type"], "body": data["text"]}
+    notification_data: PushData = {"title": "New " + data["type"], "body": data["text"]}
 
     return notification_data
 
 
-def generate_vapid_claims() -> Dict[str, Union[str, float]]:
+def generate_vapid_claims() -> VapidClaims:
     """
     Generates the VAPID claims dictionary.
     """
     expiry_time = datetime.timestamp(datetime.utcnow() + timedelta(hours=12))
-    vapid_claims: Dict[str, Union[str, float]] = {
+    vapid_claims: VapidClaims = {
         "sub": "mailto:sendahugcom@gmail.com",
         "exp": expiry_time,
     }

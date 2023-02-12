@@ -28,13 +28,14 @@
 import os
 import json
 import math
-import sys
 import http.client
-from typing import Dict, List, Any, cast
+
+from typing import Dict, List, Any, Literal, Optional, Union
 from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
 from pywebpush import webpush, WebPushException  # type: ignore
+from sqlalchemy import and_, or_
 
 from models import (
     database_path,
@@ -52,6 +53,7 @@ from models import (
     delete_object as db_delete,
     delete_all as db_delete_all,
     update_multiple as db_update_multi,
+    add_or_update_multiple as db_bulk_insert_update,
 )
 from auth import (
     AuthError,
@@ -60,9 +62,12 @@ from auth import (
     get_management_api_token,
     AUTH0_DOMAIN,
 )
-from utils.filter import WordFilter
 from utils.validator import Validator, ValidationError
-from utils.push_notifications import generate_push_data, generate_vapid_claims
+from utils.push_notifications import (
+    generate_push_data,
+    generate_vapid_claims,
+    RawPushData,
+)
 
 
 def create_app(db_path: str = database_path) -> Flask:
@@ -74,7 +79,6 @@ def create_app(db_path: str = database_path) -> Flask:
     db = initialise_db(app)
     # Utilities
     CORS(app, origins="")
-    word_filter = WordFilter()
     validator = Validator(
         {
             "post": {"max": 480, "min": 1},
@@ -106,7 +110,7 @@ def create_app(db_path: str = database_path) -> Flask:
         return math.ceil(items_count / ITEMS_PER_PAGE)
 
     # Send push notification
-    def send_push_notification(user_id, data):
+    def send_push_notification(user_id: int, data: RawPushData):
         vapid_key = os.environ.get("PRIVATE_KEY")
         notification_data = generate_push_data(data)
         vapid_claims = generate_vapid_claims()
@@ -126,7 +130,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 )
         # If there's an error, print the details
         except WebPushException as e:
-            print(e)
+            app.logger.error(e)
 
     # Routes
     # -----------------------------------------------------------------
@@ -183,15 +187,13 @@ def create_app(db_path: str = database_path) -> Flask:
         validator.check_type(search_query, "Search query")
 
         # Get the users with the search query in their display name
-        users = User.query.filter(
-            User.display_name.ilike("%" + search_query + "%")
-        ).all()
+        users = User.query.filter(User.display_name.ilike(f"%{search_query}%")).all()
 
         posts = (
             db.session.query(Post, User.display_name)
             .join(User)
             .order_by(db.desc(Post.date))
-            .filter(Post.text.like("%" + search_query + "%"))
+            .filter(Post.text.like(f"%{search_query}%"))
             .filter(Post.open_report == db.false())
             .paginate(page=current_page, per_page=ITEMS_PER_PAGE)
         )
@@ -240,42 +242,19 @@ def create_app(db_path: str = database_path) -> Flask:
             )
 
         new_post_data = json.loads(request.data)
-        blacklist_check = word_filter.blacklisted(new_post_data["text"])
+        validator.validate_post_or_message(text=new_post_data["text"], type="post")
 
-        # If there's no blacklisted word, add the new post to the database
-        if blacklist_check.is_blacklisted is False:
-            # Check the length adn  type of the post's text
-            validator.check_length(new_post_data["text"], "post")
-            validator.check_type(new_post_data["text"], "post text")
+        # Create a new post object
+        new_post = Post(
+            user_id=new_post_data["userId"],
+            text=new_post_data["text"],
+            date=new_post_data["date"],
+            given_hugs=new_post_data["givenHugs"],
+            sent_hugs="",
+        )
 
-            # Create a new post object
-            new_post = Post(
-                user_id=new_post_data["userId"],
-                text=new_post_data["text"],
-                date=new_post_data["date"],
-                given_hugs=new_post_data["givenHugs"],
-                sent_hugs="",
-            )
-
-            # Try to add the post to the database
-            try:
-                added_post = db_add(new_post)["added"]
-            # If there's an error, abort
-            except Exception:
-                abort(500)
-        # If there's a blacklisted word / phrase, alert the user
-        else:
-            num_issues = len(blacklist_check.badword_indexes)
-            raise ValidationError(
-                {
-                    "code": 400,
-                    "description": f"Your text contains {str(num_issues)}"
-                    " forbidden term(s). The following word(s) is/"
-                    f"are not allowed: {blacklist_check.forbidden_words}."
-                    "Please fix your post's text and try again.",
-                },
-                400,
-            )
+        # Try to add the post to the database
+        added_post = db_add(new_post)["resource"]
 
         return jsonify({"success": True, "posts": added_post})
 
@@ -286,7 +265,9 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: patch:my-post or patch:any-post.
     @app.route("/posts/<post_id>", methods=["PATCH"])
     @requires_auth(["patch:my-post", "patch:any-post"])
-    def edit_post(token_payload, post_id):
+    def edit_post(token_payload, post_id: int):
+        push_notification: Optional[RawPushData] = None
+
         # If there's no ID provided
         if post_id is None:
             abort(404)
@@ -307,74 +288,27 @@ def create_app(db_path: str = database_path) -> Flask:
         post_author = User.query.filter(User.id == original_post.user_id).one_or_none()
 
         # If the user's permission is 'patch my' the user can only edit
-        # their own posts.
-        if "patch:my-post" in token_payload["permissions"]:
-            # Compares the user's ID to the user_id of the post
-            if original_post.user_id != current_user.id:
-                # If the user attempted to edit the text of a post that doesn't
-                # belong to them, throws an auth error
-                if original_post.text != updated_post["text"]:
-                    raise AuthError(
-                        {
-                            "code": 403,
-                            "description": "You do not have permission to edit "
-                            "this post.",
-                        },
-                        403,
-                    )
-            # Otherwise, the user attempted to edit their own post, which
-            # is allowed
-            else:
-                # If the text was changed
-                if original_post.text != updated_post["text"]:
-                    blacklist_check = word_filter.blacklisted(updated_post["text"])
-                    # If there's no blacklisted word, add the new post to the database
-                    if blacklist_check.is_blacklisted is False:
-                        # Check the length adn  type of the post's text
-                        validator.check_length(updated_post["text"], "post")
-                        validator.check_type(updated_post["text"], "post text")
+        # their own posts. If it's a user trying to edit the text
+        # of a post that doesn't belong to them, throw an auth error
+        if (
+            "patch:my-post" in token_payload["permissions"]
+            and original_post.user_id != current_user.id
+            and original_post.text != updated_post["text"]
+        ):
+            raise AuthError(
+                {
+                    "code": 403,
+                    "description": "You do not have permission to edit " "this post.",
+                },
+                403,
+            )
 
-                        original_post.text = updated_post["text"]
-                    # If there's a blacklisted word / phrase, alert the user
-                    else:
-                        num_issues = len(blacklist_check.badword_indexes)
-                        raise ValidationError(
-                            {
-                                "code": 400,
-                                "description": f"Your text contains {str(num_issues)}"
-                                " forbidden term(s). The following word(s) is/"
-                                f"are not allowed: {blacklist_check.forbidden_words}."
-                                "Please fix your post's text and try again.",
-                            },
-                            400,
-                        )
-        # Otherwise, the user is allowed to edit any post, and thus text
-        # editing is allowed
-        else:
-            # If the text was changed
-            if original_post.text != updated_post["text"]:
-                blacklist_check = word_filter.blacklisted(updated_post["text"])
-                # If there's no blacklisted word, add the new post to the database
-                if blacklist_check.is_blacklisted is False:
-                    # Check the length adn  type of the post's text
-                    validator.check_length(updated_post["text"], "post")
-                    validator.check_type(updated_post["text"], "post text")
-
-                    original_post.text = updated_post["text"]
-                # If there's a blacklisted word / phrase, alert the user
-                else:
-                    num_issues = len(blacklist_check.badword_indexes)
-
-                    raise ValidationError(
-                        {
-                            "code": 400,
-                            "description": f"Your text contains {str(num_issues)}"
-                            " forbidden term(s). The following word(s) is/"
-                            f"are not allowed: {blacklist_check.forbidden_words}."
-                            "Please fix your post's text and try again.",
-                        },
-                        400,
-                    )
+        # Otherwise, the user either attempted to edit their own post, or
+        # they're allowed to edit any post, so let them update the post
+        # If the text was changed
+        if original_post.text != updated_post["text"]:
+            validator.validate_post_or_message(text=updated_post["text"], type="post")
+            original_post.text = updated_post["text"]
 
         # If a hug was added
         # Since anyone can give hugs, this doesn't require a permissions check
@@ -436,30 +370,26 @@ def create_app(db_path: str = database_path) -> Flask:
             original_post.open_report = False
 
         # Try to update the database
-        try:
-            # Objects to update
-            to_update = [original_post, current_user, post_author]
-            # If there's a report to close, add it to the list of objects
-            # to update.
-            if "closeReport" in updated_post:
-                to_update.append(open_report)
-            # Update users' and post's data
-            updated_res = db_update_multi(to_update)
+        # Objects to update
+        to_update = [original_post, current_user, post_author]
+        to_add = []
+        # If there's a report to close, add it to the list of objects
+        # to update.
+        if "closeReport" in updated_post:
+            to_update.append(open_report)
 
-            # If there was an added hug, add the new notification
-            if "givenHugs" in updated_post:
-                if original_hugs != updated_post["givenHugs"]:
-                    send_push_notification(
-                        user_id=notification_for, data=push_notification
-                    )
-                    db_add(notification)
+        # If there was an added hug, add the new notification
+        if "givenHugs" in updated_post:
+            if original_hugs != updated_post["givenHugs"]:
 
-            data = json.loads(updated_res.data)["updated"]
-            db_updated_post = data[0]
-        # If there's an error, abort
-        except Exception:
-            print(sys.exc_info())
-            abort(500)
+                to_add.append(notification)
+
+        updated = db_bulk_insert_update(add_objs=to_add, update_objs=to_update)
+        data = [item for item in updated["resource"] if "sentHugs" in item.keys()]
+        db_updated_post = data[0]
+
+        if push_notification:
+            send_push_notification(user_id=notification_for, data=push_notification)
 
         return jsonify({"success": True, "updated": db_updated_post})
 
@@ -469,7 +399,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: delete:my-post or delete:any-post.
     @app.route("/posts/<post_id>", methods=["DELETE"])
     @requires_auth(["delete:my-post", "delete:any-post"])
-    def delete_post(token_payload, post_id):
+    def delete_post(token_payload, post_id: int):
         # If there's no ID provided
         if post_id is None:
             abort(404)
@@ -504,11 +434,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # Otherwise, it's either their post or they're allowed to delete any
         # post.
         # Try to delete the post
-        try:
-            db_delete(post_data)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        db_delete(post_data)
 
         return jsonify({"success": True, "deleted": post_id})
 
@@ -517,7 +443,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Parameters: type - Type of posts (new or suggested) to fetch.
     # Authorization: None.
     @app.route("/posts/<type>")
-    def get_new_posts(type):
+    def get_new_posts(type: Literal["new", "suggested"]):
         page = request.args.get("page", 1, type=int)
 
         formatted_posts = []
@@ -552,7 +478,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/users/<type>")
     @requires_auth(["read:admin-board"])
-    def get_users_by_type(token_payload, type):
+    def get_users_by_type(token_payload, type: str):
         page = request.args.get("page", 1, type=int)
 
         # If the type of users to fetch is blocked users
@@ -573,11 +499,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 user.release_date = None
 
                 # Try to update the database
-                try:
-                    db_update(user)
-                # If there's an error, abort
-                except Exception:
-                    abort(500)
+                db_update(user)
 
             # Paginate users
             formatted_users = [user.format() for user in paginated_users.items]
@@ -593,29 +515,23 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:user.
     @app.route("/users/all/<user_id>")
     @requires_auth(["read:user"])
-    def get_user_data(token_payload, user_id):
+    def get_user_data(token_payload, user_id: Union[int, str]):
         # If there's no ID provided
         if user_id is None:
             abort(404)
 
-        user_data = User.query.filter(User.auth0_id == user_id).one_or_none()
+        # Try to convert it to a number; if it's a number, it's a
+        # regular ID, so try to find the user with that ID
+        try:
+            int(user_id)
+            user_data = User.query.filter(User.id == int(user_id)).one_or_none()
+        # Otherwise, it's an Auth0 ID
+        except Exception:
+            user_data = User.query.filter(User.auth0_id == user_id).one_or_none()
 
-        # If there's no user with that Auth0 ID, try to find a user with that
-        # ID; the user might be trying to view user profile
+        # If there's no user with that Auth0 ID, abort
         if user_data is None:
-            # Try to convert it to a number; if it's a number, it's a
-            # regular ID, so try to find the user with that ID
-            try:
-                int(user_id)
-                user_data = User.query.filter(User.id == user_id).one_or_none()
-
-                # If there's no user with that ID either, abort
-                if user_data is None:
-                    abort(404)
-            # Otherwise, it's an Auth0 ID and it's the user's first login,
-            # so just return a 'not found' message
-            except Exception:
-                abort(404)
+            abort(404)
 
         # If the user is currently blocked, compare their release date to
         # the current date and time.
@@ -627,11 +543,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 user_data.release_date = None
 
                 # Try to update the database
-                try:
-                    db_update(user_data)
-                # If there's an error, abort
-                except Exception:
-                    abort(500)
+                db_update(user_data)
 
         formatted_user_data = user_data.format()
         formatted_user_data["posts"] = Post.query.filter(
@@ -679,12 +591,8 @@ def create_app(db_path: str = database_path) -> Flask:
             '"rbg":"#f8eee4","item":"#f4b56a"}',
         )
 
-        # Try to add the post to the database
-        try:
-            added_user = db_add(new_user)["added"]
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        # Try to add the user to the database
+        added_user = db_add(new_user)["resource"]
 
         # Get the Management API token and check that it's valid
         MGMT_API_TOKEN = check_mgmt_api_token()
@@ -714,7 +622,7 @@ def create_app(db_path: str = database_path) -> Flask:
             )
             delete_response = connection.getresponse()
             delete_response_data = delete_response.read()
-            print(delete_response_data)
+            app.logger.debug(delete_response_data)
 
             # Then add the 'user' role to the user's payload
             create_payload = '{ "roles": [ "rol_BhidDxUqlXDx8qIr" ] }'
@@ -726,10 +634,10 @@ def create_app(db_path: str = database_path) -> Flask:
             )
             create_response = connection.getresponse()
             create_response_data = create_response.read()
-            print(create_response_data)
+            app.logger.debug(create_response_data)
         # If there's an error, print it
         except Exception as e:
-            print(e)
+            app.logger.error(e)
 
         return jsonify({"success": True, "user": added_user})
 
@@ -739,10 +647,13 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: patch:user or patch:any-user.
     @app.route("/users/all/<user_id>", methods=["PATCH"])
     @requires_auth(["patch:user", "patch:any-user"])
-    def edit_user(token_payload, user_id):
+    def edit_user(token_payload, user_id: int):
+        push_notification: Optional[RawPushData] = None
+
         # if there's no user ID provided, abort with 'Bad Request'
         if user_id is None:
-            abort(404)
+            abort(400)
+
         # Check if the user ID isn't an integer; if it isn't, abort
         validator.check_type(user_id, "User ID")
 
@@ -784,39 +695,28 @@ def create_app(db_path: str = database_path) -> Flask:
         # If the user is attempting to change a user's display name, check
         # their permissions
         if "displayName" in updated_user:
-            if updated_user["displayName"] != original_user.display_name:
-                # if the user is only allowed to change their own name
-                # (user / mod)
-                if "patch:user" in token_payload["permissions"]:
-                    # If it's not the current user, abort
-                    if token_payload["sub"] != original_user.auth0_id:
-                        raise AuthError(
-                            {
-                                "code": 403,
-                                "description": "You do not have permission to "
-                                "edit this user's display name.",
-                            },
-                            403,
-                        )
-                    # If it is, let them update user data
-                    else:
-                        # Check the length and type of the user's display name
-                        validator.check_length(
-                            updated_user["displayName"], "display name"
-                        )
-                        validator.check_type(
-                            updated_user["displayName"], "display name"
-                        )
+            # if the name changed and the user is only allowed to
+            # change their own name (user / mod)
+            if (
+                updated_user["displayName"] != original_user.display_name
+                and "patch:user" in token_payload["permissions"]
+            ):
+                # If it's not the current user, abort
+                if token_payload["sub"] != original_user.auth0_id:
+                    raise AuthError(
+                        {
+                            "code": 403,
+                            "description": "You do not have permission to "
+                            "edit this user's display name.",
+                        },
+                        403,
+                    )
 
-                        original_user.display_name = updated_user["displayName"]
-                # if the user can edit anyone or the user is trying to
-                # update their own name
-                else:
-                    # Check the length adn  type of the user's display name
-                    validator.check_length(updated_user["displayName"], "display name")
-                    validator.check_type(updated_user["displayName"], "display name")
+            # Otherwise, check the length and type of the user's display name
+            validator.check_length(updated_user["displayName"], "display name")
+            validator.check_type(updated_user["displayName"], "display name")
 
-                    original_user.display_name = updated_user["displayName"]
+            original_user.display_name = updated_user["displayName"]
 
         # If the request was in done in order to block or unlock a user
         if "blocked" in updated_user:
@@ -829,11 +729,11 @@ def create_app(db_path: str = database_path) -> Flask:
                     },
                     403,
                 )
+
             # Otherwise, the user is a manager, so they can block a user.
             # In that case, block / unblock the user as requested.
-            else:
-                original_user.blocked = updated_user["blocked"]
-                original_user.release_date = updated_user["releaseDate"]
+            original_user.blocked = updated_user["blocked"]
+            original_user.release_date = updated_user["releaseDate"]
 
         # If there's a 'closeReport' value, this update is the result of
         # a report, which means the report with the given ID needs to be
@@ -886,52 +786,38 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Checks if the user's role is updated based on the
         # permissions in the JWT
-        # Checks whether the user has 'patch:any-post' permission, which
-        # if given to moderators and admins
-        if "patch:any-post" in token_payload["permissions"]:
-            # Checks whether the user has 'delete:any-post' permission, which
-            # is given only to admins, and whether the user is already
-            # marked as an admin in the database; if the user isn't an admin
-            # in the database, changes their role to admin. If they are,
-            # there's no need to update their role.
-            if (
-                "delete:any-post" in token_payload["permissions"]
-                and original_user.role != "admin"
-            ):
-                original_user.role = "admin"
-            # If the user doesn't have that permission but they have the
-            # permission to edit any post, they're moderators. Checks whether
-            # the user is marked as a mod in the database; if the user isn't,
-            # changes their role to moderator. If they are, there's no need to
-            # update their role.
-            elif (
-                "delete:any-post" not in token_payload["permissions"]
-                and original_user.role != "moderator"
-            ):
-                original_user.role = "moderator"
+        # Checks whether the user has 'delete:any-post' permission, which
+        # is given only to admins
+        if "delete:any-post" in token_payload["permissions"]:
+            original_user.role = "admin"
+        # If the user doesn't have that permission but they have the
+        # permission to edit any post, they're moderators
+        elif "patch:any-post" in token_payload["permissions"]:
+            original_user.role = "moderator"
         # Otherwise, the user's role is a user, so make sure to mark it
         # as such.
         else:
             original_user.role = "user"
 
         # Try to update it in the database
-        try:
-            # Update users' data
-            db_update(original_user)
-            db_update(current_user)
-            if "closeReport" in updated_user:
-                db_update(open_report)
-            # If the user was given a hug, add a new notification
-            if "receivedH" in updated_user and "givenH" in updated_user:
-                if original_hugs != updated_user["receivedH"]:
-                    send_push_notification(
-                        user_id=notification_for, data=push_notification
-                    )
-                    db_add(notification)
-            updated_user = original_user.format()
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        # Update users' data
+        to_update = [original_user, current_user]
+        to_add = []
+        if "closeReport" in updated_user:
+            to_update.append(open_report)
+        # If the user was given a hug, add a new notification
+        if "receivedH" in updated_user and "givenH" in updated_user:
+            if original_hugs != updated_user["receivedH"]:
+                to_add.append(notification)
+
+        updated = db_bulk_insert_update(add_objs=to_add, update_objs=to_update)
+        updated_original_user = [
+            item for item in updated["resource"] if item["id"] == original_user.id
+        ]
+        updated_user = updated_original_user[0]
+
+        if push_notification:
+            send_push_notification(user_id=notification_for, data=push_notification)
 
         return jsonify({"success": True, "updated": updated_user})
 
@@ -973,7 +859,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: delete:my-post or delete:any-post
     @app.route("/users/all/<user_id>/posts", methods=["DELETE"])
     @requires_auth(["delete:my-post", "delete:any-post"])
-    def delete_user_posts(token_payload, user_id):
+    def delete_user_posts(token_payload, user_id: int):
         validator.check_type(user_id, "User ID")
         current_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
@@ -981,18 +867,20 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # If the user making the request isn't the same as the user
         # whose posts should be deleted
-        if current_user.id != int(user_id):
-            # If the user can only delete their own posts, they're not
-            # allowed to delete others' posts, so raise an AuthError
-            if "delete:my-post" in token_payload["permissions"]:
-                raise AuthError(
-                    {
-                        "code": 403,
-                        "description": "You do not have permission to delete "
-                        "another user's posts.",
-                    },
-                    403,
-                )
+        # If the user can only delete their own posts, they're not
+        # allowed to delete others' posts, so raise an AuthError
+        if (
+            current_user.id != int(user_id)
+            and "delete:my-post" in token_payload["permissions"]
+        ):
+            raise AuthError(
+                {
+                    "code": 403,
+                    "description": "You do not have permission to delete "
+                    "another user's posts.",
+                },
+                403,
+            )
 
         # Otherwise, the user is either trying to delete their own posts or
         # they're allowed to delete others' posts, so let them continue
@@ -1004,11 +892,7 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(404)
 
         # Try to delete
-        try:
-            db_delete_all("posts", user_id)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        db_delete_all("posts", user_id)
 
         return jsonify({"success": True, "userID": user_id, "deleted": num_deleted})
 
@@ -1232,44 +1116,24 @@ def create_app(db_path: str = database_path) -> Flask:
                 403,
             )
 
-        blacklist_check = word_filter.blacklisted(message_data["messageText"])
-
-        # If there's a blacklisted word / phrase, alert the user
-        if blacklist_check.is_blacklisted:
-            num_issues = len(blacklist_check.badword_indexes)
-
-            raise ValidationError(
-                {
-                    "code": 400,
-                    "description": f"Your message contains {str(num_issues)}"
-                    " forbidden term(s). The following word(s) is/"
-                    f"are not allowed: {blacklist_check.forbidden_words}."
-                    "Please fix your post's text and try again.",
-                },
-                400,
-            )
-
-        # Check the length adn  type of the message text
-        validator.check_length(message_data["messageText"], "message")
-        validator.check_type(message_data["messageText"], "message text")
+        validator.validate_post_or_message(
+            text=message_data["messageText"], type="message"
+        )
 
         # Checks if there's an existing thread between the users (with user 1
         # being the sender and user 2 being the recipient)
-        thread = (
-            Thread.query.filter(Thread.user_1_id == message_data["fromId"])
-            .filter(Thread.user_2_id == message_data["forId"])
-            .one_or_none()
-        )
-
-        # Checks if there's an existing thread between the users (in the
-        # opposite order - with user 1 being the recipient and user 2 being
-        # the sender)
-        if thread is None:
-            thread = (
-                Thread.query.filter(Thread.user_1_id == message_data["forId"])
-                .filter(Thread.user_2_id == message_data["fromId"])
-                .one_or_none()
+        thread = Thread.query.filter(
+            or_(
+                and_(
+                    Thread.user_1_id == message_data["fromId"],
+                    Thread.user_2_id == message_data["forId"],
+                ),
+                and_(
+                    Thread.user_1_id == message_data["forId"],
+                    Thread.user_2_id == message_data["fromId"],
+                ),
             )
+        ).one_or_none()
 
         # If there's no thread between the users
         if thread is None:
@@ -1277,12 +1141,8 @@ def create_app(db_path: str = database_path) -> Flask:
                 user_1_id=message_data["fromId"], user_2_id=message_data["forId"]
             )
             # Try to create the new thread
-            try:
-                data = db_add(new_thread)
-                thread_id = cast(dict[str, Any], data["added"])["id"]
-            # If there's an error, abort
-            except Exception:
-                abort(500)
+            data = db_add(new_thread)
+            thread_id = data["resource"]["id"]
         # If there's a thread between the users
         else:
             thread_id = thread.id
@@ -1292,11 +1152,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 thread.user_1_deleted = False
                 thread.user_2_deleted = False
                 # Update the thread in the database
-                try:
-                    db_update(thread)
-                # If there's an error, abort
-                except Exception:
-                    abort(500)
+                db_update(thread)
 
         # If a new thread was created and the database session ended, we need
         # to get the logged user's data again.
@@ -1321,22 +1177,18 @@ def create_app(db_path: str = database_path) -> Flask:
             text="You have a new message",
             date=message_data["date"],
         )
-        push_notification = {
+        push_notification: RawPushData = {
             "type": "message",
             "text": logged_user.display_name + " sent you a message",
         }
         notification_for = message_data["forId"]
 
         # Try to add the message to the database
-        try:
-            sent_message = db_add(new_message)["added"]
-            db_add(notification)
-            send_push_notification(user_id=notification_for, data=push_notification)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        added = db_bulk_insert_update(add_objs=[new_message, notification])
+        sent_message = [item for item in added["resource"] if "threadID" in item.keys()]
+        send_push_notification(user_id=notification_for, data=push_notification)
 
-        return jsonify({"success": True, "message": sent_message})
+        return jsonify({"success": True, "message": sent_message[0]})
 
     # Endpoint: DELETE /messages/<mailbox_type>/<item_id>
     # Description: Deletes a message/thread from the database.
@@ -1345,7 +1197,11 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>/<item_id>", methods=["DELETE"])
     @requires_auth(["delete:messages"])
-    def delete_thread(token_payload, mailbox_type, item_id):
+    def delete_thread(
+        token_payload,
+        mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
+        item_id: int,
+    ):
         # Variable indicating whether to delete the message from the databse
         # or leave it in it (for the other user)
         delete_message: bool = False
@@ -1425,19 +1281,13 @@ def create_app(db_path: str = database_path) -> Flask:
             delete_message = False
 
         # Try to delete the thread
-        try:
-            # If both users deleted the message/thread, delete it from
-            # the database entirely
-            if delete_message:
-                db_delete(delete_item)
-            # Otherwise, just update the appropriate deleted property
-            else:
-                db_update(
-                    delete_item, {"set_deleted": True, "user_id": request_user.id}
-                )
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        # If both users deleted the message/thread, delete it from
+        # the database entirely
+        if delete_message:
+            db_delete(delete_item)
+        # Otherwise, just update the appropriate deleted property
+        else:
+            db_update(delete_item, {"set_deleted": True, "user_id": request_user.id})
 
         return jsonify({"success": True, "deleted": item_id})
 
@@ -1447,7 +1297,9 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>", methods=["DELETE"])
     @requires_auth(["delete:messages"])
-    def clear_mailbox(token_payload, mailbox_type):
+    def clear_mailbox(
+        token_payload, mailbox_type: Literal["inbox", "outbox", "thread", "threads"]
+    ):
         user_id = request.args.get("userID", type=int)
 
         # If there's no specified mailbox, abort
@@ -1495,11 +1347,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 abort(404)
 
         # Try to clear the mailbox
-        try:
-            db_delete_all(mailbox_type, user_id)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        db_delete_all(mailbox_type, user_id)
 
         return jsonify({"success": True, "userID": user_id, "deleted": num_messages})
 
@@ -1621,14 +1469,12 @@ def create_app(db_path: str = database_path) -> Flask:
             reported_item.open_report = True
 
         # Try to add the report to the database
-        try:
-            added_report = db_add(report)["added"]
-            db_update(reported_item)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        updated = db_bulk_insert_update(add_objs=[report], update_objs=[reported_item])
+        added_report = [
+            item for item in updated["resource"] if "reporter" in item.keys()
+        ]
 
-        return jsonify({"success": True, "report": added_report})
+        return jsonify({"success": True, "report": added_report[0]})
 
     # Endpoint: PATCH /reports/<report_id>
     # Description: Update the status of the report with the given ID.
@@ -1636,7 +1482,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/reports/<report_id>", methods=["PATCH"])
     @requires_auth(["read:admin-board"])
-    def update_report_status(token_payload, report_id):
+    def update_report_status(token_payload, report_id: int):
         updated_report = json.loads(request.data)
         report = Report.query.filter(Report.id == report_id).one_or_none()
 
@@ -1660,27 +1506,21 @@ def create_app(db_path: str = database_path) -> Flask:
         # Set the dismissed and closed values to those of the updated report
         report.dismissed = updated_report["dismissed"]
         report.closed = updated_report["closed"]
+        to_update = [report]
 
         # If the item wasn't deleted, set the post/user's open_report
         # value to false
         if reported_item:
             reported_item.open_report = False
+            to_update.append(reported_item)
 
         # Try to update the report in the database
-        try:
-            db_update(report)
+        updated = db_update_multi(objs=to_update)
+        return_report = [
+            item for item in updated["resource"] if "reporter" in item.keys()
+        ]
 
-            # If the item wasn't deleted, set the post/user's open_report
-            # value to false
-            if reported_item:
-                db_update(reported_item)
-
-            return_report = report.format()
-        # If there's an error, abort
-        except Exception:
-            abort(500)
-
-        return jsonify({"success": True, "updated": return_report})
+        return jsonify({"success": True, "updated": return_report[0]})
 
     # Endpoint: GET /filters
     # Description: Get a paginated list of filtered words.
@@ -1717,12 +1557,8 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(409)
 
         # Try to add the word to the filters list
-        try:
-            filter = Filter(filter=new_filter.lower())
-            added = db_add(filter)["added"]
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        filter = Filter(filter=new_filter.lower())
+        added = db_add(filter)["resource"]
 
         return jsonify({"success": True, "added": added})
 
@@ -1732,7 +1568,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/filters/<filter_id>", methods=["DELETE"])
     @requires_auth(["read:admin-board"])
-    def delete_filter(token_payload, filter_id):
+    def delete_filter(token_payload, filter_id: int):
         validator.check_type(filter_id, "Filter ID")
 
         # If there's no word in that index
@@ -1741,12 +1577,8 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(404)
 
         # Otherwise, try to delete it
-        try:
-            removed = to_delete.format()
-            db_delete(to_delete)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        removed = to_delete.format()
+        db_delete(to_delete)
 
         return jsonify({"success": True, "deleted": removed})
 
@@ -1798,12 +1630,8 @@ def create_app(db_path: str = database_path) -> Flask:
         # notifications tab right now).
         if silent_refresh == "false":
             # Update the user's last-read date
-            try:
-                user.last_notifications_read = datetime.now()
-                db_update(user)
-            # If there's an error, abort
-            except Exception:
-                abort(500)
+            user.last_notifications_read = datetime.now()
+            db_update(user)
 
         return jsonify({"success": True, "notifications": formatted_notifications})
 
@@ -1837,17 +1665,13 @@ def create_app(db_path: str = database_path) -> Flask:
         )
 
         # Try to add it to the database
-        try:
-            subscribed = user.display_name
-            sub = db_add(subscription)["added"]
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        subscribed = user.display_name
+        sub = db_add(subscription)["resource"]
 
         return {
             "success": True,
             "subscribed": subscribed,
-            "subId": cast(dict[str, Any], sub)["id"],
+            "subId": sub["id"],
         }
 
     # Endpoint: PATCH /notifications
@@ -1857,7 +1681,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications/<sub_id>", methods=["POST"])
     @requires_auth(["read:messages"])
-    def update_notification_subscription(token_payload, sub_id):
+    def update_notification_subscription(token_payload, sub_id: int):
         # if the request is empty, return 204. This happens due to a bug
         # in the frontend that causes the request to be sent twice, once
         # with subscription data and once with an empty object
@@ -1879,13 +1703,9 @@ def create_app(db_path: str = database_path) -> Flask:
         old_sub.subscription_data = json.dumps(subscription_data)
 
         # Try to add it to the database
-        try:
-            subscribed = user.display_name
-            subId = old_sub.id
-            db_update(old_sub)
-        # If there's an error, abort
-        except Exception:
-            abort(500)
+        subscribed = user.display_name
+        subId = old_sub.id
+        db_update(old_sub)
 
         return {"success": True, "subscribed": subscribed, "subId": subId}
 
@@ -1953,7 +1773,11 @@ def create_app(db_path: str = database_path) -> Flask:
     def unprocessable(error):
         return (
             jsonify(
-                {"success": False, "code": 422, "message": "Unprocessable request."}
+                {
+                    "success": False,
+                    "code": 422,
+                    "message": f"Unprocessable request. {error.description}",
+                }
             ),
             422,
         )
@@ -1966,7 +1790,8 @@ def create_app(db_path: str = database_path) -> Flask:
                 {
                     "success": False,
                     "code": 500,
-                    "message": "An internal server error occurred.",
+                    "message": "An internal server error occurred. "
+                    f"{error.description}",
                 }
             ),
             500,

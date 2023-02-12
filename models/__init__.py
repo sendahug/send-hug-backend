@@ -44,4 +44,5 @@ from .db_helpers import (
     update_multiple,
     delete_object,
     delete_all,
+    add_or_update_multiple,
 )

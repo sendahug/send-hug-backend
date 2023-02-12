@@ -25,21 +25,37 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Literal, Any, Union
+from typing import Literal, Any, TypedDict, Union
 
-from flask import jsonify, Response
+from flask import abort
+from sqlalchemy.exc import DataError, IntegrityError
 
 from .models import Post, Message, Thread, db
 
 
+class DBReturnModel(TypedDict):
+    success: bool
+    resource: dict[str, Any]
+
+
+class DBBulkModel(TypedDict):
+    success: bool
+    resource: list[dict[str, Any]]
+
+
+class DBDeleteModel(TypedDict):
+    success: bool
+    deleted: Union[int, str]
+
+
 # Database management methods
 # -----------------------------------------------------------------
-# Method: Add
-# Description: Inserts a new record into the database.
-# Parameters: Object to insert (User, Post or Message).
-def add(
-    obj: db.Model,  # type: ignore[name-defined]
-) -> dict[str, Union[bool, dict[str, Any]]]:
+def add(obj: db.Model) -> DBReturnModel:  # type: ignore[name-defined]
+    """
+    Inserts a new record into the database.
+
+    param obj: Object to insert (User, Post or Message).
+    """
     return_object = {}
 
     # Try to add the object to the database
@@ -47,20 +63,28 @@ def add(
         db.session.add(obj)
         db.session.commit()
         return_object = obj.format()
-    # If there's an error, rollback
-    except Exception:
+    # If there's a database error
+    except (DataError, IntegrityError) as err:
         db.session.rollback()
+        abort(422, str(err.orig))
+    # If there's an error, rollback
+    except Exception as err:
+        db.session.rollback()
+        abort(500, str(err))
     # Close the connection once the attempt is complete
     finally:
         db.session.close()
 
-    return {"success": True, "added": return_object}
+    return {"success": True, "resource": return_object}
 
 
-# Method: Update
-# Description: Updates an existing record.
-# Parameters: Updated object (User, Post or Message).
-def update(obj: db.Model, params={}) -> Response:  # type: ignore[name-defined]
+def update(obj: db.Model, params={}) -> DBReturnModel:  # type: ignore[name-defined]
+    """
+    Updates an existing record.
+
+    param obj: Updated object (User, Post or Message).
+    param params: dictionary of extra params for handling related objects
+    """
     updated_object = {}
 
     # Try to update the object in the database
@@ -100,22 +124,29 @@ def update(obj: db.Model, params={}) -> Response:  # type: ignore[name-defined]
 
         db.session.commit()
         updated_object = obj.format()
-    # If there's an error, rollback
-    except Exception:
+    # If there's a database error
+    except (DataError, IntegrityError) as err:
         db.session.rollback()
+        abort(422, str(err.orig))
+    # If there's an error, rollback
+    except Exception as err:
+        db.session.rollback()
+        abort(500, str(err))
     # Close the connection once the attempt is complete
     finally:
         db.session.close()
 
-    return jsonify({"success": True, "updated": updated_object})
+    return {"success": True, "resource": updated_object}
 
 
-# Method: Update Multiple
-# Description: Updates multiple records.
-# Parameters: A list with all objects to update.
 def update_multiple(
     objs: list[db.Model] = [],  # type: ignore[name-defined]
-) -> Response:
+) -> DBBulkModel:
+    """
+    Updates multiple records.
+
+    param objs: A list with all objects to update.
+    """
     updated_objects = []
 
     # Try to update the object in the database
@@ -123,49 +154,93 @@ def update_multiple(
         for obj in objs:
             db.session.commit()
             updated_objects.append(obj.format())
-    # If there's an error, rollback
-    except Exception:
+    # If there's a database error
+    except (DataError, IntegrityError) as err:
         db.session.rollback()
+        abort(422, str(err.orig))
+    # If there's an error, rollback
+    except Exception as err:
+        db.session.rollback()
+        abort(500, str(err))
     # Close the connection once the attempt is complete
     finally:
         db.session.close()
 
-    return jsonify({"success": True, "updated": updated_objects})
+    return {"success": True, "resource": updated_objects}
 
 
-# Method: Delete Object
-# Description: Deletes an existing record.
-# Parameters: Object (User, Post or Message) to delete.
-def delete_object(obj: db.Model) -> Response:  # type: ignore[name-defined]
-    deleted = None
+def add_or_update_multiple(
+    add_objs: list[db.Model] = [],  # type: ignore[name-defined]
+    update_objs: list[db.Model] = [],  # type: ignore[name-defined]
+) -> DBBulkModel:
+    """
+    Inserts or updates multiple records at once.
 
+    param add_objs: Objects to add to the database.
+    param update_objs: Objects to update in the database.
+    """
+    updated_or_added_objects = []
+
+    # Try to update the object in the database
+    try:
+        db.session.add_all(add_objs)
+        db.session.commit()
+
+        for obj in update_objs:
+            updated_or_added_objects.append(obj.format())
+
+        for obj in add_objs:
+            updated_or_added_objects.append(obj.format())
+    # If there's a database error
+    except (DataError, IntegrityError) as err:
+        db.session.rollback()
+        abort(422, str(err.orig))
+    # If there's an error, rollback
+    except Exception as err:
+        db.session.rollback()
+        abort(500, str(err))
+    # Close the connection once the attempt is complete
+    finally:
+        db.session.close()
+
+    return {"success": True, "resource": updated_or_added_objects}
+
+
+def delete_object(obj: db.Model) -> DBDeleteModel:  # type: ignore[name-defined]
+    """
+    Deletes an existing record.
+
+    param obj: Object (User, Post or Message) to delete.
+    """
     # Try to delete the record from the database
     try:
-        # If the object to delete is a thread, delete all associated
-        # messages first
-        if type(obj) is Thread:
-            db.session.query(Message).filter(Message.thread == obj.id).delete()
-
         db.session.delete(obj)
         db.session.commit()
-        deleted = obj.id
-    # If there's an error, rollback
-    except Exception:
+        deleted: int = obj.id
+    # If there's a database error
+    except (DataError, IntegrityError) as err:
         db.session.rollback()
+        abort(422, str(err.orig))
+    # If there's an error, rollback
+    except Exception as err:
+        db.session.rollback()
+        abort(500, str(err))
     # Close the connection once the attempt is complete
     finally:
         db.session.close()
 
-    return jsonify({"success": True, "deleted": deleted})
+    return {"success": True, "deleted": deleted}
 
 
-# Method: Delete All
-# Description: Deletes all records that match a condition.
-# Parameters: Type - type of item to delete (posts or messages)
-#             ID - ID of the user whose posts or messages need to be deleted.
 def delete_all(
-    type: Literal["posts", "inbox", "outbox", "threads"], id: int
-) -> Response:
+    type: Literal["posts", "inbox", "outbox", "thread", "threads"], id: int
+) -> DBDeleteModel:
+    """
+    Deletes all records that match a condition.
+
+    param type: type of item to delete (posts or messages)
+    param id: ID of the user whose posts or messages need to be deleted.
+    """
     # Try to delete the records
     try:
         # If the type of objects to delete is posts, the ID is the
@@ -304,11 +379,16 @@ def delete_all(
                 db.session.query(Thread).filter(Thread.id == thread).delete()
 
         db.session.commit()
-    # If there's an error, rollback
-    except Exception:
+    # If there's a database error
+    except (DataError, IntegrityError) as err:
         db.session.rollback()
+        abort(422, str(err.orig))
+    # If there's an error, rollback
+    except Exception as err:
+        db.session.rollback()
+        abort(500, str(err))
     # Close the connection once the attempt is complete
     finally:
         db.session.close()
 
-    return jsonify({"success": True, "deleted": type})
+    return {"success": True, "deleted": type}

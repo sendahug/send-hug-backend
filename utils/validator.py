@@ -25,7 +25,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Union
+from typing import Union, Optional, Literal
+
+from .filter import WordFilter
 
 
 # Validation Error
@@ -38,89 +40,81 @@ class ValidationError(Exception):
 # Validator
 class Validator:
     constraints: dict[str, dict[str, int]] = {}
+    word_filter: WordFilter = WordFilter()
 
     # INIT
     def __init__(self, types: dict[str, dict[str, int]]):
         self.constraints = types
 
     # Checks the length according to the given types
-    def check_length(self, data: str, objType: str):
+    def check_length(self, data: str, obj_type: str) -> bool:
+        """
+        Checks the length of the data according to the object type.
+
+        param data: The string to check
+        param obj_type: The type of object to test by
+        """
         too_long_error = "Your {} is too long! Please shorten it and then try again."
         too_short_error = (
             "Your {} cannot be empty. Please write something and then try again."
         )
+        error_message: Optional[str] = None
 
-        if objType.lower() in [self.constraints.keys()]:
-            # Check if the item is too long; if it is, abort
-            if len(data) > self.constraints[objType.lower()]["max"]:
-                raise ValidationError(
-                    {"code": 400, "description": too_long_error.format(objType)},
-                    400,
-                )
-            # Check if the item is empty; if it is, abort
-            elif len(data) < self.constraints[objType.lower()]["min"]:
-                raise ValidationError(
-                    {"code": 400, "description": too_short_error.format(objType)},
-                    400,
-                )
+        if obj_type.lower() in self.constraints.keys():
+            if obj_type.lower() == "report":
+                # Check if the report reason is too long
+                if len(data) > self.constraints["report"]["max"]:
+                    error_message = too_long_error.format("report reason")
+                # Check if the report reason is empty
+                elif len(data) < self.constraints["report"]["min"]:
+                    error_message = (
+                        "You cannot send a report without a reason. "
+                        "Please write something and try to send it again."
+                    )
+            else:
+                # Check if the item is too long
+                if len(data) > self.constraints[obj_type.lower()]["max"]:
+                    error_message = too_long_error.format(obj_type)
+                # Check if the item is empty
+                elif len(data) < self.constraints[obj_type.lower()]["min"]:
+                    error_message = too_short_error.format(obj_type)
 
-        elif objType.lower() == "display name":
-            # Check if the name is too long; if it is, abort
+        elif obj_type.lower() == "display name":
+            # Check if the name is too long
             if len(data) > self.constraints["user"]["max"]:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": too_long_error.format("new display name"),
-                    },
-                    400,
-                )
-            # Check if the name is empty; if it is, abort
+                error_message = too_long_error.format("new display name")
+            # Check if the name is empty
             elif len(data) < self.constraints["user"]["min"]:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": too_short_error.format("display name"),
-                    },
-                    400,
-                )
-
-        elif objType.lower() == "report":
-            # Check if the report reason is too long; if it is, abort
-            if len(data) > self.constraints["report"]["max"]:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": too_long_error.format("report reason"),
-                    },
-                    400,
-                )
-            # Check if the report reason is empty; if it is, abort
-            elif len(data) < self.constraints["report"]["min"]:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": "You cannot send a report without a reason. "
-                        "Please write something and try to send it again.",
-                    },
-                    400,
-                )
+                error_message = too_short_error.format("display name")
 
         else:
             # Check if the data is empty
             if len(data) < 1:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": f"{objType} cannot be empty. "
-                        "Please write something and try again.",
-                    },
-                    400,
+                error_message = (
+                    f"{obj_type} cannot be empty. "
+                    "Please write something and try again."
                 )
+
+        # if anything failed validation, raise an error
+        if error_message:
+            raise ValidationError(
+                {
+                    "code": 400,
+                    "description": error_message,
+                },
+                400,
+            )
 
         return True
 
     # Checks the type of the given item
-    def check_type(self, data: Union[str, int], objType: str):
+    def check_type(self, data: Union[str, int], obj_type: str) -> bool:
+        """
+        Checks the type of the data matches the expected type.
+
+        param data: The item to check
+        param obj_type: The type of object to test by
+        """
         text_types = [
             "post text",
             "message text",
@@ -134,19 +128,18 @@ class Validator:
 
         # If the type is one of the free text types, check that it's a
         # string
-        if objType.lower() in text_types:
+        if obj_type.lower() in text_types and type(data) is not str:
             # If it's not a string, raise a validation error
-            if type(data) is not str:
-                raise ValidationError(
-                    {
-                        "code": 400,
-                        "description": error_message.format(objType, "String"),
-                    },
-                    400,
-                )
+            raise ValidationError(
+                {
+                    "code": 400,
+                    "description": error_message.format(obj_type, "String"),
+                },
+                400,
+            )
 
         # If the type is one of the ID types, check that it's an integer
-        elif "id" in objType.lower():
+        elif "id" in obj_type.lower():
             # Try to convert the data to int
             try:
                 int(data)
@@ -156,9 +149,34 @@ class Validator:
                 raise ValidationError(
                     {
                         "code": 400,
-                        "description": error_message.format(objType, "Integer"),
+                        "description": error_message.format(obj_type, "Integer"),
                     },
                     400,
                 )
 
         return True
+
+    def validate_post_or_message(self, text: str, type: Literal["post", "message"]):
+        """
+        Validates a post/message
+        """
+        blacklist_check = self.word_filter.blacklisted(text)
+
+        # If there's no blacklisted word, check the length and type
+        if blacklist_check.is_blacklisted is False:
+            # Check the length and type of the post's text
+            self.check_length(text, type)
+            self.check_type(text, f"{type} text")
+        # If there's a blacklisted word / phrase, alert the user
+        else:
+            num_issues = len(blacklist_check.badword_indexes)
+            raise ValidationError(
+                {
+                    "code": 400,
+                    "description": f"Your text contains {str(num_issues)}"
+                    " forbidden term(s). The following word(s) is/"
+                    f"are not allowed: {blacklist_check.forbidden_words}."
+                    f"Please fix your {type}'s text and try again.",
+                },
+                400,
+            )
