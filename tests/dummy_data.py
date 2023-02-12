@@ -112,6 +112,14 @@ new_report = {
     "date": "Sun Jun 07 2020 15:57:45",
 }
 
+new_user_report = {
+    "type": "User",
+    "userID": 0,
+    "reporter": 0,
+    "reportReason": "The user is posting Spam",
+    "date": "Sun Jun 07 2022 15:57:45",
+}
+
 new_subscription = {
     "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",
     "expirationTime": None,
