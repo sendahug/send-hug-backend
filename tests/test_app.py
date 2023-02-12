@@ -1981,12 +1981,12 @@ class TestHugApp(unittest.TestCase):
     def test_update_user_report_as_admin(self):
         report = new_user_report
         report["id"] = 35
-        report["userID"] = 4
+        report["userID"] = 5
         report["reporter"] = sample_admin_id
         report["dismissed"] = False
         report["closed"] = False
         response = self.client().patch(
-            "/reports/36", headers=admin_header, data=json.dumps(report)
+            "/reports/35", headers=admin_header, data=json.dumps(report)
         )
         response_data = json.loads(response.data)
         report_text = response_data["updated"]
