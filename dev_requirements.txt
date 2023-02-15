@@ -2,5 +2,5 @@ codecov==2.1.12
 coverage==7.1.0
 pre-commit==3.0.4
 mypy==1.0.0
-types-python-jose==3.3.4.3
+types-python-jose==3.3.4.4
 types-Flask-Cors==3.0.10.2
