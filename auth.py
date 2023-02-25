@@ -92,7 +92,7 @@ def get_rsa_key(token: str) -> dict[str, Any]:
     returns: The RSA key for decoding the JWT (if decoding the token is possible)
     """
     # Gets the JWKS from Auth0
-    auth_json = urlopen("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json")
+    auth_json = urlopen(f"https://{AUTH0_DOMAIN}/.well-known/jwks.json")
     jwks = json.loads(auth_json.read())
 
     # Tries to get the token header
@@ -143,7 +143,7 @@ def verify_jwt(token: str) -> dict[str, Any]:
                 rsa_key,
                 algorithms=ALGORITHMS,
                 audience=API_AUDIENCE,
-                issuer="https://" + AUTH0_DOMAIN + "/",
+                issuer=f"https://{AUTH0_DOMAIN}/",
             )
         # If the token expired
         except exceptions.ExpiredSignatureError:
@@ -260,7 +260,7 @@ def check_mgmt_api_token() -> str:
     token_header = jwt.get_unverified_header(token)
 
     # Gets the JWKS from Auth0
-    auth_json = urlopen("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json")
+    auth_json = urlopen(f"https://{AUTH0_DOMAIN}/.well-known/jwks.json")
     jwks = json.loads(auth_json.read())
 
     # If the 'kid' key doesn't exist in the token header
@@ -282,7 +282,7 @@ def check_mgmt_api_token() -> str:
                 rsa_key,
                 algorithms=ALGORITHMS,
                 audience=API_AUDIENCE,
-                issuer="https://" + AUTH0_DOMAIN + "/",
+                issuer=f"https://{AUTH0_DOMAIN}/",
             )
         # If the token expired
         except exceptions.ExpiredSignatureError:

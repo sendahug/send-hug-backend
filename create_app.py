@@ -328,7 +328,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 current_user.given_hugs += 1
                 post_author.received_hugs += 1
                 sent_hugs.append(current_user.id)
-                original_post.sent_hugs = "".join([str(e) + " " for e in sent_hugs])
+                original_post.sent_hugs = "".join([f"{str(e)} " for e in sent_hugs])
 
                 # Create a notification for the user getting the hug
                 today = datetime.now()
@@ -341,7 +341,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 )
                 push_notification = {
                     "type": "hug",
-                    "text": current_user.display_name + " sent you a hug",
+                    "text": f"{current_user.display_name} sent you a hug",
                 }
                 notification_for = post_author.id
 
@@ -610,7 +610,7 @@ def create_app(db_path: str = database_path) -> Flask:
         try:
             # General variables for establishing an HTTPS connection to Auth0
             connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
-            auth_header = "Bearer " + MGMT_API_TOKEN
+            auth_header = f"Bearer {MGMT_API_TOKEN}"
             headers = {
                 "content-type": "application/json",
                 "authorization": auth_header,
@@ -621,7 +621,7 @@ def create_app(db_path: str = database_path) -> Flask:
             delete_payload = '{ "roles": [ "rol_QeyIIcHg326Vv1Ay" ] }'
             connection.request(
                 "DELETE",
-                "/api/v2/users/" + user_data["id"] + "/roles",
+                f"/api/v2/users/{user_data['id']}/roles",
                 delete_payload,
                 headers,
             )
@@ -633,7 +633,7 @@ def create_app(db_path: str = database_path) -> Flask:
             create_payload = '{ "roles": [ "rol_BhidDxUqlXDx8qIr" ] }'
             connection.request(
                 "POST",
-                "/api/v2/users/" + user_data["id"] + "/roles",
+                f"/api/v2/users/{user_data['id']}/roles",
                 create_payload,
                 headers,
             )
@@ -684,7 +684,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 )
                 push_notification = {
                     "type": "hug",
-                    "text": current_user.display_name + " sent you a hug",
+                    "text": f"{current_user.display_name} sent you a hug",
                 }
                 notification_for = original_user.id
 
@@ -1184,7 +1184,7 @@ def create_app(db_path: str = database_path) -> Flask:
         )
         push_notification: RawPushData = {
             "type": "message",
-            "text": logged_user.display_name + " sent you a message",
+            "text": f"{logged_user.display_name} sent you a message",
         }
         notification_for = message_data["forId"]
 

@@ -41,7 +41,7 @@ def generate_push_data(data: RawPushData) -> PushData:
     Generates the push notification's data from the
     given raw data.
     """
-    notification_data: PushData = {"title": "New " + data["type"], "body": data["text"]}
+    notification_data: PushData = {"title": f"New {data['type']}", "body": data["text"]}
 
     return notification_data
 

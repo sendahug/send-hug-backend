@@ -72,20 +72,20 @@ access_tokens = {
 malformed_header = {"Content-Type": "application/json", "Authorization": "Bearer"}
 user_header = {
     "Content-Type": "application/json",
-    "Authorization": "Bearer " + access_tokens["user_jwt"],
+    "Authorization": f"Bearer {access_tokens['user_jwt']}",
 }
 moderator_header = {
     "Content-Type": "application/json",
-    "Authorization": "Bearer " + access_tokens["moderator_jwt"],
+    "Authorization": f"Bearer {access_tokens['moderator_jwt']}",
 }
 admin_header = {
     "Content-Type": "application/json",
-    "Authorization": "Bearer " + access_tokens["admin_jwt"],
+    "Authorization": f"Bearer {access_tokens['admin_jwt']}",
 }
 
 blocked_header = {
     "Content-Type": "application/json",
-    "Authorization": "Bearer " + access_tokens["blocked_jwt"],
+    "Authorization": f"Bearer {access_tokens['blocked_jwt']}",
 }
 
 
@@ -118,10 +118,10 @@ def get_user_tokens():
         f.close()
 
     # Set the authorisation headers with the newly fetched JWTs
-    user_header["Authorization"] = "Bearer " + access_tokens["user_jwt"]
-    moderator_header["Authorization"] = "Bearer " + access_tokens["moderator_jwt"]
-    admin_header["Authorization"] = "Bearer " + access_tokens["admin_jwt"]
-    blocked_header["Authorization"] = "Bearer " + access_tokens["blocked_jwt"]
+    user_header["Authorization"] = f"Bearer {access_tokens['user_jwt']}"
+    moderator_header["Authorization"] = (f"Bearer {access_tokens['moderator_jwt']}",)
+    admin_header["Authorization"] = (f"Bearer {access_tokens['admin_jwt']}",)
+    blocked_header["Authorization"] = (f"Bearer {access_tokens['blocked_jwt']}",)
 
 
 # App testing
