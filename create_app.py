@@ -277,9 +277,6 @@ def create_app(db_path: str = database_path) -> Flask:
     def edit_post(token_payload, post_id: int):
         push_notification: Optional[RawPushData] = None
 
-        # If there's no ID provided
-        if post_id is None:
-            abort(404)
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
@@ -418,9 +415,6 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/posts/<post_id>", methods=["DELETE"])
     @requires_auth(["delete:my-post", "delete:any-post"])
     def delete_post(token_payload, post_id: int):
-        # If there's no ID provided
-        if post_id is None:
-            abort(404)
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
@@ -539,10 +533,6 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/users/all/<user_id>")
     @requires_auth(["read:user"])
     def get_user_data(token_payload, user_id: Union[int, str]):
-        # If there's no ID provided
-        if user_id is None:
-            abort(404)
-
         # Try to convert it to a number; if it's a number, it's a
         # regular ID, so try to find the user with that ID
         try:
@@ -672,10 +662,6 @@ def create_app(db_path: str = database_path) -> Flask:
     @requires_auth(["patch:user", "patch:any-user"])
     def edit_user(token_payload, user_id: int):
         push_notification: Optional[RawPushData] = None
-
-        # if there's no user ID provided, abort with 'Bad Request'
-        if user_id is None:
-            abort(400)
 
         # Check if the user ID isn't an integer; if it isn't, abort
         validator.check_type(user_id, "User ID")
@@ -1237,14 +1223,9 @@ def create_app(db_path: str = database_path) -> Flask:
         # Variable indicating whether to delete the message from the databse
         # or leave it in it (for the other user)
         delete_message: bool = False
-
-        # If there's no thread ID, abort
-        if item_id is None:
-            abort(405)
+        delete_item: Optional[Message] = None
 
         validator.check_type(item_id, "Message ID")
-
-        delete_item: Optional[Message] = None
 
         # If the mailbox type is inbox or outbox, search for a message
         # with that ID
@@ -1335,10 +1316,6 @@ def create_app(db_path: str = database_path) -> Flask:
         token_payload, mailbox_type: Literal["inbox", "outbox", "thread", "threads"]
     ):
         user_id = request.args.get("userID", type=int)
-
-        # If there's no specified mailbox, abort
-        if mailbox_type is None:
-            abort(404)
 
         # If there's no user ID, abort
         if user_id is None:
