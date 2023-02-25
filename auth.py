@@ -263,6 +263,8 @@ def check_mgmt_api_token() -> str:
     auth_json = urlopen(f"https://{AUTH0_DOMAIN}/.well-known/jwks.json")
     jwks = json.loads(auth_json.read())
 
+    rsa_key = {}
+
     # If the 'kid' key doesn't exist in the token header
     for key in jwks["keys"]:
         if key["kid"] == token_header["kid"]:

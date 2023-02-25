@@ -25,6 +25,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from typing import Any
 import unittest
 import json
 import os
@@ -119,9 +120,9 @@ def get_user_tokens():
 
     # Set the authorisation headers with the newly fetched JWTs
     user_header["Authorization"] = f"Bearer {access_tokens['user_jwt']}"
-    moderator_header["Authorization"] = (f"Bearer {access_tokens['moderator_jwt']}",)
-    admin_header["Authorization"] = (f"Bearer {access_tokens['admin_jwt']}",)
-    blocked_header["Authorization"] = (f"Bearer {access_tokens['blocked_jwt']}",)
+    moderator_header["Authorization"] = f"Bearer {access_tokens['moderator_jwt']}"
+    admin_header["Authorization"] = f"Bearer {access_tokens['admin_jwt']}"
+    blocked_header["Authorization"] = f"Bearer {access_tokens['blocked_jwt']}"
 
 
 # App testing
@@ -2433,7 +2434,7 @@ class TestHugApp(unittest.TestCase):
                 "/notifications", data=json.dumps(new_subscription), headers=user_header
             )
             # Then update it
-            updated_subscription = {**new_subscription}
+            updated_subscription: dict[str, Any] = {**new_subscription}
             updated_subscription["id"] = 1
             response = self.client().patch(
                 "/notifications/1", data=json.dumps(new_subscription)
@@ -2450,7 +2451,7 @@ class TestHugApp(unittest.TestCase):
                 "/notifications", data=json.dumps(new_subscription), headers=user_header
             )
             # Then update it
-            updated_subscription = {**new_subscription}
+            updated_subscription: dict[str, Any] = {**new_subscription}
             updated_subscription["id"] = 1
             response = self.client().patch(
                 "/notifications/1",
@@ -2469,7 +2470,7 @@ class TestHugApp(unittest.TestCase):
                 "/notifications", data=json.dumps(new_subscription), headers=user_header
             )
             # Then update it
-            updated_subscription = {**new_subscription}
+            updated_subscription: dict[str, Any] = {**new_subscription}
             updated_subscription["id"] = 1
             response = self.client().patch(
                 "/notifications/1",
@@ -2491,7 +2492,7 @@ class TestHugApp(unittest.TestCase):
                 headers=moderator_header,
             )
             # Then update it
-            updated_subscription = {**new_subscription}
+            updated_subscription: dict[str, Any] = {**new_subscription}
             updated_subscription["id"] = 1
             response = self.client().patch(
                 "/notifications/1",
@@ -2513,7 +2514,7 @@ class TestHugApp(unittest.TestCase):
                 headers=admin_header,
             )
             # Then update it
-            updated_subscription = {**new_subscription}
+            updated_subscription: dict[str, Any] = {**new_subscription}
             updated_subscription["id"] = 1
             response = self.client().patch(
                 "/notifications/1",

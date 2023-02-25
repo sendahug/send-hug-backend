@@ -245,7 +245,7 @@ class Report(db.Model):  # type: ignore[name-defined]
                 "closed": self.closed,
             }
         # If the report was for a post
-        elif self.type.lower() == "post":
+        else:
             return_report = {
                 "id": self.id,
                 "type": self.type,

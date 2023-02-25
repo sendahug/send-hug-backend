@@ -323,11 +323,13 @@ def create_app(db_path: str = database_path) -> Flask:
             )
             original_post.text = updated_post["text"]
 
+        original_hugs = original_post.given_hugs
+        notification: Optional[Notification] = None
+        notification_for: Optional[int] = None
+
         # If a hug was added
         # Since anyone can give hugs, this doesn't require a permissions check
         if "givenHugs" in updated_post:
-            original_hugs = original_post.given_hugs
-
             if original_post.given_hugs != updated_post["givenHugs"]:
                 hugs = original_post.sent_hugs.split(" ")
                 sent_hugs = list(filter(None, hugs))
@@ -358,6 +360,8 @@ def create_app(db_path: str = database_path) -> Flask:
                 }
                 notification_for = post_author.id
 
+        open_report: Optional[Report] = None
+
         # If there's a 'closeReport' value, this update is the result of
         # a report, which means the report with the given ID needs to be
         # closed.
@@ -378,9 +382,11 @@ def create_app(db_path: str = database_path) -> Flask:
             open_report = Report.query.filter(
                 Report.id == updated_post["closeReport"]
             ).one_or_none()
-            open_report.dismissed = False
-            open_report.closed = True
-            original_post.open_report = False
+
+            if open_report:
+                open_report.dismissed = False
+                open_report.closed = True
+                original_post.open_report = False
 
         # Try to update the database
         # Objects to update
@@ -394,14 +400,13 @@ def create_app(db_path: str = database_path) -> Flask:
         # If there was an added hug, add the new notification
         if "givenHugs" in updated_post:
             if original_hugs != updated_post["givenHugs"]:
-
                 to_add.append(notification)
 
         updated = db_bulk_insert_update(add_objs=to_add, update_objs=to_update)
         data = [item for item in updated["resource"] if "sentHugs" in item.keys()]
         db_updated_post = data[0]
 
-        if push_notification:
+        if push_notification and notification_for:
             send_push_notification(user_id=notification_for, data=push_notification)
 
         return jsonify({"success": True, "updated": db_updated_post})
@@ -681,10 +686,13 @@ def create_app(db_path: str = database_path) -> Flask:
             User.auth0_id == token_payload["sub"]
         ).one_or_none()
 
+        original_hugs = original_user.received_hugs
+        notification: Optional[Notification] = None
+        notification_for: Optional[int] = None
+
         # If the user being updated was given a hug, also update the current
         # user's "given hugs" value, as they just gave a hug
         if "receivedH" in updated_user and "givenH" in updated_user:
-            original_hugs = original_user.received_hugs
             if original_user.received_hugs != updated_user["receivedH"]:
                 current_user.given_hugs += 1
                 today = datetime.now()
@@ -753,6 +761,8 @@ def create_app(db_path: str = database_path) -> Flask:
             original_user.blocked = updated_user["blocked"]
             original_user.release_date = updated_user["releaseDate"]
 
+        open_report: Optional[Report] = None
+
         # If there's a 'closeReport' value, this update is the result of
         # a report, which means the report with the given ID needs to be
         # closed.
@@ -760,9 +770,11 @@ def create_app(db_path: str = database_path) -> Flask:
             open_report = Report.query.filter(
                 Report.id == updated_user["closeReport"]
             ).one_or_none()
-            open_report.dismissed = False
-            open_report.closed = True
-            original_user.open_report = False
+
+            if open_report:
+                open_report.dismissed = False
+                open_report.closed = True
+                original_user.open_report = False
 
         # If the user is attempting to change a user's settings, check
         # whether it's the current user
@@ -834,7 +846,7 @@ def create_app(db_path: str = database_path) -> Flask:
         ]
         updated_user = updated_original_user[0]
 
-        if push_notification:
+        if push_notification and notification_for:
             send_push_notification(user_id=notification_for, data=push_notification)
 
         return jsonify({"success": True, "updated": updated_user})
@@ -1232,6 +1244,8 @@ def create_app(db_path: str = database_path) -> Flask:
 
         validator.check_type(item_id, "Message ID")
 
+        delete_item: Optional[Message] = None
+
         # If the mailbox type is inbox or outbox, search for a message
         # with that ID
         if mailbox_type in ["inbox", "outbox", "thread"]:
@@ -1344,6 +1358,8 @@ def create_app(db_path: str = database_path) -> Flask:
                 },
                 403,
             )
+
+        num_messages = 0
 
         # If the user is trying to clear their inbox
         if mailbox_type == "inbox":
@@ -1518,7 +1534,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 User.id == updated_report["userID"]
             ).one_or_none()
         # If the item reported is a post
-        elif report.type.lower() == "post":
+        else:
             reported_item = Post.query.filter(
                 Post.id == updated_report["postID"]
             ).one_or_none()
