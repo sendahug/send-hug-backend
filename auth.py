@@ -50,14 +50,15 @@ class AuthError(Exception):
         self.status_code = status_code
 
 
-# Function: get_auth_header
-# Description: Gets the request's 'Authorization' header. Checks to see whether
-#              said header exists; whether the header is comprised of two
-#              parts; and whether the first part is 'bearer'. This serves as
-#              preliminary verification that the JWT is in the correct form.
-# Parameters: None
-# Returns: split_auth_header[1] - The JSON web token.
 def get_auth_header() -> str:
+    """
+    Gets the request's 'Authorization' header. Checks to see whether said header
+    exists; whether the header is comprised of two parts; and whether the
+    first part is 'bearer'. This serves as preliminary verification that
+    the JWT is in the correct form.
+
+    returns: The JSON web token.
+    """
     # If there's no auth header, raise an error
     if "Authorization" not in request.headers:
         raise AuthError(
@@ -82,13 +83,14 @@ def get_auth_header() -> str:
     return split_auth_header[1]
 
 
-# Function: verify_jwt
-# Description: Gets the token and attempts to decode and verify it using the
-#              Auth0 JWKS (JSON Web Key Set) JSON. Ensures that the JWT is
-#              authentic, still valid and hasn't been tampered with.
-# Parameters: token - a JSON Web Token.
-# Returns: payload - The payload from the decoded token.
-def verify_jwt(token: str) -> dict[str, Any]:
+def get_rsa_key(token: str) -> dict[str, Any]:
+    """
+    Fetches the JWKS keys and matches the 'kid' key from the user's
+    token to the JWKS keys.
+
+    param token: The JWT.
+    returns: The RSA key for decoding the JWT (if decoding the token is possible)
+    """
     # Gets the JWKS from Auth0
     auth_json = urlopen("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json")
     jwks = json.loads(auth_json.read())
@@ -118,6 +120,20 @@ def verify_jwt(token: str) -> dict[str, Any]:
                 "n": key["n"],
                 "e": key["e"],
             }
+
+    return rsa_key
+
+
+def verify_jwt(token: str) -> dict[str, Any]:
+    """
+    Verifies the token using the Auth0 JWKS (JSON Web Key Set) JSON.
+    Ensures that the JWT is authentic, still valid and hasn't been tampered with.
+
+    param token: a JSON Web Token.
+    """
+    rsa_key = get_rsa_key(token=token)
+
+    payload = {}
 
     # Try to decode and validate the token
     if rsa_key:
@@ -159,17 +175,19 @@ def verify_jwt(token: str) -> dict[str, Any]:
     return payload
 
 
-# Function: check_permissions
-# Description: Checks the payload from of the decoded, verified JWT for
-#              permissions. Then compares the user's permissions to the
-#              required permission to check whether the user is allowed to
-#              access the given resource.
-# Parameters: permission (list) - The resource's required permissions. Can
-#                                 contain either one or two allowed types
-#                                 of permissions.
-#             payload - The payload from the decoded, verified JWT.
-# Returns: True - Boolean confirming the user has the required permission.
 def check_permissions(permission: list[str], payload: dict[str, Any]) -> bool:
+    """
+    Checks the payload from of the decoded, verified JWT for
+    permissions. Then compares the user's permissions to the
+    required permission to check whether the user is allowed to
+    access the given resource.
+
+    param permission: The resource's required permissions. Can contain either one
+    or two allowed types of permissions.
+    param payload: The payload from the decoded, verified JWT.
+
+    returns True - Boolean confirming the user has the required permission.
+    """
     # Check whether permissions are included in the token payload
     if "permissions" not in payload:
         raise AuthError(
@@ -231,13 +249,13 @@ def requires_auth(permission=[""]):
     return requires_auth_decorator
 
 
-# Function: check_mgmt_api_token
-# Description: Checks that the Management API token is valid and still hasn't
-#              expired.
-# Parameters: None.
-# Returns: Either the verified token's payload (payload) or a 'token expired'
-#          message if the token expired.
 def check_mgmt_api_token() -> str:
+    """
+    Checks that the Management API token is valid and still hasn't expired.
+
+    returns: Either the verified token's payload (payload) or a 'token expired'
+    message if the token expired.
+    """
     token = os.environ.get("MGMT_API_TOKEN", "")
     token_header = jwt.get_unverified_header(token)
 
@@ -276,23 +294,18 @@ def check_mgmt_api_token() -> str:
     return token
 
 
-# Function: get_management_api_token
-# Description: Gets a new Management API token from Auth0, in order to update
-#              users' data in their systems.
-# Parameters: None.
-# Returns: token - The JWT returned by Auth0.
 def get_management_api_token():
+    """
+    Gets a new Management API token from Auth0, in order to update
+    users' data in their systems.
+    """
     # General variables for establishing an HTTPS connection to Auth0
     connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
     headers = {"content-type": "application/x-www-form-urlencoded"}
     data = (
-        "grant_type=client_credentials&client_id="
-        + CLIENT_ID
-        + "&client_secret="
-        + CLIENT_SECRET
-        + "&audience=https%3A%2F%2F"
-        + AUTH0_DOMAIN
-        + "%2Fapi%2Fv2%2F"
+        f"grant_type=client_credentials&client_id={CLIENT_ID}"
+        f"&client_secret={CLIENT_SECRET}&audience=https%3A%2F%2F"
+        f"{AUTH0_DOMAIN}%2Fapi%2Fv2%2F"
     )
 
     # Then add the 'user' role to the user's payload

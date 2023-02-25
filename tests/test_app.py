@@ -2412,6 +2412,132 @@ class TestHugApp(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response_data["subscribed"], "user14")
 
+        # Attempt to create push subscription with an admin's JWT
+        def test_post_subscription_empty_data_as_admin(self):
+            response = self.client().post(
+                "/notifications",
+                data=None,
+                headers=admin_header,
+            )
+            response_data = json.loads(response.data)
+
+            self.assertTrue(response_data["success"])
+            self.assertEqual(response.status_code, 204)
+
+        # Update Push Subscription Route Tests ('/notifications/<sub_id>', PATCH)
+        # -------------------------------------------------------
+        # Attempt to update push subscription without auth header
+        def test_update_subscription_no_auth(self):
+            # Create the subscription
+            self.client().post(
+                "/notifications", data=json.dumps(new_subscription), headers=user_header
+            )
+            # Then update it
+            updated_subscription = {**new_subscription}
+            updated_subscription["id"] = 1
+            response = self.client().patch(
+                "/notifications/1", data=json.dumps(new_subscription)
+            )
+            response_data = json.loads(response.data)
+
+            self.assertFalse(response_data["success"])
+            self.assertEqual(response.status_code, 401)
+
+        # Attempt to update push subscription with malformed auth header
+        def test_update_subscription_malformed_auth(self):
+            # Create the subscription
+            self.client().post(
+                "/notifications", data=json.dumps(new_subscription), headers=user_header
+            )
+            # Then update it
+            updated_subscription = {**new_subscription}
+            updated_subscription["id"] = 1
+            response = self.client().patch(
+                "/notifications/1",
+                data=json.dumps(new_subscription),
+                headers=malformed_header,
+            )
+            response_data = json.loads(response.data)
+
+            self.assertFalse(response_data["success"])
+            self.assertEqual(response.status_code, 401)
+
+        # Attempt to update push subscription with a user's JWT
+        def test_update_subscription_as_user(self):
+            # Create the subscription
+            self.client().post(
+                "/notifications", data=json.dumps(new_subscription), headers=user_header
+            )
+            # Then update it
+            updated_subscription = {**new_subscription}
+            updated_subscription["id"] = 1
+            response = self.client().patch(
+                "/notifications/1",
+                data=json.dumps(new_subscription),
+                headers=user_header,
+            )
+            response_data = json.loads(response.data)
+
+            self.assertTrue(response_data["success"])
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response_data["subscribed"], "shirb")
+
+        # Attempt to create push subscription with a moderator's JWT
+        def test_update_subscription_as_mod(self):
+            # Create the subscription
+            self.client().post(
+                "/notifications",
+                data=json.dumps(new_subscription),
+                headers=moderator_header,
+            )
+            # Then update it
+            updated_subscription = {**new_subscription}
+            updated_subscription["id"] = 1
+            response = self.client().patch(
+                "/notifications/1",
+                data=json.dumps(new_subscription),
+                headers=moderator_header,
+            )
+            response_data = json.loads(response.data)
+
+            self.assertTrue(response_data["success"])
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response_data["subscribed"], "user52")
+
+        # Attempt to create push subscription with an admin's JWT
+        def test_update_subscription_as_admin(self):
+            # Create the subscription
+            self.client().post(
+                "/notifications",
+                data=json.dumps(new_subscription),
+                headers=admin_header,
+            )
+            # Then update it
+            updated_subscription = {**new_subscription}
+            updated_subscription["id"] = 1
+            response = self.client().patch(
+                "/notifications/1",
+                data=json.dumps(new_subscription),
+                headers=admin_header,
+            )
+            response_data = json.loads(response.data)
+
+            self.assertTrue(response_data["success"])
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response_data["subscribed"], "user14")
+
+        # Attempt to create push subscription with an admin's JWT
+        def test_update_subscription_empty_data_as_admin(self):
+            response = self.client().patch(
+                "/notifications/1",
+                data=None,
+                headers=admin_header,
+            )
+            response_data = json.loads(response.data)
+
+            self.assertTrue(response_data["success"])
+            self.assertEqual(response.status_code, 204)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":

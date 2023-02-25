@@ -26,15 +26,18 @@
 # SOFTWARE.
 
 import unittest
+from unittest.mock import patch
 
-from auth import verify_jwt, check_permissions, AuthError
+from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError, JOSEError
+
+from auth import verify_jwt, check_permissions, AuthError, get_rsa_key
 
 
 # Auth testing
 class TestHugApp(unittest.TestCase):
     def test_unverified_header_error(self):
         with self.assertRaises(AuthError) as exc:
-            verify_jwt(token="ehjflsahegjls.34839pqhfk.0kfjhsdlugh")
+            get_rsa_key(token="ehjflsahegjls.34839pqhfk.0kfjhsdlugh")
 
         self.assertIn(
             "Unauthorised. Malformed Authorization header.", str(exc.exception)
@@ -74,3 +77,37 @@ class TestHugApp(unittest.TestCase):
             "Unauthorised. You do not have permission to perform this action.",
             str(exc.exception),
         )
+
+    @patch("auth.get_rsa_key", return_value={"kid": ""})
+    @patch("jose.jwt.decode", side_effect=ExpiredSignatureError)
+    def test_verify_jwt_expired_signature(self, get_header_mock, verify_mock):
+        with self.assertRaises(AuthError) as exc:
+            verify_jwt(token="hi")
+
+        self.assertIn("Unauthorised. Your token has expired.", str(exc.exception))
+
+    @patch("auth.get_rsa_key", return_value={"kid": ""})
+    @patch("jose.jwt.decode", side_effect=JWTClaimsError)
+    def test_verify_jwt_claims_error(self, get_header_mock, verify_mock):
+        with self.assertRaises(AuthError) as exc:
+            verify_jwt(token="hi")
+
+        self.assertIn(
+            "Unauthorised. Your token contains invalid claims.", str(exc.exception)
+        )
+
+    @patch("auth.get_rsa_key", return_value={"kid": ""})
+    @patch("jose.jwt.decode", side_effect=JWTError)
+    def test_verify_jwt_error(self, get_header_mock, verify_mock):
+        with self.assertRaises(AuthError) as exc:
+            verify_jwt(token="hi")
+
+        self.assertIn("Unauthorised. Your token is invalid.", str(exc.exception))
+
+    @patch("auth.get_rsa_key", return_value={"kid": ""})
+    @patch("jose.jwt.decode", side_effect=JOSEError)
+    def test_verify_another_error(self, get_header_mock, verify_mock):
+        with self.assertRaises(AuthError) as exc:
+            verify_jwt(token="hi")
+
+        self.assertIn("Unauthorised. Invalid token.", str(exc.exception))
