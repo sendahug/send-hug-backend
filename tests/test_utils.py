@@ -33,6 +33,7 @@ from utils.push_notifications import (
     RawPushData,
 )
 from utils.validator import Validator, ValidationError
+from utils.filter import WordFilter
 
 
 # App testing
@@ -255,3 +256,41 @@ class TestHugUtils(unittest.TestCase):
             "Please correct the error and try again.",
             str(exc.exception),
         )
+
+    # Validator tests
+    # =====================================================
+    def test_wordfilter_blacklisted(self):
+        word_filter = WordFilter()
+        blacklisted_result = word_filter.blacklisted("hi there", filtered_words=["hi"])
+
+        self.assertTrue(blacklisted_result.is_blacklisted)
+        self.assertEqual(blacklisted_result.forbidden_words, "hi")
+        self.assertEqual(len(blacklisted_result.badword_indexes), 1)
+        self.assertEqual(blacklisted_result.badword_indexes[0].badword, "hi")
+        self.assertEqual(blacklisted_result.badword_indexes[0].index, 0)
+
+    def test_wordfilter_multiple_filters(self):
+        word_filter = WordFilter()
+        blacklisted_result = word_filter.blacklisted(
+            "hi there", filtered_words=["hi", "bye"]
+        )
+
+        self.assertTrue(blacklisted_result.is_blacklisted)
+        self.assertEqual(blacklisted_result.forbidden_words, "hi")
+        self.assertEqual(len(blacklisted_result.badword_indexes), 1)
+        self.assertEqual(blacklisted_result.badword_indexes[0].badword, "hi")
+        self.assertEqual(blacklisted_result.badword_indexes[0].index, 0)
+
+    def test_wordfilter_multiple_filters_in_string(self):
+        word_filter = WordFilter()
+        blacklisted_result = word_filter.blacklisted(
+            "hello how are you", filtered_words=["how", "you"]
+        )
+
+        self.assertTrue(blacklisted_result.is_blacklisted)
+        self.assertEqual(blacklisted_result.forbidden_words, "how,you")
+        self.assertEqual(len(blacklisted_result.badword_indexes), 2)
+        self.assertEqual(blacklisted_result.badword_indexes[0].badword, "how")
+        self.assertEqual(blacklisted_result.badword_indexes[0].index, 6)
+        self.assertEqual(blacklisted_result.badword_indexes[1].badword, "you")
+        self.assertEqual(blacklisted_result.badword_indexes[1].index, 14)

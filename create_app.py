@@ -132,6 +132,11 @@ def create_app(db_path: str = database_path) -> Flask:
         except WebPushException as e:
             app.logger.error(e)
 
+    def get_current_filters() -> list[str]:
+        """Fetches the current filters from the database."""
+        filters = Filter.query.all()
+        return [filter.filter for filter in filters]
+
     # Routes
     # -----------------------------------------------------------------
     # Endpoint: GET /
@@ -242,7 +247,11 @@ def create_app(db_path: str = database_path) -> Flask:
             )
 
         new_post_data = json.loads(request.data)
-        validator.validate_post_or_message(text=new_post_data["text"], type="post")
+        validator.validate_post_or_message(
+            text=new_post_data["text"],
+            type="post",
+            filtered_words=get_current_filters(),
+        )
 
         # Create a new post object
         new_post = Post(
@@ -307,7 +316,11 @@ def create_app(db_path: str = database_path) -> Flask:
         # they're allowed to edit any post, so let them update the post
         # If the text was changed
         if original_post.text != updated_post["text"]:
-            validator.validate_post_or_message(text=updated_post["text"], type="post")
+            validator.validate_post_or_message(
+                text=updated_post["text"],
+                type="post",
+                filtered_words=get_current_filters(),
+            )
             original_post.text = updated_post["text"]
 
         # If a hug was added
@@ -1122,7 +1135,9 @@ def create_app(db_path: str = database_path) -> Flask:
             )
 
         validator.validate_post_or_message(
-            text=message_data["messageText"], type="message"
+            text=message_data["messageText"],
+            type="message",
+            filtered_words=get_current_filters(),
         )
 
         # Checks if there's an existing thread between the users (with user 1
