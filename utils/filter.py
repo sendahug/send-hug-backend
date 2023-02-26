@@ -27,8 +27,6 @@
 
 from dataclasses import dataclass
 
-from models import Filter
-
 
 @dataclass(init=True)
 class BadWordData:
@@ -46,25 +44,22 @@ class Blacklisted:
 # Filter class
 # inspired by Wordfilter: https://pypi.org/project/wordfilter/
 class WordFilter:
-    def blacklisted(self, string: str) -> Blacklisted:
+    def blacklisted(self, string: str, filtered_words: list[str]) -> Blacklisted:
         """
         Check if there's a blacklisted word in the text
 
         param string: The string to check for blacklisted words
         """
-        filtered_words = Filter.query.all()
         test_string = string.lower()
         badword_indexes: list[BadWordData] = []
         is_blacklisted = False
 
         # Check each word
         for filter in filtered_words:
-            if filter.filter in test_string:
+            if filter in test_string:
                 is_blacklisted = True
                 badword_indexes.append(
-                    BadWordData(
-                        badword=filter.filter, index=test_string.index(filter.filter)
-                    )
+                    BadWordData(badword=filter, index=test_string.index(filter))
                 )
 
         # return

@@ -132,6 +132,11 @@ def create_app(db_path: str = database_path) -> Flask:
         except WebPushException as e:
             app.logger.error(e)
 
+    def get_current_filters() -> list[str]:
+        """Fetches the current filters from the database."""
+        filters = Filter.query.all()
+        return [filter.filter for filter in filters]
+
     # Routes
     # -----------------------------------------------------------------
     # Endpoint: GET /
@@ -242,7 +247,11 @@ def create_app(db_path: str = database_path) -> Flask:
             )
 
         new_post_data = json.loads(request.data)
-        validator.validate_post_or_message(text=new_post_data["text"], type="post")
+        validator.validate_post_or_message(
+            text=new_post_data["text"],
+            type="post",
+            filtered_words=get_current_filters(),
+        )
 
         # Create a new post object
         new_post = Post(
@@ -268,9 +277,6 @@ def create_app(db_path: str = database_path) -> Flask:
     def edit_post(token_payload, post_id: int):
         push_notification: Optional[RawPushData] = None
 
-        # If there's no ID provided
-        if post_id is None:
-            abort(404)
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
@@ -307,14 +313,20 @@ def create_app(db_path: str = database_path) -> Flask:
         # they're allowed to edit any post, so let them update the post
         # If the text was changed
         if original_post.text != updated_post["text"]:
-            validator.validate_post_or_message(text=updated_post["text"], type="post")
+            validator.validate_post_or_message(
+                text=updated_post["text"],
+                type="post",
+                filtered_words=get_current_filters(),
+            )
             original_post.text = updated_post["text"]
+
+        original_hugs = original_post.given_hugs
+        notification: Optional[Notification] = None
+        notification_for: Optional[int] = None
 
         # If a hug was added
         # Since anyone can give hugs, this doesn't require a permissions check
         if "givenHugs" in updated_post:
-            original_hugs = original_post.given_hugs
-
             if original_post.given_hugs != updated_post["givenHugs"]:
                 hugs = original_post.sent_hugs.split(" ")
                 sent_hugs = list(filter(None, hugs))
@@ -328,7 +340,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 current_user.given_hugs += 1
                 post_author.received_hugs += 1
                 sent_hugs.append(current_user.id)
-                original_post.sent_hugs = "".join([str(e) + " " for e in sent_hugs])
+                original_post.sent_hugs = "".join([f"{str(e)} " for e in sent_hugs])
 
                 # Create a notification for the user getting the hug
                 today = datetime.now()
@@ -341,9 +353,11 @@ def create_app(db_path: str = database_path) -> Flask:
                 )
                 push_notification = {
                     "type": "hug",
-                    "text": current_user.display_name + " sent you a hug",
+                    "text": f"{current_user.display_name} sent you a hug",
                 }
                 notification_for = post_author.id
+
+        open_report: Optional[Report] = None
 
         # If there's a 'closeReport' value, this update is the result of
         # a report, which means the report with the given ID needs to be
@@ -365,9 +379,11 @@ def create_app(db_path: str = database_path) -> Flask:
             open_report = Report.query.filter(
                 Report.id == updated_post["closeReport"]
             ).one_or_none()
-            open_report.dismissed = False
-            open_report.closed = True
-            original_post.open_report = False
+
+            if open_report:
+                open_report.dismissed = False
+                open_report.closed = True
+                original_post.open_report = False
 
         # Try to update the database
         # Objects to update
@@ -381,14 +397,13 @@ def create_app(db_path: str = database_path) -> Flask:
         # If there was an added hug, add the new notification
         if "givenHugs" in updated_post:
             if original_hugs != updated_post["givenHugs"]:
-
                 to_add.append(notification)
 
         updated = db_bulk_insert_update(add_objs=to_add, update_objs=to_update)
         data = [item for item in updated["resource"] if "sentHugs" in item.keys()]
         db_updated_post = data[0]
 
-        if push_notification:
+        if push_notification and notification_for:
             send_push_notification(user_id=notification_for, data=push_notification)
 
         return jsonify({"success": True, "updated": db_updated_post})
@@ -400,9 +415,6 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/posts/<post_id>", methods=["DELETE"])
     @requires_auth(["delete:my-post", "delete:any-post"])
     def delete_post(token_payload, post_id: int):
-        # If there's no ID provided
-        if post_id is None:
-            abort(404)
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
@@ -521,10 +533,6 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/users/all/<user_id>")
     @requires_auth(["read:user"])
     def get_user_data(token_payload, user_id: Union[int, str]):
-        # If there's no ID provided
-        if user_id is None:
-            abort(404)
-
         # Try to convert it to a number; if it's a number, it's a
         # regular ID, so try to find the user with that ID
         try:
@@ -610,7 +618,7 @@ def create_app(db_path: str = database_path) -> Flask:
         try:
             # General variables for establishing an HTTPS connection to Auth0
             connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
-            auth_header = "Bearer " + MGMT_API_TOKEN
+            auth_header = f"Bearer {MGMT_API_TOKEN}"
             headers = {
                 "content-type": "application/json",
                 "authorization": auth_header,
@@ -621,7 +629,7 @@ def create_app(db_path: str = database_path) -> Flask:
             delete_payload = '{ "roles": [ "rol_QeyIIcHg326Vv1Ay" ] }'
             connection.request(
                 "DELETE",
-                "/api/v2/users/" + user_data["id"] + "/roles",
+                f"/api/v2/users/{user_data['id']}/roles",
                 delete_payload,
                 headers,
             )
@@ -633,7 +641,7 @@ def create_app(db_path: str = database_path) -> Flask:
             create_payload = '{ "roles": [ "rol_BhidDxUqlXDx8qIr" ] }'
             connection.request(
                 "POST",
-                "/api/v2/users/" + user_data["id"] + "/roles",
+                f"/api/v2/users/{user_data['id']}/roles",
                 create_payload,
                 headers,
             )
@@ -655,10 +663,6 @@ def create_app(db_path: str = database_path) -> Flask:
     def edit_user(token_payload, user_id: int):
         push_notification: Optional[RawPushData] = None
 
-        # if there's no user ID provided, abort with 'Bad Request'
-        if user_id is None:
-            abort(400)
-
         # Check if the user ID isn't an integer; if it isn't, abort
         validator.check_type(user_id, "User ID")
 
@@ -668,10 +672,13 @@ def create_app(db_path: str = database_path) -> Flask:
             User.auth0_id == token_payload["sub"]
         ).one_or_none()
 
+        original_hugs = original_user.received_hugs
+        notification: Optional[Notification] = None
+        notification_for: Optional[int] = None
+
         # If the user being updated was given a hug, also update the current
         # user's "given hugs" value, as they just gave a hug
         if "receivedH" in updated_user and "givenH" in updated_user:
-            original_hugs = original_user.received_hugs
             if original_user.received_hugs != updated_user["receivedH"]:
                 current_user.given_hugs += 1
                 today = datetime.now()
@@ -684,7 +691,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 )
                 push_notification = {
                     "type": "hug",
-                    "text": current_user.display_name + " sent you a hug",
+                    "text": f"{current_user.display_name} sent you a hug",
                 }
                 notification_for = original_user.id
 
@@ -740,6 +747,8 @@ def create_app(db_path: str = database_path) -> Flask:
             original_user.blocked = updated_user["blocked"]
             original_user.release_date = updated_user["releaseDate"]
 
+        open_report: Optional[Report] = None
+
         # If there's a 'closeReport' value, this update is the result of
         # a report, which means the report with the given ID needs to be
         # closed.
@@ -747,9 +756,11 @@ def create_app(db_path: str = database_path) -> Flask:
             open_report = Report.query.filter(
                 Report.id == updated_user["closeReport"]
             ).one_or_none()
-            open_report.dismissed = False
-            open_report.closed = True
-            original_user.open_report = False
+
+            if open_report:
+                open_report.dismissed = False
+                open_report.closed = True
+                original_user.open_report = False
 
         # If the user is attempting to change a user's settings, check
         # whether it's the current user
@@ -821,7 +832,7 @@ def create_app(db_path: str = database_path) -> Flask:
         ]
         updated_user = updated_original_user[0]
 
-        if push_notification:
+        if push_notification and notification_for:
             send_push_notification(user_id=notification_for, data=push_notification)
 
         return jsonify({"success": True, "updated": updated_user})
@@ -1122,7 +1133,9 @@ def create_app(db_path: str = database_path) -> Flask:
             )
 
         validator.validate_post_or_message(
-            text=message_data["messageText"], type="message"
+            text=message_data["messageText"],
+            type="message",
+            filtered_words=get_current_filters(),
         )
 
         # Checks if there's an existing thread between the users (with user 1
@@ -1184,7 +1197,7 @@ def create_app(db_path: str = database_path) -> Flask:
         )
         push_notification: RawPushData = {
             "type": "message",
-            "text": logged_user.display_name + " sent you a message",
+            "text": f"{logged_user.display_name} sent you a message",
         }
         notification_for = message_data["forId"]
 
@@ -1210,10 +1223,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # Variable indicating whether to delete the message from the databse
         # or leave it in it (for the other user)
         delete_message: bool = False
-
-        # If there's no thread ID, abort
-        if item_id is None:
-            abort(405)
+        delete_item: Optional[Message] = None
 
         validator.check_type(item_id, "Message ID")
 
@@ -1307,10 +1317,6 @@ def create_app(db_path: str = database_path) -> Flask:
     ):
         user_id = request.args.get("userID", type=int)
 
-        # If there's no specified mailbox, abort
-        if mailbox_type is None:
-            abort(404)
-
         # If there's no user ID, abort
         if user_id is None:
             abort(400)
@@ -1329,6 +1335,8 @@ def create_app(db_path: str = database_path) -> Flask:
                 },
                 403,
             )
+
+        num_messages = 0
 
         # If the user is trying to clear their inbox
         if mailbox_type == "inbox":
@@ -1503,7 +1511,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 User.id == updated_report["userID"]
             ).one_or_none()
         # If the item reported is a post
-        elif report.type.lower() == "post":
+        else:
             reported_item = Post.query.filter(
                 Post.id == updated_report["postID"]
             ).one_or_none()
@@ -1684,7 +1692,7 @@ def create_app(db_path: str = database_path) -> Flask:
     #              notifications).
     # Parameters: None.
     # Authorization: read:messages.
-    @app.route("/notifications/<sub_id>", methods=["POST"])
+    @app.route("/notifications/<sub_id>", methods=["PATCH"])
     @requires_auth(["read:messages"])
     def update_notification_subscription(token_payload, sub_id: int):
         # if the request is empty, return 204. This happens due to a bug

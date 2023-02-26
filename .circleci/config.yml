@@ -58,7 +58,7 @@ jobs:
             - "/usr/local/lib/python3.9/site-packages"
       - run:
           command: |
-            coverage run -m unittest discover --pattern=test_*.py
+            pytest
 
 # Conditionally run testing depending on branch
 # Once it's done, run codecov to upload test coverage

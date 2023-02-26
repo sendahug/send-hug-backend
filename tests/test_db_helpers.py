@@ -25,63 +25,202 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
 from datetime import datetime
 
-from sh import pg_restore  # type: ignore
 from werkzeug.exceptions import HTTPException
+from sqlalchemy.exc import OperationalError, DataError, IntegrityError
+import pytest
 
 from models.db_helpers import (
     add,
     update,
     update_multiple,
     add_or_update_multiple,
+    delete_object,
 )
-from create_app import create_app
-from models import db, Post
-from .dummy_data import updated_post_1, DATETIME_PATTERN
+from models import Post
 
 
-# App testing
-class TestDBHelpers(unittest.TestCase):
-    # Setting up each test
-    def setUp(self):
-        test_db_path = "postgresql://postgres:password@localhost:5432/test_sah"
-        self.app = create_app(db_path=test_db_path)
-        self.client = self.app.test_client
-        self.db = db
+@pytest.fixture
+def post_to_add():
+    current_date = datetime.now()
+    return Post(
+        user_id=1,
+        text="hello",
+        date=current_date,
+        given_hugs=0,
+        open_report=False,
+        sent_hugs="",
+    )
 
-        pg_restore(
-            "-d",
-            "test_sah",
-            "tests/capstone_db",
-            "--clean",
-            "--if-exists",
-            "-Fc",
-            "--no-owner",
-            "-h",
-            "localhost",
-            "-p",
-            "5432",
-            "-U",
-            "postgres",
-        )
 
-        # binds the app to the current context
-        with self.app.app_context():
-            # create all tables
-            self.db.create_all()
+@pytest.fixture
+def invalid_post_to_add():
+    current_date = datetime.now()
+    return Post(
+        user_id=100,
+        text="hello",
+        date=current_date,
+        given_hugs=0,
+        open_report=False,
+        sent_hugs="",
+    )
 
-    # Executed after each test
-    def tearDown(self):
-        # binds the app to the current context
-        with self.app.app_context():
-            self.db.drop_all()
-            self.db.session.close()
 
-    def test_add_no_errors(self):
-        current_date = datetime.now()
-        expected_return = {
+def test_add_no_errors(test_db, post_to_add):
+    expected_return = {
+        "id": 46,
+        "userId": 1,
+        "user": "",
+        "text": "hello",
+        "date": post_to_add.date,
+        "givenHugs": 0,
+        "sentHugs": [],
+    }
+
+    actual_return = add(obj=post_to_add)
+
+    assert expected_return == actual_return["resource"]
+
+
+def test_add_integrity_error(test_db, invalid_post_to_add):
+    with pytest.raises(HTTPException) as exc:
+        add(obj=invalid_post_to_add)
+
+    assert "Unprocessable Entity" in str(exc.value)
+    assert "violates foreign key constraint" in str(exc.value)
+
+
+def test_add_other_error(test_db, mocker, post_to_add):
+    mocker.patch(
+        "models.db.session.commit",
+        side_effect=OperationalError(
+            statement="test error", params=None, orig=BaseException()
+        ),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        add(obj=post_to_add)
+
+    assert "500 Internal Server Error" in str(exc.value)
+    assert "test error" in str(exc.value)
+
+
+def test_update_no_errors(test_db, db_helpers_dummy_data):
+    expected_return = db_helpers_dummy_data["updated_post"]
+
+    post = test_db.session.get(Post, 1)
+
+    if not post:
+        pytest.fail("The post doesn't exist! Check the test database")
+
+    original_text = post.text
+    post.text = "new test"
+    actual_return = update(obj=post)
+
+    assert expected_return == actual_return["resource"]
+    assert original_text != actual_return["resource"]["text"]
+
+
+def test_update_integrity_error(test_db):
+    post = test_db.session.get(Post, 1)
+
+    if not post:
+        pytest.fail("The post doesn't exist! Check the test database")
+
+    post.text = None
+
+    with pytest.raises(HTTPException) as exc:
+        update(obj=post)
+
+    assert "Unprocessable Entity" in str(exc.value)
+    assert "violates not-null constraint" in str(exc.value)
+
+
+def test_update_other_error(test_db, mocker, post_to_add):
+    mocker.patch(
+        "models.db.session.commit",
+        side_effect=OperationalError(
+            statement="test error", params=None, orig=BaseException()
+        ),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        update(obj=post_to_add)
+
+    assert "500 Internal Server Error" in str(exc.value)
+    assert "test error" in str(exc.value)
+
+
+def test_update_multiple_no_errors(test_db, db_helpers_dummy_data):
+    expected_return = [
+        db_helpers_dummy_data["updated_post"],
+        {
+            "id": 2,
+            "userId": 1,
+            "user": "",
+            "text": "test",
+            "date": datetime.strptime(
+                "2020-06-01 15:10:59.898", db_helpers_dummy_data["DATETIME_PATTERN"]
+            ),
+            "givenHugs": 3,
+            "sentHugs": ["4"],
+        },
+    ]
+
+    posts = test_db.session.query(Post).filter(Post.id < 3).order_by(Post.id).all()
+    original_post_1_text = posts[0].text
+    posts[0].text = "new test"
+    original_post_2_hugs = posts[1].given_hugs
+    posts[1].given_hugs = 3
+    actual_return = update_multiple(objs=posts)
+    updated_posts = sorted(actual_return["resource"], key=lambda p: p["id"])
+
+    assert expected_return == updated_posts
+    assert updated_posts[0]["text"] != original_post_1_text
+    assert updated_posts[1]["givenHugs"] != original_post_2_hugs
+
+
+def test_update_multiple_error(test_db):
+    posts = test_db.session.query(Post).filter(Post.id < 3).order_by(Post.id).all()
+    posts[0].text = "hello"
+    posts[1].user_id = 1000
+
+    with pytest.raises(HTTPException) as exc:
+        update_multiple(objs=posts)
+
+    assert "Unprocessable Entity" in str(exc.value)
+    assert "violates foreign key constraint" in str(exc.value)
+
+    # Make sure the post that's right wasn't updated either
+    post = test_db.session.get(Post, 1)
+
+    if not post:
+        pytest.fail("The post doesn't exist! Check the test database")
+
+    assert post.text != "hello"
+
+
+def test_update_multiple_other_error(test_db, mocker, post_to_add):
+    mocker.patch(
+        "models.db.session.commit",
+        side_effect=OperationalError(
+            statement="test error", params=None, orig=BaseException()
+        ),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        update_multiple(objs=[post_to_add])
+
+    assert "500 Internal Server Error" in str(exc.value)
+    assert "test error" in str(exc.value)
+
+
+def test_add_or_update_no_errors(test_db, db_helpers_dummy_data, post_to_add):
+    current_date = post_to_add.date
+    expected_return = [
+        db_helpers_dummy_data["updated_post"],
+        {
             "id": 46,
             "userId": 1,
             "user": "",
@@ -89,192 +228,84 @@ class TestDBHelpers(unittest.TestCase):
             "date": current_date,
             "givenHugs": 0,
             "sentHugs": [],
-        }
+        },
+    ]
 
-        with self.app.app_context():
-            post_to_add = Post(
-                user_id=1,
-                text="hello",
-                date=current_date,
-                given_hugs=0,
-                open_report=False,
-                sent_hugs="",
-            )
-            actual_return = add(obj=post_to_add)
+    post_to_update = test_db.session.get(Post, 1)
 
-            self.assertEqual(expected_return, actual_return["resource"])
+    if not post_to_update:
+        pytest.fail("The post doesn't exist! Check the test database")
 
-    def test_add_integrity_error(self):
-        with self.app.app_context():
-            current_date = datetime.now()
-            post_to_add = Post(
-                user_id=100,
-                text="hello",
-                date=current_date,
-                given_hugs=0,
-                open_report=False,
-                sent_hugs="",
-            )
+    original_post_text = post_to_update.text
+    post_to_update.text = "new test"
+    actual_return = add_or_update_multiple(
+        add_objs=[post_to_add], update_objs=[post_to_update]
+    )
 
-            with self.assertRaises(HTTPException) as exc:
-                add(obj=post_to_add)
+    assert expected_return == actual_return["resource"]
+    assert original_post_text != actual_return["resource"][0]["text"]
 
-            self.assertIn("Unprocessable Entity", str(exc.exception))
-            self.assertIn("violates foreign key constraint", str(exc.exception))
 
-    def test_update_no_errors(self):
-        expected_return = updated_post_1
+def test_add_or_update_error(test_db, invalid_post_to_add):
+    post_to_update = test_db.session.get(Post, 1)
 
-        with self.app.app_context():
-            post = self.db.session.get(Post, 1)
+    if not post_to_update:
+        pytest.fail("The post doesn't exist! Check the test database")
 
-            if not post:
-                self.fail("The post doesn't exist! Check the test database")
+    post_to_update.text = "new test"
 
-            original_text = post.text
-            post.text = "new test"
-            actual_return = update(obj=post)
+    with pytest.raises(HTTPException) as exc:
+        add_or_update_multiple(
+            add_objs=[invalid_post_to_add], update_objs=[post_to_update]
+        )
 
-            self.assertEqual(expected_return, actual_return["resource"])
-            self.assertNotEqual(original_text, actual_return["resource"]["text"])
+    assert "Unprocessable Entity" in str(exc.value)
+    assert "violates foreign key constraint" in str(exc.value)
 
-    def test_update_integrity_error(self):
-        with self.app.app_context():
-            post = self.db.session.get(Post, 1)
+    # Make sure the post that's right wasn't updated either
+    post = test_db.session.get(Post, 1)
 
-            if not post:
-                self.fail("The post doesn't exist! Check the test database")
+    if not post:
+        pytest.fail("The post doesn't exist! Check the test database")
 
-            post.text = None
+    assert post.text != "new test"
 
-            with self.assertRaises(HTTPException) as exc:
-                update(obj=post)
 
-            self.assertIn("Unprocessable Entity", str(exc.exception))
-            self.assertIn("violates not-null constraint", str(exc.exception))
+def test_add_or_update_other_error(test_db, mocker, post_to_add):
+    mocker.patch(
+        "models.db.session.commit",
+        side_effect=OperationalError(
+            statement="test error", params=None, orig=BaseException()
+        ),
+    )
 
-    def test_update_multiple_no_errors(self):
-        expected_return = [
-            updated_post_1,
-            {
-                "id": 2,
-                "userId": 1,
-                "user": "",
-                "text": "test",
-                "date": datetime.strptime("2020-06-01 15:10:59.898", DATETIME_PATTERN),
-                "givenHugs": 3,
-                "sentHugs": ["4"],
-            },
-        ]
+    with pytest.raises(HTTPException) as exc:
+        add_or_update_multiple(add_objs=[post_to_add], update_objs=[])
 
-        with self.app.app_context():
-            posts = (
-                self.db.session.query(Post).filter(Post.id < 3).order_by(Post.id).all()
-            )
-            original_post_1_text = posts[0].text
-            posts[0].text = "new test"
-            original_post_2_hugs = posts[1].given_hugs
-            posts[1].given_hugs = 3
-            actual_return = update_multiple(objs=posts)
-            updated_posts = sorted(actual_return["resource"], key=lambda p: p["id"])
+    assert "500 Internal Server Error" in str(exc.value)
+    assert "test error" in str(exc.value)
 
-            self.assertEqual(expected_return, updated_posts)
-            self.assertNotEqual(updated_posts[0]["text"], original_post_1_text)
-            self.assertNotEqual(updated_posts[1]["givenHugs"], original_post_2_hugs)
 
-    def test_update_multiple_error(self):
-        with self.app.app_context():
-            posts = (
-                self.db.session.query(Post).filter(Post.id < 3).order_by(Post.id).all()
-            )
-            posts[0].text = "hello"
-            posts[1].user_id = 1000
+@pytest.mark.parametrize(
+    "error, exception_code, exception_error",
+    [
+        (IntegrityError, "422 Unprocessable Entity", "invalid selection!"),
+        (DataError, "422 Unprocessable Entity", "DBAPI error!"),
+        (OperationalError, "500 Internal Server Error", "test error"),
+    ],
+)
+def test_delete_error(
+    test_db, mocker, post_to_add, error, exception_code, exception_error
+):
+    mocker.patch(
+        "models.db.session.delete",
+        side_effect=error(
+            statement=exception_error, params=None, orig=BaseException(exception_error)
+        ),
+    )
 
-            with self.assertRaises(HTTPException) as exc:
-                update_multiple(objs=posts)
+    with pytest.raises(HTTPException) as exc:
+        delete_object(obj=post_to_add)
 
-            self.assertIn("Unprocessable Entity", str(exc.exception))
-            self.assertIn("violates foreign key constraint", str(exc.exception))
-
-            # Make sure the post that's right wasn't updated either
-            post = self.db.session.get(Post, 1)
-
-            if not post:
-                self.fail("The post doesn't exist! Check the test database")
-
-            self.assertNotEqual(post.text, "hello")
-
-    def test_add_or_update_no_errors(self):
-        current_date = datetime.now()
-        expected_return = [
-            updated_post_1,
-            {
-                "id": 46,
-                "userId": 1,
-                "user": "",
-                "text": "hello",
-                "date": current_date,
-                "givenHugs": 0,
-                "sentHugs": [],
-            },
-        ]
-
-        with self.app.app_context():
-            post_to_add = Post(
-                user_id=1,
-                text="hello",
-                date=current_date,
-                given_hugs=0,
-                open_report=False,
-                sent_hugs="",
-            )
-            post_to_update = self.db.session.get(Post, 1)
-
-            if not post_to_update:
-                self.fail("The post doesn't exist! Check the test database")
-
-            original_post_text = post_to_update.text
-            post_to_update.text = "new test"
-            actual_return = add_or_update_multiple(
-                add_objs=[post_to_add], update_objs=[post_to_update]
-            )
-
-            self.assertEqual(expected_return, actual_return["resource"])
-            self.assertNotEqual(
-                original_post_text, actual_return["resource"][0]["text"]
-            )
-
-    def test_add_or_update_error(self):
-        current_date = datetime.now()
-
-        with self.app.app_context():
-            post_to_add = Post(
-                user_id=100,
-                text="hello",
-                date=current_date,
-                given_hugs=0,
-                open_report=False,
-                sent_hugs="",
-            )
-            post_to_update = self.db.session.get(Post, 1)
-
-            if not post_to_update:
-                self.fail("The post doesn't exist! Check the test database")
-
-            post_to_update.text = "new test"
-
-            with self.assertRaises(HTTPException) as exc:
-                add_or_update_multiple(
-                    add_objs=[post_to_add], update_objs=[post_to_update]
-                )
-
-            self.assertIn("Unprocessable Entity", str(exc.exception))
-            self.assertIn("violates foreign key constraint", str(exc.exception))
-
-            # Make sure the post that's right wasn't updated either
-            post = self.db.session.get(Post, 1)
-
-            if not post:
-                self.fail("The post doesn't exist! Check the test database")
-
-            self.assertNotEqual(post.text, "new test")
+    assert exception_code in str(exc.value)
+    assert exception_error in str(exc.value)

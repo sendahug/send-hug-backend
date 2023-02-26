@@ -156,11 +156,15 @@ class Validator:
 
         return True
 
-    def validate_post_or_message(self, text: str, type: Literal["post", "message"]):
+    def validate_post_or_message(
+        self, text: str, type: Literal["post", "message"], filtered_words: list[str]
+    ):
         """
         Validates a post/message
         """
-        blacklist_check = self.word_filter.blacklisted(text)
+        blacklist_check = self.word_filter.blacklisted(
+            string=text, filtered_words=filtered_words
+        )
 
         # If there's no blacklisted word, check the length and type
         if blacklist_check.is_blacklisted is False:
