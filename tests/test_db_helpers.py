@@ -28,6 +28,7 @@
 from datetime import datetime
 
 from werkzeug.exceptions import HTTPException
+from sqlalchemy.exc import OperationalError, DataError, IntegrityError
 import pytest
 
 from models.db_helpers import (
@@ -35,23 +36,15 @@ from models.db_helpers import (
     update,
     update_multiple,
     add_or_update_multiple,
+    delete_object,
 )
 from models import Post
 
 
-def test_add_no_errors(test_db):
+@pytest.fixture
+def post_to_add():
     current_date = datetime.now()
-    expected_return = {
-        "id": 46,
-        "userId": 1,
-        "user": "",
-        "text": "hello",
-        "date": current_date,
-        "givenHugs": 0,
-        "sentHugs": [],
-    }
-
-    post_to_add = Post(
+    return Post(
         user_id=1,
         text="hello",
         date=current_date,
@@ -59,14 +52,12 @@ def test_add_no_errors(test_db):
         open_report=False,
         sent_hugs="",
     )
-    actual_return = add(obj=post_to_add)
-
-    assert expected_return == actual_return["resource"]
 
 
-def test_add_integrity_error(test_db):
+@pytest.fixture
+def invalid_post_to_add():
     current_date = datetime.now()
-    post_to_add = Post(
+    return Post(
         user_id=100,
         text="hello",
         date=current_date,
@@ -75,11 +66,44 @@ def test_add_integrity_error(test_db):
         sent_hugs="",
     )
 
+
+def test_add_no_errors(test_db, post_to_add):
+    expected_return = {
+        "id": 46,
+        "userId": 1,
+        "user": "",
+        "text": "hello",
+        "date": post_to_add.date,
+        "givenHugs": 0,
+        "sentHugs": [],
+    }
+
+    actual_return = add(obj=post_to_add)
+
+    assert expected_return == actual_return["resource"]
+
+
+def test_add_integrity_error(test_db, invalid_post_to_add):
     with pytest.raises(HTTPException) as exc:
-        add(obj=post_to_add)
+        add(obj=invalid_post_to_add)
 
     assert "Unprocessable Entity" in str(exc.value)
     assert "violates foreign key constraint" in str(exc.value)
+
+
+def test_add_other_error(test_db, mocker, post_to_add):
+    mocker.patch(
+        "models.db.session.commit",
+        side_effect=OperationalError(
+            statement="test error", params=None, orig=BaseException()
+        ),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        add(obj=post_to_add)
+
+    assert "500 Internal Server Error" in str(exc.value)
+    assert "test error" in str(exc.value)
 
 
 def test_update_no_errors(test_db, db_helpers_dummy_data):
@@ -111,6 +135,21 @@ def test_update_integrity_error(test_db):
 
     assert "Unprocessable Entity" in str(exc.value)
     assert "violates not-null constraint" in str(exc.value)
+
+
+def test_update_other_error(test_db, mocker, post_to_add):
+    mocker.patch(
+        "models.db.session.commit",
+        side_effect=OperationalError(
+            statement="test error", params=None, orig=BaseException()
+        ),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        update(obj=post_to_add)
+
+    assert "500 Internal Server Error" in str(exc.value)
+    assert "test error" in str(exc.value)
 
 
 def test_update_multiple_no_errors(test_db, db_helpers_dummy_data):
@@ -162,8 +201,23 @@ def test_update_multiple_error(test_db):
     assert post.text != "hello"
 
 
-def test_add_or_update_no_errors(test_db, db_helpers_dummy_data):
-    current_date = datetime.now()
+def test_update_multiple_other_error(test_db, mocker, post_to_add):
+    mocker.patch(
+        "models.db.session.commit",
+        side_effect=OperationalError(
+            statement="test error", params=None, orig=BaseException()
+        ),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        update_multiple(objs=[post_to_add])
+
+    assert "500 Internal Server Error" in str(exc.value)
+    assert "test error" in str(exc.value)
+
+
+def test_add_or_update_no_errors(test_db, db_helpers_dummy_data, post_to_add):
+    current_date = post_to_add.date
     expected_return = [
         db_helpers_dummy_data["updated_post"],
         {
@@ -177,14 +231,6 @@ def test_add_or_update_no_errors(test_db, db_helpers_dummy_data):
         },
     ]
 
-    post_to_add = Post(
-        user_id=1,
-        text="hello",
-        date=current_date,
-        given_hugs=0,
-        open_report=False,
-        sent_hugs="",
-    )
     post_to_update = test_db.session.get(Post, 1)
 
     if not post_to_update:
@@ -200,17 +246,7 @@ def test_add_or_update_no_errors(test_db, db_helpers_dummy_data):
     assert original_post_text != actual_return["resource"][0]["text"]
 
 
-def test_add_or_update_error(test_db):
-    current_date = datetime.now()
-
-    post_to_add = Post(
-        user_id=100,
-        text="hello",
-        date=current_date,
-        given_hugs=0,
-        open_report=False,
-        sent_hugs="",
-    )
+def test_add_or_update_error(test_db, invalid_post_to_add):
     post_to_update = test_db.session.get(Post, 1)
 
     if not post_to_update:
@@ -219,7 +255,9 @@ def test_add_or_update_error(test_db):
     post_to_update.text = "new test"
 
     with pytest.raises(HTTPException) as exc:
-        add_or_update_multiple(add_objs=[post_to_add], update_objs=[post_to_update])
+        add_or_update_multiple(
+            add_objs=[invalid_post_to_add], update_objs=[post_to_update]
+        )
 
     assert "Unprocessable Entity" in str(exc.value)
     assert "violates foreign key constraint" in str(exc.value)
@@ -231,3 +269,43 @@ def test_add_or_update_error(test_db):
         pytest.fail("The post doesn't exist! Check the test database")
 
     assert post.text != "new test"
+
+
+def test_add_or_update_other_error(test_db, mocker, post_to_add):
+    mocker.patch(
+        "models.db.session.commit",
+        side_effect=OperationalError(
+            statement="test error", params=None, orig=BaseException()
+        ),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        add_or_update_multiple(add_objs=[post_to_add], update_objs=[])
+
+    assert "500 Internal Server Error" in str(exc.value)
+    assert "test error" in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    "error, exception_code, exception_error",
+    [
+        (IntegrityError, "422 Unprocessable Entity", "invalid selection!"),
+        (DataError, "422 Unprocessable Entity", "DBAPI error!"),
+        (OperationalError, "500 Internal Server Error", "test error"),
+    ],
+)
+def test_delete_error(
+    test_db, mocker, post_to_add, error, exception_code, exception_error
+):
+    mocker.patch(
+        "models.db.session.delete",
+        side_effect=error(
+            statement=exception_error, params=None, orig=BaseException(exception_error)
+        ),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        delete_object(obj=post_to_add)
+
+    assert exception_code in str(exc.value)
+    assert exception_error in str(exc.value)
