@@ -25,7 +25,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
+import pytest
 
 from utils.push_notifications import (
     generate_push_data,
@@ -36,261 +36,165 @@ from utils.validator import Validator, ValidationError
 from utils.filter import WordFilter
 
 
-# App testing
-class TestHugUtils(unittest.TestCase):
-    validator: Validator
+@pytest.fixture(scope="class")
+def test_validator():
+    yield Validator(
+        {
+            "post": {"max": 480, "min": 1},
+            "message": {"max": 480, "min": 1},
+            "user": {"max": 60, "min": 1},
+            "report": {"max": 120, "min": 1},
+        }
+    )
 
-    # Setting up the suite
-    @classmethod
-    def setUpClass(cls):
-        cls.validator = Validator(
-            {
-                "post": {"max": 480, "min": 1},
-                "message": {"max": 480, "min": 1},
-                "user": {"max": 60, "min": 1},
-                "report": {"max": 120, "min": 1},
-            }
-        )
 
-    # Push notification tests
-    # =====================================================
-    def test_generate_push_data(self):
-        base_data: RawPushData = {"type": "hug", "text": "Meow"}
-        push_data = generate_push_data(base_data)
+# Push notification tests
+# =====================================================
+def test_generate_push_data():
+    base_data: RawPushData = {"type": "hug", "text": "Meow"}
+    push_data = generate_push_data(base_data)
 
-        self.assertEqual(push_data["title"], "New hug")
-        self.assertEqual(push_data["body"], "Meow")
+    assert push_data["title"] == "New hug"
+    assert push_data["body"] == "Meow"
 
-    def test_generate_vapid_claims(self):
-        vapid_claims = generate_vapid_claims()
 
-        # TODO: Add check for the expiry time
-        self.assertEqual(vapid_claims["sub"], "mailto:sendahugcom@gmail.com")
+def test_generate_vapid_claims():
+    vapid_claims = generate_vapid_claims()
 
-    # Validator tests
-    # =====================================================
-    # TODO: These tests are really better done with parameterization...
-    # but this requires switching to pytest, which is fine but a project in itself
-    def test_validator_too_long_post(self):
-        too_long_post = "xy" * 450
+    # TODO: Add check for the expiry time
+    assert vapid_claims["sub"] == "mailto:sendahugcom@gmail.com"
 
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_length(data=too_long_post, obj_type="Post")
 
-        self.assertIn(
+# Validator tests
+# =====================================================
+@pytest.mark.parametrize(
+    "text, obj_type, error_str",
+    [
+        (
+            "xy" * 450,
+            "Post",
             "Your Post is too long! Please shorten it and then try again.",
-            str(exc.exception),
-        )
-
-    def test_validator_too_short_post(self):
-        too_short_post = ""
-
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_length(data=too_short_post, obj_type="Post")
-
-        self.assertIn(
+        ),
+        (
+            "",
+            "Post",
             "Your Post cannot be empty. Please write something and then try again.",
-            str(exc.exception),
-        )
-
-    def test_validator_too_long_name(self):
-        too_long_name = "xy" * 450
-
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_length(data=too_long_name, obj_type="Display name")
-
-        self.assertIn(
+        ),
+        (
+            "xy" * 450,
+            "Display name",
             "Your new display name is too long! Please shorten it and then try again.",
-            str(exc.exception),
-        )
-
-    def test_validator_too_short_name(self):
-        too_short_name = ""
-
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_length(data=too_short_name, obj_type="Display name")
-
-        self.assertIn(
-            "Your display name cannot be empty. "
-            "Please write something and then try again.",
-            str(exc.exception),
-        )
-
-    def test_validator_too_long_report_reason(self):
-        too_long_report_reason = "xy" * 450
-
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_length(data=too_long_report_reason, obj_type="report")
-
-        self.assertIn(
+        ),
+        (
+            "",
+            "Display name",
+            "Your display name cannot be empty. Please write "
+            "something and then try again.",
+        ),
+        (
+            "xy" * 450,
+            "report",
             "Your report reason is too long! Please shorten it and then try again.",
-            str(exc.exception),
-        )
-
-    def test_validator_too_short_report_reason(self):
-        too_short_report_reason = ""
-
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_length(data=too_short_report_reason, obj_type="report")
-
-        self.assertIn(
-            "You cannot send a report without a reason. "
-            "Please write something and try to send it again.",
-            str(exc.exception),
-        )
-
-    def test_too_short(self):
-        too_short_text = ""
-
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_length(data=too_short_text, obj_type="anything")
-
-        self.assertIn(
+        ),
+        (
+            "",
+            "report",
+            "You cannot send a report without a reason. Please write something "
+            "and try to send it again.",
+        ),
+        (
+            "",
+            "anything",
             "anything cannot be empty. Please write something and try again.",
-            str(exc.exception),
-        )
+        ),
+    ],
+)
+def test_validator_errors(test_validator, text, obj_type, error_str):
+    with pytest.raises(ValidationError) as exc:
+        test_validator.check_length(data=text, obj_type=obj_type)
 
-    def test_just_right(self):
-        post = "hi"
-        res = self.validator.check_length(data=post, obj_type="Post")
-        self.assertTrue(res)
+    assert error_str in str(exc.value)
 
-    def test_correct_string_type_post(self):
-        text = "hello"
-        res = self.validator.check_type(data=text, obj_type="post text")
-        self.assertTrue(res)
 
-    def test_incorrect_type_post(self):
-        text = 3
+@pytest.mark.parametrize("text, obj_type", [("hi", "Post"), ("hello", "post text")])
+def test_just_right(test_validator, text, obj_type):
+    res = test_validator.check_length(data=text, obj_type=obj_type)
+    assert res is True
 
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_type(data=text, obj_type="post text")
 
-        self.assertIn(
-            "post text must be of type 'String'. "
-            "Please correct the error and try again.",
-            str(exc.exception),
-        )
+@pytest.mark.parametrize(
+    "data, obj_type, item_in_error, type_in_error",
+    [
+        (3, "post text", "post text", "String"),
+        (3, "message text", "message text", "String"),
+        (3, "display name", "display name", "String"),
+        (3, "report reason", "report reason", "String"),
+        (3, "search query", "search query", "String"),
+        ("h", "user ID", "user ID", "Integer"),
+    ],
+)
+def test_incorrect_type(test_validator, data, obj_type, item_in_error, type_in_error):
+    with pytest.raises(ValidationError) as exc:
+        test_validator.check_type(data=data, obj_type=obj_type)
 
-    def test_correct_string_type_message(self):
-        text = "hello"
-        res = self.validator.check_type(data=text, obj_type="message text")
-        self.assertTrue(res)
+    assert (
+        f"{item_in_error} must be of type '{type_in_error}'. "
+        "Please correct the error and try again."
+    ) in str(exc.value)
 
-    def test_incorrect_type_message(self):
-        text = 3
 
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_type(data=text, obj_type="message text")
+@pytest.mark.parametrize(
+    "data, obj_type",
+    [
+        ("hello", "post text"),
+        ("hello", "message text"),
+        ("hello", "display name"),
+        ("hello", "report reason"),
+        ("hello", "search query"),
+        (3, "user ID"),
+    ],
+)
+def test_correct_type(test_validator, data, obj_type):
+    res = test_validator.check_type(data=data, obj_type=obj_type)
+    assert res is True
 
-        self.assertIn(
-            "message text must be of type 'String'. "
-            "Please correct the error and try again.",
-            str(exc.exception),
-        )
 
-    def test_correct_string_type_name(self):
-        text = "hello"
-        res = self.validator.check_type(data=text, obj_type="display name")
-        self.assertTrue(res)
+# Validator tests
+# =====================================================
+def test_wordfilter_blacklisted():
+    word_filter = WordFilter()
+    blacklisted_result = word_filter.blacklisted("hi there", filtered_words=["hi"])
 
-    def test_incorrect_type_name(self):
-        text = 3
+    assert blacklisted_result.is_blacklisted is True
+    assert blacklisted_result.forbidden_words == "hi"
+    assert len(blacklisted_result.badword_indexes) == 1
+    assert blacklisted_result.badword_indexes[0].badword == "hi"
+    assert blacklisted_result.badword_indexes[0].index == 0
 
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_type(data=text, obj_type="display name")
 
-        self.assertIn(
-            "display name must be of type 'String'. "
-            "Please correct the error and try again.",
-            str(exc.exception),
-        )
+def test_wordfilter_multiple_filters():
+    word_filter = WordFilter()
+    blacklisted_result = word_filter.blacklisted(
+        "hi there", filtered_words=["hi", "bye"]
+    )
 
-    def test_correct_string_type_report(self):
-        text = "hello"
-        res = self.validator.check_type(data=text, obj_type="report reason")
-        self.assertTrue(res)
+    assert blacklisted_result.is_blacklisted is True
+    assert blacklisted_result.forbidden_words == "hi"
+    assert len(blacklisted_result.badword_indexes) == 1
+    assert blacklisted_result.badword_indexes[0].badword == "hi"
+    assert blacklisted_result.badword_indexes[0].index == 0
 
-    def test_incorrect_type_report(self):
-        text = 3
 
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_type(data=text, obj_type="report reason")
+def test_wordfilter_multiple_filters_in_string():
+    word_filter = WordFilter()
+    blacklisted_result = word_filter.blacklisted(
+        "hello how are you", filtered_words=["how", "you"]
+    )
 
-        self.assertIn(
-            "report reason must be of type 'String'. "
-            "Please correct the error and try again.",
-            str(exc.exception),
-        )
-
-    def test_correct_string_type_search(self):
-        text = "hello"
-        res = self.validator.check_type(data=text, obj_type="search query")
-        self.assertTrue(res)
-
-    def test_incorrect_type_search(self):
-        text = 3
-
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_type(data=text, obj_type="search query")
-
-        self.assertIn(
-            "search query must be of type 'String'. "
-            "Please correct the error and try again.",
-            str(exc.exception),
-        )
-
-    def test_correct_number_type_id(self):
-        obj_id = 3
-        res = self.validator.check_type(data=obj_id, obj_type="user ID")
-        self.assertTrue(res)
-
-    def test_incorrect_type_id(self):
-        obj_id = "h"
-
-        with self.assertRaises(ValidationError) as exc:
-            self.validator.check_type(data=obj_id, obj_type="user ID")
-
-        self.assertIn(
-            "user ID must be of type 'Integer'. "
-            "Please correct the error and try again.",
-            str(exc.exception),
-        )
-
-    # Validator tests
-    # =====================================================
-    def test_wordfilter_blacklisted(self):
-        word_filter = WordFilter()
-        blacklisted_result = word_filter.blacklisted("hi there", filtered_words=["hi"])
-
-        self.assertTrue(blacklisted_result.is_blacklisted)
-        self.assertEqual(blacklisted_result.forbidden_words, "hi")
-        self.assertEqual(len(blacklisted_result.badword_indexes), 1)
-        self.assertEqual(blacklisted_result.badword_indexes[0].badword, "hi")
-        self.assertEqual(blacklisted_result.badword_indexes[0].index, 0)
-
-    def test_wordfilter_multiple_filters(self):
-        word_filter = WordFilter()
-        blacklisted_result = word_filter.blacklisted(
-            "hi there", filtered_words=["hi", "bye"]
-        )
-
-        self.assertTrue(blacklisted_result.is_blacklisted)
-        self.assertEqual(blacklisted_result.forbidden_words, "hi")
-        self.assertEqual(len(blacklisted_result.badword_indexes), 1)
-        self.assertEqual(blacklisted_result.badword_indexes[0].badword, "hi")
-        self.assertEqual(blacklisted_result.badword_indexes[0].index, 0)
-
-    def test_wordfilter_multiple_filters_in_string(self):
-        word_filter = WordFilter()
-        blacklisted_result = word_filter.blacklisted(
-            "hello how are you", filtered_words=["how", "you"]
-        )
-
-        self.assertTrue(blacklisted_result.is_blacklisted)
-        self.assertEqual(blacklisted_result.forbidden_words, "how,you")
-        self.assertEqual(len(blacklisted_result.badword_indexes), 2)
-        self.assertEqual(blacklisted_result.badword_indexes[0].badword, "how")
-        self.assertEqual(blacklisted_result.badword_indexes[0].index, 6)
-        self.assertEqual(blacklisted_result.badword_indexes[1].badword, "you")
-        self.assertEqual(blacklisted_result.badword_indexes[1].index, 14)
+    assert blacklisted_result.is_blacklisted is True
+    assert blacklisted_result.forbidden_words == "how,you"
+    assert len(blacklisted_result.badword_indexes) == 2
+    assert blacklisted_result.badword_indexes[0].badword == "how"
+    assert blacklisted_result.badword_indexes[0].index == 6
+    assert blacklisted_result.badword_indexes[1].badword == "you"
+    assert blacklisted_result.badword_indexes[1].index == 14

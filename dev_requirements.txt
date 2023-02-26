@@ -4,3 +4,7 @@ pre-commit==3.0.4
 mypy==1.0.0
 types-python-jose==3.3.4.3
 types-Flask-Cors==3.0.10.2
+
+pytest==7.2.1
+pytest-mock==3.10.0
+pytest-cov==4.0.0

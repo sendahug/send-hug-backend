@@ -1692,7 +1692,7 @@ def create_app(db_path: str = database_path) -> Flask:
     #              notifications).
     # Parameters: None.
     # Authorization: read:messages.
-    @app.route("/notifications/<sub_id>", methods=["POST"])
+    @app.route("/notifications/<sub_id>", methods=["PATCH"])
     @requires_auth(["read:messages"])
     def update_notification_subscription(token_payload, sub_id: int):
         # if the request is empty, return 204. This happens due to a bug

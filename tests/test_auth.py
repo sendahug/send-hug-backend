@@ -25,89 +25,69 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
-from unittest.mock import patch
-
 from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError, JOSEError
+import pytest
 
 from auth import verify_jwt, check_permissions, AuthError, get_rsa_key
 
 
 # Auth testing
-class TestHugApp(unittest.TestCase):
-    def test_unverified_header_error(self):
-        with self.assertRaises(AuthError) as exc:
-            get_rsa_key(token="ehjflsahegjls.34839pqhfk.0kfjhsdlugh")
+def test_unverified_header_error():
+    with pytest.raises(AuthError) as exc:
+        get_rsa_key(token="ehjflsahegjls.34839pqhfk.0kfjhsdlugh")
 
-        self.assertIn(
-            "Unauthorised. Malformed Authorization header.", str(exc.exception)
+    assert "Unauthorised. Malformed Authorization header." in str(exc.value)
+
+
+def test_no_permissions():
+    with pytest.raises(AuthError) as exc:
+        check_permissions(
+            permission=["read:user"],
+            payload={
+                "sub": "auth0|12345",
+                "aud": [
+                    "sendhug",
+                ],
+            },
         )
 
-    def test_no_permissions(self):
-        with self.assertRaises(AuthError) as exc:
-            check_permissions(
-                permission=["read:user"],
-                payload={
-                    "sub": "auth0|12345",
-                    "aud": [
-                        "sendhug",
-                    ],
-                },
-            )
+    assert "Unauthorised. You do not have permission to perform this action." in str(
+        exc.value
+    )
 
-        self.assertIn(
-            "Unauthorised. You do not have permission to perform this action.",
-            str(exc.exception),
+
+def test_multiple_permissions_error():
+    with pytest.raises(AuthError) as exc:
+        check_permissions(
+            permission=["read:user", "write:user"],
+            payload={
+                "sub": "auth0|12345",
+                "aud": [
+                    "sendhug",
+                ],
+                "permissions": ["do:stuff", "read:stuff"],
+            },
         )
 
-    def test_multiple_permissions_error(self):
-        with self.assertRaises(AuthError) as exc:
-            check_permissions(
-                permission=["read:user", "write:user"],
-                payload={
-                    "sub": "auth0|12345",
-                    "aud": [
-                        "sendhug",
-                    ],
-                    "permissions": ["do:stuff", "read:stuff"],
-                },
-            )
+    assert "Unauthorised. You do not have permission to perform this action." in str(
+        exc.value
+    )
 
-        self.assertIn(
-            "Unauthorised. You do not have permission to perform this action.",
-            str(exc.exception),
-        )
 
-    @patch("auth.get_rsa_key", return_value={"kid": ""})
-    @patch("jose.jwt.decode", side_effect=ExpiredSignatureError)
-    def test_verify_jwt_expired_signature(self, get_header_mock, verify_mock):
-        with self.assertRaises(AuthError) as exc:
-            verify_jwt(token="hi")
+@pytest.mark.parametrize(
+    "error, error_message",
+    [
+        (ExpiredSignatureError, "Unauthorised. Your token has expired."),
+        (JWTClaimsError, "Unauthorised. Your token contains invalid claims."),
+        (JWTError, "Unauthorised. Your token is invalid."),
+        (JOSEError, "Unauthorised. Invalid token."),
+    ],
+)
+def test_verify_jwt_error(mocker, error, error_message):
+    mocker.patch("auth.get_rsa_key", return_value={"kid": ""})
+    mocker.patch("jose.jwt.decode", side_effect=error)
 
-        self.assertIn("Unauthorised. Your token has expired.", str(exc.exception))
+    with pytest.raises(AuthError) as exc:
+        verify_jwt(token="hi")
 
-    @patch("auth.get_rsa_key", return_value={"kid": ""})
-    @patch("jose.jwt.decode", side_effect=JWTClaimsError)
-    def test_verify_jwt_claims_error(self, get_header_mock, verify_mock):
-        with self.assertRaises(AuthError) as exc:
-            verify_jwt(token="hi")
-
-        self.assertIn(
-            "Unauthorised. Your token contains invalid claims.", str(exc.exception)
-        )
-
-    @patch("auth.get_rsa_key", return_value={"kid": ""})
-    @patch("jose.jwt.decode", side_effect=JWTError)
-    def test_verify_jwt_error(self, get_header_mock, verify_mock):
-        with self.assertRaises(AuthError) as exc:
-            verify_jwt(token="hi")
-
-        self.assertIn("Unauthorised. Your token is invalid.", str(exc.exception))
-
-    @patch("auth.get_rsa_key", return_value={"kid": ""})
-    @patch("jose.jwt.decode", side_effect=JOSEError)
-    def test_verify_another_error(self, get_header_mock, verify_mock):
-        with self.assertRaises(AuthError) as exc:
-            verify_jwt(token="hi")
-
-        self.assertIn("Unauthorised. Invalid token.", str(exc.exception))
+    assert error_message in str(exc.value)
