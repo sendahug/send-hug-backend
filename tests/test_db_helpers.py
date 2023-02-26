@@ -28,6 +28,7 @@
 from datetime import datetime
 
 from werkzeug.exceptions import HTTPException
+from sqlalchemy.exc import OperationalError
 import pytest
 
 from models.db_helpers import (
@@ -82,6 +83,29 @@ def test_add_integrity_error(test_db):
     assert "violates foreign key constraint" in str(exc.value)
 
 
+def test_add_other_error(test_db, mocker):
+    mocker.patch(
+        "models.db.session.commit",
+        side_effect=OperationalError(
+            statement="test error", params=None, orig=BaseException()
+        ),
+    )
+    post_to_add = Post(
+        user_id=1,
+        text="hello",
+        date=datetime.now(),
+        given_hugs=0,
+        open_report=False,
+        sent_hugs="",
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        add(obj=post_to_add)
+
+    assert "500 Internal Server Error" in str(exc.value)
+    assert "test error" in str(exc.value)
+
+
 def test_update_no_errors(test_db, db_helpers_dummy_data):
     expected_return = db_helpers_dummy_data["updated_post"]
 
@@ -111,6 +135,29 @@ def test_update_integrity_error(test_db):
 
     assert "Unprocessable Entity" in str(exc.value)
     assert "violates not-null constraint" in str(exc.value)
+
+
+def test_update_other_error(test_db, mocker):
+    mocker.patch(
+        "models.db.session.commit",
+        side_effect=OperationalError(
+            statement="test error", params=None, orig=BaseException()
+        ),
+    )
+    post_to_add = Post(
+        user_id=1,
+        text="hello",
+        date=datetime.now(),
+        given_hugs=0,
+        open_report=False,
+        sent_hugs="",
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        update(obj=post_to_add)
+
+    assert "500 Internal Server Error" in str(exc.value)
+    assert "test error" in str(exc.value)
 
 
 def test_update_multiple_no_errors(test_db, db_helpers_dummy_data):
@@ -160,6 +207,29 @@ def test_update_multiple_error(test_db):
         pytest.fail("The post doesn't exist! Check the test database")
 
     assert post.text != "hello"
+
+
+def test_update_multiple_other_error(test_db, mocker):
+    mocker.patch(
+        "models.db.session.commit",
+        side_effect=OperationalError(
+            statement="test error", params=None, orig=BaseException()
+        ),
+    )
+    post_to_add = Post(
+        user_id=1,
+        text="hello",
+        date=datetime.now(),
+        given_hugs=0,
+        open_report=False,
+        sent_hugs="",
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        update_multiple(objs=[post_to_add])
+
+    assert "500 Internal Server Error" in str(exc.value)
+    assert "test error" in str(exc.value)
 
 
 def test_add_or_update_no_errors(test_db, db_helpers_dummy_data):
@@ -231,3 +301,26 @@ def test_add_or_update_error(test_db):
         pytest.fail("The post doesn't exist! Check the test database")
 
     assert post.text != "new test"
+
+
+def test_add_or_update_other_error(test_db, mocker):
+    mocker.patch(
+        "models.db.session.commit",
+        side_effect=OperationalError(
+            statement="test error", params=None, orig=BaseException()
+        ),
+    )
+    post_to_add = Post(
+        user_id=1,
+        text="hello",
+        date=datetime.now(),
+        given_hugs=0,
+        open_report=False,
+        sent_hugs="",
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        add_or_update_multiple(add_objs=[post_to_add], update_objs=[])
+
+    assert "500 Internal Server Error" in str(exc.value)
+    assert "test error" in str(exc.value)
