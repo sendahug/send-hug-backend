@@ -37,7 +37,6 @@ from models.db_helpers import (
     add_or_update_multiple,
 )
 from models import Post
-from .dummy_data import updated_post_1, DATETIME_PATTERN
 
 
 def test_add_no_errors(test_db):
@@ -83,8 +82,8 @@ def test_add_integrity_error(test_db):
     assert "violates foreign key constraint" in str(exc.value)
 
 
-def test_update_no_errors(test_db):
-    expected_return = updated_post_1
+def test_update_no_errors(test_db, db_helpers_dummy_data):
+    expected_return = db_helpers_dummy_data["updated_post"]
 
     post = test_db.session.get(Post, 1)
 
@@ -114,15 +113,17 @@ def test_update_integrity_error(test_db):
     assert "violates not-null constraint" in str(exc.value)
 
 
-def test_update_multiple_no_errors(test_db):
+def test_update_multiple_no_errors(test_db, db_helpers_dummy_data):
     expected_return = [
-        updated_post_1,
+        db_helpers_dummy_data["updated_post"],
         {
             "id": 2,
             "userId": 1,
             "user": "",
             "text": "test",
-            "date": datetime.strptime("2020-06-01 15:10:59.898", DATETIME_PATTERN),
+            "date": datetime.strptime(
+                "2020-06-01 15:10:59.898", db_helpers_dummy_data["DATETIME_PATTERN"]
+            ),
             "givenHugs": 3,
             "sentHugs": ["4"],
         },
@@ -161,10 +162,10 @@ def test_update_multiple_error(test_db):
     assert post.text != "hello"
 
 
-def test_add_or_update_no_errors(test_db):
+def test_add_or_update_no_errors(test_db, db_helpers_dummy_data):
     current_date = datetime.now()
     expected_return = [
-        updated_post_1,
+        db_helpers_dummy_data["updated_post"],
         {
             "id": 46,
             "userId": 1,

@@ -26,22 +26,15 @@
 # SOFTWARE.
 
 import json
-from tests.dummy_data import (
-    sample_admin_id,
-    sample_moderator_id,
-    sample_user_id,
-    new_post,
-    updated_post,
-    blocked_user_id,
-    report_post,
-)
 
 
 # Create Post Route Tests ('/posts', POST)
 # -------------------------------------------------------
 # Attempt to create a post without auth header
-def test_send_post_no_auth(app_client, test_db, user_headers):
-    response = app_client.post("/posts", data=json.dumps(new_post))
+def test_send_post_no_auth(app_client, test_db, user_headers, dummy_request_data):
+    response = app_client.post(
+        "/posts", data=json.dumps(dummy_request_data["new_post"])
+    )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
@@ -49,9 +42,13 @@ def test_send_post_no_auth(app_client, test_db, user_headers):
 
 
 # Attempt to create a post with a malformed auth header
-def test_send_post_malformed_auth(app_client, test_db, user_headers):
+def test_send_post_malformed_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.post(
-        "/posts", headers=user_headers["malformed"], data=json.dumps(new_post)
+        "/posts",
+        headers=user_headers["malformed"],
+        data=json.dumps(dummy_request_data["new_post"]),
     )
     response_data = json.loads(response.data)
 
@@ -60,9 +57,11 @@ def test_send_post_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to create a post with a user's JWT
-def test_send_post_as_user(app_client, test_db, user_headers):
-    post = new_post
-    post["userId"] = sample_user_id
+def test_send_post_as_user(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["new_post"]
+    post["userId"] = dummy_users_data["user"]["internal"]
     response = app_client.post(
         "/posts", headers=user_headers["user"], data=json.dumps(post)
     )
@@ -75,9 +74,11 @@ def test_send_post_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to create a post with a moderator's JWT
-def test_send_post_as_mod(app_client, test_db, user_headers):
-    post = new_post
-    post["userId"] = sample_moderator_id
+def test_send_post_as_mod(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["new_post"]
+    post["userId"] = dummy_users_data["moderator"]["internal"]
     response = app_client.post(
         "/posts", headers=user_headers["moderator"], data=json.dumps(post)
     )
@@ -90,9 +91,11 @@ def test_send_post_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to create a post with an admin's JWT
-def test_send_post_as_admin(app_client, test_db, user_headers):
-    post = new_post
-    post["userId"] = sample_admin_id
+def test_send_post_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["new_post"]
+    post["userId"] = dummy_users_data["admin"]["internal"]
     response = app_client.post(
         "/posts", headers=user_headers["admin"], data=json.dumps(post)
     )
@@ -105,9 +108,11 @@ def test_send_post_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to create a post with a blocked user's JWT
-def test_send_post_as_blocked(app_client, test_db, user_headers):
-    post = new_post
-    post["userId"] = blocked_user_id
+def test_send_post_as_blocked(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["new_post"]
+    post["userId"] = dummy_users_data["blocked"]["internal"]
     response = app_client.post(
         "/posts", headers=user_headers["blocked"], data=json.dumps(post)
     )
@@ -120,8 +125,10 @@ def test_send_post_as_blocked(app_client, test_db, user_headers):
 # Update Post Route Tests ('/posts/<post_id>', PATCH)
 # -------------------------------------------------------
 # Attempt to update a post with no authorisation header
-def test_update_post_no_auth(app_client, test_db, user_headers):
-    response = app_client.patch("/posts/4", data=json.dumps(updated_post))
+def test_update_post_no_auth(app_client, test_db, user_headers, dummy_request_data):
+    response = app_client.patch(
+        "/posts/4", data=json.dumps(dummy_request_data["updated_post"])
+    )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
@@ -129,9 +136,13 @@ def test_update_post_no_auth(app_client, test_db, user_headers):
 
 
 # Attempt to update a post with a malformed auth header
-def test_update_post_malformed_auth(app_client, test_db, user_headers):
+def test_update_post_malformed_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.patch(
-        "/posts/4", headers=user_headers["malformed"], data=json.dumps(updated_post)
+        "/posts/4",
+        headers=user_headers["malformed"],
+        data=json.dumps(dummy_request_data["updated_post"]),
     )
     response_data = json.loads(response.data)
 
@@ -140,9 +151,11 @@ def test_update_post_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to update the user's post (with same user's JWT)
-def test_update_own_post_as_user(app_client, test_db, user_headers):
-    post = updated_post
-    post["userId"] = sample_user_id
+def test_update_own_post_as_user(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["updated_post"]
+    post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
     response = app_client.patch(
         "/posts/4", headers=user_headers["user"], data=json.dumps(post)
@@ -156,9 +169,11 @@ def test_update_own_post_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to update another user's post (with user's JWT)
-def test_update_other_users_post_as_user(app_client, test_db, user_headers):
-    post = updated_post
-    post["userId"] = sample_moderator_id
+def test_update_other_users_post_as_user(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["updated_post"]
+    post["userId"] = dummy_users_data["moderator"]["internal"]
     post["givenHugs"] = 1
     response = app_client.patch(
         "/posts/13", headers=user_headers["user"], data=json.dumps(post)
@@ -170,9 +185,11 @@ def test_update_other_users_post_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to update the moderator's post (with same moderator's JWT)
-def test_update_own_post_as_mod(app_client, test_db, user_headers):
-    post = updated_post
-    post["userId"] = sample_moderator_id
+def test_update_own_post_as_mod(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["updated_post"]
+    post["userId"] = dummy_users_data["moderator"]["internal"]
     post["givenHugs"] = 1
     response = app_client.patch(
         "/posts/13", headers=user_headers["moderator"], data=json.dumps(post)
@@ -186,9 +203,11 @@ def test_update_own_post_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to update another user's post (with moderator's JWT)
-def test_update_other_users_post_as_mod(app_client, test_db, user_headers):
-    post = updated_post
-    post["userId"] = sample_user_id
+def test_update_other_users_post_as_mod(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["updated_post"]
+    post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
     response = app_client.patch(
         "/posts/4", headers=user_headers["moderator"], data=json.dumps(post)
@@ -202,9 +221,11 @@ def test_update_other_users_post_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to close the report on another user's post (with mod's JWT)
-def test_update_other_users_post_report_as_mod(app_client, test_db, user_headers):
-    post = report_post
-    post["userId"] = sample_user_id
+def test_update_other_users_post_report_as_mod(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["report_post"]
+    post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
     response = app_client.patch(
         "/posts/4", headers=user_headers["moderator"], data=json.dumps(post)
@@ -216,9 +237,11 @@ def test_update_other_users_post_report_as_mod(app_client, test_db, user_headers
 
 
 # Attempt to update the admin's post (with same admin's JWT)
-def test_update_own_post_as_admin(app_client, test_db, user_headers):
-    post = updated_post
-    post["userId"] = sample_admin_id
+def test_update_own_post_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["updated_post"]
+    post["userId"] = dummy_users_data["admin"]["internal"]
     post["givenHugs"] = 2
     response = app_client.patch(
         "/posts/23", headers=user_headers["admin"], data=json.dumps(post)
@@ -232,9 +255,11 @@ def test_update_own_post_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to update another user's post (with admin's JWT)
-def test_update_other_users_post_as_admin(app_client, test_db, user_headers):
-    post = updated_post
-    post["userId"] = sample_user_id
+def test_update_other_users_post_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["updated_post"]
+    post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
     response = app_client.patch(
         "/posts/4", headers=user_headers["admin"], data=json.dumps(post)
@@ -248,9 +273,11 @@ def test_update_other_users_post_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to close the report on another user's post (with admin's JWT)
-def test_update_other_users_post_report_as_admin(app_client, test_db, user_headers):
-    post = report_post
-    post["userId"] = sample_user_id
+def test_update_other_users_post_report_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["report_post"]
+    post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
     response = app_client.patch(
         "/posts/4", headers=user_headers["admin"], data=json.dumps(post)
@@ -264,9 +291,11 @@ def test_update_other_users_post_report_as_admin(app_client, test_db, user_heade
 
 
 # Attempt to update a post with no ID (with admin's JWT)
-def test_update_no_id_post_as_admin(app_client, test_db, user_headers):
-    post = updated_post
-    post["userId"] = sample_user_id
+def test_update_no_id_post_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["updated_post"]
+    post["userId"] = dummy_users_data["user"]["internal"]
     response = app_client.patch(
         "/posts/", headers=user_headers["admin"], data=json.dumps(post)
     )
@@ -277,9 +306,11 @@ def test_update_no_id_post_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to update a post that doesn't exist (with admin's JWT)
-def test_update_nonexistent_post_as_admin(app_client, test_db, user_headers):
-    post = updated_post
-    post["userId"] = sample_user_id
+def test_update_nonexistent_post_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["updated_post"]
+    post["userId"] = dummy_users_data["user"]["internal"]
     response = app_client.patch(
         "/posts/100", headers=user_headers["admin"], data=json.dumps(post)
     )
@@ -290,9 +321,11 @@ def test_update_nonexistent_post_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to update a post without post ID
-def test_update_post_no_id_as_admin(app_client, test_db, user_headers):
-    post = updated_post
-    post["userId"] = sample_user_id
+def test_update_post_no_id_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    post = dummy_request_data["updated_post"]
+    post["userId"] = dummy_users_data["user"]["internal"]
     response = app_client.patch(
         "/posts/", headers=user_headers["admin"], data=json.dumps(post)
     )

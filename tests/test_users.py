@@ -30,18 +30,6 @@ import json
 import pytest
 
 from models import User, Report
-from tests.dummy_data import (
-    sample_admin_auth0_id,
-    sample_admin_id,
-    sample_moderator_auth0_id,
-    sample_moderator_id,
-    sample_user_auth0_id,
-    sample_user_id,
-    new_user,
-    updated_display,
-    updated_unblock_user,
-    updated_user,
-)
 
 
 # Get Users by Type Tests ('/users/<type>', GET)
@@ -122,42 +110,44 @@ def test_get_user_data_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's data with a user's JWT
-def test_get_user_data_as_user(app_client, test_db, user_headers):
+def test_get_user_data_as_user(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.get(
-        f"/users/all/{sample_user_auth0_id}", headers=user_headers["user"]
+        f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
     response_data = json.loads(response.data)
     user_data = response_data["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert user_data["id"] == int(sample_user_id)
+    assert user_data["id"] == int(dummy_users_data["user"]["internal"])
 
 
 # Attempt to get a user's data with a moderator's JWT
-def test_get_user_data_as_mod(app_client, test_db, user_headers):
+def test_get_user_data_as_mod(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.get(
-        f"/users/all/{sample_moderator_auth0_id}", headers=user_headers["moderator"]
+        f"/users/all/{dummy_users_data['moderator']['auth0']}",
+        headers=user_headers["moderator"],
     )
     response_data = json.loads(response.data)
     user_data = response_data["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert user_data["id"] == int(sample_moderator_id)
+    assert user_data["id"] == int(dummy_users_data["moderator"]["internal"])
 
 
 # Attempt to get a user's data with an admin's JWT
-def test_get_user_data_as_admin(app_client, test_db, user_headers):
+def test_get_user_data_as_admin(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.get(
-        f"/users/all/{sample_admin_auth0_id}", headers=user_headers["admin"]
+        f"/users/all/{dummy_users_data['admin']['auth0']}",
+        headers=user_headers["admin"],
     )
     response_data = json.loads(response.data)
     user_data = response_data["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert user_data["id"] == int(sample_admin_id)
+    assert user_data["id"] == int(dummy_users_data["admin"]["internal"])
 
 
 # Attempt to get a user's data with no ID (with admin's JWT)
@@ -190,8 +180,10 @@ def test_get_user_no_id_as_admin(app_client, test_db, user_headers):
 # Create User Tests ('/users', POST)
 # -------------------------------------------------------
 # Attempt to create a user without auth header
-def test_create_user_no_auth(app_client, test_db, user_headers):
-    response = app_client.post("/users", data=new_user)
+def test_create_user_no_auth(app_client, test_db, user_headers, dummy_request_data):
+    response = app_client.post(
+        "/users", data=json.dumps(dummy_request_data["new_user"])
+    )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
@@ -199,9 +191,13 @@ def test_create_user_no_auth(app_client, test_db, user_headers):
 
 
 # Attempt to create a user with malformed auth header
-def test_create_user_malformed_auth(app_client, test_db, user_headers):
+def test_create_user_malformed_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.post(
-        "/users", headers=user_headers["malformed"], data=new_user
+        "/users",
+        headers=user_headers["malformed"],
+        data=json.dumps(dummy_request_data["new_user"]),
     )
     response_data = json.loads(response.data)
 
@@ -210,8 +206,12 @@ def test_create_user_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to create a user with user's JWT
-def test_create_user_as_user(app_client, test_db, user_headers):
-    response = app_client.post("/users", headers=user_headers["user"], data=new_user)
+def test_create_user_as_user(app_client, test_db, user_headers, dummy_request_data):
+    response = app_client.post(
+        "/users",
+        headers=user_headers["user"],
+        data=json.dumps(dummy_request_data["new_user"]),
+    )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
@@ -219,9 +219,13 @@ def test_create_user_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to create a user with moderator's JWT
-def test_create_user_as_moderator(app_client, test_db, user_headers):
+def test_create_user_as_moderator(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.post(
-        "/users", headers=user_headers["moderator"], data=new_user
+        "/users",
+        headers=user_headers["moderator"],
+        data=json.dumps(dummy_request_data["new_user"]),
     )
     response_data = json.loads(response.data)
 
@@ -230,8 +234,12 @@ def test_create_user_as_moderator(app_client, test_db, user_headers):
 
 
 # Attempt to create a user with admin's JWT
-def test_create_user_as_damin(app_client, test_db, user_headers):
-    response = app_client.post("/users", headers=user_headers["admin"], data=new_user)
+def test_create_user_as_damin(app_client, test_db, user_headers, dummy_request_data):
+    response = app_client.post(
+        "/users",
+        headers=user_headers["admin"],
+        data=json.dumps(dummy_request_data["new_user"]),
+    )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
@@ -243,8 +251,14 @@ def test_create_user_as_damin(app_client, test_db, user_headers):
 # is done automatically, it's no longer needed, but in case of an error
 # adjusting a user's roles, it's important to make sure they still
 # can't create other users
-def test_create_different_user_as_new_user(app_client, test_db, user_headers):
-    response = app_client.post("/users", headers=user_headers["blocked"], data=new_user)
+def test_create_different_user_as_new_user(
+    app_client, test_db, user_headers, dummy_request_data
+):
+    response = app_client.post(
+        "/users",
+        headers=user_headers["blocked"],
+        data=json.dumps(dummy_request_data["new_user"]),
+    )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
@@ -254,8 +268,10 @@ def test_create_different_user_as_new_user(app_client, test_db, user_headers):
 # Edit User Data Tests ('/users/all/<user_id>', PATCH)
 # -------------------------------------------------------
 # Attempt to update a user's data without auth header
-def test_update_user_no_auth(app_client, test_db, user_headers):
-    response = app_client.patch("/users/all/1", data=json.dumps(updated_user))
+def test_update_user_no_auth(app_client, test_db, user_headers, dummy_request_data):
+    response = app_client.patch(
+        "/users/all/1", data=json.dumps(dummy_request_data["updated_user"])
+    )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
@@ -263,9 +279,13 @@ def test_update_user_no_auth(app_client, test_db, user_headers):
 
 
 # Attempt to update a user's data with malformed auth header
-def test_update_user_malformed_auth(app_client, test_db, user_headers):
+def test_update_user_malformed_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.patch(
-        "/users/all/1", headers=user_headers["malformed"], data=json.dumps(updated_user)
+        "/users/all/1",
+        headers=user_headers["malformed"],
+        data=json.dumps(dummy_request_data["updated_user"]),
     )
     response_data = json.loads(response.data)
 
@@ -274,12 +294,14 @@ def test_update_user_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to update a user's data with a user's JWT
-def test_update_user_as_user(app_client, test_db, user_headers):
-    user = updated_user
-    user["id"] = sample_user_id
+def test_update_user_as_user(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = dummy_request_data["updated_user"]
+    user["id"] = dummy_users_data["user"]["internal"]
     user["displayName"] = "user"
     response = app_client.patch(
-        f"/users/all/{sample_user_id}",
+        f"/users/all/{dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
         data=json.dumps(user),
     )
@@ -293,11 +315,13 @@ def test_update_user_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to update another user's display name with a user's JWT
-def test_update_other_users_display_name_as_user(app_client, test_db, user_headers):
-    user = updated_display
-    user["id"] = sample_moderator_id
+def test_update_other_users_display_name_as_user(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = dummy_request_data["updated_display"]
+    user["id"] = dummy_users_data["moderator"]["internal"]
     response = app_client.patch(
-        f"/users/all/{sample_moderator_id}",
+        f"/users/all/{dummy_users_data['moderator']['internal']}",
         headers=user_headers["user"],
         data=json.dumps(user),
     )
@@ -308,11 +332,13 @@ def test_update_other_users_display_name_as_user(app_client, test_db, user_heade
 
 
 # Attempt to update a user's blocked state with a user's JWT
-def test_update_block_user_as_user(app_client, test_db, user_headers):
-    user = updated_unblock_user
-    user["id"] = sample_user_id
+def test_update_block_user_as_user(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = dummy_request_data["updated_unblock_user"]
+    user["id"] = dummy_users_data["user"]["internal"]
     response = app_client.patch(
-        f"/users/all/{sample_user_id}",
+        f"/users/all/{dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
         data=json.dumps(user),
     )
@@ -323,12 +349,14 @@ def test_update_block_user_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to update a user's data with a moderator's JWT
-def test_update_user_as_mod(app_client, test_db, user_headers):
-    user = updated_user
-    user["id"] = sample_moderator_id
+def test_update_user_as_mod(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = dummy_request_data["updated_user"]
+    user["id"] = dummy_users_data["moderator"]["internal"]
     user["displayName"] = "mod"
     response = app_client.patch(
-        f"/users/all/{sample_moderator_id}",
+        f"/users/all/{dummy_users_data['moderator']['internal']}",
         headers=user_headers["moderator"],
         data=json.dumps(user),
     )
@@ -342,11 +370,13 @@ def test_update_user_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to update another user's display name with a moderator's JWT
-def test_update_other_users_display_name_as_mod(app_client, test_db, user_headers):
-    user = updated_display
-    user["id"] = sample_admin_id
+def test_update_other_users_display_name_as_mod(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = dummy_request_data["updated_display"]
+    user["id"] = dummy_users_data["admin"]["internal"]
     response = app_client.patch(
-        f"/users/all/{sample_admin_id}",
+        f"/users/all/{dummy_users_data['admin']['internal']}",
         headers=user_headers["moderator"],
         data=json.dumps(user),
     )
@@ -357,11 +387,13 @@ def test_update_other_users_display_name_as_mod(app_client, test_db, user_header
 
 
 # Attempt to update a user's blocked state with a moderator's JWT
-def test_update_block_user_as_mod(app_client, test_db, user_headers):
-    user = updated_unblock_user
-    user["id"] = sample_moderator_id
+def test_update_block_user_as_mod(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = dummy_request_data["updated_unblock_user"]
+    user["id"] = dummy_users_data["moderator"]["internal"]
     response = app_client.patch(
-        f"/users/all/{sample_moderator_id}",
+        f"/users/all/{dummy_users_data['moderator']['internal']}",
         headers=user_headers["moderator"],
         data=json.dumps(user),
     )
@@ -372,12 +404,14 @@ def test_update_block_user_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to update a user's data with an admin's JWT
-def test_update_user_as_admin(app_client, test_db, user_headers):
-    user = updated_user
-    user["id"] = sample_admin_id
+def test_update_user_as_admin(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = dummy_request_data["updated_user"]
+    user["id"] = dummy_users_data["admin"]["internal"]
     user["displayName"] = "admin"
     response = app_client.patch(
-        f"/users/all/{sample_admin_id}",
+        f"/users/all/{dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
@@ -391,11 +425,13 @@ def test_update_user_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to update another user's display name with an admin's JWT
-def test_update_other_user_as_admin(app_client, test_db, user_headers):
-    user = updated_display
-    user["id"] = sample_user_id
+def test_update_other_user_as_admin(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = dummy_request_data["updated_display"]
+    user["id"] = dummy_users_data["user"]["internal"]
     response = app_client.patch(
-        f"/users/all/{sample_user_id}",
+        f"/users/all/{dummy_users_data['user']['internal']}",
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
@@ -408,11 +444,13 @@ def test_update_other_user_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to update a user's blocked state with an admin's JWT
-def test_update_block_user_as_admin(app_client, test_db, user_headers):
-    user = updated_unblock_user
-    user["id"] = sample_user_id
+def test_update_block_user_as_admin(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = dummy_request_data["updated_unblock_user"]
+    user["id"] = dummy_users_data["user"]["internal"]
     response = app_client.patch(
-        f"/users/all/{sample_user_id}",
+        f"/users/all/{dummy_users_data['user']['internal']}",
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
@@ -421,17 +459,19 @@ def test_update_block_user_as_admin(app_client, test_db, user_headers):
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert updated["id"] == int(sample_user_id)
+    assert updated["id"] == int(dummy_users_data["user"]["internal"])
 
 
 # Attempt to update another user's settings (admin's JWT)
-def test_update_user_settings_as_admin(app_client, test_db, user_headers):
-    user = updated_unblock_user
-    user["id"] = sample_user_id
+def test_update_user_settings_as_admin(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = dummy_request_data["updated_unblock_user"]
+    user["id"] = dummy_users_data["user"]["internal"]
     user["autoRefresh"] = True
     user["pushEnabled"] = True
     response = app_client.patch(
-        f"/users/all/{sample_user_id}",
+        f"/users/all/{dummy_users_data['user']['internal']}",
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
@@ -442,9 +482,13 @@ def test_update_user_settings_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to update a user's data with no ID (with admin's JWT)
-def test_update_no_id_user_as_admin(app_client, test_db, user_headers):
+def test_update_no_id_user_as_admin(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.patch(
-        "/users/all/", headers=user_headers["admin"], data=json.dumps(updated_user)
+        "/users/all/",
+        headers=user_headers["admin"],
+        data=json.dumps(dummy_request_data["updated_user"]),
     )
     response_data = json.loads(response.data)
 
@@ -453,14 +497,16 @@ def test_update_no_id_user_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to update another user's settings (admin's JWT)
-def test_update_admin_settings_as_admin(app_client, test_db, user_headers):
-    user = {**updated_unblock_user}
-    user["id"] = sample_admin_id
+def test_update_admin_settings_as_admin(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = {**dummy_request_data["updated_unblock_user"]}
+    user["id"] = dummy_users_data["admin"]["internal"]
     user["autoRefresh"] = True
     user["pushEnabled"] = True
     user["refreshRate"] = 60
     response = app_client.patch(
-        f"/users/all/{sample_admin_id}",
+        f"/users/all/{dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
@@ -474,12 +520,14 @@ def test_update_admin_settings_as_admin(app_client, test_db, user_headers):
     assert updated["refreshRate"] == 60
 
 
-def test_close_report_update_user_as_admin(app_client, test_db, user_headers):
-    user = {**updated_unblock_user}
-    user["id"] = sample_moderator_id
+def test_close_report_update_user_as_admin(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = {**dummy_request_data["updated_unblock_user"]}
+    user["id"] = dummy_users_data["moderator"]["internal"]
     user["closeReport"] = 6
     response = app_client.patch(
-        f"/users/all/{sample_admin_id}",
+        f"/users/all/{dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
@@ -488,7 +536,7 @@ def test_close_report_update_user_as_admin(app_client, test_db, user_headers):
     assert response_data["success"] is True
     assert response.status_code == 200
 
-    moderator = test_db.session.get(User, sample_moderator_id)
+    moderator = test_db.session.get(User, dummy_users_data["moderator"]["internal"])
     report = test_db.session.get(Report, 6)
 
     if not moderator or not report:

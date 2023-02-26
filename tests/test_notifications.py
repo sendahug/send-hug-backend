@@ -28,13 +28,6 @@
 from typing import Any
 import json
 
-from tests.dummy_data import (
-    sample_admin_auth0_id,
-    sample_moderator_auth0_id,
-    sample_user_auth0_id,
-    new_subscription,
-)
-
 
 # Get New Notifications Route Tests ('/notifications', GET)
 # -------------------------------------------------------
@@ -57,9 +50,11 @@ def test_get_notifications_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to get user notifications with a user's JWT (silent refresh)
-def test_get_silent_notifications_as_user(app_client, test_db, user_headers):
+def test_get_silent_notifications_as_user(
+    app_client, test_db, user_headers, dummy_users_data
+):
     pre_user_query = app_client.get(
-        f"/users/all/{sample_user_auth0_id}", headers=user_headers["user"]
+        f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
     pre_user_data = json.loads(pre_user_query.data)["user"]
     response = app_client.get(
@@ -67,7 +62,7 @@ def test_get_silent_notifications_as_user(app_client, test_db, user_headers):
     )
     response_data = json.loads(response.data)
     post_user_query = app_client.get(
-        f"/users/all/{sample_user_auth0_id}", headers=user_headers["user"]
+        f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
     post_user_data = json.loads(post_user_query.data)["user"]
 
@@ -81,9 +76,11 @@ def test_get_silent_notifications_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to get user notifications with a user's JWT (non-silent refresh)
-def test_get_non_silent_notifications_as_user(app_client, test_db, user_headers):
+def test_get_non_silent_notifications_as_user(
+    app_client, test_db, user_headers, dummy_users_data
+):
     pre_user_query = app_client.get(
-        f"/users/all/{sample_user_auth0_id}", headers=user_headers["user"]
+        f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
     pre_user_data = json.loads(pre_user_query.data)["user"]
     response = app_client.get(
@@ -91,7 +88,7 @@ def test_get_non_silent_notifications_as_user(app_client, test_db, user_headers)
     )
     response_data = json.loads(response.data)
     post_user_query = app_client.get(
-        f"/users/all/{sample_user_auth0_id}", headers=user_headers["user"]
+        f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
     post_user_data = json.loads(post_user_query.data)["user"]
 
@@ -105,9 +102,12 @@ def test_get_non_silent_notifications_as_user(app_client, test_db, user_headers)
 
 
 # Attempt to get user notifications with a mod's JWT (silent refresh)
-def test_get_silent_notifications_as_mod(app_client, test_db, user_headers):
+def test_get_silent_notifications_as_mod(
+    app_client, test_db, user_headers, dummy_users_data
+):
     pre_user_query = app_client.get(
-        f"/users/all/{sample_moderator_auth0_id}", headers=user_headers["moderator"]
+        f"/users/all/{dummy_users_data['moderator']['auth0']}",
+        headers=user_headers["moderator"],
     )
     pre_user_data = json.loads(pre_user_query.data)["user"]
     response = app_client.get(
@@ -115,7 +115,8 @@ def test_get_silent_notifications_as_mod(app_client, test_db, user_headers):
     )
     response_data = json.loads(response.data)
     post_user_query = app_client.get(
-        f"/users/all/{sample_moderator_auth0_id}", headers=user_headers["moderator"]
+        f"/users/all/{dummy_users_data['moderator']['auth0']}",
+        headers=user_headers["moderator"],
     )
     post_user_data = json.loads(post_user_query.data)["user"]
 
@@ -129,9 +130,12 @@ def test_get_silent_notifications_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to get user notifications with a mod's JWT (non-silent refresh)
-def test_get_non_silent_notifications_as_mod(app_client, test_db, user_headers):
+def test_get_non_silent_notifications_as_mod(
+    app_client, test_db, user_headers, dummy_users_data
+):
     pre_user_query = app_client.get(
-        f"/users/all/{sample_moderator_auth0_id}", headers=user_headers["moderator"]
+        f"/users/all/{dummy_users_data['moderator']['auth0']}",
+        headers=user_headers["moderator"],
     )
     pre_user_data = json.loads(pre_user_query.data)["user"]
     response = app_client.get(
@@ -139,7 +143,8 @@ def test_get_non_silent_notifications_as_mod(app_client, test_db, user_headers):
     )
     response_data = json.loads(response.data)
     post_user_query = app_client.get(
-        f"/users/all/{sample_moderator_auth0_id}", headers=user_headers["moderator"]
+        f"/users/all/{dummy_users_data['moderator']['auth0']}",
+        headers=user_headers["moderator"],
     )
     post_user_data = json.loads(post_user_query.data)["user"]
 
@@ -153,9 +158,12 @@ def test_get_non_silent_notifications_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to get user notifications with an admin's JWT (silently)
-def test_get_silent_notifications_as_admin(app_client, test_db, user_headers):
+def test_get_silent_notifications_as_admin(
+    app_client, test_db, user_headers, dummy_users_data
+):
     pre_user_query = app_client.get(
-        f"/users/all/{sample_admin_auth0_id}", headers=user_headers["admin"]
+        f"/users/all/{dummy_users_data['admin']['auth0']}",
+        headers=user_headers["admin"],
     )
     pre_user_data = json.loads(pre_user_query.data)["user"]
     response = app_client.get(
@@ -163,7 +171,8 @@ def test_get_silent_notifications_as_admin(app_client, test_db, user_headers):
     )
     response_data = json.loads(response.data)
     post_user_query = app_client.get(
-        f"/users/all/{sample_admin_auth0_id}", headers=user_headers["admin"]
+        f"/users/all/{dummy_users_data['admin']['auth0']}",
+        headers=user_headers["admin"],
     )
     post_user_data = json.loads(post_user_query.data)["user"]
 
@@ -177,9 +186,12 @@ def test_get_silent_notifications_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to get user notifications with an admin's JWT (non-silently)
-def test_get_non_silent_notifications_as_admin(app_client, test_db, user_headers):
+def test_get_non_silent_notifications_as_admin(
+    app_client, test_db, user_headers, dummy_users_data
+):
     pre_user_query = app_client.get(
-        f"/users/all/{sample_admin_auth0_id}", headers=user_headers["admin"]
+        f"/users/all/{dummy_users_data['admin']['auth0']}",
+        headers=user_headers["admin"],
     )
     pre_user_data = json.loads(pre_user_query.data)["user"]
     response = app_client.get(
@@ -187,7 +199,8 @@ def test_get_non_silent_notifications_as_admin(app_client, test_db, user_headers
     )
     response_data = json.loads(response.data)
     post_user_query = app_client.get(
-        f"/users/all/{sample_admin_auth0_id}", headers=user_headers["admin"]
+        f"/users/all/{dummy_users_data['admin']['auth0']}",
+        headers=user_headers["admin"],
     )
     post_user_data = json.loads(post_user_query.data)["user"]
 
@@ -203,8 +216,12 @@ def test_get_non_silent_notifications_as_admin(app_client, test_db, user_headers
 # Add New Push Subscription Route Tests ('/notifications', POST)
 # -------------------------------------------------------
 # Attempt to create push subscription without auth header
-def test_post_subscription_no_auth(app_client, test_db, user_headers):
-    response = app_client.post("/notifications", data=json.dumps(new_subscription))
+def test_post_subscription_no_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
+    response = app_client.post(
+        "/notifications", data=json.dumps(dummy_request_data["new_subscription"])
+    )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
@@ -212,10 +229,12 @@ def test_post_subscription_no_auth(app_client, test_db, user_headers):
 
 
 # Attempt to create push subscription with malformed auth header
-def test_post_subscription_malformed_auth(app_client, test_db, user_headers):
+def test_post_subscription_malformed_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.post(
         "/notifications",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["malformed"],
     )
     response_data = json.loads(response.data)
@@ -225,10 +244,12 @@ def test_post_subscription_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to create push subscription with a user's JWT
-def test_post_subscription_as_user(app_client, test_db, user_headers):
+def test_post_subscription_as_user(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.post(
         "/notifications",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
     response_data = json.loads(response.data)
@@ -240,10 +261,12 @@ def test_post_subscription_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to create push subscription with a moderator's JWT
-def test_post_subscription_as_mod(app_client, test_db, user_headers):
+def test_post_subscription_as_mod(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.post(
         "/notifications",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["moderator"],
     )
     response_data = json.loads(response.data)
@@ -255,10 +278,12 @@ def test_post_subscription_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to create push subscription with an admin's JWT
-def test_post_subscription_as_admin(app_client, test_db, user_headers):
+def test_post_subscription_as_admin(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.post(
         "/notifications",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["admin"],
     )
     response_data = json.loads(response.data)
@@ -285,17 +310,21 @@ def test_post_subscription_empty_data_as_admin(app_client, test_db, user_headers
 # Update Push Subscription Route Tests ('/notifications/<sub_id>', PATCH)
 # -------------------------------------------------------
 # Attempt to update push subscription without auth header
-def test_update_subscription_no_auth(app_client, test_db, user_headers):
+def test_update_subscription_no_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
     # Create the subscription
     app_client.post(
         "/notifications",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
     # Then update it
-    updated_subscription: dict[str, Any] = {**new_subscription}
+    updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 11
-    response = app_client.patch("/notifications/11", data=json.dumps(new_subscription))
+    response = app_client.patch(
+        "/notifications/11", data=json.dumps(dummy_request_data["new_subscription"])
+    )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
@@ -303,19 +332,21 @@ def test_update_subscription_no_auth(app_client, test_db, user_headers):
 
 
 # Attempt to update push subscription with malformed auth header
-def test_update_subscription_malformed_auth(app_client, test_db, user_headers):
+def test_update_subscription_malformed_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
     # Create the subscription
     app_client.post(
         "/notifications",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
     # Then update it
-    updated_subscription: dict[str, Any] = {**new_subscription}
+    updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 11
     response = app_client.patch(
         "/notifications/11",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["malformed"],
     )
     response_data = json.loads(response.data)
@@ -325,19 +356,21 @@ def test_update_subscription_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to update push subscription with a user's JWT
-def test_update_subscription_as_user(app_client, test_db, user_headers):
+def test_update_subscription_as_user(
+    app_client, test_db, user_headers, dummy_request_data
+):
     # Create the subscription
     app_client.post(
         "/notifications",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
     # Then update it
-    updated_subscription: dict[str, Any] = {**new_subscription}
+    updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 11
     response = app_client.patch(
         "/notifications/11",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
     response_data = json.loads(response.data)
@@ -349,19 +382,21 @@ def test_update_subscription_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to create push subscription with a moderator's JWT
-def test_update_subscription_as_mod(app_client, test_db, user_headers):
+def test_update_subscription_as_mod(
+    app_client, test_db, user_headers, dummy_request_data
+):
     # Create the subscription
     app_client.post(
         "/notifications",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["moderator"],
     )
     # Then update it
-    updated_subscription: dict[str, Any] = {**new_subscription}
+    updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 11
     response = app_client.patch(
         "/notifications/11",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["moderator"],
     )
     response_data = json.loads(response.data)
@@ -373,19 +408,21 @@ def test_update_subscription_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to create push subscription with an admin's JWT
-def test_update_subscription_as_admin(app_client, test_db, user_headers):
+def test_update_subscription_as_admin(
+    app_client, test_db, user_headers, dummy_request_data
+):
     # Create the subscription
     app_client.post(
         "/notifications",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["admin"],
     )
     # Then update it
-    updated_subscription: dict[str, Any] = {**new_subscription}
+    updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 11
     response = app_client.patch(
         "/notifications/11",
-        data=json.dumps(new_subscription),
+        data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["admin"],
     )
     response_data = json.loads(response.data)

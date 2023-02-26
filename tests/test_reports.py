@@ -27,14 +27,6 @@
 
 import json
 
-from tests.dummy_data import (
-    sample_admin_id,
-    sample_moderator_id,
-    sample_user_id,
-    new_report,
-    new_user_report,
-)
-
 
 # Get Open Reports Tests ('/reports', GET)
 # -------------------------------------------------------
@@ -90,8 +82,10 @@ def test_get_open_reports_as_admin(app_client, test_db, user_headers):
 # Create Report Route Tests ('/reports', POST)
 # -------------------------------------------------------
 # Attempt to create a report with no authorisation header
-def test_send_report_no_auth(app_client, test_db, user_headers):
-    response = app_client.post("/reports", data=json.dumps(new_report))
+def test_send_report_no_auth(app_client, test_db, user_headers, dummy_request_data):
+    response = app_client.post(
+        "/reports", data=json.dumps(dummy_request_data["new_report"])
+    )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
@@ -99,9 +93,13 @@ def test_send_report_no_auth(app_client, test_db, user_headers):
 
 
 # Attempt to create a report with a malformed auth header
-def test_send_report_malformed_auth(app_client, test_db, user_headers):
+def test_send_report_malformed_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.post(
-        "/reports", headers=user_headers["malformed"], data=json.dumps(new_report)
+        "/reports",
+        headers=user_headers["malformed"],
+        data=json.dumps(dummy_request_data["new_report"]),
     )
     response_data = json.loads(response.data)
 
@@ -110,11 +108,13 @@ def test_send_report_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to create a report with a user's JWT
-def test_send_report_as_user(app_client, test_db, user_headers):
-    report = new_report
+def test_send_report_as_user(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
-    report["reporter"] = sample_user_id
+    report["reporter"] = dummy_users_data["user"]["internal"]
     response = app_client.post(
         "/reports", headers=user_headers["user"], data=json.dumps(report)
     )
@@ -128,11 +128,13 @@ def test_send_report_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to create a report with a moderator's JWT
-def test_send_report_as_mod(app_client, test_db, user_headers):
-    report = new_report
+def test_send_report_as_mod(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
-    report["reporter"] = sample_moderator_id
+    report["reporter"] = dummy_users_data["moderator"]["internal"]
     response = app_client.post(
         "/reports", headers=user_headers["moderator"], data=json.dumps(report)
     )
@@ -146,11 +148,13 @@ def test_send_report_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to create a report with an admin's JWT
-def test_send_report_as_admin(app_client, test_db, user_headers):
-    report = new_report
+def test_send_report_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
-    report["reporter"] = sample_admin_id
+    report["reporter"] = dummy_users_data["admin"]["internal"]
     response = app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
@@ -164,11 +168,13 @@ def test_send_report_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to create a post report without post ID with an admin's JWT
-def test_send_malformed_report_as_admin(app_client, test_db, user_headers):
-    report = new_report
+def test_send_malformed_report_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = None
-    report["reporter"] = sample_admin_id
+    report["reporter"] = dummy_users_data["admin"]["internal"]
     response = app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
@@ -179,11 +185,13 @@ def test_send_malformed_report_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to create a post report for post that doesn't exist
-def test_send_report_nonexistent_post_as_admin(app_client, test_db, user_headers):
-    report = new_report
+def test_send_report_nonexistent_post_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 1000
-    report["reporter"] = sample_admin_id
+    report["reporter"] = dummy_users_data["admin"]["internal"]
     response = app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
@@ -194,10 +202,12 @@ def test_send_report_nonexistent_post_as_admin(app_client, test_db, user_headers
 
 
 # Attempt to create a report with an admin's JWT
-def test_send_user_report_as_admin(app_client, test_db, user_headers):
-    report = new_user_report
+def test_send_user_report_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_user_report"]
     report["userID"] = 1
-    report["reporter"] = sample_admin_id
+    report["reporter"] = dummy_users_data["admin"]["internal"]
     response = app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
@@ -211,10 +221,12 @@ def test_send_user_report_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to create a report for user that doesn't exist
-def test_send_user_report_nonexistent_user_as_admin(app_client, test_db, user_headers):
-    report = new_user_report
+def test_send_user_report_nonexistent_user_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_user_report"]
     report["userID"] = 100
-    report["reporter"] = sample_admin_id
+    report["reporter"] = dummy_users_data["admin"]["internal"]
     response = app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
@@ -227,8 +239,10 @@ def test_send_user_report_nonexistent_user_as_admin(app_client, test_db, user_he
 # Update Report Route Tests ('/reports/<report_id>', PATCH)
 # -------------------------------------------------------
 # Attempt to update a report with no authorisation header
-def test_update_report_no_auth(app_client, test_db, user_headers):
-    response = app_client.patch("/reports/36", data=json.dumps(new_report))
+def test_update_report_no_auth(app_client, test_db, user_headers, dummy_request_data):
+    response = app_client.patch(
+        "/reports/36", data=json.dumps(dummy_request_data["new_report"])
+    )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
@@ -236,9 +250,13 @@ def test_update_report_no_auth(app_client, test_db, user_headers):
 
 
 # Attempt to update a report with a malformed auth header
-def test_update_report_malformed_auth(app_client, test_db, user_headers):
+def test_update_report_malformed_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.patch(
-        "/reports/36", headers=user_headers["malformed"], data=json.dumps(new_report)
+        "/reports/36",
+        headers=user_headers["malformed"],
+        data=json.dumps(dummy_request_data["new_report"]),
     )
     response_data = json.loads(response.data)
 
@@ -247,11 +265,13 @@ def test_update_report_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to update a report (with user's JWT)
-def test_update_report_as_user(app_client, test_db, user_headers):
-    report = new_report
+def test_update_report_as_user(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
-    report["reporter"] = sample_user_id
+    report["reporter"] = dummy_users_data["user"]["internal"]
     response = app_client.patch(
         "/reports/36", headers=user_headers["user"], data=json.dumps(report)
     )
@@ -262,11 +282,13 @@ def test_update_report_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to update a report (with moderator's JWT)
-def test_update_report_as_mod(app_client, test_db, user_headers):
-    report = new_report
+def test_update_report_as_mod(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
-    report["reporter"] = sample_moderator_id
+    report["reporter"] = dummy_users_data["moderator"]["internal"]
     response = app_client.patch(
         "/reports/36", headers=user_headers["moderator"], data=json.dumps(report)
     )
@@ -277,12 +299,14 @@ def test_update_report_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to update a report (with admin's JWT)
-def test_update_report_as_admin(app_client, test_db, user_headers):
-    report = new_report
+def test_update_report_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_report"]
     report["id"] = 36
     report["userID"] = 4
     report["postID"] = 25
-    report["reporter"] = sample_admin_id
+    report["reporter"] = dummy_users_data["admin"]["internal"]
     report["dismissed"] = False
     report["closed"] = False
     response = app_client.patch(
@@ -297,11 +321,13 @@ def test_update_report_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to update a report (with admin's JWT)
-def test_update_user_report_as_admin(app_client, test_db, user_headers):
-    report = new_user_report
+def test_update_user_report_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_user_report"]
     report["id"] = 35
     report["userID"] = 5
-    report["reporter"] = sample_admin_id
+    report["reporter"] = dummy_users_data["admin"]["internal"]
     report["dismissed"] = False
     report["closed"] = False
     response = app_client.patch(
@@ -317,12 +343,14 @@ def test_update_user_report_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to update a report with no ID (with admin's JWT)
-def test_update_no_id_report_as_admin(app_client, test_db, user_headers):
-    report = new_report
+def test_update_no_id_report_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_report"]
     report["id"] = 36
     report["userID"] = 4
     report["postID"] = 25
-    report["reporter"] = sample_admin_id
+    report["reporter"] = dummy_users_data["admin"]["internal"]
     report["dismissed"] = False
     report["closed"] = False
     response = app_client.patch(
@@ -335,12 +363,14 @@ def test_update_no_id_report_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to update a report that doesn't exist (with admin's JWT)
-def test_update_nonexistent_report_as_admin(app_client, test_db, user_headers):
-    report = new_report
+def test_update_nonexistent_report_as_admin(
+    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+):
+    report = dummy_request_data["new_report"]
     report["id"] = 36
     report["userID"] = 4
     report["postID"] = 25
-    report["reporter"] = sample_admin_id
+    report["reporter"] = dummy_users_data["admin"]["internal"]
     report["dismissed"] = False
     report["closed"] = False
     response = app_client.patch(

@@ -27,14 +27,6 @@
 
 import json
 
-from tests.dummy_data import (
-    sample_admin_id,
-    sample_moderator_id,
-    sample_user_id,
-    new_message,
-    blocked_user_id,
-)
-
 
 # Get User's Messages Tests ('/messages', GET)
 # -------------------------------------------------------
@@ -57,9 +49,10 @@ def test_get_user_messages_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's inbox with a user's JWT
-def test_get_user_inbox_as_user(app_client, test_db, user_headers):
+def test_get_user_inbox_as_user(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.get(
-        f"/messages?userID={sample_user_id}", headers=user_headers["user"]
+        f"/messages?userID={dummy_users_data['user']['internal']}",
+        headers=user_headers["user"],
     )
     response_data = json.loads(response.data)
 
@@ -71,9 +64,10 @@ def test_get_user_inbox_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's outbox with a user's JWT
-def test_get_user_outbox_as_user(app_client, test_db, user_headers):
+def test_get_user_outbox_as_user(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.get(
-        f"/messages?type=outbox&userID={sample_user_id}", headers=user_headers["user"]
+        f"/messages?type=outbox&userID={dummy_users_data['user']['internal']}",
+        headers=user_headers["user"],
     )
     response_data = json.loads(response.data)
 
@@ -85,9 +79,10 @@ def test_get_user_outbox_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's threads mailbox with a user's JWT
-def test_get_user_threads_as_user(app_client, test_db, user_headers):
+def test_get_user_threads_as_user(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.get(
-        f"/messages?type=threads&userID={sample_user_id}", headers=user_headers["user"]
+        f"/messages?type=threads&userID={dummy_users_data['user']['internal']}",
+        headers=user_headers["user"],
     )
     response_data = json.loads(response.data)
 
@@ -99,9 +94,12 @@ def test_get_user_threads_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to get another user's messages with a user's JWT
-def test_get_another_users_messages_as_user(app_client, test_db, user_headers):
+def test_get_another_users_messages_as_user(
+    app_client, test_db, user_headers, dummy_users_data
+):
     response = app_client.get(
-        f"/messages?userID={sample_moderator_id}", headers=user_headers["user"]
+        f"/messages?userID={dummy_users_data['moderator']['internal']}",
+        headers=user_headers["user"],
     )
     response_data = json.loads(response.data)
 
@@ -110,9 +108,10 @@ def test_get_another_users_messages_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's inbox with a moderator's JWT
-def test_get_user_inbox_as_mod(app_client, test_db, user_headers):
+def test_get_user_inbox_as_mod(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.get(
-        f"/messages?userID={sample_moderator_id}", headers=user_headers["moderator"]
+        f"/messages?userID={dummy_users_data['moderator']['internal']}",
+        headers=user_headers["moderator"],
     )
     response_data = json.loads(response.data)
 
@@ -124,9 +123,9 @@ def test_get_user_inbox_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's outbox with a moderator's JWT
-def test_get_user_outbox_as_mod(app_client, test_db, user_headers):
+def test_get_user_outbox_as_mod(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.get(
-        f"/messages?type=outbox&userID={sample_moderator_id}",
+        f"/messages?type=outbox&userID={dummy_users_data['moderator']['internal']}",
         headers=user_headers["moderator"],
     )
     response_data = json.loads(response.data)
@@ -139,9 +138,9 @@ def test_get_user_outbox_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's threads mailbox with a moderator's JWT
-def test_get_user_threads_as_mod(app_client, test_db, user_headers):
+def test_get_user_threads_as_mod(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.get(
-        f"/messages?type=threads&userID={sample_moderator_id}",
+        f"/messages?type=threads&userID={dummy_users_data['moderator']['internal']}",
         headers=user_headers["moderator"],
     )
     response_data = json.loads(response.data)
@@ -154,9 +153,12 @@ def test_get_user_threads_as_mod(app_client, test_db, user_headers):
 
 
 #  Attempt to get another user's messages with a moderator's JWT
-def test_get_another_users_messages_as_mod(app_client, test_db, user_headers):
+def test_get_another_users_messages_as_mod(
+    app_client, test_db, user_headers, dummy_users_data
+):
     response = app_client.get(
-        f"/messages?userID={sample_admin_id}", headers=user_headers["moderator"]
+        f"/messages?userID={dummy_users_data['admin']['internal']}",
+        headers=user_headers["moderator"],
     )
     response_data = json.loads(response.data)
 
@@ -165,9 +167,10 @@ def test_get_another_users_messages_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's inbox with an admin's JWT
-def test_get_user_inbox_as_admin(app_client, test_db, user_headers):
+def test_get_user_inbox_as_admin(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.get(
-        f"/messages?userID={sample_admin_id}", headers=user_headers["admin"]
+        f"/messages?userID={dummy_users_data['admin']['internal']}",
+        headers=user_headers["admin"],
     )
     response_data = json.loads(response.data)
 
@@ -179,9 +182,10 @@ def test_get_user_inbox_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's outbox with an admin's JWT
-def test_get_user_outbox_as_admin(app_client, test_db, user_headers):
+def test_get_user_outbox_as_admin(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.get(
-        f"/messages?type=outbox&userID={sample_admin_id}", headers=user_headers["admin"]
+        f"/messages?type=outbox&userID={dummy_users_data['admin']['internal']}",
+        headers=user_headers["admin"],
     )
     response_data = json.loads(response.data)
 
@@ -193,9 +197,9 @@ def test_get_user_outbox_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's threads mailbox with an admin's JWT
-def test_get_user_threads_as_admin(app_client, test_db, user_headers):
+def test_get_user_threads_as_admin(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.get(
-        f"/messages?type=threads&userID={sample_admin_id}",
+        f"/messages?type=threads&userID={dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
     )
     response_data = json.loads(response.data)
@@ -208,9 +212,12 @@ def test_get_user_threads_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to get another user's messages with an admin's JWT
-def test_get_another_users_messages_as_admin(app_client, test_db, user_headers):
+def test_get_another_users_messages_as_admin(
+    app_client, test_db, user_headers, dummy_users_data
+):
     response = app_client.get(
-        f"/messages?userID={sample_user_id}", headers=user_headers["admin"]
+        f"/messages?userID={dummy_users_data['user']['internal']}",
+        headers=user_headers["admin"],
     )
     response_data = json.loads(response.data)
 
@@ -240,9 +247,12 @@ def get_other_users_thread_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to get other users' messaging thread (with admin's JWT)
-def get_nonexistent_thread_as_admin(app_client, test_db, user_headers):
+def get_nonexistent_thread_as_admin(
+    app_client, test_db, user_headers, dummy_users_data
+):
     response = app_client.get(
-        f"/messages?userID={sample_admin_id}&type=thread&threadID=200",
+        f"/messages?userID={dummy_users_data['admin']['internal']}"
+        "&type=thread&threadID=200",
         headers=user_headers["admin"],
     )
     response_data = json.loads(response.data)
@@ -254,8 +264,10 @@ def get_nonexistent_thread_as_admin(app_client, test_db, user_headers):
 # Create Message Route Tests ('/message', POST)
 # -------------------------------------------------------
 # Attempt to create a message with no authorisation header
-def test_send_message_no_auth(app_client, test_db, user_headers):
-    response = app_client.post("/messages", data=json.dumps(new_message))
+def test_send_message_no_auth(app_client, test_db, user_headers, dummy_request_data):
+    response = app_client.post(
+        "/messages", data=json.dumps(dummy_request_data["new_message"])
+    )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
@@ -263,9 +275,13 @@ def test_send_message_no_auth(app_client, test_db, user_headers):
 
 
 # Attempt to create a message with a malformed auth header
-def test_send_message_malformed_auth(app_client, test_db, user_headers):
+def test_send_message_malformed_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
     response = app_client.post(
-        "/messages", headers=user_headers["malformed"], data=json.dumps(new_message)
+        "/messages",
+        headers=user_headers["malformed"],
+        data=json.dumps(dummy_request_data["new_message"]),
     )
     response_data = json.loads(response.data)
 
@@ -274,10 +290,12 @@ def test_send_message_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to create a message with a user's JWT
-def test_send_message_as_user(app_client, test_db, user_headers):
-    message = new_message
-    message["fromId"] = int(sample_user_id)
-    message["forId"] = sample_moderator_id
+def test_send_message_as_user(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    message = dummy_request_data["new_message"]
+    message["fromId"] = int(dummy_users_data["user"]["internal"])
+    message["forId"] = dummy_users_data["moderator"]["internal"]
     response = app_client.post(
         "/messages", headers=user_headers["user"], data=json.dumps(message)
     )
@@ -290,10 +308,12 @@ def test_send_message_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to create a message from another user (with a user's JWT)
-def test_send_message_from_another_user_as_user(app_client, test_db, user_headers):
-    message = new_message
-    message["fromId"] = int(sample_admin_id)
-    message["forId"] = sample_moderator_id
+def test_send_message_from_another_user_as_user(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    message = dummy_request_data["new_message"]
+    message["fromId"] = int(dummy_users_data["admin"]["internal"])
+    message["forId"] = dummy_users_data["moderator"]["internal"]
     response = app_client.post(
         "/messages", headers=user_headers["user"], data=json.dumps(message)
     )
@@ -304,10 +324,12 @@ def test_send_message_from_another_user_as_user(app_client, test_db, user_header
 
 
 # Attempt to create a message with a moderator's JWT
-def test_send_message_as_mod(app_client, test_db, user_headers):
-    message = new_message
-    message["fromId"] = int(sample_moderator_id)
-    message["forId"] = sample_admin_id
+def test_send_message_as_mod(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    message = dummy_request_data["new_message"]
+    message["fromId"] = int(dummy_users_data["moderator"]["internal"])
+    message["forId"] = dummy_users_data["admin"]["internal"]
     response = app_client.post(
         "/messages", headers=user_headers["moderator"], data=json.dumps(message)
     )
@@ -320,10 +342,12 @@ def test_send_message_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to create a message from another user (with a moderator's JWT)
-def test_send_message_from_another_user_as_mod(app_client, test_db, user_headers):
-    message = new_message
-    message["fromId"] = int(sample_admin_id)
-    message["forId"] = sample_user_id
+def test_send_message_from_another_user_as_mod(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    message = dummy_request_data["new_message"]
+    message["fromId"] = int(dummy_users_data["admin"]["internal"])
+    message["forId"] = dummy_users_data["user"]["internal"]
     response = app_client.post(
         "/messages", headers=user_headers["moderator"], data=json.dumps(message)
     )
@@ -334,10 +358,12 @@ def test_send_message_from_another_user_as_mod(app_client, test_db, user_headers
 
 
 # Attempt to create a message with an admin's JWT
-def test_send_message_as_admin(app_client, test_db, user_headers):
-    message = new_message
-    message["fromId"] = int(sample_admin_id)
-    message["forId"] = sample_moderator_id
+def test_send_message_as_admin(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    message = dummy_request_data["new_message"]
+    message["fromId"] = int(dummy_users_data["admin"]["internal"])
+    message["forId"] = dummy_users_data["moderator"]["internal"]
     response = app_client.post(
         "/messages", headers=user_headers["admin"], data=json.dumps(message)
     )
@@ -350,10 +376,12 @@ def test_send_message_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to create a message from another user (with an admin's JWT)
-def test_send_message_from_another_user_as_admin(app_client, test_db, user_headers):
-    message = new_message
-    message["fromId"] = int(sample_user_id)
-    message["forId"] = sample_moderator_id
+def test_send_message_from_another_user_as_admin(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    message = dummy_request_data["new_message"]
+    message["fromId"] = int(dummy_users_data["user"]["internal"])
+    message["forId"] = dummy_users_data["moderator"]["internal"]
     response = app_client.post(
         "/messages", headers=user_headers["admin"], data=json.dumps(message)
     )
@@ -364,10 +392,12 @@ def test_send_message_from_another_user_as_admin(app_client, test_db, user_heade
 
 
 # Attempt to send a message from a user (when there's no thread)
-def test_send_message_existing_thread_as_user(app_client, test_db, user_headers):
-    message = new_message
-    message["fromId"] = int(blocked_user_id)
-    message["forId"] = sample_admin_id
+def test_send_message_existing_thread_as_user(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    message = dummy_request_data["new_message"]
+    message["fromId"] = int(dummy_users_data["blocked"]["internal"])
+    message["forId"] = dummy_users_data["admin"]["internal"]
     response = app_client.post(
         "/messages", headers=user_headers["blocked"], data=json.dumps(message)
     )
@@ -385,9 +415,11 @@ def test_send_message_existing_thread_as_user(app_client, test_db, user_headers)
     assert len(new_thread_data["messages"]) == 2
 
 
-def test_send_message_create_thread(app_client, test_db, user_headers):
-    message = {**new_message}
-    message["fromId"] = int(sample_admin_id)
+def test_send_message_create_thread(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    message = {**dummy_request_data["new_message"]}
+    message["fromId"] = int(dummy_users_data["admin"]["internal"])
     message["forId"] = 9
     response = app_client.post(
         "/messages", headers=user_headers["admin"], data=json.dumps(message)
@@ -395,7 +427,8 @@ def test_send_message_create_thread(app_client, test_db, user_headers):
     response_data = json.loads(response.data)
     response_message = response_data["message"]
     new_thread = app_client.get(
-        f"/messages?userID={sample_admin_id}&type=thread&threadID=9",
+        f"/messages?userID={dummy_users_data['admin']['internal']}"
+        "&type=thread&threadID=9",
         headers=user_headers["admin"],
     )
     new_thread_data = json.loads(new_thread.data)
@@ -552,9 +585,10 @@ def test_empty_mailbox_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to empty user's inbox (user JWT)
-def test_empty_mailbox_as_user(app_client, test_db, user_headers):
+def test_empty_mailbox_as_user(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.delete(
-        f"/messages/inbox?userID={sample_user_id}", headers=user_headers["user"]
+        f"/messages/inbox?userID={dummy_users_data['user']['internal']}",
+        headers=user_headers["user"],
     )
     response_data = json.loads(response.data)
 
@@ -576,9 +610,9 @@ def test_empty_other_users_mailbox_as_user(app_client, test_db, user_headers):
 
 
 # Attempt to empty user's outbox (moderator's JWT)
-def test_empty_mailbox_as_mod(app_client, test_db, user_headers):
+def test_empty_mailbox_as_mod(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.delete(
-        f"/messages/outbox?userID={sample_moderator_id}",
+        f"/messages/outbox?userID={dummy_users_data['moderator']['internal']}",
         headers=user_headers["moderator"],
     )
     response_data = json.loads(response.data)
@@ -601,9 +635,10 @@ def test_empty_other_users_mailbox_as_mod(app_client, test_db, user_headers):
 
 
 # Attempt to empty user's threads mailbox (admin's JWT)
-def test_empty_mailbox_as_admin(app_client, test_db, user_headers):
+def test_empty_mailbox_as_admin(app_client, test_db, user_headers, dummy_users_data):
     response = app_client.delete(
-        f"/messages/threads?userID={sample_admin_id}", headers=user_headers["admin"]
+        f"/messages/threads?userID={dummy_users_data['admin']['internal']}",
+        headers=user_headers["admin"],
     )
     response_data = json.loads(response.data)
 
