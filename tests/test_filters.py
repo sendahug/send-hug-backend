@@ -27,11 +27,13 @@
 
 import json
 
+import pytest
+
 
 # Get Filters Tests ('/filters', GET)
 # -------------------------------------------------------
 # Attempt to get filters without auth header
-def test_get_filters_no_auth(app_client, test_db, user_headers):
+def test_get_filters_no_auth(app_client, test_db):
     response = app_client.get("/filters")
     response_data = json.loads(response.data)
 
@@ -39,31 +41,24 @@ def test_get_filters_no_auth(app_client, test_db, user_headers):
     assert response.status_code == 401
 
 
-# Attempt to get filters with malformed auth header
-def test_get_filters_malformed_auth(app_client, test_db, user_headers):
-    response = app_client.get("/filters", headers=user_headers["malformed"])
+# Attempt to get filters without permission
+@pytest.mark.parametrize(
+    "user, status_code",
+    [
+        # malformed auth header
+        ("malformed", 401),
+        # a user's JWT
+        ("user", 403),
+        # a moderator's JWT
+        ("moderator", 403),
+    ],
+)
+def test_get_filters_auth_error(app_client, test_db, user_headers, user, status_code):
+    response = app_client.get("/filters", headers=user_headers[user])
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
-    assert response.status_code == 401
-
-
-# Attempt to get filters with a user's JWT
-def test_get_filters_as_user(app_client, test_db, user_headers):
-    response = app_client.get("/filters", headers=user_headers["user"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
-#  Attempt to get filters with a moderator's JWT
-def test_get_filters_as_mod(app_client, test_db, user_headers):
-    response = app_client.get("/filters", headers=user_headers["moderator"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
+    assert response.status_code == status_code
 
 
 # Attempt to get filters with an admin's JWT
@@ -88,41 +83,30 @@ def test_create_filters_no_auth(app_client, test_db, user_headers):
     assert response.status_code == 401
 
 
-# Attempt to create a filter with malformed auth header
-def test_create_filters_malformed_auth(app_client, test_db, user_headers):
+# Attempt to get filters without permission
+@pytest.mark.parametrize(
+    "user, status_code",
+    [
+        # malformed auth header
+        ("malformed", 401),
+        # a user's JWT
+        ("user", 403),
+        # a moderator's JWT
+        ("moderator", 403),
+    ],
+)
+def test_create_filters_auth_error(
+    app_client, test_db, user_headers, user, status_code
+):
     response = app_client.post(
         "/filters",
-        headers=user_headers["malformed"],
+        headers=user_headers[user],
         data=json.dumps({"word": "sample"}),
     )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
-    assert response.status_code == 401
-
-
-# Attempt to create a filter with a user's JWT
-def test_create_filters_as_user(app_client, test_db, user_headers):
-    response = app_client.post(
-        "/filters", headers=user_headers["user"], data=json.dumps({"word": "sample"})
-    )
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
-#  Attempt to create a filter with a moderator's JWT
-def test_create_filters_as_mod(app_client, test_db, user_headers):
-    response = app_client.post(
-        "/filters",
-        headers=user_headers["moderator"],
-        data=json.dumps({"word": "sample"}),
-    )
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
+    assert response.status_code == status_code
 
 
 # Attempt to create a filter with an admin's JWT
@@ -162,31 +146,26 @@ def test_delete_filters_no_auth(app_client, test_db, user_headers):
     assert response.status_code == 401
 
 
-# Attempt to delete a filter with malformed auth header
-def test_delete_filters_malformed_auth(app_client, test_db, user_headers):
-    response = app_client.delete("/filters/1", headers=user_headers["malformed"])
+# Attempt to get filters without permission
+@pytest.mark.parametrize(
+    "user, status_code",
+    [
+        # malformed auth header
+        ("malformed", 401),
+        # a user's JWT
+        ("user", 403),
+        # a moderator's JWT
+        ("moderator", 403),
+    ],
+)
+def test_delete_filters_auth_error(
+    app_client, test_db, user_headers, user, status_code
+):
+    response = app_client.delete("/filters/1", headers=user_headers[user])
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
-    assert response.status_code == 401
-
-
-# Attempt to delete a filter with a user's JWT
-def test_delete_filters_as_user(app_client, test_db, user_headers):
-    response = app_client.delete("/filters/1", headers=user_headers["user"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
-#  Attempt to delete a filter with a moderator's JWT
-def test_delete_filters_as_mod(app_client, test_db, user_headers):
-    response = app_client.delete("/filters/1", headers=user_headers["moderator"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
+    assert response.status_code == status_code
 
 
 # Attempt to delete a filter with an admin's JWT

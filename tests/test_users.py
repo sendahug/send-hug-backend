@@ -43,31 +43,24 @@ def test_get_user_list_no_auth(app_client, test_db, user_headers):
     assert response.status_code == 401
 
 
-# Attempt to get list of users with malformed auth header
-def test_get_user_list_malformed_auth(app_client, test_db, user_headers):
-    response = app_client.get("/users/blocked", headers=user_headers["malformed"])
+# Attempt to get list of users with
+@pytest.mark.parametrize(
+    "user, error_code",
+    [
+        # malformed auth header
+        ("malformed", 401),
+        # user's auth header
+        ("user", 403),
+        # moderator's auth header
+        ("moderator", 403),
+    ],
+)
+def test_get_user_list_auth_error(app_client, test_db, user_headers, user, error_code):
+    response = app_client.get("/users/blocked", headers=user_headers[user])
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
-    assert response.status_code == 401
-
-
-# Attempt to get list of users with user's auth header
-def test_get_user_list_as_user(app_client, test_db, user_headers):
-    response = app_client.get("/users/blocked", headers=user_headers["user"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
-# Attempt to get list of users with moderator's auth header
-def test_get_user_list_as_mod(app_client, test_db, user_headers):
-    response = app_client.get("/users/blocked", headers=user_headers["moderator"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
+    assert response.status_code == error_code
 
 
 # Attempt to get list of users with admin's auth header
@@ -150,15 +143,6 @@ def test_get_user_data_as_admin(app_client, test_db, user_headers, dummy_users_d
     assert user_data["id"] == int(dummy_users_data["admin"]["internal"])
 
 
-# Attempt to get a user's data with no ID (with admin's JWT)
-def test_get_no_id_user_as_admin(app_client, test_db, user_headers):
-    response = app_client.get("/users/all/", headers=user_headers["admin"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 404
-
-
 # Attempt to get a nonexistent user's data (with admin's JWT)
 def test_get_nonexistent_user_as_admin(app_client, test_db, user_headers):
     response = app_client.get("/users/all/100", headers=user_headers["admin"])
@@ -168,7 +152,7 @@ def test_get_nonexistent_user_as_admin(app_client, test_db, user_headers):
     assert response.status_code == 404
 
 
-# Attempt to get a user without post ID
+# Attempt to get a user's data with no ID (with admin's JWT)
 def test_get_user_no_id_as_admin(app_client, test_db, user_headers):
     response = app_client.get("/users/all/", headers=user_headers["admin"])
     response_data = json.loads(response.data)
@@ -567,40 +551,29 @@ def test_get_user_posts_malformed_auth(app_client, test_db, user_headers):
     assert response.status_code == 401
 
 
-# Attempt to get a user's posts with a user's JWT
-def test_get_user_posts_as_user(app_client, test_db, user_headers):
-    response = app_client.get("/users/all/1/posts", headers=user_headers["user"])
+# Attempt to get a user's posts with
+@pytest.mark.parametrize(
+    "user_id, user, total_pages, posts_num",
+    [
+        # a user's JWT
+        (1, "user", 2, 5),
+        # a moderator's JWT
+        (4, "moderator", 3, 5),
+        # an admin's JWT
+        (5, "admin", 1, 2),
+    ],
+)
+def test_get_user_posts(
+    app_client, test_db, user_headers, user_id, user, total_pages, posts_num
+):
+    response = app_client.get(f"/users/all/{user_id}/posts", headers=user_headers[user])
     response_data = json.loads(response.data)
 
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["page"] == 1
-    assert response_data["total_pages"] == 2
-    assert len(response_data["posts"]) == 5
-
-
-# Attempt to get a user's posts with a moderator's JWT
-def test_get_user_posts_as_mod(app_client, test_db, user_headers):
-    response = app_client.get("/users/all/4/posts", headers=user_headers["moderator"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert response_data["page"] == 1
-    assert response_data["total_pages"] == 3
-    assert len(response_data["posts"]) == 5
-
-
-# Attempt to get a user's posts with an admin's JWT
-def test_get_user_posts_as_admin(app_client, test_db, user_headers):
-    response = app_client.get("/users/all/5/posts", headers=user_headers["admin"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert response_data["page"] == 1
-    assert response_data["total_pages"] == 1
-    assert len(response_data["posts"]) == 2
+    assert response_data["total_pages"] == total_pages
+    assert len(response_data["posts"]) == posts_num
 
 
 # Delete User's Posts Route Tests ('/users/all/<user_id>/posts', DELETE)
@@ -625,56 +598,51 @@ def test_delete_posts_malformed_auth(app_client, test_db, user_headers):
     assert response.status_code == 401
 
 
-# Attempt to delete the user's posts (with same user's JWT)
-def test_delete_own_posts_as_user(app_client, test_db, user_headers):
-    response = app_client.delete("/users/all/1/posts", headers=user_headers["user"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert response_data["deleted"] == 8
-
-
-# Attempt to delete another user's posts (with user's JWT)
-def test_delete_other_users_posts_as_user(app_client, test_db, user_headers):
-    response = app_client.delete("/users/all/4/posts", headers=user_headers["user"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
-# Attempt to delete the moderator's posts (with same moderator's JWT)
-def test_delete_own_posts_as_mod(app_client, test_db, user_headers):
+# Attempt to delete the user's posts
+@pytest.mark.parametrize(
+    "user_id, user, deleted_post",
+    [
+        # (with same user's JWT)
+        (1, "user", 8),
+        # (with same moderator's JWT)
+        (5, "moderator", 2),
+        # (with same admin's JWT)
+        (4, "admin", 14),
+    ],
+)
+def test_delete_own_posts(
+    app_client, test_db, user_headers, user_id, user, deleted_post
+):
     response = app_client.delete(
-        "/users/all/5/posts", headers=user_headers["moderator"]
+        f"/users/all/{user_id}/posts", headers=user_headers[user]
     )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == 2
+    assert response_data["deleted"] == deleted_post
 
 
-# Attempt to delete another user's posts (with moderator's JWT)
-def test_delete_other_users_posts_as_mod(app_client, test_db, user_headers):
+# Attempt to delete another user's posts without permission
+@pytest.mark.parametrize(
+    "user_id, user",
+    [
+        # (with user's JWT)
+        (4, "user"),
+        # (with moderator's JWT)
+        (1, "moderator"),
+    ],
+)
+def test_delete_other_users_posts_no_permission(
+    app_client, test_db, user_headers, user_id, user
+):
     response = app_client.delete(
-        "/users/all/1/posts", headers=user_headers["moderator"]
+        f"/users/all/{user_id}/posts", headers=user_headers[user]
     )
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 403
-
-
-# Attempt to delete the admin's posts (with same admin's JWT)
-def test_delete_own_posts_as_admin(app_client, test_db, user_headers):
-    response = app_client.delete("/users/all/4/posts", headers=user_headers["admin"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert response_data["deleted"] == 14
 
 
 # Attempt to delete another user's posts (with admin's JWT)

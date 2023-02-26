@@ -27,6 +27,8 @@
 
 import json
 
+import pytest
+
 
 # Create Post Route Tests ('/posts', POST)
 # -------------------------------------------------------
@@ -290,21 +292,6 @@ def test_update_other_users_post_report_as_admin(
     assert post_text["text"] == post["text"]
 
 
-# Attempt to update a post with no ID (with admin's JWT)
-def test_update_no_id_post_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
-):
-    post = dummy_request_data["updated_post"]
-    post["userId"] = dummy_users_data["user"]["internal"]
-    response = app_client.patch(
-        "/posts/", headers=user_headers["admin"], data=json.dumps(post)
-    )
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 404
-
-
 # Attempt to update a post that doesn't exist (with admin's JWT)
 def test_update_nonexistent_post_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
@@ -320,7 +307,7 @@ def test_update_nonexistent_post_as_admin(
     assert response.status_code == 404
 
 
-# Attempt to update a post without post ID
+# Attempt to update a post without post ID (with admin's JWT)
 def test_update_post_no_id_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
@@ -380,14 +367,25 @@ def test_delete_post_malformed_auth(app_client, test_db, user_headers):
     assert response.status_code == 401
 
 
-# Attempt to delete the user's post (with same user's JWT)
-def test_delete_own_post_as_user(app_client, test_db, user_headers):
-    response = app_client.delete("/posts/2", headers=user_headers["user"])
+# Attempt to delete the user's post
+@pytest.mark.parametrize(
+    "post_id, user",
+    [
+        # (with same user's JWT)
+        (2, "user"),
+        # (with same moderator's JWT)
+        (12, "moderator"),
+        # (with same admin's JWT)
+        (23, "admin"),
+    ],
+)
+def test_delete_own_post(app_client, test_db, user_headers, post_id, user):
+    response = app_client.delete(f"/posts/{post_id}", headers=user_headers[user])
     response_data = json.loads(response.data)
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == "2"
+    assert response_data["deleted"] == f"{post_id}"
 
 
 # Attempt to delete another user's post (with user's JWT)
@@ -399,16 +397,6 @@ def test_delete_other_users_post_as_user(app_client, test_db, user_headers):
     assert response.status_code == 403
 
 
-# Attempt to delete the moderator's post (with same moderator's JWT)
-def test_delete_own_post_as_mod(app_client, test_db, user_headers):
-    response = app_client.delete("/posts/12", headers=user_headers["moderator"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert response_data["deleted"] == "12"
-
-
 # Attempt to delete another user's post (with moderator's JWT)
 def test_delete_other_users_post_as_mod(app_client, test_db, user_headers):
     response = app_client.delete("/posts/25", headers=user_headers["moderator"])
@@ -416,16 +404,6 @@ def test_delete_other_users_post_as_mod(app_client, test_db, user_headers):
 
     assert response_data["success"] is False
     assert response.status_code == 403
-
-
-# Attempt to delete the admin's post (with same admin's JWT)
-def test_delete_own_post_as_admin(app_client, test_db, user_headers):
-    response = app_client.delete("/posts/23", headers=user_headers["admin"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert response_data["deleted"] == "23"
 
 
 # Attempt to delete another user's post (with admin's JWT)
@@ -438,15 +416,6 @@ def test_delete_other_users_post_as_admin(app_client, test_db, user_headers):
     assert response_data["deleted"] == "1"
 
 
-# Attempt to delete a post with no ID (with admin's JWT)
-def test_delete_no_id_post_as_admin(app_client, test_db, user_headers):
-    response = app_client.delete("/posts/", headers=user_headers["admin"])
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 404
-
-
 # Attempt to delete a post that doesn't exist (with admin's JWT)
 def test_delete_nonexistent_post_as_admin(app_client, test_db, user_headers):
     response = app_client.delete("/posts/100", headers=user_headers["admin"])
@@ -456,7 +425,7 @@ def test_delete_nonexistent_post_as_admin(app_client, test_db, user_headers):
     assert response.status_code == 404
 
 
-# Attempt to delete a post without post ID
+# Attempt to delete a post without post ID (with admin's JWT)
 def test_delete_post_no_id_as_admin(app_client, test_db, user_headers):
     response = app_client.delete("/posts/", headers=user_headers["admin"])
     response_data = json.loads(response.data)
@@ -467,9 +436,16 @@ def test_delete_post_no_id_as_admin(app_client, test_db, user_headers):
 
 # Get Posts by Type Tests ('posts/<type>', GET)
 # -------------------------------------------------------
-# Attempt to get page 1 of full new posts
-def test_get_full_new_posts(app_client, test_db, user_headers):
-    response = app_client.get("/posts/new")
+# Attempt to get page 1 of each full page
+@pytest.mark.parametrize(
+    "post_type",
+    [
+        ("new"),
+        ("suggested"),
+    ],
+)
+def test_get_full_posts_page_1(app_client, test_db, post_type):
+    response = app_client.get(f"/posts/{post_type}")
     response_data = json.loads(response.data)
 
     assert response_data["success"] is True
@@ -478,31 +454,16 @@ def test_get_full_new_posts(app_client, test_db, user_headers):
     assert response_data["total_pages"] == 5
 
 
-# Attempt to get page 2 of full new posts
-def test_get_full_new_posts_page_2(app_client, test_db, user_headers):
-    response = app_client.get("/posts/new?page=2")
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert len(response_data["posts"]) == 5
-    assert response_data["total_pages"] == 5
-
-
-# Attempt to get page 1 of full suggested posts
-def test_get_full_suggested_posts(app_client, test_db, user_headers):
-    response = app_client.get("/posts/suggested")
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert len(response_data["posts"]) == 5
-    assert response_data["total_pages"] == 5
-
-
-# Attempt to get page 2 of full suggested posts
-def test_get_full_suggested_posts_page_2(app_client, test_db, user_headers):
-    response = app_client.get("/posts/suggested?page=2")
+# Attempt to get page 2 of each full page
+@pytest.mark.parametrize(
+    "post_type",
+    [
+        ("new"),
+        ("suggested"),
+    ],
+)
+def test_get_full_posts_page_2(app_client, test_db, post_type):
+    response = app_client.get(f"/posts/{post_type}?page=2")
     response_data = json.loads(response.data)
 
     assert response_data["success"] is True
