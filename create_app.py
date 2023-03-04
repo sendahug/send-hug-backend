@@ -920,11 +920,11 @@ def create_app(db_path: str = database_path) -> Flask:
     @requires_auth(["read:messages"])
     def get_user_messages(token_payload):
         page = request.args.get("page", 1, type=int)
-        type = request.args.get("type", "inbox")
-        thread_id = request.args.get("threadID", None)
+        type = request.args.get("type", "inbox", type=str)
+        thread_id = request.args.get("threadID", None, type=int)
 
         # Gets the user's ID from the URL arguments
-        user_id = request.args.get("userID", None)
+        user_id = request.args.get("userID", None, type=int)
 
         # If there's no user ID, abort
         if user_id is None:
@@ -1602,7 +1602,7 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/notifications")
     @requires_auth(["read:messages"])
     def get_latest_notifications(token_payload):
-        silent_refresh = request.args.get("silentRefresh", True)
+        silent_refresh = request.args.get("silentRefresh", True, type=bool)
         user = User.query.filter(User.auth0_id == token_payload["sub"]).one_or_none()
 
         # If there's no user with that ID, abort
