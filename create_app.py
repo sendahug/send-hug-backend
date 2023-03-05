@@ -275,8 +275,6 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/posts/<post_id>", methods=["PATCH"])
     @requires_auth(["patch:my-post", "patch:any-post"])
     def edit_post(token_payload, post_id: int):
-        push_notification: Optional[RawPushData] = None
-
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
@@ -291,8 +289,6 @@ def create_app(db_path: str = database_path) -> Flask:
         if original_post is None:
             abort(404)
 
-        post_author = User.query.filter(User.id == original_post.user_id).one_or_none()
-
         # If the user's permission is 'patch my' the user can only edit
         # their own posts. If it's a user trying to edit the text
         # of a post that doesn't belong to them, throw an auth error
@@ -304,7 +300,7 @@ def create_app(db_path: str = database_path) -> Flask:
             raise AuthError(
                 {
                     "code": 403,
-                    "description": "You do not have permission to edit " "this post.",
+                    "description": "You do not have permission to edit this post.",
                 },
                 403,
             )
@@ -319,43 +315,6 @@ def create_app(db_path: str = database_path) -> Flask:
                 filtered_words=get_current_filters(),
             )
             original_post.text = updated_post["text"]
-
-        original_hugs = original_post.given_hugs
-        notification: Optional[Notification] = None
-        notification_for: Optional[int] = None
-
-        # If a hug was added
-        # Since anyone can give hugs, this doesn't require a permissions check
-        if "givenHugs" in updated_post:
-            if original_post.given_hugs != updated_post["givenHugs"]:
-                hugs = original_post.sent_hugs.split(" ")
-                sent_hugs = list(filter(None, hugs))
-
-                # If the current user already sent a hug on this post, abort
-                if str(current_user.id) in sent_hugs:
-                    abort(409)
-
-                # Otherwise, continue adding the new hug
-                original_post.given_hugs = updated_post["givenHugs"]
-                current_user.given_hugs += 1
-                post_author.received_hugs += 1
-                sent_hugs.append(current_user.id)
-                original_post.sent_hugs = "".join([f"{str(e)} " for e in sent_hugs])
-
-                # Create a notification for the user getting the hug
-                today = datetime.now()
-                notification = Notification(
-                    for_id=post_author.id,
-                    from_id=current_user.id,
-                    type="hug",
-                    text="You got a hug",
-                    date=today,
-                )
-                push_notification = {
-                    "type": "hug",
-                    "text": f"{current_user.display_name} sent you a hug",
-                }
-                notification_for = post_author.id
 
         open_report: Optional[Report] = None
 
@@ -387,26 +346,81 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Try to update the database
         # Objects to update
-        to_update = [original_post, current_user, post_author]
-        to_add = []
+        to_update = [original_post]
+
         # If there's a report to close, add it to the list of objects
         # to update.
         if "closeReport" in updated_post:
             to_update.append(open_report)
 
-        # If there was an added hug, add the new notification
-        if "givenHugs" in updated_post:
-            if original_hugs != updated_post["givenHugs"]:
-                to_add.append(notification)
-
-        updated = db_bulk_insert_update(add_objs=to_add, update_objs=to_update)
+        updated = db_update_multi(objs=to_update)
         data = [item for item in updated["resource"] if "sentHugs" in item.keys()]
         db_updated_post = data[0]
 
-        if push_notification and notification_for:
-            send_push_notification(user_id=notification_for, data=push_notification)
-
         return jsonify({"success": True, "updated": db_updated_post})
+
+    # Endpoint: POST /posts/<post_id>/hugs
+    # Description: Sends a hug to a specific user.
+    # Parameters: user_id - the user to send a hug to.
+    # Authorization: read:user
+    @app.route("/posts/<post_id>/hugs", methods=["POST"])
+    @requires_auth(["patch:my-post", "patch:any-post"])
+    def send_hug_for_post(token_payload, post_id: int):
+        # Check if the post ID isn't an integer; if it isn't, abort
+        validator.check_type(post_id, "Post ID")
+
+        original_post: Optional[Post] = db.session.get(Post, int(post_id))
+
+        # Gets the user's ID
+        current_user: Optional[User] = User.query.filter(
+            User.auth0_id == token_payload["sub"]
+        ).one_or_none()
+
+        print(original_post)
+
+        # If there's no post with that ID
+        if original_post is None or current_user is None:
+            abort(404)
+
+        hugs = original_post.sent_hugs.split(" ")
+        post_author = db.session.get(User, original_post.user_id)
+
+        # If the current user already sent a hug on this post, abort
+        if str(current_user.id) in hugs:
+            abort(409)
+
+        # Otherwise, continue adding the new hug
+        original_post.given_hugs += 1
+        current_user.given_hugs += 1
+        post_author.received_hugs += 1
+        hugs.append(str(current_user.id))
+        original_post.sent_hugs = " ".join([str(e) for e in hugs])
+
+        # Create a notification for the user getting the hug
+        today = datetime.now()
+        notification = Notification(
+            for_id=post_author.id,
+            from_id=current_user.id,
+            type="hug",
+            text="You got a hug",
+            date=today,
+        )
+        push_notification: RawPushData = {
+            "type": "hug",
+            "text": f"{current_user.display_name} sent you a hug",
+        }
+
+        # Try to update the database
+        # Objects to update
+        to_update = [original_post, current_user, post_author]
+        to_add = [notification]
+
+        db_bulk_insert_update(add_objs=to_add, update_objs=to_update)
+        send_push_notification(user_id=post_author.id, data=push_notification)
+
+        return jsonify(
+            {"success": True, "updated": f"Successfully sent hug for post {post_id}"}
+        )
 
     # Endpoint: DELETE /posts/<post_id>
     # Description: Deletes a post from the database.
