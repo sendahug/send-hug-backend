@@ -471,7 +471,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # Try to delete the post
         db_delete(post_data)
 
-        return jsonify({"success": True, "deleted": post_id})
+        return jsonify({"success": True, "deleted": int(post_id)})
 
     # Endpoint: GET /posts/<type>
     # Description: Gets all new posts.
@@ -893,7 +893,9 @@ def create_app(db_path: str = database_path) -> Flask:
         # Try to delete
         db_delete_all("posts", user_id)
 
-        return jsonify({"success": True, "userID": user_id, "deleted": num_deleted})
+        return jsonify(
+            {"success": True, "userID": int(user_id), "deleted": num_deleted}
+        )
 
     # Endpoint: POST /users/all/<user_id>/hugs
     # Description: Sends a hug to a specific user.

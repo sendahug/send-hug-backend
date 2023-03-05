@@ -390,7 +390,7 @@ def test_delete_own_post(app_client, test_db, user_headers, post_id, user):
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == f"{post_id}"
+    assert response_data["deleted"] == post_id
 
 
 # Attempt to delete another user's post (with user's JWT)
@@ -418,7 +418,7 @@ def test_delete_other_users_post_as_admin(app_client, test_db, user_headers):
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == "1"
+    assert response_data["deleted"] == 1
 
 
 # Attempt to delete a post that doesn't exist (with admin's JWT)
