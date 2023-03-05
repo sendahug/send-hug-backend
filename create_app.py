@@ -220,7 +220,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 "posts": formatted_posts,
                 "user_results": len(users),
                 "post_results": posts.total,
-                "current_page": current_page,
+                "current_page": int(current_page),
                 "total_pages": calculate_total_pages(posts.total),
             }
         )
@@ -425,7 +425,10 @@ def create_app(db_path: str = database_path) -> Flask:
             send_push_notification(user_id=post_author.id, data=push_notification)
 
         return jsonify(
-            {"success": True, "updated": f"Successfully sent hug for post {post_id}"}
+            {
+                "success": True,
+                "updated": f"Successfully sent hug for post {int(post_id)}",
+            }
         )
 
     # Endpoint: DELETE /posts/<post_id>
@@ -844,7 +847,7 @@ def create_app(db_path: str = database_path) -> Flask:
             {
                 "success": True,
                 "posts": paginated_posts,
-                "page": page,
+                "page": int(page),
                 "total_pages": calculate_total_pages(user_posts.total),
             }
         )
@@ -1128,7 +1131,7 @@ def create_app(db_path: str = database_path) -> Flask:
             {
                 "success": True,
                 "messages": formatted_messages,
-                "current_page": page,
+                "current_page": int(page),
                 "total_pages": total_pages,
             }
         )
@@ -1330,7 +1333,7 @@ def create_app(db_path: str = database_path) -> Flask:
         else:
             db_update(delete_item, {"set_deleted": True, "user_id": request_user.id})
 
-        return jsonify({"success": True, "deleted": item_id})
+        return jsonify({"success": True, "deleted": int(item_id)})
 
     # Endpoint: DELETE /messages/<mailbox_type>
     # Description: Clears the selected mailbox (deleting all messages in it).
@@ -1388,7 +1391,9 @@ def create_app(db_path: str = database_path) -> Flask:
         # Try to clear the mailbox
         db_delete_all(mailbox_type, user_id)
 
-        return jsonify({"success": True, "userID": user_id, "deleted": num_messages})
+        return jsonify(
+            {"success": True, "userID": int(user_id), "deleted": num_messages}
+        )
 
     # Endpoint: GET /reports
     # Description: Gets the currently open reports.
