@@ -376,8 +376,6 @@ def create_app(db_path: str = database_path) -> Flask:
             User.auth0_id == token_payload["sub"]
         ).one_or_none()
 
-        print(original_post)
-
         # If there's no post with that ID
         if original_post is None or current_user is None:
             abort(404)
@@ -683,8 +681,9 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # If there's a login count (meaning, the user is editing their own
         # data), update it
-        if "loginCount" in updated_user:
-            original_user.login_count = updated_user["loginCount"]
+        original_user.login_count = updated_user.get(
+            "loginCount", original_user.login_count
+        )
 
         # If the user is attempting to change a user's display name, check
         # their permissions
@@ -762,21 +761,19 @@ def create_app(db_path: str = database_path) -> Flask:
                     403,
                 )
 
-        # If the user is changing their auto-refresh settings
-        if "autoRefresh" in updated_user:
-            original_user.auto_refresh = updated_user["autoRefresh"]
-
-        # If the user is changing their push notifications setting
-        if "pushEnabled" in updated_user:
-            original_user.push_enabled = updated_user["pushEnabled"]
-
-        # If the user is changing their auto-refresh settings
-        if "refreshRate" in updated_user:
-            original_user.refresh_rate = updated_user["refreshRate"]
-
-        # If the user is changing their selected character
-        if "selectedIcon" in updated_user:
-            original_user.selected_character = updated_user["selectedIcon"]
+        # If the user is changing their settings
+        original_user.auto_refresh = updated_user.get(
+            "autoRefresh", original_user.auto_refresh
+        )
+        original_user.push_enabled = updated_user.get(
+            "pushEnabled", original_user.push_enabled
+        )
+        original_user.refresh_rate = updated_user.get(
+            "refreshRate", original_user.refresh_rate
+        )
+        original_user.selected_character = updated_user.get(
+            "selectedIcon", original_user.selected_character
+        )
 
         # If the user is changing their character colours
         if "iconColours" in updated_user:
