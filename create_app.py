@@ -381,7 +381,9 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(404)
 
         hugs = original_post.sent_hugs.split(" ")
-        post_author = db.session.get(User, original_post.user_id)
+        post_author: Optional[User] = db.session.get(User, original_post.user_id)
+        notification: Optional[Notification] = None
+        push_notification: Optional[RawPushData] = None
 
         # If the current user already sent a hug on this post, abort
         if str(current_user.id) in hugs:
@@ -390,31 +392,37 @@ def create_app(db_path: str = database_path) -> Flask:
         # Otherwise, continue adding the new hug
         original_post.given_hugs += 1
         current_user.given_hugs += 1
-        post_author.received_hugs += 1
         hugs.append(str(current_user.id))
         original_post.sent_hugs = " ".join([str(e) for e in hugs])
 
         # Create a notification for the user getting the hug
-        today = datetime.now()
-        notification = Notification(
-            for_id=post_author.id,
-            from_id=current_user.id,
-            type="hug",
-            text="You got a hug",
-            date=today,
-        )
-        push_notification: RawPushData = {
-            "type": "hug",
-            "text": f"{current_user.display_name} sent you a hug",
-        }
+        if post_author:
+            post_author.received_hugs += 1
+            today = datetime.now()
+            notification = Notification(
+                for_id=post_author.id,
+                from_id=current_user.id,
+                type="hug",
+                text="You got a hug",
+                date=today,
+            )
+            push_notification = {
+                "type": "hug",
+                "text": f"{current_user.display_name} sent you a hug",
+            }
 
         # Try to update the database
         # Objects to update
         to_update = [original_post, current_user, post_author]
-        to_add = [notification]
+        to_add = []
+
+        if notification:
+            to_add.append(notification)
 
         db_bulk_insert_update(add_objs=to_add, update_objs=to_update)
-        send_push_notification(user_id=post_author.id, data=push_notification)
+
+        if post_author and push_notification:
+            send_push_notification(user_id=post_author.id, data=push_notification)
 
         return jsonify(
             {"success": True, "updated": f"Successfully sent hug for post {post_id}"}
