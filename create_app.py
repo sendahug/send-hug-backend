@@ -1623,7 +1623,7 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/notifications")
     @requires_auth(["read:messages"])
     def get_latest_notifications(token_payload):
-        silent_refresh = request.args.get("silentRefresh", True, type=bool)
+        silent_refresh = request.args.get("silentRefresh", True)
         user = User.query.filter(User.auth0_id == token_payload["sub"]).one_or_none()
 
         # If there's no user with that ID, abort
@@ -1795,7 +1795,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 {
                     "success": False,
                     "code": 409,
-                    "message": "Conflict. The resource you were trying to create"
+                    "message": "Conflict. The resource you were trying to create "
                     "already exists.",
                 }
             ),
