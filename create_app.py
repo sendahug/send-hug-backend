@@ -661,43 +661,11 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/users/all/<user_id>", methods=["PATCH"])
     @requires_auth(["patch:user", "patch:any-user"])
     def edit_user(token_payload, user_id: int):
-        push_notification: Optional[RawPushData] = None
-
         # Check if the user ID isn't an integer; if it isn't, abort
         validator.check_type(user_id, "User ID")
 
         updated_user = json.loads(request.data)
         original_user = User.query.filter(User.id == user_id).one_or_none()
-        current_user = User.query.filter(
-            User.auth0_id == token_payload["sub"]
-        ).one_or_none()
-
-        original_hugs = original_user.received_hugs
-        notification: Optional[Notification] = None
-        notification_for: Optional[int] = None
-
-        # If the user being updated was given a hug, also update the current
-        # user's "given hugs" value, as they just gave a hug
-        if "receivedH" in updated_user and "givenH" in updated_user:
-            if original_user.received_hugs != updated_user["receivedH"]:
-                current_user.given_hugs += 1
-                today = datetime.now()
-                notification = Notification(
-                    for_id=original_user.id,
-                    from_id=current_user.id,
-                    type="hug",
-                    text="You got a hug",
-                    date=today,
-                )
-                push_notification = {
-                    "type": "hug",
-                    "text": f"{current_user.display_name} sent you a hug",
-                }
-                notification_for = original_user.id
-
-            # Update user data
-            original_user.received_hugs = updated_user["receivedH"]
-            original_user.given_hugs = updated_user["givenH"]
 
         # If there's a login count (meaning, the user is editing their own
         # data), update it
@@ -817,23 +785,16 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Try to update it in the database
         # Update users' data
-        to_update = [original_user, current_user]
-        to_add = []
+        to_update = [original_user]
+
         if "closeReport" in updated_user:
             to_update.append(open_report)
-        # If the user was given a hug, add a new notification
-        if "receivedH" in updated_user and "givenH" in updated_user:
-            if original_hugs != updated_user["receivedH"]:
-                to_add.append(notification)
 
-        updated = db_bulk_insert_update(add_objs=to_add, update_objs=to_update)
+        updated = db_update_multi(objs=to_update)
         updated_original_user = [
-            item for item in updated["resource"] if item["id"] == original_user.id
+            item for item in updated["resource"] if "selectedIcon" in item.keys()
         ]
         updated_user = updated_original_user[0]
-
-        if push_notification and notification_for:
-            send_push_notification(user_id=notification_for, data=push_notification)
 
         return jsonify({"success": True, "updated": updated_user})
 
@@ -911,6 +872,52 @@ def create_app(db_path: str = database_path) -> Flask:
         db_delete_all("posts", user_id)
 
         return jsonify({"success": True, "userID": user_id, "deleted": num_deleted})
+
+    # Endpoint: POST /users/all/<user_id>/hugs
+    # Description: Sends a hug to a specific user.
+    # Parameters: user_id - the user to send a hug to.
+    # Authorization: read:user
+    @app.route("/users/all/<user_id>/hugs", methods=["POST"])
+    @requires_auth(["read:user"])
+    def send_hug_to_user(token_payload, user_id: int):
+        validator.check_type(user_id, "User ID")
+        user_to_hug = db.session.get(User, int(user_id))
+
+        if user_to_hug is None:
+            abort(404)
+
+        current_user = User.query.filter(
+            User.auth0_id == token_payload["sub"]
+        ).one_or_none()
+
+        current_user.given_hugs += 1
+        user_to_hug.received_hugs += 1
+        today = datetime.now()
+        notification = Notification(
+            for_id=user_to_hug.id,
+            from_id=current_user.id,
+            type="hug",
+            text="You got a hug",
+            date=today,
+        )
+        push_notification: RawPushData = {
+            "type": "hug",
+            "text": f"{current_user.display_name} sent you a hug",
+        }
+
+        # Try to update it in the database
+        to_update = [user_to_hug, current_user]
+        to_add = [notification]
+
+        db_bulk_insert_update(add_objs=to_add, update_objs=to_update)
+        send_push_notification(user_id=user_to_hug.id, data=push_notification)
+
+        return jsonify(
+            {
+                "success": True,
+                "updated": f"Successfully sent hug to {user_to_hug.display_name}",
+            }
+        )
 
     # Endpoint: GET /messages
     # Description: Gets the user's messages.
