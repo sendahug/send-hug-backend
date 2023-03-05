@@ -283,7 +283,7 @@ def test_update_user_as_user(
 ):
     user = dummy_request_data["updated_user"]
     user["id"] = dummy_users_data["user"]["internal"]
-    user["displayName"] = "user"
+    user["displayName"] = "user123"
     response = app_client.patch(
         f"/users/all/{dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
@@ -294,8 +294,7 @@ def test_update_user_as_user(
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert updated["receivedH"] == user["receivedH"]
-    assert updated["givenH"] == user["givenH"]
+    assert updated["displayName"] == user["displayName"]
 
 
 # Attempt to update another user's display name with a user's JWT
@@ -349,8 +348,7 @@ def test_update_user_as_mod(
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert updated["receivedH"] == user["receivedH"]
-    assert updated["givenH"] == user["givenH"]
+    assert updated["displayName"] == user["displayName"]
 
 
 # Attempt to update another user's display name with a moderator's JWT
@@ -393,7 +391,7 @@ def test_update_user_as_admin(
 ):
     user = dummy_request_data["updated_user"]
     user["id"] = dummy_users_data["admin"]["internal"]
-    user["displayName"] = "admin"
+    user["displayName"] = "admin123"
     response = app_client.patch(
         f"/users/all/{dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
@@ -404,8 +402,7 @@ def test_update_user_as_admin(
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert updated["receivedH"] == user["receivedH"]
-    assert updated["givenH"] == user["givenH"]
+    assert updated["displayName"] == user["displayName"]
 
 
 # Attempt to update another user's display name with an admin's JWT
@@ -414,6 +411,7 @@ def test_update_other_user_as_admin(
 ):
     user = dummy_request_data["updated_display"]
     user["id"] = dummy_users_data["user"]["internal"]
+    user["displayName"] = "hello"
     response = app_client.patch(
         f"/users/all/{dummy_users_data['user']['internal']}",
         headers=user_headers["admin"],
@@ -424,7 +422,7 @@ def test_update_other_user_as_admin(
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert updated["receivedH"] == user["receivedH"]
+    assert updated["displayName"] == user["displayName"]
 
 
 # Attempt to update a user's blocked state with an admin's JWT
@@ -671,3 +669,24 @@ def test_delete_nonexistent_posts_as_admin(app_client, test_db, user_headers):
 
     assert response_data["success"] is False
     assert response.status_code == 404
+
+
+# Send a Hug for user Tests ('/users/all/<user_id>/hugs', POST)
+# -------------------------------------------------------
+# Attempt to send hugs for a post that doesn't exist
+def test_user_hugs_post_no_existing(app_client, test_db, user_headers):
+    response = app_client.post("/users/all/1000/hugs", headers=user_headers["admin"])
+    response_data = json.loads(response.data)
+
+    assert response_data["success"] is False
+    assert response.status_code == 404
+
+
+# Attempt to send hugs
+def test_user_hugs(app_client, test_db, user_headers):
+    response = app_client.post("/users/all/1/hugs", headers=user_headers["moderator"])
+    response_data = json.loads(response.data)
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert response_data["updated"] == "Successfully sent hug to shirb"

@@ -322,29 +322,34 @@ def test_update_post_no_id_as_admin(
     assert response.status_code == 404
 
 
+# Send a Hug for post Tests ('/posts/<post_id>/hugs', POST)
+# -------------------------------------------------------
 # Attempt to send hugs for post you already sent hugs for
-def test_update_post_hugs_given_duplicate_hugs(app_client, test_db, user_headers):
-    post = {"id": 1, "text": "test", "givenHugs": 3}
-    response = app_client.patch(
-        "/posts/1", headers=user_headers["admin"], data=json.dumps(post)
-    )
+def test_post_hugs_given_duplicate_hugs(app_client, test_db, user_headers):
+    response = app_client.post("/posts/1/hugs", headers=user_headers["admin"])
     response_data = json.loads(response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 409
 
 
+# Attempt to send hugs for a post that doesn't exist
+def test_post_hugs_post_no_existing(app_client, test_db, user_headers):
+    response = app_client.post("/posts/1000/hugs", headers=user_headers["admin"])
+    response_data = json.loads(response.data)
+
+    assert response_data["success"] is False
+    assert response.status_code == 404
+
+
 # Attempt to send hugs
-def test_update_post_hugs(app_client, test_db, user_headers):
-    post = {"id": 1, "text": "test", "givenHugs": 3}
-    response = app_client.patch(
-        "/posts/1", headers=user_headers["moderator"], data=json.dumps(post)
-    )
+def test_post_hugs(app_client, test_db, user_headers):
+    response = app_client.post("/posts/1/hugs", headers=user_headers["moderator"])
     response_data = json.loads(response.data)
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["updated"]["givenHugs"] == 3
+    assert response_data["updated"] == "Successfully sent hug for post 1"
 
 
 # Delete Post Route Tests ('/posts/<post_id>', DELETE)

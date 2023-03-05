@@ -467,7 +467,7 @@ def test_delete_message_as_user(app_client, test_db, user_headers):
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == "3"
+    assert response_data["deleted"] == 3
 
 
 # Attempt to delete another user's message (with a user's JWT)
@@ -491,7 +491,7 @@ def test_delete_thread_as_user(app_client, test_db, user_headers):
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == "2"
+    assert response_data["deleted"] == 2
     assert len(thread_data["messages"]) == 0
 
 
@@ -502,7 +502,7 @@ def test_delete_message_as_mod(app_client, test_db, user_headers):
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == "5"
+    assert response_data["deleted"] == 5
 
 
 # Attempt to delete another user's message (with a moderator's JWT)
@@ -523,7 +523,7 @@ def test_delete_message_as_admin(app_client, test_db, user_headers):
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == "10"
+    assert response_data["deleted"] == 10
 
 
 # Attempt to delete another user's message (with an admin's JWT)
