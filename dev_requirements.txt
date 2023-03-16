@@ -1,5 +1,5 @@
 codecov==2.1.12
-coverage==7.2.1
+coverage==7.2.2
 pre-commit==3.1.1
 mypy==1.1.1
 types-python-jose==3.3.4.5
