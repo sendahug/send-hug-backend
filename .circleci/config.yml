@@ -3,6 +3,8 @@ parameters:
   run_workflow_build:
     default: false
     type: boolean
+orbs:
+  codecov: codecov/codecov@3
 
 jobs:
   lint:
@@ -59,6 +61,7 @@ jobs:
       - run:
           command: |
             pytest
+      - codecov/upload
 
 # Conditionally run testing depending on branch
 # Once it's done, run codecov to upload test coverage
@@ -72,7 +75,4 @@ workflows:
         - equal: [ dev, << pipeline.git.branch >> ]
     jobs:
       - lint
-      - build:
-          post-steps:
-            - run:
-                command: codecov
+      - build
