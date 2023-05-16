@@ -28,7 +28,7 @@ python-jose==3.3.0
 pywebpush==1.14.0
 requests==2.30.0
 rsa==4.9
-sh==2.0.3
+sh==2.0.4
 six==1.16.0
 SQLAlchemy==2.0.13
 urllib3==2.0.2
