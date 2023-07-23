@@ -1,7 +1,7 @@
 coverage==7.2.7
 pre-commit==3.3.3
 mypy==1.4.1
-types-python-jose==3.3.4.7
+types-python-jose==3.3.4.8
 types-Flask-Cors==3.0.10.5
 
 pytest==7.4.0
