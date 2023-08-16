@@ -30,7 +30,7 @@ requests==2.31.0
 rsa==4.9
 sh==2.0.6
 six==1.16.0
-SQLAlchemy==2.0.19
+SQLAlchemy==2.0.20
 urllib3==2.0.4
 Werkzeug==2.3.6
 setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
