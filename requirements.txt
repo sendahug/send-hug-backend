@@ -1,4 +1,4 @@
-alembic==1.13.0
+alembic==1.13.1
 certifi==2023.11.17
 cffi==1.16.0
 chardet==5.2.0
