@@ -11,7 +11,7 @@ Flask-Migrate==4.0.5
 Flask-SQLAlchemy==3.1.1
 future==0.18.3
 gunicorn==21.2.0
-http-ece==1.1.0
+http-ece==1.2.0
 idna==3.6
 itsdangerous==2.1.2
 Jinja2==3.1.3
