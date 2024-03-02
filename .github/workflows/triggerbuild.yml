@@ -4,10 +4,12 @@ name: Trigger Build
 # Controls when the action will run. Triggers the workflow on pull request
 # events but only for the master branch
 on:
-  pull_request:
-    branches: [ dev, staging, live ]
-  pull_request_target:
-    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [testing_disabling_the_workflow_so_making_up_unlikely_branch]
+  # pull_request:
+  #   branches: [ dev, staging, live ]
+  # pull_request_target:
+  #   types: [opened, synchronize, reopened, ready_for_review]
 
 # Trigger CircleCI build via the API
 jobs:
