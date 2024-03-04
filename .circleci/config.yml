@@ -67,12 +67,6 @@ jobs:
 # Once it's done, run codecov to upload test coverage
 workflows:
   test:
-    when:
-      or:
-        - << pipeline.parameters.run_workflow_build >>
-        - equal: [ live, << pipeline.git.branch >> ]
-        - equal: [ staging, << pipeline.git.branch >> ]
-        - equal: [ dev, << pipeline.git.branch >> ]
     jobs:
       - lint
       - build
