@@ -1,0 +1,37 @@
+Docs:
+  - changed-files:
+      - any-glob-to-any-file: "**/*.md"
+
+src:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ./*.py
+          - utils/*
+
+models:
+  - changed-files:
+      - any-glob-to-any-file:
+        - models/*
+        - migrations/*
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - setup.cfg
+          - .pre-commit-config.yaml
+          - tests/*
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - requirements.txt
+          - dev_requirements.txt
+
+CI/CD:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/*
+          - .circleci/*
+
+release:
+  - head-branch: "dev"

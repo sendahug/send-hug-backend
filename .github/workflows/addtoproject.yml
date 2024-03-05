@@ -1,0 +1,24 @@
+name: Add issues/PRs to project
+
+on:
+  issues:
+    types:
+      - opened
+  pull_request:
+    types:
+      - opened
+    branches:
+      - dev
+      - live
+
+jobs:
+  add-to-project:
+    name: Add issue to project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@v0.5.0
+        with:
+          # You can target a project in a different organization
+          # to the issue
+          project-url: https://github.com/orgs/sendahug/projects/7
+          github-token: ${{ secrets.ISSUES_PRS_PAT }}
