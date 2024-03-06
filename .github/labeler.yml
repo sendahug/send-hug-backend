@@ -26,6 +26,7 @@ dependencies:
       - any-glob-to-any-file:
           - requirements.txt
           - dev_requirements.txt
+          - .github/workflows/*
 
 CI/CD:
   - changed-files:
