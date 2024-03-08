@@ -58,12 +58,13 @@ The project is open source, so feel free to use parts of the code. However, the 
 
 The app contains several files and folders:
 
-1. **app.py** - The main application file. This file contains all endpoints and error handlers.
-2. **filter.py** - The system responsible for filtering words. (Work in progress)
-3. **manage.py** - The file managing running database migrations when deploying.
-4. **models.py** - The file containing SQLAlchemy models, as well as all database-related methods.
-5. **auth.py** - The file dealing with authentication - getting the Authorization header, verifying the JWT and confirming the user has the required permission.
-6. **test_app.py** - The file containing the backend's test suite.
+1. **app.py** - The main application file. Simply generates and runs the app.
+2. **create_app.py** - Contains the app's content. This file contains all endpoints and error handlers.
+3. **filter.py** - The system responsible for filtering words. (Work in progress)
+4. **manage.py** - The file managing running database migrations when deploying.
+5. **models** - The folder containing SQLAlchemy models, as well as all database-related methods.
+6. **auth.py** - The file dealing with authentication - getting the Authorization header, verifying the JWT and confirming the user has the required permission.
+7. **tests** - The folder containing the backend's test suite.
 
 ## Dependencies
 
@@ -103,7 +104,7 @@ In case the user's authorisation header is malformed, their JWT is invalid in an
 
 ## Testing
 
-This project utilises Python's unittest for testing. There are two options in terms of setting up authentication for testing: generating JWTs for each of the four required users manually, or using Auth0's Resource Owner Password flow. This project is set up using the latter, but if you want to use the former, skip to the second part of testing.
+This project utilises Pytest for testing. There are two options in terms of setting up authentication for testing: generating JWTs for each of the four required users manually, or using Auth0's Resource Owner Password flow. This project is set up using the latter, but if you want to use the former, skip to the second part of testing.
 
 ### Automated Testing Using the Resource Owner Password Flow
 
@@ -159,7 +160,7 @@ The project was hosted live on Heroku (we're currently looking at alternatives, 
   4. Enter `heroku create <APP_NAME>` (with your own app name). If successful, Heroku returns the live version's URL (will be referred to as <LIVE_URL>) and the Git repo link (will be referred to as <GIT_URL>).
   5. Enter `heroku addons:create heroku-postgresql:hobby-dev --app <APP_NAME>`. This creates a Postgres database for your app. Change 'hobby-dev' to another tier if you want to use the app with a paid tier (depending on your needs; for more information check the [Heroku guide](https://devcenter.heroku.com/articles/heroku-postgres-plans)).
   6. Make sure you're in the top directory (FSND-capstone). In your terminal, enter `git remote add heroku-server <GIT_URL>`.
-  7. Enter `git subtree push --prefix backend heroku-server master`. This triggers the app build. If successful, you'll get a 'Verifying deploy... done.' message.
+  7. Enter `git heroku-server master`. This triggers the app build. If successful, you'll get a 'Verifying deploy... done.' message.
   8. Add the following environment variables (via CLI or via the Heroku website):
     - API_AUDIENCE - set with your own API audience from Auth0
     - AUTH0_DOMAIN - set with your own Auth0 domain
