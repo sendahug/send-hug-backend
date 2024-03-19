@@ -16,7 +16,8 @@ Before you start working on a bug fix, make sure that there's no currently open 
 Pull requests are welcome in this project. When submitting a bug-related PR, make sure to:
 - Include a link to the issue, if your PR is a fix for a reported bug (from our repo's open issues).
 - Include information about the bug itself, the behaviour you expected, the circumstances around the appearance of this bug, how you fixed it, and any other relevant data in the PR description.
-- Give the PR an informative title.
+- Give the PR an informative title (guidance below).
+- Add a changelog entry (guidance below).
 
 Also, make sure that your code:
 - Is properly documented.
@@ -56,7 +57,7 @@ Also, make sure that your code:
 - Follows the same styling as the project.
 - Clears all checks (particularly the tests).
 
-#### Pull Request Title
+## Pull Request Title
 
 The title of the pull request must contain a brief description of the main change, and be prefixed with one of the following, depending on the type of change included:
 - `feature:` - For new features.
@@ -67,7 +68,7 @@ The title of the pull request must contain a brief description of the main chang
 
 Note that there's also a `deps:` prefix, but it's reserved to Dependabot's pull requests.
 
-#### Changelog
+## Changelog
 
 Changes in the changelog are divided into six groups in the following order:
 - **Features**
