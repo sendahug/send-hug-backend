@@ -47,13 +47,37 @@ Pull requests are welcome in this project. When submitting a feature-related PR,
 - Include a link to the feature request, if your PR is meant to close an open feature request.
 - Include information about the feature, how you implemented it, and any other relevant data in the PR description.
 - Include the relevant tests for your feature. This is just as essential as the feature itself.
-- Give the PR an informative title.
+- Give the PR an informative title (guidance below).
+- Add a changelog entry (guidance below).
 
 Also, make sure that your code:
 - Is properly documented.
 - Is concise and solves the bug.
 - Follows the same styling as the project.
 - Clears all checks (particularly the tests).
+
+#### Pull Request Title
+
+The title of the pull request must contain a brief description of the main change, and be prefixed with one of the following, depending on the type of change included:
+- `feature:` - For new features.
+- `change:` - For any changes to existing functionality in the app.
+- `fix:` - For any bug fixes.
+- `chore:` - For dependency updates, CI/CD, repository files (e.g., contributing.md), build/deployment-related files and general code cleanup.
+- `docs:` - For any updates to the dodcumentation.
+
+Note that there's also a `deps:` prefix, but it's reserved to Dependabot's pull requests.
+
+#### Changelog
+
+Changes in the changelog are divided into six groups in the following order:
+- **Features**
+- **Changes**
+- **Fixes**
+- **Breaking Changes**
+- **Chores**
+- **Documentation**
+
+Apart from **Breaking Changes**, all of these correspond to pull request titles. Breaking changes are defined separately, as anything that present a change that could be breaking for users. Changes with the same type should be grouped under the same title. For the pull request stage, all changes should be placed beneath the relevant title under the `Unreleased` heading (without a date); once they're released, a date and a version number will be added to the Changelog (thus clearing the `Unreleased` section).
 
 ## Anything Else
 
