@@ -387,3 +387,70 @@
 - Suggested posts are now sorted by date as well as hugs ([7b1c5fe](https://github.com/sendahug/send-hug-backend/commit/7b1c5fe9e4e2740e17ef76edca3c0cddad5da490)).
 
 ## v1.0.0 Beta 1
+
+# TODO: FINISH THIS
+
+### 2020-05-24
+
+#### Documentation
+
+- Added an API documentation file with details about all the existing endpoints ([73eb458](https://github.com/sendahug/send-hug-backend/commit/73eb458afdf7c307e841165b62204d91e164ddac)).
+
+### 2020-05-23
+
+#### Features
+
+- Added a PATCH endpoint for editing posts ([bc803d8](https://github.com/sendahug/send-hug-backend/commit/bc803d8740ab8d60265083df217f134518e2bb55)).
+- Added a PATCH endpoint for editing users ([decfc21](https://github.com/sendahug/send-hug-backend/commit/decfc2145121336353d4ed2f69643ed151a3dcac)).
+
+#### Fixes
+
+- Fixed a bug where the posts' edit endpoint attempted to return the SQLAlchemy object instead of a formatted dictionary, which caused an error (as the objects aren't JSON-serializable). ([9d3a8fc](https://github.com/sendahug/send-hug-backend/commit/9d3a8fc0a9859278a323f24279de323efdd35c61))
+
+### 2020-05-21
+
+#### Fixes
+
+- Added previously-missing keys to the models' `format` methods to ensure all the required columns are added to the objects the API returns ([721a034](https://github.com/sendahug/send-hug-backend/commit/721a03467ecde82bec595e66b1458e75f29ae891)).
+
+### 2020-05-20
+
+#### Features
+
+- Added an endpoint for fetching a single user's data ([4742c8e](https://github.com/sendahug/send-hug-backend/commit/4742c8e6bd1e634991b0ea3cd9c08cac7b58e97a)).
+- Added an endpoint for fetching a user's messages ([ae69245](https://github.com/sendahug/send-hug-backend/commit/ae69245f11a3c8769c39ef8415b514ea1269e28f)).
+- Added a 'username' column to the users table ([e0b2d45](https://github.com/sendahug/send-hug-backend/commit/e0b2d45ff392495b055a1a5d23da8aa6ffdc949e)).
+- Added an error handler for 404 error ([606f3b7](https://github.com/sendahug/send-hug-backend/commit/606f3b73eb60b0a170119c219af079d3fdd39f67)).
+- Added helper methods for adding, updating and deleting objects from the database ([5a92834](https://github.com/sendahug/send-hug-backend/commit/5a92834ff99f272275b63fdd6624427c0e8a263a)).
+- Added POST endpoints for creating posts, users and messages ([0d6dcb6](https://github.com/sendahug/send-hug-backend/commit/0d6dcb6d9f7330dc07a251a4a9255f35ff304497)).
+- Added error handlers for 400, 422 and 500 errors ([3b05246](https://github.com/sendahug/send-hug-backend/commit/3b0524696fb6b43b1236a78e6d2534f5935f9977)).
+- Added DELETE endpoints for deleting posts and messages ([87f35d9](https://github.com/sendahug/send-hug-backend/commit/87f35d98c1f880e1b76569be67b0537f00b2a42e)).
+
+#### Fixes
+
+- Fixed bugs in user-related endpoints, which broken when a user ID wasn't provided ([8a702ac](https://github.com/sendahug/send-hug-backend/commit/8a702acaebb8bdd64afd5c1ff73b4000677cca7c)).
+
+### 2020-05-19
+
+#### Features
+
+- Added initial SQLAlchemy models for posts, users and messages ([499f432](https://github.com/sendahug/send-hug-backend/commit/499f432961434741e92c1ef78081591ad7c91144)).
+- Set up Flask-CORS to enable communication with the front-end ([771ebde](https://github.com/sendahug/send-hug-backend/commit/771ebdeee2f192d96c6d673cd9f1cb1fe10e34ba)).
+- Added the database initialisation to the app's creation process ([b165d83](https://github.com/sendahug/send-hug-backend/commit/b165d837f431b79233768b99a59491bf016af84a)).
+- Instantiated Flask-Migrate and created the initial migration ([b471339](https://github.com/sendahug/send-hug-backend/commit/b471339f29cafb8533a1275021126654b3bec52e) & [ae48e72](https://github.com/sendahug/send-hug-backend/commit/ae48e72c3fba162609643866a6d55227b4f05131)).
+- Added date columns to the posts and messages tables ([8207ca0](https://github.com/sendahug/send-hug-backend/commit/8207ca07c6bad77941af6073fe49427dfd32d731)).
+- Added initial helper methods for formatting data to JSON to each model ([51e38df](https://github.com/sendahug/send-hug-backend/commit/51e38dfd073c2946833f3d755f5043e0e4a70756)).
+- Added an initial home endpoint ([7bdbdf3](https://github.com/sendahug/send-hug-backend/commit/7bdbdf363dcaf7b0b4728f8991ee2b190e327c6c)).
+- Added a 'hugs' columns to the posts table ([f3b9bfc](https://github.com/sendahug/send-hug-backend/commit/f3b9bfc61e7aa7bfa2656cf5c2f3b6f6aafc081a)).
+
+### 2020-05-14
+
+#### Documentation
+
+- Added an initial README ([e271602](https://github.com/sendahug/send-hug-backend/commit/e271602215d8fa19c909803f76ab7a8ad9227719)).
+
+### 2020-05-13
+
+#### Features
+
+- Initialised the project with a basic Flask app ([f50cc09](https://github.com/sendahug/send-hug-backend/commit/f50cc09858a48e020b8cc4786298c293f5781d16)).
