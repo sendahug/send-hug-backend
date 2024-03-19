@@ -302,4 +302,88 @@
 
 ## v1.0.0 Beta 2
 
+### 2020-12-22
+
+#### Features
+
+- Added the users' icon data to the messages' endpoints to allow displaying the icons in the messaging views ([d831d53](https://github.com/sendahug/send-hug-backend/commit/d831d5327ab481d12bcb2def276e141e7a34d4f3)).
+
+#### Fixes
+
+- Renamed the keys in the icon colours' dictionary to match the expected keys in the front-end ([5826418](https://github.com/sendahug/send-hug-backend/commit/5826418335d32939f198d80daeee9492c87030df)).
+
+#### Chores
+
+- Updated the tests and the tests' data to include the new icon data ([717c383](https://github.com/sendahug/send-hug-backend/commit/717c38314bea793da4ad2e5fab66c15249c94c1a) & [b08fc76](https://github.com/sendahug/send-hug-backend/commit/b08fc76f662d6f5baef9db4ba3bec30ea90a3ca5))
+
+### 2020-12-21
+
+#### Fixes
+
+- Fixed a string formatting error in the users' update endpoint ([eb351fd](https://github.com/sendahug/send-hug-backend/commit/eb351fdffe40798f85c48fc6333df87397e40798)).
+- The default colours for the users' icons were set to the wrong values. They've now been updated to the correct values ([2088b42](https://github.com/sendahug/send-hug-backend/commit/2088b4295840d7c89cd46ecf5d39cb79e594f25d)).
+
+### 2020-12-20
+
+#### Features
+
+- Added selected icon and icon colours columns to the users table to allow users to select an icon and its colours ([861fe99](https://github.com/sendahug/send-hug-backend/commit/861fe9945caacf69482e639870e3bbf990d2afce) & [041a0ac](https://github.com/sendahug/send-hug-backend/commit/041a0ac7886b0f51ad744a6d2dfd7fa5b1e70a9b)).
+- Added the ability to update a user's icon and selected colours in the users' update endpoint ([a81e09a](https://github.com/sendahug/send-hug-backend/commit/a81e09a7fd09081dad64c42b7ec366d1f716e1d8)).
+
+#### Chores
+
+- Updated the test databases ([8c38c0e](https://github.com/sendahug/send-hug-backend/commit/8c38c0ecd2b28c546708e795e7dff82d55fe218e)).
+
+### 2020-12-16
+
+#### Chores
+
+- Adjusted the GitHub Actions workflow and the CircleCI workflow to allow running tests only on pull requests made against the development and the live branches - based on an API request to the CircleCI API - or on commits pushed to either of those branches - based on the CircleCI config ([5426ed6](https://github.com/sendahug/send-hug-backend/commit/5426ed6d88f210b79b18f8d9c3e4fe793fc4db0f) - [24d60e7](https://github.com/sendahug/send-hug-backend/commit/24d60e78a1fbc36632dce179e984a93172aaaf63)).
+
+### 2020-12-15
+
+#### Chores
+
+- Added an initial GitHub Actions workflow to trigger CircleCI builds ([a6aadda](https://github.com/sendahug/send-hug-backend/commit/a6aadda23bbbbe67156f8b0db5eda55d8ac85387)).
+
+### 2020-12-08
+
+#### Chores
+
+- Set the CircleCI workflow to only run on specific branches ([b9ecca0](https://github.com/sendahug/send-hug-backend/commit/b9ecca0bad28cbb3b6b31c048b2d300251aff391)).
+
+#### Documentation
+
+- Replaced the Travis CI bradge in the readme with a CircleCI badge ([47354a2](https://github.com/sendahug/send-hug-backend/commit/47354a2a11321789b37bc3d31d969c64702ea307)).
+
+### 2020-12-07
+
+#### Chores
+
+- Replaced the Travis CI config with a new CircleCI workflow ([fd8032d](https://github.com/sendahug/send-hug-backend/commit/fd8032d8b6bccf4ec0e64d37b7494421569b3341) - [a370cf6](https://github.com/sendahug/send-hug-backend/commit/a370cf68b9e6fd39dfe87ed05164e51c795722be)).
+
+### 2020-12-06
+
+#### Chores
+
+- Added an initial CircleCI workflow file to run tests in CI ([f7d05fd](https://github.com/sendahug/send-hug-backend/commit/f7d05fdff661cbe751ec3f224eee22114b2a2b8c) - [72a2906](https://github.com/sendahug/send-hug-backend/commit/72a2906b4023166aacf0668b0bd6793a4e980399)).
+
+### 2020-11-29
+
+#### Chores
+
+- Changed the create-release workflow to remove the branch restriction as a temporary workaround for it ([e1589fe](https://github.com/sendahug/send-hug-backend/commit/e1589fece668b1eabc9f799e54bc81a37078e366)).
+
+### 2020-11-11
+
+#### Chores
+
+- Added a pyup config file ([4caa558](https://github.com/sendahug/send-hug-backend/commit/4caa55820b695b93aa1ec7b807f45b9d6402d390)).
+
+### 2020-11-08
+
+#### Changes
+
+- Suggested posts are now sorted by date as well as hugs ([7b1c5fe](https://github.com/sendahug/send-hug-backend/commit/7b1c5fe9e4e2740e17ef76edca3c0cddad5da490)).
+
 ## v1.0.0 Beta 1
