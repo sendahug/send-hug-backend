@@ -390,6 +390,105 @@
 
 # TODO: FINISH THIS
 
+### 2020-06-02
+
+#### Features
+
+- Added an error handler for 405 errors ([e1caca8](https://github.com/sendahug/send-hug-backend/commit/e1caca8164b48b67d3af0b800d6d042bb3de95ff)).
+
+#### Changes
+
+- Deleted an unnecessary update to the number of posts a user posted in the users' update endpoint ([5a473db](https://github.com/sendahug/send-hug-backend/commit/5a473dba8b26f17e563bfa2021e74bc2b89817a7)).
+- New posts are now sorted by date when fetching posts ([93f3008](https://github.com/sendahug/send-hug-backend/commit/93f30082f2a209074974571411c6e358e48eb328)).
+
+#### Fixes
+
+- The posts' edit endpoint was accidentally trying to access JSON keys using a dot notation instead of the correct dictionary notation. This was updated to the correct access method ([93f3008](https://github.com/sendahug/send-hug-backend/commit/93f30082f2a209074974571411c6e358e48eb328)).
+- Added missing session commit to the helper method for deleting rows from the database ([93f3008](https://github.com/sendahug/send-hug-backend/commit/93f30082f2a209074974571411c6e358e48eb328)).
+- The "add message" endpoint was trying to access the message's text using the wrong key. This was updated to the correct key ([94a7880](https://github.com/sendahug/send-hug-backend/commit/94a78803bbf5f8b868fb1f6117af829b035b5c61)).
+
+### 2020-06-01
+
+#### Features
+
+- The database helper methods now return the formatted JSON for the objects added/updated, instead of the SQLAlchemy objects ([592426a](https://github.com/sendahug/send-hug-backend/commit/592426a75da972041952583c4f62c962fdf30902)).
+
+#### Changes
+
+- Moved any query that joined multiple tables together (e.g., main page queries) to a helper method for "joined queries" ([5b596b6](https://github.com/sendahug/send-hug-backend/commit/5b596b6d82f393c1ed29b4c7ab8eb395b25e79c2)).
+
+#### Fixes
+
+- Fixed attribute references in POST /post endpoint. The endpoint previously tried accessing the JSON keys based on the names of the columns in SQLAlchemy instead of the keys based on the names set in the front-end. The keys' names were updated to match the incoming request from the front-end ([c151f15](https://github.com/sendahug/send-hug-backend/commit/c151f15de3239d446f40e5e132a0a1dd83bf1d65)).
+
+### 2020-05-31
+
+#### Features
+
+- Added an endpoint for fetching a user's posts ([3f887dc](https://github.com/sendahug/send-hug-backend/commit/3f887dc62327ff7623d61b0faca7850a2beed053)).
+- Improved the error handling for "no user ID" in endpoints where user ID is required ([07ec306](https://github.com/sendahug/send-hug-backend/commit/07ec306397f2324e44c939e78afc6b154c488953)).
+- Added a check before the messages' table join to ensure there are messages ([76c69ff](https://github.com/sendahug/send-hug-backend/commit/76c69ffd9687b43c2726fb8aeec1b7ca03c8044d)).
+
+#### Fixes
+
+- Fixed reference errors in the 'create user' endpoint and in the JWT handling ([7b8d539](https://github.com/sendahug/send-hug-backend/commit/7b8d53985f692604d8dbea6192bedbf045f41c5f)).
+- The user data in the 'edit user' endpoint was accidentally treated as an object (with properties accessed using the `.` notation) instead of a dictionary, which caused a reference error. This was updated to the correct notation ([0cab697](https://github.com/sendahug/send-hug-backend/commit/0cab69713afbd2ff6499d66498d49ee7c401cb0c)).
+- Fixed an error when trying to get the number of posts published by a user ([4dfd3d3](https://github.com/sendahug/send-hug-backend/commit/4dfd3d3f0aa8c57c0d78d5755867d6af9f6c5021)).
+
+#### Documentation
+
+- Updated the README with more details about files and dependencies ([bbb7274](https://github.com/sendahug/send-hug-backend/commit/bbb727434b6a805910b90f281cd3c7ce2ef1d389) & [33cdb8c](https://github.com/sendahug/send-hug-backend/commit/33cdb8c392292c45ee40966bdd126f634e0088e0)).
+
+### 2020-05-30
+
+#### Features
+
+- Added a login counter to the users table to track the number of times a user logs in ([702fcb0](https://github.com/sendahug/send-hug-backend/commit/702fcb0eabbb48ea64d211fb98f3944275f00e73) & [5c203d6](https://github.com/sendahug/send-hug-backend/commit/5c203d6c4d6c988c7546009b9842dc2fc544e509)).
+
+#### Fixes
+
+- Fixed a duplicate headers error in the CORS configuration ([ebac524](https://github.com/sendahug/send-hug-backend/commit/ebac5245df3034c938f12e98ee3b3bda5bf8004d)).
+
+### 2020-05-29
+
+#### Fixes
+
+- Fixed a reference error in the requires_auth decorator ([0b57af6](https://github.com/sendahug/send-hug-backend/commit/0b57af61177928b3f1c4b14c0b258bf2bfcd8133)).
+
+### 2020-05-28
+
+#### Features
+
+- Added authorisation handling. The authentication header now also checks for whether the user has the required permission to access a given endpoint ([51d55bb](https://github.com/sendahug/send-hug-backend/commit/51d55bb6d58aa1c1909f68a70d7ae2b412a66d45) - [0b7b86d](https://github.com/sendahug/send-hug-backend/commit/0b7b86d2a23375f3d6b0b0731c82a8640393eeb7)).
+- The app's endpoints (except the home route) now require the relevant permission (e.g., `post:post` in POST /posts) to access ([5c63371](https://github.com/sendahug/send-hug-backend/commit/5c63371b7e84dd5f81b8c8043a5266106ac40daf)).
+- When attempting to edit or delete posts, the app now checks whether the user is trying to change their own post or whether they have permission to change any post before allowing the edit/delete ([1907be4](https://github.com/sendahug/send-hug-backend/commit/1907be4c25060d0213e7f29b85fa6c735d36dba5) & [5d7f70e](https://github.com/sendahug/send-hug-backend/commit/5d7f70e9b71d55560f47a1c6f0df06b203102396)).
+
+### 2020-05-27
+
+#### Features
+
+- The user endpoints now require a valid JWT to access them ([1d4d89e](https://github.com/sendahug/send-hug-backend/commit/1d4d89e2280009542e095e2de0e026044f3e13a9)).
+- Added a check to ensure users aren't created twice and a handler for 409 errors ([db53332](https://github.com/sendahug/send-hug-backend/commit/db533326502dc3bd831d59b81dd76f7abc8dc0bf)).
+
+#### Changes
+
+- The parameters in the users' creation endpoint were changed to match the updated model ([313e412](https://github.com/sendahug/send-hug-backend/commit/313e412983bc51678ac39a20053e096076cec0e1)).
+
+### 2020-05-26
+
+#### Features
+
+- Added support for user authentication ([b937e64](https://github.com/sendahug/send-hug-backend/commit/b937e642083b19a5a269bba0d8976b6fea280bd4) - [9a79090](https://github.com/sendahug/send-hug-backend/commit/9a7909067eb22396b551a8e0e206e6ad56915aa4)). This includes:
+  - An error for authentation/authorisation issues.
+  - A function for checking the authorisation header.
+  - A function for checking the validity of a JWT.
+  - A decorator for handling authentication in the endpoints.
+- Added a display name column to the users table ([d90db03](https://github.com/sendahug/send-hug-backend/commit/d90db03051d980ec78dacecc1ba9aa67338af444)).
+
+#### Fixes
+
+- The front-end's URL in development was accidentally set to the back-end's URL, which meant all requests from the front-end resulted in a CORS error. The URL was updated to the correct front-end URL ([f23c8ca](https://github.com/sendahug/send-hug-backend/commit/f23c8caf6a558f492f7c87877acb1ae8bbb0a032)).
+
 ### 2020-05-24
 
 #### Documentation
