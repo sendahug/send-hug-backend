@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2024-03-25
+
+#### Chores
+
+- Replaced the "update superproject repo" and "add to project" workflows to use the new reusable workflows defined in [sendahug/send-a-workflow](https://github.com/sendahug/send-a-workflow) ([#588](https://github.com/sendahug/send-hug-backend/pull/588)).
+
 ### 2024-03-08
 
 #### Documentation
