@@ -6,6 +6,7 @@ Flask-SQLAlchemy==3.1.1
 gunicorn==21.2.0
 psycopg2-binary==2.9.9
 python-jose==3.3.0
-pywebpush==1.14.1
+pywebpush==2.0.0
 SQLAlchemy==2.0.28
 setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
+aiohttp>= 3.9.2 # not directly required, pinned to avoid a vulnerability
