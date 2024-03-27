@@ -41,7 +41,7 @@
 
 ### 2023-10-29
 
-#### Chores
+#### Chores
 
 - Updated werkzeug and Flask to v3 ([#504](https://github.com/sendahug/send-hug-backend/pull/504)).
 
@@ -79,11 +79,11 @@
 
 ### 2023-02-26
 
-#### Chores
+#### Chores
 
 - Migrated the tests from unittest to Pytest, which will allow us to split the tests according to the test subject, move the dummy data into fixtures which are reset automatically after every test, and parameterise tests to reduce duplicate code ([c0ca9ec](https://github.com/sendahug/send-hug-backend/commit/c0ca9ec3f07748937a80731d0438cefe385f72db) - [dd29135](https://github.com/sendahug/send-hug-backend/commit/dd29135d6ef8d760d49aaf5f3a42d249081122be)).
 
-#### Documentation
+#### Documentation
 
 - Adjusted the testing instructions in the README ([27f0297](https://github.com/sendahug/send-hug-backend/commit/27f029712c56cd94a9d6ac497a0400d0ceaabc7c)).
 
@@ -100,29 +100,29 @@
 
 ### 2023-02-12
 
-#### Features
+#### Features
 
 - Added a helper method for bulk inserts/updates ([8f522ee](https://github.com/sendahug/send-hug-backend/commit/8f522ee316b512b98b80f80b235e07fb93280763) & [fff806b](https://github.com/sendahug/send-hug-backend/commit/fff806b47394e1500b6c93c716c9cecd7b70311e)).
 - Added on-delete/on-update rules to various foreign keys ([427e68e](https://github.com/sendahug/send-hug-backend/commit/427e68e3a598089272a5e48cab9a1d323f23e88a)).
 
-#### Changes
+#### Changes
 
 - Moved the database-related error handling from the various endpoints to the relevant database helper functions. It doesn't really make sense to be doing the same error handling in multiple places when it's all related to the database. This also allows handling DBAPI errors related to bad data with the correct error code. ([7614d66](https://github.com/sendahug/send-hug-backend/commit/7614d669a20381b2dcf27c6f7bd4d463a6e342bd))
 - Updated the multiple-users update in GET /users to use the new bulk update helper function ([2273bbf](https://github.com/sendahug/send-hug-backend/commit/2273bbfb54eaf054d8a57af904fec15b826dd5bd)).
 
-#### Chores
+#### Chores
 
 - Replaced the methods' documentation with python docstrings ([d56ea87](https://github.com/sendahug/send-hug-backend/commit/d56ea875a77d40b4693772c34da6966909b650fc)).
 - Added tests for more helper functions and fixed some tests' data ([4218a98](https://github.com/sendahug/send-hug-backend/commit/4218a9870d5a6dd30f64200b16c6e38faabe6fac) - [760a00a](https://github.com/sendahug/send-hug-backend/commit/760a00a3c99c581ac27f0cdf898fdb85c45a6e78)).
 
 ### 2023-02-11
 
-#### Changes
+#### Changes
 
 - Replaced all `print` calls with logging to a proper python logger ([46e58f3](https://github.com/sendahug/send-hug-backend/commit/46e58f35ddaae56b4eeaf28f408dfe37b3e8fbb6)).
 - Standardised the db helpers' responses to avoid confusion in the endpoints ([82065f0](https://github.com/sendahug/send-hug-backend/commit/82065f0b38d5afad81327a642665d5a98aeae4a2)).
 
-#### Chores
+#### Chores
 
 - Fixed the typing in various parts of the app ([3ba34e6](https://github.com/sendahug/send-hug-backend/commit/3ba34e6d812dd567c34d26f334ef8d1ec23af9a5) - [f51612d](https://github.com/sendahug/send-hug-backend/commit/f51612dc6a9e693d5878bed5c240cd8850e56f14)).
 
@@ -132,13 +132,13 @@
 
 - Deleted an unneeded install step in CI ([ebec08e](https://github.com/sendahug/send-hug-backend/commit/ebec08e1376f5b8181cf8f6928c5a79262800070)).
 
-### 2023-02-05
+### 2023-02-05
 
 #### Features
 
 - Added a new helper method for validating post/message texts ([449281a](https://github.com/sendahug/send-hug-backend/commit/449281a137c2ad8f5cac3d32a8cb5aaa8ad9de52)).
 
-#### Chores
+#### Chores
 
 - Cleaned up more old code. This includes improved typing, simplified nested statements, and the removal of duplicate code ([c46c702](https://github.com/sendahug/send-hug-backend/commit/c46c7028cc43bb61e832535e0d4b4315654c0ca6) - [4065d5b](https://github.com/sendahug/send-hug-backend/commit/4065d5b9e9405bee268a12c0064179ee7d573d79)).
 
@@ -150,7 +150,7 @@
 
 ### 2023-01-29
 
-#### Changes
+#### Changes
 
 - Replaced the pagination mechanism with the built-in Flask-SQLAlchemy pagination mechanism. The previous pagination mechanism required fetching all the records from the database before doing any sort of pagination. This is extremely inefficient in large numbers and it makes more sense to do it in the database. ([a3b2d93](https://github.com/sendahug/send-hug-backend/commit/a3b2d93e814fc8443f89825e056984a58a213e52))
 - Separated app setup from app creation. The app creation file should be purely for running the complete Flask app. The setup should be handled separately. Storing both in the same file was wrong ([ad20200](https://github.com/sendahug/send-hug-backend/commit/ad20200a43715c0f154ba078338ac843e2c63877)).
@@ -187,13 +187,13 @@
 
 ### 2022-12-21
 
-#### Changes
+#### Changes
 
 - Moved the filter and validator utilities to a new `utils` directory ([0105450](https://github.com/sendahug/send-hug-backend/commit/0105450a5e05ab76741cb15c895c6a99739f2b97)).
 - Moved the database helper functions from the models' module to a new database-related module ([10bf93b](https://github.com/sendahug/send-hug-backend/commit/10bf93bec16d4804d21b776d7bb20475cf30fe3f)).
 - Adjusted the way Flask-SQLAlchemy is initialised to correctly pass in the required settings ([f5851af](https://github.com/sendahug/send-hug-backend/commit/f5851afca5e7d3b007174e4747defe7be6b624ce) & [d2af058](https://github.com/sendahug/send-hug-backend/commit/d2af058990de28973fa446981d3e06a1fe684b59)).
 
-#### Chores
+#### Chores
 
 - Simplified old code in the Validator ([2aa458a](https://github.com/sendahug/send-hug-backend/commit/2aa458a61a3e9ea461d455d702916903a384965c)).
 - Deleted the unneeded PyOpenSSL dependency ([bdeeced](https://github.com/sendahug/send-hug-backend/commit/bdeeced78b40d8bd22a7dc0fff10a7c1e00789c2)).
@@ -205,7 +205,7 @@
 
 - Moved the push notifications' helper functions to their own module ([29b5a4f](https://github.com/sendahug/send-hug-backend/commit/29b5a4fa0b28e5eb1be1496625451e4e957c8229)).
 
-#### Chores
+#### Chores
 
 - Added pre-commit to handle reformatting and linting the files ([/5f5a0a1](https://github.com/sendahug/send-hug-backend/commit/5f5a0a149f4b6ca40a8ca489b3e5105b518efe9e) - [9fb2588](https://github.com/sendahug/send-hug-backend/commit/9fb2588da87ffe0448881d9ae562f5aec3e9d620)).
 
@@ -227,7 +227,7 @@
 
 ### 2022-08-14
 
-#### Documentation
+#### Documentation
 
 - Deleted the pyup badges from the README as they've switched to priced tiers only and those badges weren't particularly useful anyway ([0383362](https://github.com/sendahug/send-hug-backend/commit/038336206c9e16b82712d7d303a814ad4338eb77)).
 
@@ -245,17 +245,17 @@
 
 ### 2022-06-18
 
-#### Fixes
+#### Fixes
 
 - Fixed a bug where endpoints handling user data returned an error due to an attempt to use `json.load` on a null value ([959e21a](https://github.com/sendahug/send-hug-backend/commit/959e21ab3854707bf3cc5ea6df26e1a7c692b5c8)).
 
 ### 2022-06-12
 
-#### Changes
+#### Changes
 
 - Deleted the `manage.py` file, which was previously used to run migrations in deployment ([7ac21d1](https://github.com/sendahug/send-hug-backend/commit/7ac21d1f3fe968c903ecabe9e26798953d9c8844)).
 
-#### Chores
+#### Chores
 
 - Deleted the flask-script dependency, which was removed in flask-migrate v3 ([6e734a9](https://github.com/sendahug/send-hug-backend/commit/6e734a9ebea781e0ebad3cdc473e73d341439d96)).
 
@@ -310,7 +310,7 @@
 
 ### 2020-12-22
 
-#### Features
+#### Features
 
 - Added the users' icon data to the messages' endpoints to allow displaying the icons in the messaging views ([d831d53](https://github.com/sendahug/send-hug-backend/commit/d831d5327ab481d12bcb2def276e141e7a34d4f3)).
 
@@ -318,13 +318,13 @@
 
 - Renamed the keys in the icon colours' dictionary to match the expected keys in the front-end ([5826418](https://github.com/sendahug/send-hug-backend/commit/5826418335d32939f198d80daeee9492c87030df)).
 
-#### Chores
+#### Chores
 
 - Updated the tests and the tests' data to include the new icon data ([717c383](https://github.com/sendahug/send-hug-backend/commit/717c38314bea793da4ad2e5fab66c15249c94c1a) & [b08fc76](https://github.com/sendahug/send-hug-backend/commit/b08fc76f662d6f5baef9db4ba3bec30ea90a3ca5))
 
 ### 2020-12-21
 
-#### Fixes
+#### Fixes
 
 - Fixed a string formatting error in the users' update endpoint ([eb351fd](https://github.com/sendahug/send-hug-backend/commit/eb351fdffe40798f85c48fc6333df87397e40798)).
 - The default colours for the users' icons were set to the wrong values. They've now been updated to the correct values ([2088b42](https://github.com/sendahug/send-hug-backend/commit/2088b4295840d7c89cd46ecf5d39cb79e594f25d)).
@@ -342,23 +342,23 @@
 
 ### 2020-12-16
 
-#### Chores
+#### Chores
 
 - Adjusted the GitHub Actions workflow and the CircleCI workflow to allow running tests only on pull requests made against the development and the live branches - based on an API request to the CircleCI API - or on commits pushed to either of those branches - based on the CircleCI config ([5426ed6](https://github.com/sendahug/send-hug-backend/commit/5426ed6d88f210b79b18f8d9c3e4fe793fc4db0f) - [24d60e7](https://github.com/sendahug/send-hug-backend/commit/24d60e78a1fbc36632dce179e984a93172aaaf63)).
 
 ### 2020-12-15
 
-#### Chores
+#### Chores
 
 - Added an initial GitHub Actions workflow to trigger CircleCI builds ([a6aadda](https://github.com/sendahug/send-hug-backend/commit/a6aadda23bbbbe67156f8b0db5eda55d8ac85387)).
 
-### 2020-12-08
+### 2020-12-08
 
 #### Chores
 
 - Set the CircleCI workflow to only run on specific branches ([b9ecca0](https://github.com/sendahug/send-hug-backend/commit/b9ecca0bad28cbb3b6b31c048b2d300251aff391)).
 
-#### Documentation
+#### Documentation
 
 - Replaced the # CI bradge in the readme with a CircleCI badge ([47354a2](https://github.com/sendahug/send-hug-backend/commit/47354a2a11321789b37bc3d31d969c64702ea307)).
 
@@ -368,7 +368,7 @@
 
 - Replaced the # CI config with a new CircleCI workflow ([fd8032d](https://github.com/sendahug/send-hug-backend/commit/fd8032d8b6bccf4ec0e64d37b7494421569b3341) - [a370cf6](https://github.com/sendahug/send-hug-backend/commit/a370cf68b9e6fd39dfe87ed05164e51c795722be)).
 
-### 2020-12-06
+### 2020-12-06
 
 #### Chores
 
@@ -380,7 +380,7 @@
 
 - Changed the create-release workflow to remove the branch restriction as a temporary workaround for it ([e1589fe](https://github.com/sendahug/send-hug-backend/commit/e1589fece668b1eabc9f799e54bc81a37078e366)).
 
-### 2020-11-11
+### 2020-11-11
 
 #### Chores
 
@@ -402,11 +402,11 @@
 
 ### 2020-11-05
 
-#### Fixes
+#### Fixes
 
 - Added a missing query to count each thread's messages when fetching threads ([0f0e82c](https://github.com/sendahug/send-hug-backend/commit/0f0e82cf9cb5a6843a30df4b640aeaf774a78dfc)).
 
-#### Chores
+#### Chores
 
 - Updated the tests and the tests' database ([38e8cc1](https://github.com/sendahug/send-hug-backend/commit/38e8cc1deec6b1583e9cef871512968e2a739787) & [df9cc96](https://github.com/sendahug/send-hug-backend/commit/df9cc96d14e59e507e722ff5f0b4f69b8b7734a8)).
 - Added a GitHub Actions workflow to create a release ([3be45a16](https://github.com/sendahug/send-hug-backend/commit/3be45a160e413f3fdfd105266f65fe964bfb57ef)).
@@ -417,7 +417,7 @@
 
 - Reversed the order in which messages are shown to display the newest messages first ([3f6ed44](https://github.com/sendahug/send-hug-backend/commit/3f6ed448887b7cefe07c2216d8badddf7440367a)).
 
-#### Fixes
+#### Fixes
 
 - Previously, if a user deleted a thread and then sent/was sent another message to/from the user they had a deleted thread with, the thread wouldn't show as it was still considered "deleted". Now, if there's a new message, the thread's restored for both users, so that they can access it as they access all other threads ([34ed5e3](https://github.com/sendahug/send-hug-backend/commit/34ed5e31a7d758d6a31ac42c10293d27d70beb42)).
 
@@ -435,7 +435,7 @@
 
 - Updated the Filter class's name to `WordFilter` to clarify its functionality ([4704901](https://github.com/sendahug/send-hug-backend/commit/4704901e4b4aa56667c4006265458bedbdf1c546)).
 
-#### Fixes
+#### Fixes
 
 - Fixed an issue in POST /filters endpoint where due to different casing, the same filters could be added multiple times ([33f1551](https://github.com/sendahug/send-hug-backend/commit/33f155123688bc26d5be676d6cb6345a0ebda559)).
 - Fixed the values of the variables returned from the "create filter" and "update filter" endpoints. The expected structure in those endpoints changed once the filters were moved to a table, but they weren't updated, which caused an error ([5a865e2](https://github.com/sendahug/send-hug-backend/commit/5a865e27bbf793dcf1c01c09eb75f4779a94fc5b)).
@@ -506,7 +506,7 @@
 
 ### 2020-09-19
 
-#### Features
+#### Features
 
 - Added the forbidden words to the error message returned by the API on validation errors to allow the users to fix their text ([b6ebe7b](https://github.com/sendahug/send-hug-backend/commit/b6ebe7b00e2b626bef549e3c1903bf35210e16c8)).
 
@@ -516,13 +516,13 @@
 
 ### 2020-09-14
 
-#### Chores
+#### Chores
 
 - Updated dependencies ([f8a8386](https://github.com/sendahug/send-hug-backend/commit/f8a8386b6794edc190882052454a59e76f774a63)).
 
 ### 2020-09-10
 
-#### Chores
+#### Chores
 
 - Updated the tests' database (and the command used to restore it) to exclude postgres's roles ([968a873](https://github.com/sendahug/send-hug-backend/commit/968a8730e0e942f4392670eaf0bd9214cb71732d) & [5cdc941](https://github.com/sendahug/send-hug-backend/commit/5cdc9413b1633b90e3079246ad6860c08f3c9769)).
 - Added database dump to import before running the tests. This is required right now due to a Postgres bug that causes errors when trying to restore a database via `pg_restore` (whereas it works fine via `psql`). Once the database was restored via `psql` (or even via `pg_restore`), `pg_restore` works fine; the first restoration seems to be the problem. Since `psql` doesn't seem to work on Python (through the sh package), right now both archives are required: the sql dump is needed to run `psql` restoration, and the custom dump is needed to run `pg_restore` during tests. ([10f2941](https://github.com/sendahug/send-hug-backend/commit/10f294109b1e88a5a23fc136174580436452bdd9))
@@ -535,43 +535,43 @@
 
 ### 2020-09-09
 
-#### Fixes
+#### Fixes
 
 - Added missing "thread" message type to the "delete message" endpoint to allow deleting messages from the single thread view ([84a5208](https://github.com/sendahug/send-hug-backend/commit/84a52083b11c5cac37565d2c463f0f727fdd85a5)).
 - Fixed the list index in the filters' delete endpoint ([cf80bcf](https://github.com/sendahug/send-hug-backend/commit/cf80bcf0ec492b779b6f070f8d0e43be644e9b0d)).
 - Changed the way the app checks whether a filter exists in a given index, which fixes an "out of bounds" error ([cf80bcf](https://github.com/sendahug/send-hug-backend/commit/cf80bcf0ec492b779b6f070f8d0e43be644e9b0d)).
 - Added a check for whether a thread exists before attempting to use the SQLAlchemy object, which caused a "NoneType has no attribute" error in the "read user messages" endpoint ([549832a](https://github.com/sendahug/send-hug-backend/commit/549832af17963a867b81221a47b22e2062f93dc8)).
 
-#### Chores
+#### Chores
 
 - Updated `psycopg2-binary` to v2.8.6 ([15a7bfb](https://github.com/sendahug/send-hug-backend/commit/15a7bfb06d7188b3a4519bb22e8d5fef6ce96629)).
 - Fixed further errors in tests ([4b28c32](https://github.com/sendahug/send-hug-backend/commit/4b28c329f8dfe2fe808a0d9f5f4f6672ca582c61) & [cefb898](https://github.com/sendahug/send-hug-backend/commit/cefb8985b8aa94be9d6b8648ebec61ca65d62d57)).
 - Added an initial # CI workflow to run unit tests in CI ([60d3b9b](https://github.com/sendahug/send-hug-backend/commit/60d3b9b80cebee84c9c911a45a1fe8aa9d7cde05) - [2bd3e69](https://github.com/sendahug/send-hug-backend/commit/2bd3e69a2a5501a4d68a45a6ce143102ade08ec5)).
 - Updated the tests database ([4748da3](https://github.com/sendahug/send-hug-backend/commit/4748da3894913f641e5083f2502bfdd1b483edec) & [333170e](https://github.com/sendahug/send-hug-backend/commit/333170ee1bcbe8cb21326bbeed8d044c1db7734b)).
 
-#### Documentation
+#### Documentation
 
 - Updated the testing instructions in the README ([5218631](https://github.com/sendahug/send-hug-backend/commit/521863184ae90554a927a26653a39a75d49009e6)).
 
-### 2020-09-08
+### 2020-09-08
 
-#### Features
+#### Features
 
 - Added a helper method for updating multiple SQLAlchemy objects at once ([22b119e](https://github.com/sendahug/send-hug-backend/commit/22b119e8779522909e4b95a4157cadf7cb9fa6d5)).
 - Added a permission check to the posts' update endpoint to ensure non-admins can't close a report via that endpoint ([fcd74ce](https://github.com/sendahug/send-hug-backend/commit/fcd74ce213bc5f778ae6fb47a7e541d822084417)).
 - Added a check to the users' edit endpoint to ensure users can't update other users' settings ([20ea747](https://github.com/sendahug/send-hug-backend/commit/20ea747894b525f5040927ed8fcf535cffd6a54a)).
 
-#### Changes
+#### Changes
 
 - The posts' update endpoint now updates objects using the bulk update method instead of the single update method ([be4f805](https://github.com/sendahug/send-hug-backend/commit/be4f8051616dc274e2bec83aff12e3deda354106)).
 
-#### Fixes
+#### Fixes
 
 - Fixed a bug comparing user IDs in posts and messages DELETE endpoints. The user ID was treated as a string in the permissions check, which caused the condition to return `False` even when the user was trying to delete their own posts ([e491483](https://github.com/sendahug/send-hug-backend/commit/e4914833ff32140b6ad3e156316a1be777733c99) & [c52a34c](https://github.com/sendahug/send-hug-backend/commit/c52a34c630dcbc68454d67ccbf3776b69e88047c)).
 - Fixed an error in the new report, new message and new post endpoints, in which the wrong value was assigned to the 'new item' variable and returned to the user ([c81ed84](https://github.com/sendahug/send-hug-backend/commit/c81ed84bfcec7c6be4acef2b7281afa70a5ea631) & [7b12c30](https://github.com/sendahug/send-hug-backend/commit/7b12c30de87602c92cff989c16ed854bbeaec63e)).
 - Added missing checks to the "create report" endpoint to ensure the post/user being reported actually existed before trying to create a report ([a12a4d6](https://github.com/sendahug/send-hug-backend/commit/a12a4d6d0c3339716211c56ba0463e35833259ce)).
 
-#### Chores
+#### Chores
 
 - Changed the way the database is set up and reset between tests. Now, The database clearing runs after every test, and the initial creation is removed (as it's re-created before the first test anyway). ([0170f55](https://github.com/sendahug/send-hug-backend/commit/0170f55e8838296176e8c26065c4f5bd2c763bd2) & [6e289f2](https://github.com/sendahug/send-hug-backend/commit/6e289f22fa8a9f017aeb5db131c5eb525ac346cb))
 - Fixed an error in tests that caused the test users' token not to be updated in the authorisation headers ([145491a](https://github.com/sendahug/send-hug-backend/commit/145491a863864e093e9fb668c2fbac2e4f5014d5)).
@@ -579,9 +579,9 @@
 - Fixed errors in the home, search and posts endpoints' tests ([3e8bfbc](https://github.com/sendahug/send-hug-backend/commit/3e8bfbcc56f6bc3d5df25372534d2cf00322d92c)).
 - Fixed errors in user, messages, reports and filters tests ([9e50bcd](https://github.com/sendahug/send-hug-backend/commit/9e50bcdcd8a148c5a9e31875ab366c3de2bb89f6) & [1adccf1](https://github.com/sendahug/send-hug-backend/commit/1adccf1d74f3f660d7145acefe8227438ed5c2f2) & [1e96c69](https://github.com/sendahug/send-hug-backend/commit/1e96c69e952e0785d3a3021059ab71faa4904a05)).
 
-### 2020-09-05
+### 2020-09-05
 
-#### Chores
+#### Chores
 
 - Replaced http.client library with urllib.request in tests ([cc43ddc](https://github.com/sendahug/send-hug-backend/commit/cc43ddc91bf13215a71bfcae6b50f035288dc0b0)).
 
@@ -592,7 +592,7 @@
 - Fixed an error in new user workflow where the wrong value was assigned to the "new user" variable and returned by the API ([18650ca](https://github.com/sendahug/send-hug-backend/commit/18650cad5c2c62e50c7a715be1e522a55f3ef01c)).
 - Fixed the URL encoding in the management API token fetch ([5092546](https://github.com/sendahug/send-hug-backend/commit/5092546ae81a3752c48e9a0ac4aed39220e6a561)).
 
-#### Chores
+#### Chores
 
 - Added token getter for each of the test users in unit tests. This is meant to be a set up for automated unit-testing. Each user's token is fetched via Auth0's Resource Owner Password Grant and is then saved and used for performing the relevant user's tests. ([645b439](https://github.com/sendahug/send-hug-backend/commit/645b439901c216a6a20d28df404e9f984763298d) & [8fe91e1](https://github.com/sendahug/send-hug-backend/commit/8fe91e1f1b4094c8d415cff542ad92d9923cedf6))
 - Adjusted the test data and database ([eb3f5ad](https://github.com/sendahug/send-hug-backend/commit/eb3f5ad6773665a233f92afd8ccb7781a83a406a) & [2b7d51f](https://github.com/sendahug/send-hug-backend/commit/2b7d51fba84b775a26b014bb242ac0ca3a2f8559)).
@@ -610,11 +610,11 @@
 
 ### 2020-08-31
 
-#### Chores
+#### Chores
 
 - Updated dependencies ([d6feaf9](https://github.com/sendahug/send-hug-backend/commit/d6feaf91500b92007465443f851a77565a3879fe)).
 
-#### Documentation
+#### Documentation
 
 - Added build status badges to the README ([aa67494](https://github.com/sendahug/send-hug-backend/commit/aa67494d88b2a93d1f683dc9739ca903570f1dd9)).
 
@@ -633,17 +633,17 @@
 
 ### 2020-08-09
 
-#### Documentation
+#### Documentation
 
 - Renamed the API Documentation file ([057abf6](https://github.com/sendahug/send-hug-backend/commit/057abf696de627e1761205aac08d198d364085b1)).
 
 ### 2020-08-01
 
-#### Changes
+#### Changes
 
 - Changed added objects' return data ([0e6eed4](https://github.com/sendahug/send-hug-backend/commit/0e6eed41855aa438ffdc48104bd59135837545d3)).
 
-#### Fixes
+#### Fixes
 
 - The Auth0 management API token now correctly establishes an HTTPS request instead of an HTTP request ([20dff64](https://github.com/sendahug/send-hug-backend/commit/20dff64596ad2f726ac53cf72b3c74ccec458e54) - [e76463a](https://github.com/sendahug/send-hug-backend/commit/e76463a010655522c0ff125b8e70f0996dd0ba56)).
 - Added a condition to properly mark "user" roles upon user update, as we previously only had checks for "admin" and "moderator" roles ([5ee19f9](https://github.com/sendahug/send-hug-backend/commit/5ee19f97797477ff07800590d92523dad07e2be6)).
@@ -659,7 +659,7 @@
   - Added methods for refreshing the Auth0 Management API tokens used for the role update.
   - Adjusted the user endpoints to the new structure.
 
-#### Fixes
+#### Fixes
 
 - Fixed a bug where first login caused an issue getting user data due to a number (the user's internal ID) being treated as a string ([700ec9a](https://github.com/sendahug/send-hug-backend/commit/700ec9a78b7bb65118210513ae749a52593ac633)).
 
@@ -669,7 +669,7 @@
 
 - Added a "refresh rate" column to the users' table to indicate how often users want their notifications to be refreshed in the background ([1fff031](https://github.com/sendahug/send-hug-backend/commit/1fff031a2f16b9b958079d2e10c45a276abd0ae2)).
 
-#### Fixes
+#### Fixes
 
 - Added missing setup for settings-related attributes in the users' creation and edit processes ([7670744](https://github.com/sendahug/send-hug-backend/commit/767074440a9ac8f413b6f9042b60466ebd69916e)).
 
@@ -679,13 +679,13 @@
 
 - Fixed a bug with sent_hugs list where we accidentally added empty items to the list ([2c8bc20](https://github.com/sendahug/send-hug-backend/commit/2c8bc207b6aa6a0b24204a21471bd541b8dca6ee)).
 
-### 2020-07-21
+### 2020-07-21
 
-#### Features
+#### Features
 
 - Added the list of the users who sent hugs for a post to the post JSON returned by the API ([85cb8b1](https://github.com/sendahug/send-hug-backend/commit/85cb8b110fe028046f340923c18fe6d58124d8ff)).
 
-#### Fixes
+#### Fixes
 
 - Added a missing comma in the conversion process between strings (the way the `sent_hugs` list is stored in the database) and lists (the way the back-end and front-end treat the list). ([b0362c3](https://github.com/sendahug/send-hug-backend/commit/b0362c33acbaa41153185a41f2485499d30a28a3))
 
@@ -698,7 +698,7 @@
 
 ### 2020-07-19
 
-#### Features
+#### Features
 
 - Added type validation for all user inputs ([3095d51](https://github.com/sendahug/send-hug-backend/commit/3095d51c586c57fc01719f2a2196df38cbd8aeb1)).
 
@@ -709,7 +709,7 @@
 
 ### 2020-07-18
 
-#### Features
+#### Features
 
 - Added a helper method for checking whether a text contains blacklisted words ([cdd6e04](https://github.com/sendahug/send-hug-backend/commit/cdd6e04b0a937caa70387c9748676396ee30be8c)).
 - Added a special validation error (and a handler for it) to use when the user input isn't valid ([13cec90](https://github.com/sendahug/send-hug-backend/commit/13cec90b3df6ee3a0fc3b554dafecc77bc6af830) & [4105a8f](https://github.com/sendahug/send-hug-backend/commit/4105a8f128bd765f2f6bebea4837475049bc14df)).
@@ -717,7 +717,7 @@
 - User posts are now ordered by date ([4204bad](https://github.com/sendahug/send-hug-backend/commit/4204bad10c07caf9df12df30d26981f49a6de2fd)).
 - Added length checks for all user inputs ([38a3bc9](https://github.com/sendahug/send-hug-backend/commit/38a3bc908f3efcf8340205616945a66fcdd3c657) & [42eee66](https://github.com/sendahug/send-hug-backend/commit/42eee666df5b3c86b5071ea152619621758813ee)).
 
-#### Fixes
+#### Fixes
 
 - Previously, when users tried to update their own display name, the update was ignored due to a missing if/else branch (we only had handling for cases where the user tried to update someone else's display name). The missing branch was added to the if/else clause ([036f006](https://github.com/sendahug/send-hug-backend/commit/036f0065454843c372788c29035984174eb8e401)).
 
@@ -729,37 +729,37 @@
 
 ### 2020-07-16
 
-#### Chores
+#### Chores
 
 - Updated the test process to include a database reset between tests. This ensures that all tests are fully independent and can run in any order ([818aed5](https://github.com/sendahug/send-hug-backend/commit/818aed58663347121b87fd8e97a12b6708f76a88) & [36bf4eb](https://github.com/sendahug/send-hug-backend/commit/36bf4ebfd016bf5114e0a960d830f95fc5493340)).
 - Added more unit tests and updated existing tests' data to match the reset database ([9e6dd31](https://github.com/sendahug/send-hug-backend/commit/9e6dd31486cac15491250d09c660d071be4c5011) - [9c54965](https://github.com/sendahug/send-hug-backend/commit/9c54965934bbf2fed2b6f37e2be09c5116e40c5c)).
 - Moved the JWTs used by the tests to environment variables, which makes them easier to replace and to keep out of the repository ([9c54965](https://github.com/sendahug/send-hug-backend/commit/9c54965934bbf2fed2b6f37e2be09c5116e40c5c)).
 - Updated the tests' database ([33037be](https://github.com/sendahug/send-hug-backend/commit/33037be5ca2527087e6f833ee01aa9d1101ac0af)).
 
-#### Documentation
+#### Documentation
 
 - Updated the README with details about the database-reset and the JWTs in tests ([8dc9e78](https://github.com/sendahug/send-hug-backend/commit/8dc9e783f756fcc9b1aaa7fd1a232f0cf1bb9f16) & [f141352](https://github.com/sendahug/send-hug-backend/commit/f1413521e020286a9b624ff795f1a108b4d6fcda)).
 
 ### 2020-07-15
 
-#### Features
+#### Features
 
 - The user-related endpoints now also return the date in which the user last read their notifications ([6e56f80](https://github.com/sendahug/send-hug-backend/commit/6e56f804f60e2e4ec64b6ed661c59edeeee6dad0)).
 
-#### Chores
+#### Chores
 
 - Updated the tests' database ([0e89123](https://github.com/sendahug/send-hug-backend/commit/0e89123478deda0b0e33a4aeb26bd438ad3a233d)).
 - Added further tests for new endpoints and scenarios ([3d2f081](https://github.com/sendahug/send-hug-backend/commit/3d2f0815fea3a90c4fde6fa3774af05f4e240716) - [bbf63b0](https://github.com/sendahug/send-hug-backend/commit/bbf63b0d41bf946b80582bdbff4a086ab04bd2bf)).
 
 ### 2020-07-14
 
-#### Chores
+#### Chores
 
 - Updated tests and added tests for the new endpoints ([9b83d25](https://github.com/sendahug/send-hug-backend/commit/9b83d258d4b3dde58809c71fc0e9f57f947a7f18) - [26429e8](https://github.com/sendahug/send-hug-backend/commit/26429e8f36992307e23d2dddf87bfe1b896897b1)).
 
 ### 2020-07-09
 
-#### Features
+#### Features
 
 - The "read all users by type" endpoint now also automatically unblocks users whose release time has passed ([9ae0812](https://github.com/sendahug/send-hug-backend/commit/9ae081298fe22f5ff3c45263f4a3193a9f0d89f0)).
 - Added new columns to the users table to indicate whether the user enabled push notifications and auto-refresh for notifications ([8046f76](https://github.com/sendahug/send-hug-backend/commit/8046f768854541a61ac2ef001360f25cd939d755) - [ce96b5c](https://github.com/sendahug/send-hug-backend/commit/ce96b5c72b9f197e29393a0f801692fd449c23a5)).
@@ -787,7 +787,7 @@
 
 ### 2020-07-07
 
-#### Features
+#### Features
 
 
 - Added support for user notifications for hugs/messages ([356b787](https://github.com/sendahug/send-hug-backend/commit/356b7875ed4e3e2191b387c1e5920fc47c64e0c9) - [7d0d425](https://github.com/sendahug/send-hug-backend/commit/7d0d425d1c1244f73b0d6f4f96d74755ae0c0801)). This includes:
@@ -804,7 +804,7 @@
 
 ### 2020-06-29
 
-#### Fixes
+#### Fixes
 
 - Fixed an error that caused the suggested posts' fetch to fail due to an undefined variable ([753d465](https://github.com/sendahug/send-hug-backend/commit/753d465b7206f8a762e194bfbac5b1512d6cf934)).
 
@@ -822,7 +822,7 @@
 
 ### 2020-06-23
 
-#### Features
+#### Features
 
 - Added the ability to delete messages and threads. This includes:
   - Added new columns to messages and threads to indicate whether each of he users deleted the message/thread ([a57d90f](https://github.com/sendahug/send-hug-backend/commit/a57d90fa9362a26d9a3bbe704ae06d05732c3e96) - [9fb551b](https://github.com/sendahug/send-hug-backend/commit/9fb551bae336f8fc7cbdd2f9c79475707a5639e7)).
@@ -838,7 +838,7 @@
 
 ### 2020-06-22
 
-#### Features
+#### Features
 
 - Added the block-related properties to the formatted user JSON sent back by the API ([9d4ec62](https://github.com/sendahug/send-hug-backend/commit/9d4ec62e28d4ab102672b450fd8f1e4740cb8916)).
 - Added a check to prevent blocked users from posting new posts ([89c1021](https://github.com/sendahug/send-hug-backend/commit/89c10218e5c95dd0c7e3e780f8482a62acd5157e)).
@@ -848,7 +848,7 @@
 
 - Changed all user endpoints to include the `all` prefix (as the user type) for consistency ([7de62bd](https://github.com/sendahug/send-hug-backend/commit/7de62bdbb4ac1ce9590a552dc368acd9a1ff880f)).
 
-#### Fixes
+#### Fixes
 
 - Fixed a bug where attempting to access the `/users/:user_id` endpoint errored with an "invalid argument" because the request was sent to the new `users/:user_type` endpoint instead. This was fixed by adding `all` as the user type to the "read user" endpoint ([4732622](https://github.com/sendahug/send-hug-backend/commit/473262293e23682db7a62fe9d351f9a7f0fd14c1)).
 - Fixed a bug referencing a variable before assigning it in the "get users by type" endpoint ([2494775](https://github.com/sendahug/send-hug-backend/commit/2494775cc3824e171a1ca0add40f90c8ebbed298)).
@@ -873,7 +873,7 @@
 - Added an endpoint for fetching users by type, with initial setup for fetching blocked users ([66f8355](https://github.com/sendahug/send-hug-backend/commit/66f83557d27e383b6e5eaa73ccc3b2b8cd1533e8)).
 - Added an initial word filter to filter out words before saving posts/messages. This includes a new word filter module, an endpoint for fetching the filtered out words, an endpoint for adding a word and an endpoint for deleting a word ([ecabcf6](https://github.com/sendahug/send-hug-backend/commit/ecabcf622cec2302dd6a35b8dda890e0668fbfbf) - [b7bf6fb](https://github.com/sendahug/send-hug-backend/commit/b7bf6fb8ce3d27b1527c6dbcdebcf64f43f67365)).
 
-#### Changes
+#### Changes
 
 - Deleted the SQLAlchemy relationship between the User and Report tables ([2794ba3](https://github.com/sendahug/send-hug-backend/commit/2794ba30e02fb810e2ca1858bfc7f94307bb45b7)).
 
@@ -883,7 +883,7 @@
 
 ### 2020-06-20
 
-#### Features
+#### Features
 
 - Added thea ability to report users and posts. This includes:
   - Added a reports table for saving reports ([43f77a6](https://github.com/sendahug/send-hug-backend/commit/43f77a60ec8e8279dbb521f16395a3b703a07dd1) & [41a0797](https://github.com/sendahug/send-hug-backend/commit/41a07977ea05149c18959092db3722aba9a39417) & [6ddf488](https://github.com/sendahug/send-hug-backend/commit/6ddf488489029f82a049384077869b4486efb81c)).
@@ -892,7 +892,7 @@
 
 ### 2020-06-18
 
-#### Features
+#### Features
 
 - Added an POST "/" endpoint for running a search ([ccbe98b](https://github.com/sendahug/send-hug-backend/commit/ccbe98bbe1c740e9c15d19699a2d121deea44e12)).
 - Added a helper method for deleting multiple records from the database ([ea9cf14](https://github.com/sendahug/send-hug-backend/commit/ea9cf1422c9fc46aa4c81ff9b61847410280454f)).
@@ -909,7 +909,7 @@
 
 - Added the ability to send someone a hug from their profile via the "edit user" endpoint ([1d967bc](https://github.com/sendahug/send-hug-backend/commit/1d967bc9197e691e18c0bc5a30e33635b0c8acdb)).
 
-#### Fixes
+#### Fixes
 
 - Added a check to ensure an error is raised in the "edit user" endpoint only if another user is attempting to edit another user's display name. This fixes a bug that caused an error to be thrown when users attempted to send a hug to another user ([d19eb93](https://github.com/sendahug/send-hug-backend/commit/d19eb93deb996702ce06729ac68952aff68e944e)).
 
@@ -927,7 +927,7 @@
 
 ### 2020-06-14
 
-#### Features
+#### Features
 
 - Added support for message threads. This includes:
   - Added a `threads` table ([9938fe3](https://github.com/sendahug/send-hug-backend/commit/9938fe3464768a4b9a927e779661aef1f7b56b5b) & [a2aeef4](https://github.com/sendahug/send-hug-backend/commit/a2aeef47b6c19e38fc0b1e8fa981a3f37f9c65a2)).
@@ -951,7 +951,7 @@
 
 ### 2020-06-11
 
-#### Changes
+#### Changes
 
 - Moved the Auth0 variables to environment variables ([5ca5243](https://github.com/sendahug/send-hug-backend/commit/5ca5243fea0b32f4a9291b60c9319bbe73d9c4f7)).
 
@@ -1032,21 +1032,21 @@
 
 ### 2020-06-07
 
-#### Changes
+#### Changes
 
 - Adjusted the code responsible for decoding the JWT to fail gracefully if an invalid token is passed in, instead of just throwing an internal error that doesn't reach the front-end ([eaac000](https://github.com/sendahug/send-hug-backend/commit/eaac0004b87d2aeaac699b8ad13076e77df41410)).
 
-#### Chores
+#### Chores
 
 - Added unittest and started setting up unit tests for the project ([12aa04c](https://github.com/sendahug/send-hug-backend/commit/12aa04c18f5d43924bec37293a7e22d711b38814) - [9105bb7](https://github.com/sendahug/send-hug-backend/commit/9105bb73c0a0660eee08f86422017d7731229b3e)).
 
-#### Documentation
+#### Documentation
 
 - Added testing instructions to the README ([f09fefb](https://github.com/sendahug/send-hug-backend/commit/f09fefb55c81386246c0ebee83f1bf7d7e798467)).
 
 ### 2020-06-05
 
-#### Changes
+#### Changes
 
 - Consolidated posts/new and posts/suggested to one endpoint for fetching posts by type ([6cfa7e0](https://github.com/sendahug/send-hug-backend/commit/6cfa7e0cf9855e53b84766a63ccd5be9290f7a9a)).
 
@@ -1067,7 +1067,7 @@
 
 ### 2020-06-03
 
-#### Features
+#### Features
 
 - Added support for pagination in all "read all" endpoints ([9bfa525](https://github.com/sendahug/send-hug-backend/commit/9bfa52588c9d39f731a1cf28272dd8111a607e5e)).
 - Added the ability to update the user's display name ([7a37c12](https://github.com/sendahug/send-hug-backend/commit/7a37c1203dcb28302607c7a8d229ba17490febd7)).
@@ -1079,11 +1079,11 @@
 
 ### 2020-06-02
 
-#### Features
+#### Features
 
 - Added an error handler for 405 errors ([e1caca8](https://github.com/sendahug/send-hug-backend/commit/e1caca8164b48b67d3af0b800d6d042bb3de95ff)).
 
-#### Changes
+#### Changes
 
 - Deleted an unnecessary update to the number of posts a user posted in the users' update endpoint ([5a473db](https://github.com/sendahug/send-hug-backend/commit/5a473dba8b26f17e563bfa2021e74bc2b89817a7)).
 - New posts are now sorted by date when fetching posts ([93f3008](https://github.com/sendahug/send-hug-backend/commit/93f30082f2a209074974571411c6e358e48eb328)).
@@ -1104,35 +1104,35 @@
 
 - Moved any query that joined multiple tables together (e.g., main page queries) to a helper method for "joined queries" ([5b596b6](https://github.com/sendahug/send-hug-backend/commit/5b596b6d82f393c1ed29b4c7ab8eb395b25e79c2)).
 
-#### Fixes
+#### Fixes
 
 - Fixed attribute references in POST /post endpoint. The endpoint previously tried accessing the JSON keys based on the names of the columns in SQLAlchemy instead of the keys based on the names set in the front-end. The keys' names were updated to match the incoming request from the front-end ([c151f15](https://github.com/sendahug/send-hug-backend/commit/c151f15de3239d446f40e5e132a0a1dd83bf1d65)).
 
 ### 2020-05-31
 
-#### Features
+#### Features
 
 - Added an endpoint for fetching a user's posts ([3f887dc](https://github.com/sendahug/send-hug-backend/commit/3f887dc62327ff7623d61b0faca7850a2beed053)).
 - Improved the error handling for "no user ID" in endpoints where user ID is required ([07ec306](https://github.com/sendahug/send-hug-backend/commit/07ec306397f2324e44c939e78afc6b154c488953)).
 - Added a check before the messages' table join to ensure there are messages ([76c69ff](https://github.com/sendahug/send-hug-backend/commit/76c69ffd9687b43c2726fb8aeec1b7ca03c8044d)).
 
-#### Fixes
+#### Fixes
 
 - Fixed reference errors in the 'create user' endpoint and in the JWT handling ([7b8d539](https://github.com/sendahug/send-hug-backend/commit/7b8d53985f692604d8dbea6192bedbf045f41c5f)).
 - The user data in the 'edit user' endpoint was accidentally treated as an object (with properties accessed using the `.` notation) instead of a dictionary, which caused a reference error. This was updated to the correct notation ([0cab697](https://github.com/sendahug/send-hug-backend/commit/0cab69713afbd2ff6499d66498d49ee7c401cb0c)).
 - Fixed an error when trying to get the number of posts published by a user ([4dfd3d3](https://github.com/sendahug/send-hug-backend/commit/4dfd3d3f0aa8c57c0d78d5755867d6af9f6c5021)).
 
-#### Documentation
+#### Documentation
 
 - Updated the README with more details about files and dependencies ([bbb7274](https://github.com/sendahug/send-hug-backend/commit/bbb727434b6a805910b90f281cd3c7ce2ef1d389) & [33cdb8c](https://github.com/sendahug/send-hug-backend/commit/33cdb8c392292c45ee40966bdd126f634e0088e0)).
 
-### 2020-05-30
+### 2020-05-30
 
 #### Features
 
 - Added a login counter to the users table to track the number of times a user logs in ([702fcb0](https://github.com/sendahug/send-hug-backend/commit/702fcb0eabbb48ea64d211fb98f3944275f00e73) & [5c203d6](https://github.com/sendahug/send-hug-backend/commit/5c203d6c4d6c988c7546009b9842dc2fc544e509)).
 
-#### Fixes
+#### Fixes
 
 - Fixed a duplicate headers error in the CORS configuration ([ebac524](https://github.com/sendahug/send-hug-backend/commit/ebac5245df3034c938f12e98ee3b3bda5bf8004d)).
 
@@ -1163,7 +1163,7 @@
 
 ### 2020-05-26
 
-#### Features
+#### Features
 
 - Added support for user authentication ([b937e64](https://github.com/sendahug/send-hug-backend/commit/b937e642083b19a5a269bba0d8976b6fea280bd4) - [9a79090](https://github.com/sendahug/send-hug-backend/commit/9a7909067eb22396b551a8e0e206e6ad56915aa4)). This includes:
   - An error for authentation/authorisation issues.
@@ -1172,19 +1172,19 @@
   - A decorator for handling authentication in the endpoints.
 - Added a display name column to the users table ([d90db03](https://github.com/sendahug/send-hug-backend/commit/d90db03051d980ec78dacecc1ba9aa67338af444)).
 
-#### Fixes
+#### Fixes
 
 - The front-end's URL in development was accidentally set to the back-end's URL, which meant all requests from the front-end resulted in a CORS error. The URL was updated to the correct front-end URL ([f23c8ca](https://github.com/sendahug/send-hug-backend/commit/f23c8caf6a558f492f7c87877acb1ae8bbb0a032)).
 
 ### 2020-05-24
 
-#### Documentation
+#### Documentation
 
 - Added an API documentation file with details about all the existing endpoints ([73eb458](https://github.com/sendahug/send-hug-backend/commit/73eb458afdf7c307e841165b62204d91e164ddac)).
 
 ### 2020-05-23
 
-#### Features
+#### Features
 
 - Added a PATCH endpoint for editing posts ([bc803d8](https://github.com/sendahug/send-hug-backend/commit/bc803d8740ab8d60265083df217f134518e2bb55)).
 - Added a PATCH endpoint for editing users ([decfc21](https://github.com/sendahug/send-hug-backend/commit/decfc2145121336353d4ed2f69643ed151a3dcac)).
@@ -1218,7 +1218,7 @@
 
 ### 2020-05-19
 
-#### Features
+#### Features
 
 - Added initial SQLAlchemy models for posts, users and messages ([499f432](https://github.com/sendahug/send-hug-backend/commit/499f432961434741e92c1ef78081591ad7c91144)).
 - Set up Flask-CORS to enable communication with the front-end ([771ebde](https://github.com/sendahug/send-hug-backend/commit/771ebdeee2f192d96c6d673cd9f1cb1fe10e34ba)).
@@ -1231,7 +1231,7 @@
 
 ### 2020-05-14
 
-#### Documentation
+#### Documentation
 
 - Added an initial README ([e271602](https://github.com/sendahug/send-hug-backend/commit/e271602215d8fa19c909803f76ab7a8ad9227719)).
 
