@@ -34,7 +34,7 @@ from typing import Dict, List, Any, Literal, Optional, Union
 from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
-from pywebpush import webpush, WebPushException  # type: ignore
+from pywebpush import webpush, WebPushException
 from sqlalchemy import and_, or_
 
 from models import (
@@ -251,7 +251,7 @@ def create_app(db_path: str = database_path) -> Flask:
         )
 
         # Create a new post object
-        new_post = Post(  # type:ignore
+        new_post = Post(  # type: ignore
             user_id=new_post_data["userId"],
             text=new_post_data["text"],
             date=new_post_data["date"],
