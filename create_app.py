@@ -380,7 +380,9 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(404)
 
         hugs = original_post.sent_hugs.split(" ") if original_post.sent_hugs else []
-        post_author: Optional[User] = db.session.get(User, original_post.user_id)
+        post_author: Optional[User] = User.query.filter(
+            User.id == original_post.user_id
+        ).one_or_none()
         notification: Optional[Notification] = None
         push_notification: Optional[RawPushData] = None
 
