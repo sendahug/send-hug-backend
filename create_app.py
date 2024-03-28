@@ -1559,25 +1559,16 @@ def create_app(db_path: str = database_path) -> Flask:
         if last_read is None:
             last_read = datetime(2020, 7, 1, 12, 00)
 
-        from_user = db.aliased(User)
-        for_user = db.aliased(User)
-
         # Gets all new notifications
         notifications = (
-            db.session.query(
-                Notification, from_user.display_name, for_user.display_name
-            )
-            .join(from_user, from_user.id == Notification.from_id)
-            .join(for_user, for_user.id == Notification.for_id)
-            .filter(Notification.for_id == user_id)
+            Notification.query.filter(Notification.for_id == user_id)
             .filter(Notification.date > last_read)
             .order_by(Notification.date)
             .all()
         )
 
         formatted_notifications = [
-            notification[0].format(from_name=notification[1], for_name=notification[2])
-            for notification in notifications
+            notification.format() for notification in notifications
         ]
 
         # Updates the user's 'last read' time only if this fetch was

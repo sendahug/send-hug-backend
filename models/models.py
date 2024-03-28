@@ -399,15 +399,22 @@ class Notification(db.Model):  # type: ignore[name-defined]
     type: Mapped[str] = db.Column(db.String(), nullable=False)
     text: Mapped[str] = db.Column(db.String(), nullable=False)
     date: Mapped[DateTime] = db.Column(db.DateTime, nullable=False)
+    # Column properties
+    from_name = column_property(
+        select(User.display_name).where(User.id == from_id).scalar_subquery()
+    )
+    for_name = column_property(
+        select(User.display_name).where(User.id == for_id).scalar_subquery()
+    )
 
     # Format method
-    def format(self, from_name: str = "", for_name: str = ""):
+    def format(self):
         return {
             "id": self.id,
             "fromId": self.from_id,
-            "from": from_name,
+            "from": self.from_name,
             "forId": self.for_id,
-            "for": for_name,
+            "for": self.for_name,
             "type": self.type,
             "text": self.text,
             "date": self.date,
