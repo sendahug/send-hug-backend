@@ -105,9 +105,12 @@ def create_app(db_path: str = database_path) -> Flask:
         return response
 
     # TODO: Replace with an internal pagination mechanism
-    def calculate_total_pages(items_count: int) -> int:
+    def calculate_total_pages(items_count: Optional[int]) -> int:
         """Caculates the number of pages for the query"""
-        return math.ceil(items_count / ITEMS_PER_PAGE)
+        if items_count:
+            return math.ceil(items_count / ITEMS_PER_PAGE)
+
+        return 0
 
     # Send push notification
     def send_push_notification(user_id: int, data: RawPushData):
@@ -151,7 +154,7 @@ def create_app(db_path: str = database_path) -> Flask:
         }
 
         for target in posts.keys():
-            posts_query = db.session.query(Post).filter(Post.open_report == db.false())
+            posts_query = Post.query.filter(Post.open_report == db.false())
 
             # Gets the ten most recent posts
             if target == "recent":
@@ -191,8 +194,7 @@ def create_app(db_path: str = database_path) -> Flask:
         users = User.query.filter(User.display_name.ilike(f"%{search_query}%")).all()
 
         posts = (
-            db.session.query(Post)
-            .order_by(db.desc(Post.date))
+            Post.query.order_by(db.desc(Post.date))
             .filter(Post.text.like(f"%{search_query}%"))
             .filter(Post.open_report == db.false())
             .paginate(page=current_page, per_page=ITEMS_PER_PAGE)
@@ -478,7 +480,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         formatted_posts = []
 
-        full_posts_query = db.session.query(Post).filter(Post.open_report == db.false())
+        full_posts_query = Post.query.filter(Post.open_report == db.false())
 
         if type == "new":
             full_posts_query = full_posts_query.order_by(db.desc(Post.date))
@@ -967,7 +969,7 @@ def create_app(db_path: str = database_path) -> Flask:
             )
 
         if type in ["inbox", "outbox", "thread"]:
-            messages_query = db.session.query(Message)
+            messages_query = Message.query
 
             # For inbox, gets all incoming messages
             if type == "inbox":
@@ -1020,8 +1022,7 @@ def create_app(db_path: str = database_path) -> Flask:
         else:
             # Get the thread ID, and users' names and IDs
             threads_messages = (
-                db.session.query(Thread)
-                .order_by(Thread.id)
+                Thread.query.order_by(Thread.id)
                 .filter(
                     (
                         (Thread.user_1_id == user_id)
@@ -1035,12 +1036,9 @@ def create_app(db_path: str = database_path) -> Flask:
                 .paginate(page=page, per_page=ITEMS_PER_PAGE)
             )
 
-            formatted_messages = []
             total_pages = calculate_total_pages(threads_messages.total)
-
             # Threads data formatting
-            for thread in threads_messages.items:
-                formatted_messages.append(thread.format())
+            formatted_messages = [thread.format() for thread in threads_messages.items]
 
         return jsonify(
             {
