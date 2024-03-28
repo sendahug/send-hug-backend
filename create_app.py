@@ -1328,27 +1328,18 @@ def create_app(db_path: str = database_path) -> Flask:
         for report_type in reports.keys():
             reports_page = request.args.get(f"{report_type.lower()}Page", 1, type=int)
 
-            if report_type == "User":
-                report_query = db.session.query(Report, User.display_name).join(
-                    User, User.id == Report.user_id
-                )
-            else:
-                report_query = db.session.query(Report, Post.text).join(Post)
-
             report_instances = (
-                report_query.filter(Report.closed == db.false())
+                Report.query.filter(Report.closed == db.false())
                 .filter(Report.type == report_type)
                 .order_by(db.desc(Report.date))
                 .paginate(page=reports_page, per_page=ITEMS_PER_PAGE)
             )
 
             total_pages[report_type] = calculate_total_pages(report_instances.total)
-
             # Formats the reports
-            for report in report_instances.items:
-                formatted_report = report[0].format()
-                formatted_report["displayName"] = report[1]
-                reports[report_type].append(formatted_report)
+            reports[report_type] = [
+                report.format() for report in report_instances.items
+            ]
 
         return jsonify(
             {

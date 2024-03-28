@@ -329,6 +329,9 @@ class Report(db.Model):  # type: ignore[name-defined]
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
+    user: Mapped["User"] = db.relationship(
+        "User", foreign_keys="Report.user_id"
+    )  # type: ignore
     post_id: Mapped[Optional[int]] = db.Column(
         db.Integer, db.ForeignKey("posts.id", onupdate="CASCADE", ondelete="SET NULL")
     )
@@ -345,35 +348,35 @@ class Report(db.Model):  # type: ignore[name-defined]
     date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
     dismissed: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
     closed: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
+    # Column properties
+    user_name = column_property(
+        select(User.display_name).where(User.id == user_id).scalar_subquery()
+    )
+    post_text = column_property(
+        select(Post.text).where(Post.id == post_id).scalar_subquery()
+    )
 
     # Format method
     # Responsible for returning a JSON object
     def format(self):
+        return_report = {
+            "id": self.id,
+            "type": self.type,
+            "userID": self.user_id,
+            "reporter": self.reporter,
+            "reportReason": self.report_reason,
+            "date": self.date,
+            "dismissed": self.dismissed,
+            "closed": self.closed,
+        }
+
         # If the report was for a user
         if self.type.lower() == "user":
-            return_report = {
-                "id": self.id,
-                "type": self.type,
-                "userID": self.user_id,
-                "reporter": self.reporter,
-                "reportReason": self.report_reason,
-                "date": self.date,
-                "dismissed": self.dismissed,
-                "closed": self.closed,
-            }
+            return_report["displayName"] = self.user_name
         # If the report was for a post
         else:
-            return_report = {
-                "id": self.id,
-                "type": self.type,
-                "userID": self.user_id,
-                "postID": self.post_id,
-                "reporter": self.reporter,
-                "reportReason": self.report_reason,
-                "date": self.date,
-                "dismissed": self.dismissed,
-                "closed": self.closed,
-            }
+            return_report["postID"] = self.post_id
+            return_report["text"] = self.post_text
 
         return return_report
 
