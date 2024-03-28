@@ -1295,7 +1295,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # If the user is trying to clear their threads mailbox
         if mailbox_type == "threads":
             num_messages = Thread.query.filter(
-                (Thread.user_1_id == user_id) or (Thread.user_2_id == user_id)
+                or_((Thread.user_1_id == user_id), (Thread.user_2_id == user_id))
             ).count()
             # If there are no messages, abort
             if num_messages == 0:
