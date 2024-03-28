@@ -71,7 +71,7 @@ class Post(db.Model):  # type: ignore[name-defined]
     # TODO: This should be a list of integers
     sent_hugs: Mapped[Optional[str]] = db.Column(db.Text)
     report: Mapped[Optional["Report"]] = db.relationship(
-        "Report", backref="post"
+        "Report", back_populates="post"
     )  # type: ignore
 
     @hybrid_property
@@ -248,6 +248,9 @@ class Report(db.Model):  # type: ignore[name-defined]
     post_id: Mapped[Optional[int]] = db.Column(
         db.Integer, db.ForeignKey("posts.id", onupdate="CASCADE", ondelete="SET NULL")
     )
+    post: Mapped[Optional["Post"]] = db.relationship(
+        "Post", back_populates="report"
+    )  # type: ignore
     reporter: Mapped[int] = db.Column(
         db.Integer,
         # TODO: This will fail if the user is deleted
