@@ -970,19 +970,7 @@ def create_app(db_path: str = database_path) -> Flask:
         for_user = db.aliased(User)
 
         if type in ["inbox", "outbox", "thread"]:
-            messages_query = (
-                db.session.query(
-                    Message,
-                    from_user.display_name,
-                    for_user.display_name,
-                    from_user.selected_character,
-                    from_user.icon_colours,
-                    for_user.selected_character,
-                    for_user.icon_colours,
-                )
-                .join(from_user, from_user.id == Message.from_id)
-                .join(for_user, for_user.id == Message.for_id)
-            )
+            messages_query = db.session.query(Message)
 
             # For inbox, gets all incoming messages
             if type == "inbox":
