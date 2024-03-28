@@ -27,10 +27,14 @@
 
 import os
 import json
-from typing import Dict
+from typing import Dict, Optional
+
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate  # type: ignore
 from flask import Flask
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Mapped
+from sqlalchemy import DateTime
 
 # Database configuration
 database_path = os.environ.get("DATABASE_URL", "")
@@ -51,30 +55,41 @@ def initialise_db(app: Flask) -> SQLAlchemy:
 # Post Model
 class Post(db.Model):  # type: ignore[name-defined]
     __tablename__ = "posts"
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    user_id: Mapped[int] = db.Column(
         db.Integer,
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    text = db.Column(db.String(480), nullable=False)
-    date = db.Column(db.DateTime)
-    given_hugs = db.Column(db.Integer, default=0)
-    open_report = db.Column(db.Boolean, nullable=False, default=False)
-    sent_hugs = db.Column(db.Text)
-    report = db.relationship("Report", backref="post")
+    user: Mapped["User"] = db.relationship(
+        "User", back_populates="posts"
+    )  # type: ignore
+    text: Mapped[str] = db.Column(db.String(480), nullable=False)
+    date: Mapped[DateTime] = db.Column(db.DateTime)
+    given_hugs: Mapped[Optional[int]] = db.Column(db.Integer, default=0)
+    open_report: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
+    sent_hugs: Mapped[Optional[str]] = db.Column(db.Text)
+    report: Mapped[Optional["Report"]] = db.relationship(
+        "Report", backref="post"
+    )  # type: ignore
+
+    @hybrid_property
+    def user_name(self):
+        return self.user.display_name
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self, user: str = ""):
+    def format(self):
         return {
             "id": self.id,
             "userId": self.user_id,
-            "user": user,
+            "user": self.user_name,
             "text": self.text,
             "date": self.date,
             "givenHugs": self.given_hugs,
-            "sentHugs": list(filter(None, self.sent_hugs.split(" "))),
+            "sentHugs": list(filter(None, self.sent_hugs.split(" ")))
+            if self.sent_hugs
+            else [],
         }
 
 

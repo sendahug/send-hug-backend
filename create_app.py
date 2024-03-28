@@ -151,11 +151,7 @@ def create_app(db_path: str = database_path) -> Flask:
         }
 
         for target in posts.keys():
-            posts_query = (
-                db.session.query(Post, User.display_name)
-                .join(User)
-                .filter(Post.open_report == db.false())
-            )
+            posts_query = db.session.query(Post).filter(Post.open_report == db.false())
 
             # Gets the ten most recent posts
             if target == "recent":
@@ -167,7 +163,7 @@ def create_app(db_path: str = database_path) -> Flask:
             post_instances = posts_query.limit(10).all()
 
             # formats each post in the list
-            posts[target] = [post[0].format(user=post[1]) for post in post_instances]
+            posts[target] = [post.format() for post in post_instances]
 
         return jsonify(
             {
@@ -195,8 +191,7 @@ def create_app(db_path: str = database_path) -> Flask:
         users = User.query.filter(User.display_name.ilike(f"%{search_query}%")).all()
 
         posts = (
-            db.session.query(Post, User.display_name)
-            .join(User)
+            db.session.query(Post)
             .order_by(db.desc(Post.date))
             .filter(Post.text.like(f"%{search_query}%"))
             .filter(Post.open_report == db.false())
@@ -211,7 +206,7 @@ def create_app(db_path: str = database_path) -> Flask:
             formatted_users.append(user.format())
 
         # Formats the posts
-        formatted_posts = [post[0].format(user=post[1]) for post in posts.items]
+        formatted_posts = [post.format() for post in posts.items]
 
         return jsonify(
             {
@@ -483,11 +478,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         formatted_posts = []
 
-        full_posts_query = (
-            db.session.query(Post, User.display_name)
-            .join(User)
-            .filter(Post.open_report == db.false())
-        )
+        full_posts_query = db.session.query(Post).filter(Post.open_report == db.false())
 
         if type == "new":
             full_posts_query = full_posts_query.order_by(db.desc(Post.date))
@@ -495,9 +486,7 @@ def create_app(db_path: str = database_path) -> Flask:
             full_posts_query = full_posts_query.order_by(Post.given_hugs, Post.date)
 
         paginated_posts = full_posts_query.paginate(page=page, per_page=ITEMS_PER_PAGE)
-        formatted_posts = [
-            post[0].format(user=post[1]) for post in paginated_posts.items
-        ]
+        formatted_posts = [post.format() for post in paginated_posts.items]
 
         return jsonify(
             {
