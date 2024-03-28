@@ -231,7 +231,7 @@ def create_app(db_path: str = database_path) -> Flask:
     def add_post(token_payload):
         current_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # If the user is currently blocked, raise an AuthError
         if current_user.blocked is True:
@@ -280,7 +280,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # Gets the user's ID
         current_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # If there's no post with that ID
         if original_post is None:
@@ -366,7 +366,9 @@ def create_app(db_path: str = database_path) -> Flask:
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
-        original_post: Optional[Post] = db.session.get(Post, int(post_id))
+        original_post: Optional[Post] = Post.query.filter(
+            Post.id == int(post_id)
+        ).one_or_404()
 
         # Gets the user's ID
         current_user: Optional[User] = User.query.filter(
@@ -377,7 +379,7 @@ def create_app(db_path: str = database_path) -> Flask:
         if original_post is None or current_user is None:
             abort(404)
 
-        hugs = original_post.sent_hugs.split(" ")
+        hugs = original_post.sent_hugs.split(" ") if original_post.sent_hugs else []
         post_author: Optional[User] = db.session.get(User, original_post.user_id)
         notification: Optional[Notification] = None
         push_notification: Optional[RawPushData] = None
@@ -387,6 +389,9 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(409)
 
         # Otherwise, continue adding the new hug
+        if not original_post.given_hugs:
+            original_post.given_hugs = 0
+
         original_post.given_hugs += 1
         current_user.given_hugs += 1
         hugs.append(str(current_user.id))
@@ -450,7 +455,7 @@ def create_app(db_path: str = database_path) -> Flask:
             # Gets the user's ID and compares it to the user_id of the post
             current_user = User.query.filter(
                 User.auth0_id == token_payload["sub"]
-            ).one_or_none()
+            ).one_or_404()
             # If it's not the same user, they can't delete the post, so an
             # auth error is raised
             if post_data.user_id != current_user.id:
@@ -679,7 +684,7 @@ def create_app(db_path: str = database_path) -> Flask:
         validator.check_type(user_id, "User ID")
 
         updated_user = json.loads(request.data)
-        original_user = User.query.filter(User.id == user_id).one_or_none()
+        original_user = User.query.filter(User.id == user_id).one_or_404()
 
         # If there's a login count (meaning, the user is editing their own
         # data), update it
@@ -853,7 +858,7 @@ def create_app(db_path: str = database_path) -> Flask:
         validator.check_type(user_id, "User ID")
         current_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # If the user making the request isn't the same as the user
         # whose posts should be deleted
@@ -896,14 +901,14 @@ def create_app(db_path: str = database_path) -> Flask:
     @requires_auth(["read:user"])
     def send_hug_to_user(token_payload, user_id: int):
         validator.check_type(user_id, "User ID")
-        user_to_hug = db.session.get(User, int(user_id))
+        user_to_hug = User.query.filter(User.id == int(user_id)).one_or_404()
 
         if user_to_hug is None:
             abort(404)
 
         current_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         current_user.given_hugs += 1
         user_to_hug.received_hugs += 1
@@ -955,7 +960,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # The user making the request
         requesting_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # If the user is attempting to read another user's messages
         if requesting_user.id != int(user_id):
@@ -1061,7 +1066,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         logged_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # Checks that the user isn't trying to send a message from someone else
         if logged_user.id != message_data["fromId"]:
@@ -1118,7 +1123,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # to get the logged user's data again.
         logged_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # Create a new message
         new_message = Message(  # type: ignore
@@ -1183,7 +1188,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         request_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # If the user is attempting to delete another user's messages
         if (
@@ -1265,7 +1270,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         current_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # If the user is attempting to delete another user's messages
         if current_user.id != int(user_id):
