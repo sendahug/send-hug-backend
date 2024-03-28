@@ -27,14 +27,14 @@
 
 import os
 import json
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate  # type: ignore
 from flask import Flask
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Mapped
-from sqlalchemy import DateTime, Text
+from sqlalchemy.orm import Mapped, column_property
+from sqlalchemy import DateTime, Text, select
 
 # Database configuration
 database_path = os.environ.get("DATABASE_URL", "")
@@ -120,6 +120,12 @@ class User(db.Model):  # type: ignore[name-defined]
     posts: Mapped[Optional[List["Post"]]] = db.relationship(
         "Post", back_populates="user"
     )  # type: ignore
+    sent_messages: Mapped[Optional[List["Message"]]] = db.relationship(
+        "Message", back_populates="from_user", foreign_keys="Message.from_id"
+    )  # type: ignore
+    received_messages: Mapped[Optional[List["Message"]]] = db.relationship(
+        "Message", back_populates="for_user", foreign_keys="Message.for_id"
+    )  # type: ignore
 
     # Format method
     # Responsible for returning a JSON object
@@ -155,12 +161,18 @@ class Message(db.Model):  # type: ignore[name-defined]
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
+    from_user: Mapped["User"] = db.relationship(
+        "User", back_populates="sent_messages", foreign_keys="Message.from_id"
+    )  # type: ignore
     for_id: Mapped[int] = db.Column(
         db.Integer,
         # TODO: This will fail if the user is deleted
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
+    for_user: Mapped["User"] = db.relationship(
+        "User", back_populates="received_messages", foreign_keys="Message.for_id"
+    )  # type: ignore
     text: Mapped[str] = db.Column(db.String(480), nullable=False)
     date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
     thread: Mapped[int] = db.Column(
@@ -174,31 +186,46 @@ class Message(db.Model):  # type: ignore[name-defined]
     )  # type: ignore
     from_deleted: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
     for_deleted: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
+    # Column Properties
+    from_name = column_property(
+        select(User.display_name).where(User.id == from_id).scalar_subquery()
+    )
+    from_icon = column_property(
+        select(User.selected_character).where(User.id == from_id).scalar_subquery()
+    )
+    from_colours = column_property(
+        select(User.icon_colours).where(User.id == from_id).scalar_subquery()
+    )
+    for_name = column_property(
+        select(User.display_name).where(User.id == for_id).scalar_subquery()
+    )
+    for_icon = column_property(
+        select(User.selected_character).where(User.id == for_id).scalar_subquery()
+    )
+    for_colours = column_property(
+        select(User.icon_colours).where(User.id == for_id).scalar_subquery()
+    )
 
     # Format method
     # Responsible for returning a JSON object
-    def format(
-        self,
-        from_name: str = "",
-        from_icon: str = "",
-        from_colous: Dict[str, str] = {},
-        for_name: str = "",
-        for_icon: str = "",
-        for_colours: Dict[str, str] = {},
-    ):
+    def format(self):
         return {
             "id": self.id,
             "fromId": self.from_id,
             "from": {
-                "displayName": from_name,
-                "selectedIcon": from_icon,
-                "iconColours": from_colous,
+                "displayName": self.from_name,
+                "selectedIcon": self.from_icon,
+                "iconColours": json.loads(self.from_colours)
+                if self.from_colours
+                else self.from_colours,
             },
             "forId": self.for_id,
             "for": {
-                "displayName": for_name,
-                "selectedIcon": for_icon,
-                "iconColours": for_colours,
+                "displayName": self.for_name,
+                "selectedIcon": self.for_icon,
+                "iconColours": json.loads(self.for_colours)
+                if self.for_colours
+                else self.for_colours,
             },
             "messageText": self.text,
             "date": self.date,

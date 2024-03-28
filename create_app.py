@@ -1028,17 +1028,7 @@ def create_app(db_path: str = database_path) -> Flask:
             )
 
             # formats each message in the list
-            formatted_messages = [
-                message[0].format(
-                    from_name=message[1],
-                    from_icon=message[3],
-                    from_colous=json.loads(message[4]) if message[4] else message[4],
-                    for_name=message[2],
-                    for_icon=message[5],
-                    for_colours=json.loads(message[6]) if message[6] else message[6],
-                )
-                for message in messages.items
-            ]
+            formatted_messages = [message[0].format() for message in messages.items]
             total_pages = calculate_total_pages(messages.total)
 
         # For threads, gets all threads' data
