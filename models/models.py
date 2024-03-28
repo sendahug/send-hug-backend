@@ -27,14 +27,14 @@
 
 import os
 import json
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate  # type: ignore
 from flask import Flask
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, Text
 
 # Database configuration
 database_path = os.environ.get("DATABASE_URL", "")
@@ -65,9 +65,10 @@ class Post(db.Model):  # type: ignore[name-defined]
         "User", back_populates="posts"
     )  # type: ignore
     text: Mapped[str] = db.Column(db.String(480), nullable=False)
-    date: Mapped[DateTime] = db.Column(db.DateTime)
+    date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
     given_hugs: Mapped[Optional[int]] = db.Column(db.Integer, default=0)
     open_report: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
+    # TODO: This should be a list of integers
     sent_hugs: Mapped[Optional[str]] = db.Column(db.Text)
     report: Mapped[Optional["Report"]] = db.relationship(
         "Report", backref="post"
@@ -96,27 +97,29 @@ class Post(db.Model):  # type: ignore[name-defined]
 # User Model
 class User(db.Model):  # type: ignore[name-defined]
     __tablename__ = "users"
-    id = db.Column(db.Integer, primary_key=True)
-    display_name = db.Column(db.String(60), nullable=False)
-    auth0_id = db.Column(db.String(), nullable=False)
-    received_hugs = db.Column(db.Integer, default=0)
-    given_hugs = db.Column(db.Integer, default=0)
-    login_count = db.Column(db.Integer, default=1)
-    role = db.Column(db.String(), default="user")
-    blocked = db.Column(db.Boolean, nullable=False, default=False)
-    release_date = db.Column(db.DateTime)
-    open_report = db.Column(db.Boolean, nullable=False, default=False)
-    last_notifications_read = db.Column(db.DateTime)
-    auto_refresh = db.Column(db.Boolean, default=True)
-    refresh_rate = db.Column(db.Integer, default=20)
-    push_enabled = db.Column(db.Boolean, default=False)
-    selected_character = db.Column(db.String(6), default="kitty")
-    icon_colours = db.Column(
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    display_name: Mapped[str] = db.Column(db.String(60), nullable=False)
+    auth0_id: Mapped[str] = db.Column(db.String(), nullable=False)
+    received_hugs: Mapped[int] = db.Column(db.Integer, default=0)
+    given_hugs: Mapped[Optional[int]] = db.Column(db.Integer, default=0)
+    login_count: Mapped[Optional[int]] = db.Column(db.Integer, default=1)
+    role: Mapped[Optional[str]] = db.Column(db.String(), default="user")
+    blocked: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
+    release_date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
+    open_report: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
+    last_notifications_read: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
+    auto_refresh: Mapped[Optional[bool]] = db.Column(db.Boolean, default=True)
+    refresh_rate: Mapped[Optional[int]] = db.Column(db.Integer, default=20)
+    push_enabled: Mapped[Optional[bool]] = db.Column(db.Boolean, default=False)
+    selected_character: Mapped[Optional[str]] = db.Column(db.String(6), default="kitty")
+    icon_colours: Mapped[Optional[str]] = db.Column(
         db.String(),
         default='{"character":"#BA9F93", "lbg":"#e2a275",'
         '"rbg":"#f8eee4", "item":"#f4b56a"}',
     )
-    posts = db.relationship("Post", backref="user")
+    posts: Mapped[Optional[List["Post"]]] = db.relationship(
+        "Post", back_populates="user"
+    )  # type: ignore
 
     # Format method
     # Responsible for returning a JSON object
@@ -145,26 +148,32 @@ class User(db.Model):  # type: ignore[name-defined]
 # Message Model
 class Message(db.Model):  # type: ignore[name-defined]
     __tablename__ = "messages"
-    id = db.Column(db.Integer, primary_key=True)
-    from_id = db.Column(
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    from_id: Mapped[int] = db.Column(
         db.Integer,
+        # TODO: This will fail if the user is deleted
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    for_id = db.Column(
+    for_id: Mapped[int] = db.Column(
         db.Integer,
+        # TODO: This will fail if the user is deleted
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    text = db.Column(db.String(480), nullable=False)
-    date = db.Column(db.DateTime)
-    thread = db.Column(
+    text: Mapped[str] = db.Column(db.String(480), nullable=False)
+    date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
+    thread: Mapped[int] = db.Column(
         db.Integer,
+        # TODO: This will fail if the thread is deleted
         db.ForeignKey("threads.id", onupdate="CASCADE", ondelete="CASCADE"),
         nullable=False,
     )
-    from_deleted = db.Column(db.Boolean, nullable=False, default=False)
-    for_deleted = db.Column(db.Boolean, nullable=False, default=False)
+    thread_details: Mapped["Thread"] = db.relationship(
+        "Thread", back_populates="messages"
+    )  # type: ignore
+    from_deleted: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
+    for_deleted: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
 
     # Format method
     # Responsible for returning a JSON object
@@ -200,20 +209,24 @@ class Message(db.Model):  # type: ignore[name-defined]
 # Thread Model
 class Thread(db.Model):  # type: ignore[name-defined]
     __tablename__ = "threads"
-    id = db.Column(db.Integer, primary_key=True)
-    user_1_id = db.Column(
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    user_1_id: Mapped[int] = db.Column(
         db.Integer,
+        # TODO: This will fail if the user is deleted
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    user_2_id = db.Column(
+    user_2_id: Mapped[int] = db.Column(
         db.Integer,
+        # TODO: This will fail if the user is deleted
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    user_1_deleted = db.Column(db.Boolean, nullable=False, default=False)
-    user_2_deleted = db.Column(db.Boolean, nullable=False, default=False)
-    messages = db.relationship("Message", backref="threads")
+    user_1_deleted: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
+    user_2_deleted: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
+    messages: Mapped[List[Message]] = db.relationship(
+        "Message", back_populates="thread_details"
+    )  # type: ignore
 
     # Format method
     # Responsible for returning a JSON object
@@ -224,25 +237,27 @@ class Thread(db.Model):  # type: ignore[name-defined]
 # Report Model
 class Report(db.Model):  # type: ignore[name-defined]
     __tablename__ = "reports"
-    id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(10), nullable=False)
-    user_id = db.Column(
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    type: Mapped[str] = db.Column(db.String(10), nullable=False)
+    user_id: Mapped[int] = db.Column(
         db.Integer,
+        # TODO: This will fail if the user is deleted
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    post_id = db.Column(
+    post_id: Mapped[Optional[int]] = db.Column(
         db.Integer, db.ForeignKey("posts.id", onupdate="CASCADE", ondelete="SET NULL")
     )
-    reporter = db.Column(
+    reporter: Mapped[int] = db.Column(
         db.Integer,
+        # TODO: This will fail if the user is deleted
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    report_reason = db.Column(db.String(120), nullable=False)
-    date = db.Column(db.DateTime)
-    dismissed = db.Column(db.Boolean, nullable=False, default=False)
-    closed = db.Column(db.Boolean, nullable=False, default=False)
+    report_reason: Mapped[str] = db.Column(db.String(120), nullable=False)
+    date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
+    dismissed: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
+    closed: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
 
     # Format method
     # Responsible for returning a JSON object
@@ -279,20 +294,21 @@ class Report(db.Model):  # type: ignore[name-defined]
 # Notification Model
 class Notification(db.Model):  # type: ignore[name-defined]
     __tablename__ = "notifications"
-    id = db.Column(db.Integer, primary_key=True)
-    for_id = db.Column(
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    for_id: Mapped[int] = db.Column(
         db.Integer,
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
         nullable=False,
     )
-    from_id = db.Column(
+    from_id: Mapped[int] = db.Column(
         db.Integer,
+        # TODO: This will fail if the user is deleted
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    type = db.Column(db.String(), nullable=False)
-    text = db.Column(db.String(), nullable=False)
-    date = db.Column(db.DateTime, nullable=False)
+    type: Mapped[str] = db.Column(db.String(), nullable=False)
+    text: Mapped[str] = db.Column(db.String(), nullable=False)
+    date: Mapped[DateTime] = db.Column(db.DateTime, nullable=False)
 
     # Format method
     def format(self, from_name: str = "", for_name: str = ""):
@@ -311,14 +327,14 @@ class Notification(db.Model):  # type: ignore[name-defined]
 # Notification Subscription Model
 class NotificationSub(db.Model):  # type: ignore[name-defined]
     __tablename__ = "subscriptions"
-    id = db.Column(db.Integer, primary_key=True)
-    user = db.Column(
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    user: Mapped[int] = db.Column(
         db.Integer,
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
         nullable=False,
     )
-    endpoint = db.Column(db.String(), nullable=False)
-    subscription_data = db.Column(db.Text, nullable=False)
+    endpoint: Mapped[str] = db.Column(db.String(), nullable=False)
+    subscription_data: Mapped[Text] = db.Column(db.Text, nullable=False)
 
     # Format method
     def format(self):
@@ -333,8 +349,8 @@ class NotificationSub(db.Model):  # type: ignore[name-defined]
 # Filter
 class Filter(db.Model):  # type: ignore[name-defined]
     __tablename__ = "filters"
-    id = db.Column(db.Integer, primary_key=True)
-    filter = db.Column(db.String(), nullable=False)
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    filter: Mapped[str] = db.Column(db.String(), nullable=False)
 
     # Format method
     def format(self):
