@@ -1013,7 +1013,7 @@ def create_app(db_path: str = database_path) -> Flask:
             )
 
             # formats each message in the list
-            formatted_messages = [message[0].format() for message in messages.items]
+            formatted_messages = [message.format() for message in messages.items]
             total_pages = calculate_total_pages(messages.total)
 
         # For threads, gets all threads' data
