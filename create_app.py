@@ -249,7 +249,7 @@ def create_app(db_path: str = database_path) -> Flask:
         )
 
         # Create a new post object
-        new_post = Post(
+        new_post = Post(  # type:ignore
             user_id=new_post_data["userId"],
             text=new_post_data["text"],
             date=new_post_data["date"],
@@ -394,7 +394,7 @@ def create_app(db_path: str = database_path) -> Flask:
         if post_author:
             post_author.received_hugs += 1
             today = datetime.now()
-            notification = Notification(
+            notification = Notification(  # type: ignore
                 for_id=post_author.id,
                 from_id=current_user.id,
                 type="hug",
@@ -600,7 +600,7 @@ def create_app(db_path: str = database_path) -> Flask:
         if database_user:
             abort(409)
 
-        new_user = User(
+        new_user = User(  # type: ignore
             auth0_id=user_data["id"],
             display_name=user_data["displayName"],
             role="user",
@@ -906,7 +906,7 @@ def create_app(db_path: str = database_path) -> Flask:
         current_user.given_hugs += 1
         user_to_hug.received_hugs += 1
         today = datetime.now()
-        notification = Notification(
+        notification = Notification(  # type: ignore
             for_id=user_to_hug.id,
             from_id=current_user.id,
             type="hug",
@@ -1165,7 +1165,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # If there's no thread between the users
         if thread is None:
-            new_thread = Thread(
+            new_thread = Thread(  # type: ignore
                 user_1_id=message_data["fromId"], user_2_id=message_data["forId"]
             )
             # Try to create the new thread
@@ -1189,7 +1189,7 @@ def create_app(db_path: str = database_path) -> Flask:
         ).one_or_none()
 
         # Create a new message
-        new_message = Message(
+        new_message = Message(  # type: ignore
             from_id=message_data["fromId"],
             for_id=message_data["forId"],
             text=message_data["messageText"],
@@ -1198,7 +1198,7 @@ def create_app(db_path: str = database_path) -> Flask:
         )
 
         # Create a notification for the user getting the message
-        notification = Notification(
+        notification = Notification(  # type: ignore
             for_id=message_data["forId"],
             from_id=message_data["fromId"],
             type="message",
@@ -1455,7 +1455,7 @@ def create_app(db_path: str = database_path) -> Flask:
             if reported_item is None:
                 abort(404)
 
-            report = Report(
+            report = Report(  # type: ignore
                 type=report_data["type"],
                 date=report_data["date"],
                 user_id=report_data["userID"],
@@ -1481,7 +1481,7 @@ def create_app(db_path: str = database_path) -> Flask:
             if reported_item is None:
                 abort(404)
 
-            report = Report(
+            report = Report(  # type: ignore
                 type=report_data["type"],
                 date=report_data["date"],
                 user_id=report_data["userID"],
@@ -1582,7 +1582,7 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(409)
 
         # Try to add the word to the filters list
-        filter = Filter(filter=new_filter.lower())
+        filter = Filter(filter=new_filter.lower())  # type: ignore
         added = db_add(filter)["resource"]
 
         return jsonify({"success": True, "added": added})
@@ -1683,7 +1683,7 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(404)
 
         # Create a new subscription object with the given data
-        subscription = NotificationSub(
+        subscription = NotificationSub(  # type: ignore
             user=user.id,
             endpoint=subscription_data["endpoint"],
             subscription_data=json.dumps(subscription_data),
