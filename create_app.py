@@ -966,9 +966,6 @@ def create_app(db_path: str = database_path) -> Flask:
                 403,
             )
 
-        from_user = db.aliased(User)
-        for_user = db.aliased(User)
-
         if type in ["inbox", "outbox", "thread"]:
             messages_query = db.session.query(Message)
 
@@ -1023,34 +1020,7 @@ def create_app(db_path: str = database_path) -> Flask:
         else:
             # Get the thread ID, and users' names and IDs
             threads_messages = (
-                db.session.query(
-                    db.func.count(Message.id),
-                    Message.thread,
-                    from_user.display_name,
-                    from_user.selected_character,
-                    from_user.icon_colours,
-                    for_user.display_name,
-                    for_user.selected_character,
-                    for_user.icon_colours,
-                    Thread.user_1_id,
-                    Thread.user_2_id,
-                    db.func.max(Message.date),
-                )
-                .join(Thread, Message.thread == Thread.id)
-                .join(from_user, from_user.id == Thread.user_1_id)
-                .join(for_user, for_user.id == Thread.user_2_id)
-                .group_by(
-                    Message.thread,
-                    from_user.display_name,
-                    for_user.display_name,
-                    Thread.user_1_id,
-                    Thread.user_2_id,
-                    Thread.id,
-                    from_user.selected_character,
-                    from_user.icon_colours,
-                    for_user.selected_character,
-                    for_user.icon_colours,
-                )
+                db.session.query(Thread)
                 .order_by(Thread.id)
                 .filter(
                     (
@@ -1062,9 +1032,7 @@ def create_app(db_path: str = database_path) -> Flask:
                         & (Thread.user_2_deleted == db.false())
                     )
                 )
-                .paginate(  # type: ignore[attr-defined]
-                    page=page, per_page=ITEMS_PER_PAGE
-                )
+                .paginate(page=page, per_page=ITEMS_PER_PAGE)
             )
 
             formatted_messages = []
@@ -1072,29 +1040,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
             # Threads data formatting
             for thread in threads_messages.items:
-                # Set up the thread
-                thread_json = {
-                    "id": thread[1],
-                    "user1": {
-                        "displayName": thread[2],
-                        "selectedIcon": thread[3],
-                        "iconColours": json.loads(thread[4])
-                        if thread[4]
-                        else thread[4],
-                    },
-                    "user1Id": thread[8],
-                    "user2": {
-                        "displayName": thread[5],
-                        "selectedIcon": thread[6],
-                        "iconColours": json.loads(thread[7])
-                        if thread[7]
-                        else thread[7],
-                    },
-                    "user2Id": thread[9],
-                    "numMessages": thread[0],
-                    "latestMessage": thread[10],
-                }
-                formatted_messages.append(thread_json)
+                formatted_messages.append(thread.format())
 
         return jsonify(
             {
@@ -1213,7 +1159,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>/<item_id>", methods=["DELETE"])
     @requires_auth(["delete:messages"])
-    def delete_thread(
+    def delete_thread(  # TODO: This should be renamed to delete_message
         token_payload,
         mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
         item_id: int,

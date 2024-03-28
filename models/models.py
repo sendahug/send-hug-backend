@@ -243,22 +243,79 @@ class Thread(db.Model):  # type: ignore[name-defined]
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
+    user_1: Mapped["User"] = db.relationship(
+        "User", foreign_keys="Thread.user_1_id"
+    )  # type: ignore
     user_2_id: Mapped[int] = db.Column(
         db.Integer,
         # TODO: This will fail if the user is deleted
         db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
+    user_2: Mapped["User"] = db.relationship(
+        "User", foreign_keys="Thread.user_2_id"
+    )  # type: ignore
     user_1_deleted: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
     user_2_deleted: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
     messages: Mapped[List[Message]] = db.relationship(
         "Message", back_populates="thread_details"
     )  # type: ignore
+    # Column properties
+    message_count = column_property(
+        select(db.func.count(Message.id))
+        .where(Message.thread == id)
+        .group_by(Message.thread)
+        .scalar_subquery()
+    )
+    latest_message_date = column_property(
+        select(db.func.max(Message.date))
+        .where(Message.thread == id)
+        .group_by(Message.thread)
+        .scalar_subquery()
+    )
+    user_1_name = column_property(
+        select(User.display_name).where(User.id == user_1_id).scalar_subquery()
+    )
+    user_1_icon = column_property(
+        select(User.selected_character).where(User.id == user_1_id).scalar_subquery()
+    )
+    user_1_colours = column_property(
+        select(User.icon_colours).where(User.id == user_1_id).scalar_subquery()
+    )
+    user_2_name = column_property(
+        select(User.display_name).where(User.id == user_2_id).scalar_subquery()
+    )
+    user_2_icon = column_property(
+        select(User.selected_character).where(User.id == user_2_id).scalar_subquery()
+    )
+    user_2_colours = column_property(
+        select(User.icon_colours).where(User.id == user_2_id).scalar_subquery()
+    )
 
     # Format method
     # Responsible for returning a JSON object
     def format(self):
-        return {"id": self.id, "user1": self.user_1_id, "user2": self.user_2_id}
+        return {
+            "id": self.id,
+            "user1": {
+                "displayName": self.user_1_name,
+                "selectedIcon": self.user_1_icon,
+                "iconColours": json.loads(self.user_1_colours)
+                if self.user_1_colours
+                else self.user_1_colours,
+            },
+            "user1Id": self.user_1_id,
+            "user2": {
+                "displayName": self.user_2_name,
+                "selectedIcon": self.user_2_icon,
+                "iconColours": json.loads(self.user_2_colours)
+                if self.user_2_colours
+                else self.user_2_colours,
+            },
+            "user2Id": self.user_2_id,
+            "numMessages": self.message_count,
+            "latestMessage": self.latest_message_date,
+        }
 
 
 # Report Model
