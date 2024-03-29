@@ -34,7 +34,7 @@ from datetime import datetime
 
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
-from pywebpush import webpush, WebPushException
+from pywebpush import webpush, WebPushException  # type: ignore
 from sqlalchemy import and_, or_
 
 from models import (
@@ -393,6 +393,9 @@ def create_app(db_path: str = database_path) -> Flask:
         # Otherwise, continue adding the new hug
         if not original_post.given_hugs:
             original_post.given_hugs = 0
+
+        if not current_user.given_hugs:
+            current_user.given_hugs = 0
 
         original_post.given_hugs += 1
         current_user.given_hugs += 1
