@@ -547,8 +547,8 @@ COPY public.posts (id, user_id, text, date, given_hugs, open_report, sent_hugs) 
 COPY public.reports (id, type, user_id, post_id, reporter, report_reason, dismissed, closed, date) FROM stdin;
 1	Post	1	9	4	The post is Inappropriate	t	t	2020-06-22 13:38:58.052
 2	Post	1	11	4	The post is Inappropriate	t	t	2020-06-22 14:08:10.401
-3	Post	4	\N	4	The post is Inappropriate	f	f	2020-06-22 14:13:25.667
-4	Post	4	\N	4	The post is Inappropriate	f	f	2020-06-22 14:30:33.051
+3	Post	4	\N	4	The post is Inappropriate	f	t	2020-06-22 14:13:25.667
+4	Post	4	\N	4	The post is Inappropriate	f	t	2020-06-22 14:30:33.051
 26	Post	4	\N	4	The post is Spam	t	t	2020-06-22 20:09:42.139
 5	Post	4	\N	4	The post is Inappropriate	t	t	2020-06-22 14:34:46.527
 6	User	5	\N	4	The user is posting Spam	t	t	2020-06-22 14:41:30.361

@@ -44,7 +44,7 @@ from models import Post
 @pytest.fixture
 def post_to_add():
     current_date = datetime.now()
-    return Post(
+    return Post(  # type: ignore
         user_id=1,
         text="hello",
         date=current_date,
@@ -57,7 +57,7 @@ def post_to_add():
 @pytest.fixture
 def invalid_post_to_add():
     current_date = datetime.now()
-    return Post(
+    return Post(  # type: ignore
         user_id=100,
         text="hello",
         date=current_date,
@@ -71,7 +71,7 @@ def test_add_no_errors(test_db, post_to_add):
     expected_return = {
         "id": 46,
         "userId": 1,
-        "user": "",
+        "user": "shirb",
         "text": "hello",
         "date": post_to_add.date,
         "givenHugs": 0,
@@ -158,7 +158,7 @@ def test_update_multiple_no_errors(test_db, db_helpers_dummy_data):
         {
             "id": 2,
             "userId": 1,
-            "user": "",
+            "user": "shirb",
             "text": "test",
             "date": datetime.strptime(
                 "2020-06-01 15:10:59.898", db_helpers_dummy_data["DATETIME_PATTERN"]
@@ -223,7 +223,7 @@ def test_add_or_update_no_errors(test_db, db_helpers_dummy_data, post_to_add):
         {
             "id": 46,
             "userId": 1,
-            "user": "",
+            "user": "shirb",
             "text": "hello",
             "date": current_date,
             "givenHugs": 0,
