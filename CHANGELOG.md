@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+#### Features
+
+- Added type hints to all SQLAlchemy models ([#593](https://github.com/sendahug/send-hug-backend/pull/593)).
+
+#### Changes
+
+- Replaced all queries that relied on selecting columns from different tables at the same time with single-model queries. The columns needed from other tables (e.g., the user-related columns in the messages' query) have been included in the SQLAlchemy model as `column_properties` instead. This means that we provide the SQL query for getting the relevant values, and SQLAlchemy executes it as part of our select statement. This is mostly an internal change that should have no impact whatsoever on the user, as the API's outputs should still remain the same ([#593](https://github.com/sendahug/send-hug-backend/pull/593)).
+- All models' `format` methods have been simplified and only refer to the provided model itself, without any need for external parameters ([#593](https://github.com/sendahug/send-hug-backend/pull/593)).
+- Updated the fetches for the currently logged-in user to return a 404 error if the user doesn't exist instead of returning None (which then broke the rest of the relevant workflows). ([#593](https://github.com/sendahug/send-hug-backend/pull/593))
+
+#### Fixes
+
+- Replaced the deprecated `backref` parameter in the SQLAlchemy relationship definitions with the current `back_populates` parameter ([#593](https://github.com/sendahug/send-hug-backend/pull/593)).
+- Several SQLAlchemy queries were incorrectly using Python operators (or, and) as part of their `WHERE` clause instead of the bitwise operators or the dedicated SQLAlchemy methods. This meant that in some instances the second part of a query's filter was ignored. Now, all queries use the correct SQLAlchemy helper methods (`or_`, `and_`) for filtering ([#593](https://github.com/sendahug/send-hug-backend/pull/593)).
+
+### 2024-03-29
+
 #### Chores
 
 - Added a changelog and instructions for writing changelog entries ([#585](https://github.com/sendahug/send-hug-backend/pull/585)).
