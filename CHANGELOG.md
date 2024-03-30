@@ -1,12 +1,10 @@
 # Changelog
 
-### 2024-03-30
+### 2024-03-29
 
 #### Chores
 
 - Added a changelog and instructions for writing changelog entries ([#585](https://github.com/sendahug/send-hug-backend/pull/585)).
-- Updated the instructions for updating the changelog file to reflect the new automated process. ([#594](https://github.com/sendahug/send-hug-backend/pull/594))
-- Automated the process of updating the changelog file when commits are merged to dev. This allows us to insert the date at the same time as the change, and ensures that we don't get repeated merge conflicts (due to different pull requests updating the changelog file). ([#594](https://github.com/sendahug/send-hug-backend/pull/594))
 
 ### 2024-03-25
 

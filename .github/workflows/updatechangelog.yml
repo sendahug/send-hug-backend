@@ -2,7 +2,7 @@ name: Update Changelog
 
 on:
   push:
-    branches: [ feature/automate_changelog ]
+    branches: [ dev ]
 
 jobs:
   update_changelog:
