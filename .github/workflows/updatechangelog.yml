@@ -2,31 +2,11 @@ name: Update Changelog
 
 on:
   push:
-    branches: [ dev ]
-
-env:
-  BASE_REPO_URL: "https://github.com/sendahug/send-hug-backend"
+    branches: [ feature/automate_changelog ]
 
 jobs:
   update_changelog:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ssh-key: ${{ secrets.BOT_SSH_KEY }}
-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.11
-
-      - run: python3 update_changelog.py
-
-      - name: Update the submodules
-        run: |
-          git config --global user.email "sendahugcom@gmail.com"
-          git config --global user.name "Send A Hug Bot"
-          git add .
-          git commit -m 'Updated the Changelog.'
-
-      - name: Push updates
-        run: git push origin dev
+    uses: sendahug/send-a-workflow/.github/workflows/updatechangelog.yml@feature/changelog_update
+    with:
+      base_repo_url: "https://github.com/sendahug/send-hug-backend"
+    secrets: inherit
