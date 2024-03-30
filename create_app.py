@@ -27,6 +27,7 @@
 
 import os
 import json
+import math
 import http.client
 from typing import Dict, List, Any, Literal, Optional, Union
 from datetime import datetime
@@ -107,7 +108,7 @@ def create_app(db_path: str = database_path) -> Flask:
     def calculate_total_pages(items_count: Optional[int]) -> int:
         """Caculates the number of pages for the query"""
         if items_count:
-            return items_count // ITEMS_PER_PAGE + 1
+            return math.ceil(items_count / ITEMS_PER_PAGE)
 
         return 0
 
