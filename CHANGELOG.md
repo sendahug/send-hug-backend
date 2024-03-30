@@ -4,6 +4,12 @@
 
 #### Chores
 
+- Deleted the unnecessary heading section from the pull request template ([#592](https://github.com/sendahug/send-hug-backend/pull/592)).
+
+### 2024-03-29
+
+#### Chores
+
 - Added a changelog and instructions for writing changelog entries ([#585](https://github.com/sendahug/send-hug-backend/pull/585)).
 
 ### 2024-03-25
