@@ -583,9 +583,6 @@ def create_app(db_path: str = database_path) -> Flask:
                 db_update(user_data)
 
         formatted_user_data = user_data.format()
-        formatted_user_data["posts"] = Post.query.filter(
-            Post.user_id == user_data.id
-        ).count()
 
         return jsonify({"success": True, "user": formatted_user_data})
 

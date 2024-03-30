@@ -126,6 +126,10 @@ class User(db.Model):  # type: ignore[name-defined]
     received_messages: Mapped[Optional[List["Message"]]] = db.relationship(
         "Message", back_populates="for_user", foreign_keys="Message.for_id"
     )  # type: ignore
+    # Column properties
+    post_count = column_property(
+        select(db.func.count(Post.id)).where(Post.user_id == id).scalar_subquery()
+    )
 
     # Format method
     # Responsible for returning a JSON object
@@ -148,6 +152,7 @@ class User(db.Model):  # type: ignore[name-defined]
             "iconColours": json.loads(self.icon_colours)
             if self.icon_colours
             else self.icon_colours,
+            "posts": self.post_count,
         }
 
 
