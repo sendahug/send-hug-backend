@@ -9,4 +9,5 @@ jobs:
     uses: sendahug/send-a-workflow/.github/workflows/updatechangelog.yml@feature/changelog_update
     with:
       base_repo_url: "https://github.com/sendahug/send-hug-backend"
+      repository: "send-hug-backend"
     secrets: inherit
