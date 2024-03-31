@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+### 2024-03-31
+
 #### Features
 
 - Added type hints to all SQLAlchemy models ([#593](https://github.com/sendahug/send-hug-backend/pull/593)).
@@ -18,7 +20,7 @@
 - Replaced the deprecated `backref` parameter in the SQLAlchemy relationship definitions with the current `back_populates` parameter ([#593](https://github.com/sendahug/send-hug-backend/pull/593)).
 - Several SQLAlchemy queries were incorrectly using Python operators (or, and) as part of their `WHERE` clause instead of the bitwise operators or the dedicated SQLAlchemy methods. This meant that in some instances the second part of a query's filter was ignored. Now, all queries use the correct SQLAlchemy helper methods (`or_`, `and_`) for filtering ([#593](https://github.com/sendahug/send-hug-backend/pull/593)).
 
-### 2024-03-29
+### 2024-03-30
 
 #### Chores
 
