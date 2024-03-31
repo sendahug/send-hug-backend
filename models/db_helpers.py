@@ -25,9 +25,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Literal, Any, TypedDict, Union
+from typing import List, Literal, Any, TypedDict, Union
 
 from flask import abort
+from sqlalchemy import and_, or_
 from sqlalchemy.exc import DataError, IntegrityError
 
 from .models import Post, Message, Thread, db
@@ -303,11 +304,11 @@ def delete_all(
             # Get all threads in which the user is involved
             Threads = (
                 db.session.query(Thread)
-                .filter((Thread.user_1_id == id) or (Thread.user_2_id == id))
+                .filter(or_((Thread.user_1_id == id), (Thread.user_2_id == id)))
                 .all()
             )
             # List of thread IDs to delete
-            threads_to_delete = []
+            threads_to_delete: List[int] = []
 
             # Delete the messages in each thread
             for thread in Threads:
@@ -319,10 +320,15 @@ def delete_all(
                     db.session.query(Message)
                     .filter(Message.thread == thread.id)
                     .filter(
-                        ((Message.for_id == id) and (Message.from_deleted == db.true()))
-                        | (
-                            (Message.from_id == id)
-                            and (Message.for_deleted == db.true())
+                        or_(
+                            and_(
+                                (Message.for_id == id),
+                                Message.from_deleted == db.true(),
+                            ),
+                            and_(
+                                (Message.from_id == id),
+                                (Message.for_deleted == db.true()),
+                            ),
                         )
                     )
                     .delete()
@@ -331,7 +337,9 @@ def delete_all(
                     db.session.query(Message)
                     .filter(Message.thread == thread.id)
                     .filter(
-                        (Message.for_id == id) and (Message.from_deleted == db.false())
+                        and_(
+                            (Message.for_id == id), (Message.from_deleted == db.false())
+                        )
                     )
                     .all()
                 )
@@ -339,7 +347,9 @@ def delete_all(
                     db.session.query(Message)
                     .filter(Message.thread == thread.id)
                     .filter(
-                        (Message.from_id == id) and (Message.for_deleted == db.false())
+                        and_(
+                            (Message.from_id == id), (Message.for_deleted == db.false())
+                        )
                     )
                     .all()
                 )
@@ -375,8 +385,7 @@ def delete_all(
                         thread.user_2_deleted = True
 
             # Then try to delete the threads that are okay to delete
-            for thread in threads_to_delete:
-                db.session.query(Thread).filter(Thread.id == thread).delete()
+            db.session.query(Thread).filter(Thread.id.in_(threads_to_delete)).delete()
 
         db.session.commit()
     # If there's a database error

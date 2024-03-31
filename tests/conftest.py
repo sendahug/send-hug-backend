@@ -224,7 +224,7 @@ def db_helpers_dummy_data():
         "updated_post": {
             "id": 1,
             "userId": 1,
-            "user": "",
+            "user": "shirb",
             "text": "new test",
             "date": datetime.strptime("2020-06-01 15:05:01.966", DATETIME_PATTERN),
             "givenHugs": 2,

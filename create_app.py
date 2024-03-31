@@ -29,9 +29,9 @@ import os
 import json
 import math
 import http.client
-
 from typing import Dict, List, Any, Literal, Optional, Union
 from datetime import datetime
+
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
 from pywebpush import webpush, WebPushException  # type: ignore
@@ -105,9 +105,12 @@ def create_app(db_path: str = database_path) -> Flask:
         return response
 
     # TODO: Replace with an internal pagination mechanism
-    def calculate_total_pages(items_count: int) -> int:
+    def calculate_total_pages(items_count: Optional[int]) -> int:
         """Caculates the number of pages for the query"""
-        return math.ceil(items_count / ITEMS_PER_PAGE)
+        if items_count:
+            return math.ceil(items_count / ITEMS_PER_PAGE)
+
+        return 0
 
     # Send push notification
     def send_push_notification(user_id: int, data: RawPushData):
@@ -151,11 +154,7 @@ def create_app(db_path: str = database_path) -> Flask:
         }
 
         for target in posts.keys():
-            posts_query = (
-                db.session.query(Post, User.display_name)
-                .join(User)
-                .filter(Post.open_report == db.false())
-            )
+            posts_query = Post.query.filter(Post.open_report == db.false())
 
             # Gets the ten most recent posts
             if target == "recent":
@@ -167,7 +166,7 @@ def create_app(db_path: str = database_path) -> Flask:
             post_instances = posts_query.limit(10).all()
 
             # formats each post in the list
-            posts[target] = [post[0].format(user=post[1]) for post in post_instances]
+            posts[target] = [post.format() for post in post_instances]
 
         return jsonify(
             {
@@ -195,9 +194,7 @@ def create_app(db_path: str = database_path) -> Flask:
         users = User.query.filter(User.display_name.ilike(f"%{search_query}%")).all()
 
         posts = (
-            db.session.query(Post, User.display_name)
-            .join(User)
-            .order_by(db.desc(Post.date))
+            Post.query.order_by(db.desc(Post.date))
             .filter(Post.text.like(f"%{search_query}%"))
             .filter(Post.open_report == db.false())
             .paginate(page=current_page, per_page=ITEMS_PER_PAGE)
@@ -211,7 +208,7 @@ def create_app(db_path: str = database_path) -> Flask:
             formatted_users.append(user.format())
 
         # Formats the posts
-        formatted_posts = [post[0].format(user=post[1]) for post in posts.items]
+        formatted_posts = [post.format() for post in posts.items]
 
         return jsonify(
             {
@@ -234,7 +231,7 @@ def create_app(db_path: str = database_path) -> Flask:
     def add_post(token_payload):
         current_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # If the user is currently blocked, raise an AuthError
         if current_user.blocked is True:
@@ -254,7 +251,7 @@ def create_app(db_path: str = database_path) -> Flask:
         )
 
         # Create a new post object
-        new_post = Post(
+        new_post = Post(  # type: ignore
             user_id=new_post_data["userId"],
             text=new_post_data["text"],
             date=new_post_data["date"],
@@ -283,7 +280,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # Gets the user's ID
         current_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # If there's no post with that ID
         if original_post is None:
@@ -369,7 +366,9 @@ def create_app(db_path: str = database_path) -> Flask:
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
-        original_post: Optional[Post] = db.session.get(Post, int(post_id))
+        original_post: Optional[Post] = Post.query.filter(
+            Post.id == int(post_id)
+        ).one_or_404()
 
         # Gets the user's ID
         current_user: Optional[User] = User.query.filter(
@@ -380,8 +379,10 @@ def create_app(db_path: str = database_path) -> Flask:
         if original_post is None or current_user is None:
             abort(404)
 
-        hugs = original_post.sent_hugs.split(" ")
-        post_author: Optional[User] = db.session.get(User, original_post.user_id)
+        hugs = original_post.sent_hugs.split(" ") if original_post.sent_hugs else []
+        post_author: Optional[User] = User.query.filter(
+            User.id == original_post.user_id
+        ).one_or_none()
         notification: Optional[Notification] = None
         push_notification: Optional[RawPushData] = None
 
@@ -390,6 +391,12 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(409)
 
         # Otherwise, continue adding the new hug
+        if not original_post.given_hugs:
+            original_post.given_hugs = 0
+
+        if not current_user.given_hugs:
+            current_user.given_hugs = 0
+
         original_post.given_hugs += 1
         current_user.given_hugs += 1
         hugs.append(str(current_user.id))
@@ -399,7 +406,7 @@ def create_app(db_path: str = database_path) -> Flask:
         if post_author:
             post_author.received_hugs += 1
             today = datetime.now()
-            notification = Notification(
+            notification = Notification(  # type: ignore
                 for_id=post_author.id,
                 from_id=current_user.id,
                 type="hug",
@@ -453,7 +460,7 @@ def create_app(db_path: str = database_path) -> Flask:
             # Gets the user's ID and compares it to the user_id of the post
             current_user = User.query.filter(
                 User.auth0_id == token_payload["sub"]
-            ).one_or_none()
+            ).one_or_404()
             # If it's not the same user, they can't delete the post, so an
             # auth error is raised
             if post_data.user_id != current_user.id:
@@ -483,11 +490,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         formatted_posts = []
 
-        full_posts_query = (
-            db.session.query(Post, User.display_name)
-            .join(User)
-            .filter(Post.open_report == db.false())
-        )
+        full_posts_query = Post.query.filter(Post.open_report == db.false())
 
         if type == "new":
             full_posts_query = full_posts_query.order_by(db.desc(Post.date))
@@ -495,9 +498,7 @@ def create_app(db_path: str = database_path) -> Flask:
             full_posts_query = full_posts_query.order_by(Post.given_hugs, Post.date)
 
         paginated_posts = full_posts_query.paginate(page=page, per_page=ITEMS_PER_PAGE)
-        formatted_posts = [
-            post[0].format(user=post[1]) for post in paginated_posts.items
-        ]
+        formatted_posts = [post.format() for post in paginated_posts.items]
 
         return jsonify(
             {
@@ -582,9 +583,6 @@ def create_app(db_path: str = database_path) -> Flask:
                 db_update(user_data)
 
         formatted_user_data = user_data.format()
-        formatted_user_data["posts"] = Post.query.filter(
-            Post.user_id == user_data.id
-        ).count()
 
         return jsonify({"success": True, "user": formatted_user_data})
 
@@ -611,7 +609,7 @@ def create_app(db_path: str = database_path) -> Flask:
         if database_user:
             abort(409)
 
-        new_user = User(
+        new_user = User(  # type: ignore
             auth0_id=user_data["id"],
             display_name=user_data["displayName"],
             role="user",
@@ -688,7 +686,7 @@ def create_app(db_path: str = database_path) -> Flask:
         validator.check_type(user_id, "User ID")
 
         updated_user = json.loads(request.data)
-        original_user = User.query.filter(User.id == user_id).one_or_none()
+        original_user = User.query.filter(User.id == user_id).one_or_404()
 
         # If there's a login count (meaning, the user is editing their own
         # data), update it
@@ -862,7 +860,7 @@ def create_app(db_path: str = database_path) -> Flask:
         validator.check_type(user_id, "User ID")
         current_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # If the user making the request isn't the same as the user
         # whose posts should be deleted
@@ -905,19 +903,19 @@ def create_app(db_path: str = database_path) -> Flask:
     @requires_auth(["read:user"])
     def send_hug_to_user(token_payload, user_id: int):
         validator.check_type(user_id, "User ID")
-        user_to_hug = db.session.get(User, int(user_id))
+        user_to_hug = User.query.filter(User.id == int(user_id)).one_or_404()
 
         if user_to_hug is None:
             abort(404)
 
         current_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         current_user.given_hugs += 1
         user_to_hug.received_hugs += 1
         today = datetime.now()
-        notification = Notification(
+        notification = Notification(  # type: ignore
             for_id=user_to_hug.id,
             from_id=current_user.id,
             type="hug",
@@ -964,7 +962,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # The user making the request
         requesting_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # If the user is attempting to read another user's messages
         if requesting_user.id != int(user_id):
@@ -977,23 +975,8 @@ def create_app(db_path: str = database_path) -> Flask:
                 403,
             )
 
-        from_user = db.aliased(User)
-        for_user = db.aliased(User)
-
         if type in ["inbox", "outbox", "thread"]:
-            messages_query = (
-                db.session.query(
-                    Message,
-                    from_user.display_name,
-                    for_user.display_name,
-                    from_user.selected_character,
-                    from_user.icon_colours,
-                    for_user.selected_character,
-                    for_user.icon_colours,
-                )
-                .join(from_user, from_user.id == Message.from_id)
-                .join(for_user, for_user.id == Message.for_id)
-            )
+            messages_query = Message.query
 
             # For inbox, gets all incoming messages
             if type == "inbox":
@@ -1039,52 +1022,14 @@ def create_app(db_path: str = database_path) -> Flask:
             )
 
             # formats each message in the list
-            formatted_messages = [
-                message[0].format(
-                    from_name=message[1],
-                    from_icon=message[3],
-                    from_colous=json.loads(message[4]) if message[4] else message[4],
-                    for_name=message[2],
-                    for_icon=message[5],
-                    for_colours=json.loads(message[6]) if message[6] else message[6],
-                )
-                for message in messages.items
-            ]
+            formatted_messages = [message.format() for message in messages.items]
             total_pages = calculate_total_pages(messages.total)
 
         # For threads, gets all threads' data
         else:
             # Get the thread ID, and users' names and IDs
             threads_messages = (
-                db.session.query(
-                    db.func.count(Message.id),
-                    Message.thread,
-                    from_user.display_name,
-                    from_user.selected_character,
-                    from_user.icon_colours,
-                    for_user.display_name,
-                    for_user.selected_character,
-                    for_user.icon_colours,
-                    Thread.user_1_id,
-                    Thread.user_2_id,
-                    db.func.max(Message.date),
-                )
-                .join(Thread, Message.thread == Thread.id)
-                .join(from_user, from_user.id == Thread.user_1_id)
-                .join(for_user, for_user.id == Thread.user_2_id)
-                .group_by(
-                    Message.thread,
-                    from_user.display_name,
-                    for_user.display_name,
-                    Thread.user_1_id,
-                    Thread.user_2_id,
-                    Thread.id,
-                    from_user.selected_character,
-                    from_user.icon_colours,
-                    for_user.selected_character,
-                    for_user.icon_colours,
-                )
-                .order_by(Thread.id)
+                Thread.query.order_by(Thread.id)
                 .filter(
                     (
                         (Thread.user_1_id == user_id)
@@ -1095,39 +1040,12 @@ def create_app(db_path: str = database_path) -> Flask:
                         & (Thread.user_2_deleted == db.false())
                     )
                 )
-                .paginate(  # type: ignore[attr-defined]
-                    page=page, per_page=ITEMS_PER_PAGE
-                )
+                .paginate(page=page, per_page=ITEMS_PER_PAGE)
             )
 
-            formatted_messages = []
             total_pages = calculate_total_pages(threads_messages.total)
-
             # Threads data formatting
-            for thread in threads_messages.items:
-                # Set up the thread
-                thread_json = {
-                    "id": thread[1],
-                    "user1": {
-                        "displayName": thread[2],
-                        "selectedIcon": thread[3],
-                        "iconColours": json.loads(thread[4])
-                        if thread[4]
-                        else thread[4],
-                    },
-                    "user1Id": thread[8],
-                    "user2": {
-                        "displayName": thread[5],
-                        "selectedIcon": thread[6],
-                        "iconColours": json.loads(thread[7])
-                        if thread[7]
-                        else thread[7],
-                    },
-                    "user2Id": thread[9],
-                    "numMessages": thread[0],
-                    "latestMessage": thread[10],
-                }
-                formatted_messages.append(thread_json)
+            formatted_messages = [thread.format() for thread in threads_messages.items]
 
         return jsonify(
             {
@@ -1150,7 +1068,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         logged_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # Checks that the user isn't trying to send a message from someone else
         if logged_user.id != message_data["fromId"]:
@@ -1186,7 +1104,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # If there's no thread between the users
         if thread is None:
-            new_thread = Thread(
+            new_thread = Thread(  # type: ignore
                 user_1_id=message_data["fromId"], user_2_id=message_data["forId"]
             )
             # Try to create the new thread
@@ -1207,10 +1125,10 @@ def create_app(db_path: str = database_path) -> Flask:
         # to get the logged user's data again.
         logged_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # Create a new message
-        new_message = Message(
+        new_message = Message(  # type: ignore
             from_id=message_data["fromId"],
             for_id=message_data["forId"],
             text=message_data["messageText"],
@@ -1219,7 +1137,7 @@ def create_app(db_path: str = database_path) -> Flask:
         )
 
         # Create a notification for the user getting the message
-        notification = Notification(
+        notification = Notification(  # type: ignore
             for_id=message_data["forId"],
             from_id=message_data["fromId"],
             type="message",
@@ -1246,7 +1164,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>/<item_id>", methods=["DELETE"])
     @requires_auth(["delete:messages"])
-    def delete_thread(
+    def delete_thread(  # TODO: This should be renamed to delete_message
         token_payload,
         mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
         item_id: int,
@@ -1272,7 +1190,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         request_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # If the user is attempting to delete another user's messages
         if (
@@ -1354,7 +1272,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         current_user = User.query.filter(
             User.auth0_id == token_payload["sub"]
-        ).one_or_none()
+        ).one_or_404()
 
         # If the user is attempting to delete another user's messages
         if current_user.id != int(user_id):
@@ -1384,7 +1302,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # If the user is trying to clear their threads mailbox
         if mailbox_type == "threads":
             num_messages = Thread.query.filter(
-                (Thread.user_1_id == user_id) or (Thread.user_2_id == user_id)
+                or_((Thread.user_1_id == user_id), (Thread.user_2_id == user_id))
             ).count()
             # If there are no messages, abort
             if num_messages == 0:
@@ -1417,27 +1335,18 @@ def create_app(db_path: str = database_path) -> Flask:
         for report_type in reports.keys():
             reports_page = request.args.get(f"{report_type.lower()}Page", 1, type=int)
 
-            if report_type == "User":
-                report_query = db.session.query(Report, User.display_name).join(
-                    User, User.id == Report.user_id
-                )
-            else:
-                report_query = db.session.query(Report, Post.text).join(Post)
-
             report_instances = (
-                report_query.filter(Report.closed == db.false())
+                Report.query.filter(Report.closed == db.false())
                 .filter(Report.type == report_type)
                 .order_by(db.desc(Report.date))
                 .paginate(page=reports_page, per_page=ITEMS_PER_PAGE)
             )
 
             total_pages[report_type] = calculate_total_pages(report_instances.total)
-
             # Formats the reports
-            for report in report_instances.items:
-                formatted_report = report[0].format()
-                formatted_report["displayName"] = report[1]
-                reports[report_type].append(formatted_report)
+            reports[report_type] = [
+                report.format() for report in report_instances.items
+            ]
 
         return jsonify(
             {
@@ -1476,7 +1385,7 @@ def create_app(db_path: str = database_path) -> Flask:
             if reported_item is None:
                 abort(404)
 
-            report = Report(
+            report = Report(  # type: ignore
                 type=report_data["type"],
                 date=report_data["date"],
                 user_id=report_data["userID"],
@@ -1502,7 +1411,7 @@ def create_app(db_path: str = database_path) -> Flask:
             if reported_item is None:
                 abort(404)
 
-            report = Report(
+            report = Report(  # type: ignore
                 type=report_data["type"],
                 date=report_data["date"],
                 user_id=report_data["userID"],
@@ -1603,7 +1512,7 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(409)
 
         # Try to add the word to the filters list
-        filter = Filter(filter=new_filter.lower())
+        filter = Filter(filter=new_filter.lower())  # type: ignore
         added = db_add(filter)["resource"]
 
         return jsonify({"success": True, "added": added})
@@ -1650,25 +1559,16 @@ def create_app(db_path: str = database_path) -> Flask:
         if last_read is None:
             last_read = datetime(2020, 7, 1, 12, 00)
 
-        from_user = db.aliased(User)
-        for_user = db.aliased(User)
-
         # Gets all new notifications
         notifications = (
-            db.session.query(
-                Notification, from_user.display_name, for_user.display_name
-            )
-            .join(from_user, from_user.id == Notification.from_id)
-            .join(for_user, for_user.id == Notification.for_id)
-            .filter(Notification.for_id == user_id)
+            Notification.query.filter(Notification.for_id == user_id)
             .filter(Notification.date > last_read)
             .order_by(Notification.date)
             .all()
         )
 
         formatted_notifications = [
-            notification[0].format(from_name=notification[1], for_name=notification[2])
-            for notification in notifications
+            notification.format() for notification in notifications
         ]
 
         # Updates the user's 'last read' time only if this fetch was
@@ -1704,7 +1604,7 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(404)
 
         # Create a new subscription object with the given data
-        subscription = NotificationSub(
+        subscription = NotificationSub(  # type: ignore
             user=user.id,
             endpoint=subscription_data["endpoint"],
             subscription_data=json.dumps(subscription_data),
