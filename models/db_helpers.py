@@ -28,7 +28,7 @@
 from typing import List, Literal, Any, TypedDict, Union
 
 from flask import abort
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, delete
 from sqlalchemy.exc import DataError, IntegrityError
 
 from .models import Post, Message, Thread, db
@@ -245,7 +245,7 @@ def delete_all(
         # If the type of objects to delete is posts, the ID is the
         # user ID whose posts need to be deleted
         if type == "posts":
-            db.session.delete(db.select(Post).filter(Post.user_id == id))
+            delete(Post).where(Post.user_id == id)
         # If the type of objects to delete is inbox, delete all messages
         # for the user with that ID
         if type == "inbox":
@@ -253,10 +253,8 @@ def delete_all(
             # thus okay to delete completely) from messages that weren't
             # (so that these will only be deleted for one user rather than
             # for both)
-            db.session.delete(
-                db.select(Message)
-                .filter(Message.for_id == id)
-                .filter(Message.from_deleted == db.true())
+            delete(Message).where(
+                and_(Message.for_id == id, Message.from_deleted == db.true())
             )
             messages_to_update = db.session.scalars(
                 db.select(Message)
@@ -276,10 +274,8 @@ def delete_all(
             # thus okay to delete completely) from messages that weren't
             # (so that these will only be deleted for one user rather than
             # for both)
-            db.session.delete(
-                db.select(Message)
-                .filter(Message.from_id == id)
-                .filter(Message.for_deleted == db.true())
+            delete(Message).where(
+                and_(Message.from_id == id, Message.for_deleted == db.true())
             )
             messages_to_update = db.session.scalars(
                 db.select(Message)
@@ -310,10 +306,9 @@ def delete_all(
                 # are thus okay to delete completely) from messages that
                 # weren't (so that these will only be deleted for one user
                 # rather than for both)
-                db.session.delete(
-                    db.select(Message)
-                    .filter(Message.thread == thread.id)
-                    .filter(
+                delete(Message).where(
+                    and_(
+                        Message.thread == thread.id,
                         or_(
                             and_(
                                 (Message.for_id == id),
@@ -323,7 +318,7 @@ def delete_all(
                                 (Message.from_id == id),
                                 (Message.for_deleted == db.true()),
                             ),
-                        )
+                        ),
                     )
                 )
                 messages_for_to_update = db.session.scalars(
@@ -376,9 +371,7 @@ def delete_all(
                         thread.user_2_deleted = True
 
             # Then try to delete the threads that are okay to delete
-            db.session.delete(
-                db.select(Thread).filter(Thread.id.in_(threads_to_delete))
-            )
+            delete(Thread).where(Thread.id.in_(threads_to_delete))
 
         db.session.commit()
     # If there's a database error
