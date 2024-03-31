@@ -35,7 +35,7 @@ from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
 from pywebpush import webpush, WebPushException  # type: ignore
-from sqlalchemy import and_, or_
+from sqlalchemy import Text, and_, or_
 
 from models import (
     database_path,
@@ -1190,17 +1190,19 @@ def create_app(db_path: str = database_path) -> Flask:
         # Variable indicating whether to delete the message from the databse
         # or leave it in it (for the other user)
         delete_message: bool = False
-        delete_item: Optional[Message] = None
+        delete_item: Optional[Union[Message, Thread]] = None
 
         validator.check_type(item_id, "Message ID")
 
         # If the mailbox type is inbox or outbox, search for a message
         # with that ID
         if mailbox_type in ["inbox", "outbox", "thread"]:
-            delete_item = Message.query.filter(Message.id == item_id).one_or_none()
+            delete_item = db.one_or_404(
+                db.select(Message).filter(Message.id == item_id)
+            )
         # If the mailbox type is threads, search for a thread with that ID
         elif mailbox_type == "threads":
-            delete_item = Thread.query.filter(Thread.id == item_id).one_or_none()
+            delete_item = db.one_or_404(db.select(Thread).filter(Thread.id == item_id))
 
         # If this message/thread doesn't exist, abort
         if delete_item is None:
@@ -1211,11 +1213,15 @@ def create_app(db_path: str = database_path) -> Flask:
         )
 
         # If the user is attempting to delete another user's messages
+        # TODO: This condition is so overcomplicated, it really needs to be simpler.
         if (
-            (mailbox_type == "inbox" and request_user.id != delete_item.for_id)
-            or (mailbox_type == "outbox" and request_user.id != delete_item.from_id)
+            isinstance(delete_item, Message)
+            and (
+                (mailbox_type == "inbox" and request_user.id != delete_item.for_id)
+                or (mailbox_type == "outbox" and request_user.id != delete_item.from_id)
+            )
             or (
-                mailbox_type == "threads"
+                isinstance(delete_item, Thread)
                 and (request_user.id != delete_item.user_1_id)
                 and (request_user.id != delete_item.user_2_id)
             )
@@ -1230,13 +1236,13 @@ def create_app(db_path: str = database_path) -> Flask:
             )
 
         # If the mailbox type is inbox
-        if mailbox_type == "inbox":
+        if isinstance(delete_item, Message) and mailbox_type == "inbox":
             delete_item.for_deleted = True
         # If the mailbox type is outbox
-        elif mailbox_type == "outbox":
+        elif isinstance(delete_item, Message) and mailbox_type == "outbox":
             delete_item.from_deleted = True
         # If the mailbox type is threads
-        elif mailbox_type == "threads":
+        elif isinstance(delete_item, Thread) and mailbox_type == "threads":
             # Otherwise, if the current user is the thread's user_1, set
             # the appropriate deleted property
             if request_user.id == delete_item.user_1_id:
@@ -1288,9 +1294,9 @@ def create_app(db_path: str = database_path) -> Flask:
         if user_id is None:
             abort(400)
 
-        current_user = User.query.filter(
-            User.auth0_id == token_payload["sub"]
-        ).one_or_404()
+        current_user = db.one_or_404(
+            db.select(User).filter(User.auth0_id == token_payload["sub"])
+        )
 
         # If the user is attempting to delete another user's messages
         if current_user.id != int(user_id):
@@ -1307,21 +1313,36 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # If the user is trying to clear their inbox
         if mailbox_type == "inbox":
-            num_messages = Message.query.filter(Message.for_id == user_id).count()
+            num_messages = db.session.scalar(
+                db.select(db.func.count(Message.id)).filter(Message.for_id == user_id)
+            )
             # If there are no messages, abort
             if num_messages == 0:
                 abort(404)
         # If the user is trying to clear their outbox
         if mailbox_type == "outbox":
-            num_messages = Message.query.filter(Message.from_id == user_id).count()
+            num_messages = db.session.scalar(
+                db.select(db.func.count(Message.id)).filter(Message.from_id == user_id)
+            )
             # If there are no messages, abort
             if num_messages == 0:
                 abort(404)
         # If the user is trying to clear their threads mailbox
         if mailbox_type == "threads":
-            num_messages = Thread.query.filter(
-                or_((Thread.user_1_id == user_id), (Thread.user_2_id == user_id))
-            ).count()
+            num_messages = db.session.scalar(
+                db.select(db.func.count(Thread.id)).filter(
+                    or_(
+                        and_(
+                            Thread.user_1_id == user_id,
+                            Thread.user_1_deleted == db.false(),
+                        ),
+                        and_(
+                            Thread.user_2_id == user_id,
+                            Thread.user_2_deleted == db.false(),
+                        ),
+                    )
+                )
+            )
             # If there are no messages, abort
             if num_messages == 0:
                 abort(404)
@@ -1397,13 +1418,10 @@ def create_app(db_path: str = database_path) -> Flask:
             if report_data["postID"] is None:
                 abort(422)
 
-            reported_item = Post.query.filter(
-                Post.id == report_data["postID"]
-            ).one_or_none()
-
-            # If this post doesn't exist, abort
-            if reported_item is None:
-                abort(404)
+            # Get the post. If this post doesn't exist, abort
+            reported_item = db.one_or_404(
+                db.select(Post).filter(Post.id == report_data["postID"])
+            )
 
             report = Report(  # type: ignore
                 type=report_data["type"],
@@ -1423,13 +1441,10 @@ def create_app(db_path: str = database_path) -> Flask:
             if report_data["userID"] is None:
                 abort(422)
 
-            reported_item = User.query.filter(
-                User.id == report_data["userID"]
-            ).one_or_none()
-
-            # If this user doesn't exist, abort
-            if reported_item is None:
-                abort(404)
+            # Get the user. If this user doesn't exist, abort
+            reported_item = db.one_or_404(
+                db.select(User).filter(User.id == report_data["userID"])
+            )
 
             report = Report(  # type: ignore
                 type=report_data["type"],
@@ -1471,14 +1486,14 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # If the item reported is a user
         if report.type.lower() == "user":
-            reported_item = User.query.filter(
-                User.id == updated_report["userID"]
-            ).one_or_none()
+            reported_item = db.session.scalar(
+                db.select(User).filter(User.id == updated_report["userID"])
+            )
         # If the item reported is a post
         else:
-            reported_item = Post.query.filter(
-                Post.id == updated_report["postID"]
-            ).one_or_none()
+            reported_item = db.session.scalar(
+                db.select(Post).filter(Post.id == updated_report["postID"])
+            )
 
         # Set the dismissed and closed values to those of the updated report
         report.dismissed = updated_report["dismissed"]
@@ -1508,7 +1523,9 @@ def create_app(db_path: str = database_path) -> Flask:
     def get_filters(token_payload):
         page = request.args.get("page", 1, type=int)
         words_per_page = 10
-        filtered_words = Filter.query.paginate(page=page, per_page=words_per_page)
+        filtered_words = db.paginate(
+            db.select(Filter).order_by(Filter.id), page=page, per_page=words_per_page
+        )
         filters = [filter.format() for filter in filtered_words.items]
         total_pages = calculate_total_pages(items_count=filtered_words.total)
 
@@ -1527,9 +1544,10 @@ def create_app(db_path: str = database_path) -> Flask:
         validator.check_length(new_filter, "Phrase to filter")
 
         # If the word already exists in the filters list, abort
-        existing_filter = Filter.query.filter(
-            Filter.filter == new_filter.lower()
-        ).one_or_none()
+        existing_filter: Optional[Filter] = db.session.scalar(
+            db.select(Filter).filter(Filter.filter == new_filter.lower())
+        )
+
         if existing_filter:
             abort(409)
 
@@ -1549,9 +1567,9 @@ def create_app(db_path: str = database_path) -> Flask:
         validator.check_type(filter_id, "Filter ID")
 
         # If there's no word in that index
-        to_delete = Filter.query.filter(Filter.id == filter_id).one_or_none()
-        if to_delete is None:
-            abort(404)
+        to_delete: Filter = db.one_or_404(
+            db.select(Filter).filter(Filter.id == filter_id)
+        )
 
         # Otherwise, try to delete it
         removed = to_delete.format()
@@ -1567,11 +1585,9 @@ def create_app(db_path: str = database_path) -> Flask:
     @requires_auth(["read:messages"])
     def get_latest_notifications(token_payload):
         silent_refresh = request.args.get("silentRefresh", True)
-        user = User.query.filter(User.auth0_id == token_payload["sub"]).one_or_none()
-
-        # If there's no user with that ID, abort
-        if user is None:
-            abort(404)
+        user: User = db.one_or_404(
+            db.select(User).filter(User.auth0_id == token_payload["sub"])
+        )
 
         user_id = user.id
         last_read = user.last_notifications_read
@@ -1582,12 +1598,12 @@ def create_app(db_path: str = database_path) -> Flask:
             last_read = datetime(2020, 7, 1, 12, 00)
 
         # Gets all new notifications
-        notifications = (
-            Notification.query.filter(Notification.for_id == user_id)
+        notifications: Sequence[Notification] = db.session.scalars(
+            db.select(Notification)
+            .filter(Notification.for_id == user_id)
             .filter(Notification.date > last_read)
             .order_by(Notification.date)
-            .all()
-        )
+        ).all()
 
         formatted_notifications = [
             notification.format() for notification in notifications
@@ -1619,11 +1635,9 @@ def create_app(db_path: str = database_path) -> Flask:
 
         subscription_json = request.data.decode("utf8").replace("'", '"')
         subscription_data = json.loads(subscription_json)
-        user = User.query.filter(User.auth0_id == token_payload["sub"]).one_or_none()
-
-        # If there's no user with that ID, abort
-        if user is None:
-            abort(404)
+        user: User = db.one_or_404(
+            db.select(User).filter(User.auth0_id == token_payload["sub"])
+        )
 
         # Create a new subscription object with the given data
         subscription = NotificationSub(  # type: ignore
@@ -1658,17 +1672,15 @@ def create_app(db_path: str = database_path) -> Flask:
 
         subscription_json = request.data.decode("utf8").replace("'", '"')
         subscription_data = json.loads(subscription_json)
-        user = User.query.filter(User.auth0_id == token_payload["sub"]).one_or_none()
-        old_sub = NotificationSub.query.filter(
-            NotificationSub.id == sub_id
-        ).one_or_none()
-
-        # If there's no user with that ID, abort
-        if user is None or old_sub is None:
-            abort(404)
+        user: User = db.one_or_404(
+            db.select(User).filter(User.auth0_id == token_payload["sub"])
+        )
+        old_sub: NotificationSub = db.one_or_404(
+            db.select(NotificationSub).filter(NotificationSub.id == sub_id)
+        )
 
         old_sub.endpoint = subscription_data["endpoint"]
-        old_sub.subscription_data = json.dumps(subscription_data)
+        old_sub.subscription_data = cast(Text, json.dumps(subscription_data))
 
         # Try to add it to the database
         subscribed = user.display_name
