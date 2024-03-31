@@ -1486,11 +1486,17 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # If the item reported is a user
         if report.type.lower() == "user":
+            if not updated_report.get("userID", None):
+                abort(422)
+
             reported_item = db.session.scalar(
                 db.select(User).filter(User.id == updated_report["userID"])
             )
         # If the item reported is a post
         else:
+            if not updated_report.get("postID", None):
+                abort(422)
+
             reported_item = db.session.scalar(
                 db.select(Post).filter(Post.id == updated_report["postID"])
             )
