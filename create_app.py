@@ -340,7 +340,7 @@ def create_app(db_path: str = database_path) -> Flask:
                 )
 
             # Otherwise get the open report and close it
-            open_report: Optional[Report] = db.session.scalar(
+            open_report = db.session.scalar(
                 db.select(Report).filter(Report.id == updated_post["closeReport"])
             )
 
@@ -1141,7 +1141,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # If a new thread was created and the database session ended, we need
         # to get the logged user's data again.
-        logged_user: User = db.one_or_404(
+        logged_user = db.one_or_404(
             db.select(User).filter(User.auth0_id == token_payload["sub"])
         )
 
