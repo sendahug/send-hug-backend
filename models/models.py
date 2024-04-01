@@ -25,6 +25,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from datetime import datetime
 import os
 import json
 from typing import List, Optional
@@ -107,7 +108,7 @@ class User(db.Model):  # type: ignore[name-defined]
     blocked: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
     release_date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
     open_report: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
-    last_notifications_read: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
+    last_notifications_read: Mapped[Optional[datetime]] = db.Column(db.DateTime)
     auto_refresh: Mapped[Optional[bool]] = db.Column(db.Boolean, default=True)
     refresh_rate: Mapped[Optional[int]] = db.Column(db.Integer, default=20)
     push_enabled: Mapped[Optional[bool]] = db.Column(db.Boolean, default=False)
