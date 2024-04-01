@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-#### Fixes
+#### Fixes
 
 - Fixed a bug where users couldn't delete messages from the thread view because there was no handling for deleting messages from threads in the DELETE /messages endpoint ([#596](https://github.com/sendahug/send-hug-backend/pull/596)).
 
