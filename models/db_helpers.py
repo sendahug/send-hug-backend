@@ -28,7 +28,7 @@
 from typing import List, Literal, Any, TypedDict, Union
 
 from flask import abort
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, delete
 from sqlalchemy.exc import DataError, IntegrityError
 
 from .models import Post, Message, Thread, db
@@ -96,20 +96,18 @@ def update(obj: db.Model, params={}) -> DBReturnModel:  # type: ignore[name-defi
         if type(obj) == Thread and "set_deleted" in params:
             # Just in case, makes sure that set_deleted was set to true
             if params["set_deleted"]:
-                messages_for = (
-                    db.session.query(Message)
+                messages_for = db.session.scalars(
+                    db.select(Message)
                     .filter(Message.thread == obj.id)
                     .filter(Message.for_id == params["user_id"])
                     .filter(Message.from_deleted == db.false())
-                    .all()
-                )
-                messages_from = (
-                    db.session.query(Message)
+                ).all()
+                messages_from = db.session.scalars(
+                    db.select(Message)
                     .filter(Message.thread == obj.id)
                     .filter(Message.from_id == params["user_id"])
                     .filter(Message.for_deleted == db.false())
-                    .all()
-                )
+                ).all()
 
                 # For each message that wasn't deleted by the other user, the
                 # value of for_deleted (indicating whether the user the message
@@ -152,8 +150,9 @@ def update_multiple(
 
     # Try to update the object in the database
     try:
+        db.session.commit()
+
         for obj in objs:
-            db.session.commit()
             updated_objects.append(obj.format())
     # If there's a database error
     except (DataError, IntegrityError) as err:
@@ -247,7 +246,7 @@ def delete_all(
         # If the type of objects to delete is posts, the ID is the
         # user ID whose posts need to be deleted
         if type == "posts":
-            db.session.query(Post).filter(Post.user_id == id).delete()
+            delete(Post).where(Post.user_id == id)
         # If the type of objects to delete is inbox, delete all messages
         # for the user with that ID
         if type == "inbox":
@@ -255,18 +254,14 @@ def delete_all(
             # thus okay to delete completely) from messages that weren't
             # (so that these will only be deleted for one user rather than
             # for both)
-            (
-                db.session.query(Message)
-                .filter(Message.for_id == id)
-                .filter(Message.from_deleted == db.true())
-                .delete()
+            delete(Message).where(
+                and_(Message.for_id == id, Message.from_deleted == db.true())
             )
-            messages_to_update = (
-                db.session.query(Message)
+            messages_to_update = db.session.scalars(
+                db.select(Message)
                 .filter(Message.for_id == id)
                 .filter(Message.from_deleted == db.false())
-                .all()
-            )
+            ).all()
 
             # For each message that wasn't deleted by the other user, the
             # value of for_deleted (indicating whether the user the message
@@ -280,18 +275,14 @@ def delete_all(
             # thus okay to delete completely) from messages that weren't
             # (so that these will only be deleted for one user rather than
             # for both)
-            (
-                db.session.query(Message)
-                .filter(Message.from_id == id)
-                .filter(Message.for_deleted == db.true())
-                .delete()
+            delete(Message).where(
+                and_(Message.from_id == id, Message.for_deleted == db.true())
             )
-            messages_to_update = (
-                db.session.query(Message)
+            messages_to_update = db.session.scalars(
+                db.select(Message)
                 .filter(Message.from_id == id)
                 .filter(Message.for_deleted == db.false())
-                .all()
-            )
+            ).all()
 
             # For each message that wasn't deleted by the other user, the
             # value of from_deleted (indicating whether the user who wrote
@@ -302,11 +293,11 @@ def delete_all(
         # to and from the user with that ID
         if type == "threads":
             # Get all threads in which the user is involved
-            Threads = (
-                db.session.query(Thread)
-                .filter(or_((Thread.user_1_id == id), (Thread.user_2_id == id)))
-                .all()
-            )
+            Threads = db.session.scalars(
+                db.select(Thread).filter(
+                    or_((Thread.user_1_id == id), (Thread.user_2_id == id))
+                )
+            ).all()
             # List of thread IDs to delete
             threads_to_delete: List[int] = []
 
@@ -316,10 +307,9 @@ def delete_all(
                 # are thus okay to delete completely) from messages that
                 # weren't (so that these will only be deleted for one user
                 # rather than for both)
-                (
-                    db.session.query(Message)
-                    .filter(Message.thread == thread.id)
-                    .filter(
+                delete(Message).where(
+                    and_(
+                        Message.thread == thread.id,
                         or_(
                             and_(
                                 (Message.for_id == id),
@@ -329,30 +319,27 @@ def delete_all(
                                 (Message.from_id == id),
                                 (Message.for_deleted == db.true()),
                             ),
-                        )
+                        ),
                     )
-                    .delete()
                 )
-                messages_for_to_update = (
-                    db.session.query(Message)
+                messages_for_to_update = db.session.scalars(
+                    db.select(Message)
                     .filter(Message.thread == thread.id)
                     .filter(
                         and_(
                             (Message.for_id == id), (Message.from_deleted == db.false())
                         )
                     )
-                    .all()
-                )
-                messages_from_to_update = (
-                    db.session.query(Message)
+                ).all()
+                messages_from_to_update = db.session.scalars(
+                    db.select(Message)
                     .filter(Message.thread == thread.id)
                     .filter(
                         and_(
                             (Message.from_id == id), (Message.for_deleted == db.false())
                         )
                     )
-                    .all()
-                )
+                ).all()
 
                 # For each message that wasn't deleted by the other user, the
                 # value of for_deleted (indicating whether the user the message
@@ -385,7 +372,7 @@ def delete_all(
                         thread.user_2_deleted = True
 
             # Then try to delete the threads that are okay to delete
-            db.session.query(Thread).filter(Thread.id.in_(threads_to_delete)).delete()
+            delete(Thread).where(Thread.id.in_(threads_to_delete))
 
         db.session.commit()
     # If there's a database error

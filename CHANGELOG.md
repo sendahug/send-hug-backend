@@ -6,6 +6,15 @@
 
 - Fixed a bug where users couldn't delete messages from the thread view because there was no handling for deleting messages from threads in the DELETE /messages endpoint ([#596](https://github.com/sendahug/send-hug-backend/pull/596)).
 
+### 2024-04-01
+
+#### Changes
+
+- Updated the syntax of all `select` queries for SQLAlchemy 2. Previously, we were using SQLAlchemy 1's `Query` API, which is now deprecated. Now, we use `session.scalar` and `session.scalars` for selecting single and multiple items (respectively). ([#595](https://github.com/sendahug/send-hug-backend/pull/595))
+- Updated the syntax of all paginated queries to the updated Flask-SQLAlchemy 3 / SQLAlchemy 2 syntax. Previously, we were using `Model.query.paginate()`. This has now been replaced by `db.paginate` ([#595](https://github.com/sendahug/send-hug-backend/pull/595)).
+- The helper method for bulk deleting items (posts/messages/threads) now uses SQLAlchemy's delete method instead of the old query().delete() method, which is cleaner and faster than deleting items manually via the ORM ([#595](https://github.com/sendahug/send-hug-backend/pull/595)).
+- The helper method for bulk updating items now only commits the session once. Previously, it was doing it for every object, but this is unnecessary and wastes time and resources. Now, the session is committed once all objects are updated (in the relevant endpoint), and we only loop over the updated objects to format them and return the JSON data ([#595](https://github.com/sendahug/send-hug-backend/pull/595)).
+
 ### 2024-03-31
 
 #### Features
