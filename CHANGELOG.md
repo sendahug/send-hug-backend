@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-#### Changes
+#### Changes
 
 - Updated the syntax of all `select` queries for SQLAlchemy 2. Previously, we were using SQLAlchemy 1's `Query` API, which is now deprecated. Now, we use `session.scalar` and `session.scalars` for selecting single and multiple items (respectively). ([#595](https://github.com/sendahug/send-hug-backend/pull/595))
 - Updated the syntax of all paginated queries to the updated Flask-SQLAlchemy 3 / SQLAlchemy 2 syntax. Previously, we were using `Model.query.paginate()`. This has now been replaced by `db.paginate` ([#595](https://github.com/sendahug/send-hug-backend/pull/595)).
