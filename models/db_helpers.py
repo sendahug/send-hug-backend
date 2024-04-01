@@ -150,8 +150,9 @@ def update_multiple(
 
     # Try to update the object in the database
     try:
+        db.session.commit()
+
         for obj in objs:
-            db.session.commit()
             updated_objects.append(obj.format())
     # If there's a database error
     except (DataError, IntegrityError) as err:
