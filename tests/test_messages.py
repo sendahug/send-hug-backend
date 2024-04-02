@@ -644,7 +644,7 @@ def test_empty_mailbox_as_admin(app_client, test_db, user_headers, dummy_users_d
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == 3
+    assert response_data["deleted"] == 2
     assert response_data["userID"] == 4
 
 

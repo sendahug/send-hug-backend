@@ -168,7 +168,9 @@ def test_update_multiple_no_errors(test_db, db_helpers_dummy_data):
         },
     ]
 
-    posts = test_db.session.query(Post).filter(Post.id < 3).order_by(Post.id).all()
+    posts = test_db.session.scalars(
+        test_db.select(Post).filter(Post.id < 3).order_by(Post.id)
+    ).all()
     original_post_1_text = posts[0].text
     posts[0].text = "new test"
     original_post_2_hugs = posts[1].given_hugs
@@ -182,7 +184,9 @@ def test_update_multiple_no_errors(test_db, db_helpers_dummy_data):
 
 
 def test_update_multiple_error(test_db):
-    posts = test_db.session.query(Post).filter(Post.id < 3).order_by(Post.id).all()
+    posts = test_db.session.scalars(
+        test_db.select(Post).filter(Post.id < 3).order_by(Post.id)
+    ).all()
     posts[0].text = "hello"
     posts[1].user_id = 1000
 
