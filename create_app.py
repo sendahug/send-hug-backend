@@ -262,7 +262,7 @@ def create_app(db_path: str = database_path) -> Flask:
             text=new_post_data["text"],
             date=new_post_data["date"],
             given_hugs=new_post_data["givenHugs"],
-            sent_hugs="",
+            sent_hugs=[],
         )
 
         # Try to add the post to the database
