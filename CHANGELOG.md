@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+#### Fixes
+
+- Fixed a bug where users couldn't delete messages from the thread view because there was no handling for deleting messages from threads in the DELETE /messages endpoint ([#596](https://github.com/sendahug/send-hug-backend/pull/596)).
+
+### 2024-04-01
+
 #### Changes
 
 - Updated the syntax of all `select` queries for SQLAlchemy 2. Previously, we were using SQLAlchemy 1's `Query` API, which is now deprecated. Now, we use `session.scalar` and `session.scalars` for selecting single and multiple items (respectively). ([#595](https://github.com/sendahug/send-hug-backend/pull/595))

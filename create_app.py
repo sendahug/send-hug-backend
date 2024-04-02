@@ -1235,12 +1235,16 @@ def create_app(db_path: str = database_path) -> Flask:
                 403,
             )
 
-        # If the mailbox type is inbox
-        if isinstance(delete_item, Message) and mailbox_type == "inbox":
-            delete_item.for_deleted = True
-        # If the mailbox type is outbox
-        elif isinstance(delete_item, Message) and mailbox_type == "outbox":
-            delete_item.from_deleted = True
+        # If the mailbox type is inbox/outbox/thread
+        if isinstance(delete_item, Message) and mailbox_type in [
+            "inbox",
+            "outbox",
+            "thread",
+        ]:
+            if delete_item.for_id == request_user.id:
+                delete_item.for_deleted = True
+            else:
+                delete_item.from_deleted = True
         # If the mailbox type is threads
         elif isinstance(delete_item, Thread) and mailbox_type == "threads":
             # Otherwise, if the current user is the thread's user_1, set
