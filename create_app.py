@@ -383,7 +383,7 @@ def create_app(db_path: str = database_path) -> Flask:
             db.select(User).filter(User.auth0_id == token_payload["sub"])
         )
 
-        hugs = original_post.sent_hugs.split(" ") if original_post.sent_hugs else []
+        hugs = original_post.sent_hugs or []
         post_author: Optional[User] = db.session.scalar(
             db.select(User).filter(User.id == original_post.user_id)
         )
@@ -391,7 +391,7 @@ def create_app(db_path: str = database_path) -> Flask:
         push_notification: Optional[RawPushData] = None
 
         # If the current user already sent a hug on this post, abort
-        if str(current_user.id) in hugs:
+        if current_user.id in hugs:
             abort(409)
 
         # Otherwise, continue adding the new hug
@@ -403,8 +403,8 @@ def create_app(db_path: str = database_path) -> Flask:
 
         original_post.given_hugs += 1
         current_user.given_hugs += 1
-        hugs.append(str(current_user.id))
-        original_post.sent_hugs = " ".join([str(e) for e in hugs])
+        hugs.append(current_user.id)
+        original_post.sent_hugs = [*hugs]
 
         # Create a notification for the user getting the hug
         if post_author:
