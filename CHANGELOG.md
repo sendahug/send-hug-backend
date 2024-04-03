@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### 2024-04-03
+
+#### Chores
+
+- Automated the process of updating the changelog file when commits are merged to dev. This allows us to insert the date at the same time as the change, and ensures that we don't get repeated merge conflicts (due to different pull requests updating the changelog file). ([#594](https://github.com/sendahug/send-hug-backend/pull/594))
+- Updated the instructions for updating the changelog file to reflect the new automated process. ([#594](https://github.com/sendahug/send-hug-backend/pull/594))
+
 ### 2024-04-02
 
 #### Fixes
