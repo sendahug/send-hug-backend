@@ -1,0 +1,13 @@
+{
+  "pr_number": 594,
+  "changes": [
+    {
+      "change": "Chores",
+      "description": "Automated the process of updating the changelog file when commits are merged to dev. This allows us to insert the date at the same time as the change, and ensures that we don't get repeated merge conflicts (due to different pull requests updating the changelog file)."
+    },
+    {
+      "change": "Chores",
+      "description": "Updated the instructions for updating the changelog file to reflect the new automated process."
+    }
+  ]
+}
