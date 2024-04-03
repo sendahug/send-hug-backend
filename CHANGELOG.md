@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+#### Chores
+
+- Updated the version of the Codecov orb we use in CI to the latest version ([#597](https://github.com/sendahug/send-hug-backend/pull/597)).
+- Updated the way caching works in the Circle CI workflow. Previously, the cache and restore operations used a specific key made of the branch name and the package-lock's checksum. This meant that since it was specific to each branch, we were hardly ever using the cache we built. Instead, we just kept adding to it. This update ensures we actually use the cache, which should also lower the cache-storing costs ([#597](https://github.com/sendahug/send-hug-backend/pull/597)).
+
+### 2024-04-02
+
 #### Fixes
 
 - Fixed a bug where users couldn't delete messages from the thread view because there was no handling for deleting messages from threads in the DELETE /messages endpoint ([#596](https://github.com/sendahug/send-hug-backend/pull/596)).
