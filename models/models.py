@@ -36,6 +36,7 @@ from flask import Flask
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, column_property
 from sqlalchemy import DateTime, Text, select
+from sqlalchemy.dialects.postgresql import ARRAY
 
 # Database configuration
 database_path = os.environ.get("DATABASE_URL", "")
@@ -70,7 +71,7 @@ class Post(db.Model):  # type: ignore[name-defined]
     given_hugs: Mapped[Optional[int]] = db.Column(db.Integer, default=0)
     open_report: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
     # TODO: This should be a list of integers
-    sent_hugs: Mapped[Optional[str]] = db.Column(db.Text)
+    sent_hugs: Mapped[Optional[List[int]]] = db.Column(ARRAY(db.Integer))
     report: Mapped[Optional["Report"]] = db.relationship(
         "Report", back_populates="post"
     )  # type: ignore
@@ -89,9 +90,7 @@ class Post(db.Model):  # type: ignore[name-defined]
             "text": self.text,
             "date": self.date,
             "givenHugs": self.given_hugs,
-            "sentHugs": list(filter(None, self.sent_hugs.split(" ")))
-            if self.sent_hugs
-            else [],
+            "sentHugs": list(filter(None, self.sent_hugs)) if self.sent_hugs else [],
         }
 
 
