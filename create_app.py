@@ -781,6 +781,10 @@ def create_app(db_path: str = database_path) -> Flask:
                 )
 
         # If the user is changing their settings
+        if updated_user.get("autoRefresh") and updated_user.get("refreshRate", 0) < 20:
+            abort(422)
+
+        # If the user is changing their settings
         original_user.auto_refresh = updated_user.get(
             "autoRefresh", original_user.auto_refresh
         )

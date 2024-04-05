@@ -1,0 +1,9 @@
+{
+  "pr_number": 599,
+  "changes": [
+    {
+      "change": "Fixes",
+      "description": "Added a missing check in the users' update endpoint to ensure users aren't setting the refresh rate to a too-low rate that crashes the API (due to too many requests)."
+    }
+  ]
+}
