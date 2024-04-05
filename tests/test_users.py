@@ -502,6 +502,33 @@ def test_update_admin_settings_as_admin(
     assert updated["refreshRate"] == 60
 
 
+# Attempt to update another user's settings (admin's JWT) - 0 refresh rate
+def test_update_admin_settings_as_admin_invalid_settings(
+    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+):
+    user = {**dummy_request_data["updated_unblock_user"]}
+    user["id"] = dummy_users_data["admin"]["internal"]
+    user["autoRefresh"] = True
+    user["pushEnabled"] = True
+    user["refreshRate"] = 0
+    response = app_client.patch(
+        f"/users/all/{dummy_users_data['admin']['internal']}",
+        headers=user_headers["admin"],
+        data=json.dumps(user),
+    )
+    response_data = json.loads(response.data)
+
+    get_response = app_client.get(
+        f"/users/all/{dummy_users_data['admin']['internal']}",
+        headers=user_headers["admin"],
+    )
+    get_response_data = json.loads(get_response.data)
+
+    assert response_data["success"] is False
+    assert response.status_code == 422
+    assert get_response_data["user"]["refreshRate"] is None
+
+
 def test_close_report_update_user_as_admin(
     app_client, test_db, user_headers, dummy_users_data, dummy_request_data
 ):
