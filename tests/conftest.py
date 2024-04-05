@@ -83,7 +83,21 @@ def setup_db_dump_file(test_app):
         # create all tables
         db.create_all()
         create_data(db)
-        pg_dump("test_sah", "-Fc", "-c", "-O", "-x", "-f", "tests/capstone_db")
+        pg_dump(
+            "test_sah",
+            "-Fc",
+            "-c",
+            "-O",
+            "-x",
+            "-f",
+            "tests/capstone_db",
+            "-h",
+            "localhost",
+            "-p",
+            "5432",
+            "-U",
+            "postgres",
+        )
 
 
 @pytest.fixture(scope="function")
