@@ -8,13 +8,12 @@ from sh import pg_restore, pg_dump  # type: ignore
 
 from create_app import create_app
 from models import db
-from tests.data_models import create_data
+from tests.data_models import create_data, DATETIME_PATTERN
 
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
 API_AUDIENCE = os.environ.get("API_AUDIENCE", "")
 TEST_CLIENT_ID = os.environ.get("TEST_CLIENT_ID", "")
 TEST_CLIENT_SECRET = os.environ.get("TEST_CLIENT_SECRET", "")
-DATETIME_PATTERN = "%Y-%m-%d %H:%M:%S.%f"
 
 
 @pytest.fixture(scope="session")
