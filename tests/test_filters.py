@@ -68,8 +68,8 @@ def test_get_filters_as_admin(app_client, test_db, user_headers):
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["total_pages"] == 0
-    assert len(response_data["words"]) == 0
+    assert response_data["total_pages"] == 1
+    assert len(response_data["words"]) == 2
 
 
 # Create Filters Tests ('/filters', POST)
@@ -170,10 +170,6 @@ def test_delete_filters_auth_error(
 
 # Attempt to delete a filter with an admin's JWT
 def test_delete_filters_as_admin(app_client, test_db, user_headers):
-    # Set up the test by adding a word
-    app_client.post(
-        "/filters", headers=user_headers["admin"], data=json.dumps({"word": "sample"})
-    )
     # Delete the filter
     response = app_client.delete("/filters/2", headers=user_headers["admin"])
     response_data = json.loads(response.data)
@@ -181,7 +177,7 @@ def test_delete_filters_as_admin(app_client, test_db, user_headers):
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert deleted["filter"] == "sample"
+    assert deleted["filter"] == "filtered_word_2"
 
 
 # Attempt to delete a filter that doesn't exist with an admin's JWT

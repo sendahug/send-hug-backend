@@ -59,7 +59,7 @@ def test_get_user_inbox_as_user(app_client, test_db, user_headers, dummy_users_d
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["current_page"] == 1
-    assert response_data["total_pages"] == 2
+    assert response_data["total_pages"] == 1
     assert len(response_data["messages"]) == 5
 
 
@@ -134,7 +134,7 @@ def test_get_user_outbox_as_mod(app_client, test_db, user_headers, dummy_users_d
     assert response.status_code == 200
     assert response_data["current_page"] == 1
     assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 2
+    assert len(response_data["messages"]) == 1
 
 
 # Attempt to get a user's threads mailbox with a moderator's JWT
@@ -178,7 +178,7 @@ def test_get_user_inbox_as_admin(app_client, test_db, user_headers, dummy_users_
     assert response.status_code == 200
     assert response_data["current_page"] == 1
     assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 1
+    assert len(response_data["messages"]) == 2
 
 
 # Attempt to get a user's outbox with an admin's JWT
@@ -193,7 +193,7 @@ def test_get_user_outbox_as_admin(app_client, test_db, user_headers, dummy_users
     assert response.status_code == 200
     assert response_data["current_page"] == 1
     assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 3
+    assert len(response_data["messages"]) == 4
 
 
 # Attempt to get a user's threads mailbox with an admin's JWT

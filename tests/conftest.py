@@ -4,10 +4,11 @@ import json
 from datetime import datetime
 
 import pytest
-from sh import pg_restore  # type: ignore
+from sh import pg_restore, pg_dump  # type: ignore
 
 from create_app import create_app
 from models import db
+from tests.data_models import create_data
 
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
 API_AUDIENCE = os.environ.get("API_AUDIENCE", "")
@@ -61,7 +62,7 @@ def user_headers():
     return user_headers
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def test_app():
     """Set up the test app"""
     test_db_path = "postgresql://postgres:password@localhost:5432/test_sah"
@@ -69,14 +70,24 @@ def test_app():
     yield app
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def app_client(test_app):
     """Get the test client for the test app"""
     yield test_app.test_client()
 
 
+@pytest.fixture(scope="session")
+def setup_db_dump_file(test_app):
+    with test_app.app_context():
+        db.drop_all()
+        # create all tables
+        db.create_all()
+        create_data(db)
+        pg_dump("test_sah", "-Fc", "-c", "-O", "-x", "-f", "tests/capstone_db")
+
+
 @pytest.fixture(scope="function")
-def test_db(test_app):
+def test_db(setup_db_dump_file, test_app):
     """Restore the test database from the db snapshot"""
     pg_restore(
         "-d",
