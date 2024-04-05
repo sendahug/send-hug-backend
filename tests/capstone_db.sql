@@ -140,7 +140,7 @@ CREATE TABLE public.posts (
     date timestamp without time zone,
     given_hugs integer,
     open_report boolean NOT NULL,
-    sent_hugs text
+    sent_hugs integer[]
 );
 
 
@@ -371,7 +371,7 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.alembic_version (version_num) FROM stdin;
-812b00a075e3
+75b20813c7e9
 \.
 
 
@@ -513,30 +513,30 @@ COPY public.notifications (id, for_id, from_id, type, text, date) FROM stdin;
 --
 
 COPY public.posts (id, user_id, text, date, given_hugs, open_report, sent_hugs) FROM stdin;
-30	4	hello :)	2020-07-18 12:11:39.65	24	f	4 
-28	4	testing2	2020-07-13 18:43:51.255	9	f	4 
-26	4	testing new design	2020-07-13 18:40:34.806	1	f	4 
-6	1	testing	2020-06-01 15:19:41.25	1	f	4 
-11	1	baby lee :))	2020-06-04 08:15:50.811	2	f	4 
-22	4	testing service worker	2020-06-27 10:31:24.915	1	f	4 
-13	5	2nd post	2020-06-08 14:30:58.88	1	f	4 
-10	1	cutie baby lee	2020-06-04 07:56:09.791	1	f	4 
-7	1	testing #2	2020-06-01 15:20:11.927	1	f	4 
-2	1	test	2020-06-01 15:10:59.898	2	f	4 
-4	1	test	2020-06-01 15:17:56.294	2	f	4 
-23	4	post	2020-06-27 19:17:31.072	2	f	4 
-12	5	new user	2020-06-08 14:07:25.297	1	f	4 
-9	1	leeeeeee b :))	2020-06-03 07:11:40.421	1	f	4 
-35	4	testing new rule	2020-10-24 12:19:24.199	1	f	4 
-36	4	post	2020-10-31 14:00:58.851	1	f	4 
-25	4	for report	2020-07-06 08:02:02.184	67	f	4 
-1	1	test	2020-06-01 15:05:01.966	2	f	4 
-38	4	test	2020-10-31 14:46:11.378	1	f	4 
-39	4	testing	2020-10-31 14:59:05.703	1	f	4 
-42	4	test 2	2020-10-31 15:09:50.26	1	f	4 
-43	4	test button	2020-10-31 15:20:45.636	0	f	
-44	4	button	2020-10-31 15:25:18.172	0	f	
-45	4	button 2	2020-10-31 15:26:48.043	0	f	
+30	4	hello :)	2020-07-18 12:11:39.65	24	f	{4}
+28	4	testing2	2020-07-13 18:43:51.255	9	f	{4}
+26	4	testing new design	2020-07-13 18:40:34.806	1	f	{4}
+6	1	testing	2020-06-01 15:19:41.25	1	f	{4}
+11	1	baby lee :))	2020-06-04 08:15:50.811	2	f	{4}
+22	4	testing service worker	2020-06-27 10:31:24.915	1	f	{4}
+13	5	2nd post	2020-06-08 14:30:58.88	1	f	{4}
+10	1	cutie baby lee	2020-06-04 07:56:09.791	1	f	{4}
+7	1	testing #2	2020-06-01 15:20:11.927	1	f	{4}
+2	1	test	2020-06-01 15:10:59.898	2	f	{4}
+4	1	test	2020-06-01 15:17:56.294	2	f	{4}
+23	4	post	2020-06-27 19:17:31.072	2	f	{4}
+12	5	new user	2020-06-08 14:07:25.297	1	f	{4}
+9	1	leeeeeee b :))	2020-06-03 07:11:40.421	1	f	{4}
+35	4	testing new rule	2020-10-24 12:19:24.199	1	f	{4}
+36	4	post	2020-10-31 14:00:58.851	1	f	{4}
+25	4	for report	2020-07-06 08:02:02.184	67	f	{4}
+1	1	test	2020-06-01 15:05:01.966	2	f	{4}
+38	4	test	2020-10-31 14:46:11.378	1	f	{4}
+39	4	testing	2020-10-31 14:59:05.703	1	f	{4}
+42	4	test 2	2020-10-31 15:09:50.26	1	f	{4}
+43	4	test button	2020-10-31 15:20:45.636	0	f	{}
+44	4	button	2020-10-31 15:25:18.172	0	f	{}
+45	4	button 2	2020-10-31 15:26:48.043	0	f	{}
 \.
 
 
@@ -621,10 +621,10 @@ COPY public.threads (id, user_1_id, user_2_id, user_1_deleted, user_2_deleted) F
 
 COPY public.users (id, auth0_id, received_hugs, given_hugs, display_name, login_count, role, blocked, open_report, release_date, last_notifications_read, auto_refresh, push_enabled, refresh_rate, icon_colours, selected_character) FROM stdin;
 9	auth0|5edf7b060793080013276746	0	1	user93	2	admin	f	f	\N	\N	\N	\N	\N	{"character": "#ba9f93", "lbg": "#e2a275", "rbg": "#f8eee4", "item": "#f4b56a"}	kitty
-1	auth0|5ed34765f0b8e60c8e87ca62	12	2	shirb	60	admin	f	f	\N	\N	\N	\N	\N	{"character": "#ba9f93", "lbg": "#e2a275", "rbg": "#f8eee4", "item": "#f4b56a"}	kitty
 20	auth0|5f4b9fd9915cd400670f4633	0	0	user24	4	user	t	f	2120-08-11 08:33:22.473	2020-11-03 20:21:13.399365	f	f	0	{"character": "#ba9f93", "lbg": "#e2a275", "rbg": "#f8eee4", "item": "#f4b56a"}	kitty
-5	auth0|5ede3e7a0793080013259050	2	0	user52	7	moderator	f	f	\N	\N	\N	\N	\N	{"character": "#ba9f93", "lbg": "#e2a275", "rbg": "#f8eee4", "item": "#f4b56a"}	kitty
 4	auth0|5ed8e3d0def75d0befbc7e50	106	117	user14	55	admin	f	f	\N	2020-10-30 18:13:21.282054	f	t	\N	{"character": "#ba9f93", "lbg": "#e2a275", "rbg": "#f8eee4", "item": "#f4b56a"}	kitty
+1	auth0|5ed34765f0b8e60c8e87ca62	14	2	shirb	60	admin	f	f	\N	\N	\N	\N	\N	{"character": "#ba9f93", "lbg": "#e2a275", "rbg": "#f8eee4", "item": "#f4b56a"}	kitty
+5	auth0|5ede3e7a0793080013259050	2	2	user52	7	moderator	f	f	\N	\N	\N	\N	\N	{"character": "#ba9f93", "lbg": "#e2a275", "rbg": "#f8eee4", "item": "#f4b56a"}	kitty
 \.
 
 
@@ -646,7 +646,7 @@ SELECT pg_catalog.setval('public.messages_id_seq', 26, true);
 -- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.notifications_id_seq', 95, true);
+SELECT pg_catalog.setval('public.notifications_id_seq', 97, true);
 
 
 --

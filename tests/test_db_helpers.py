@@ -164,7 +164,7 @@ def test_update_multiple_no_errors(test_db, db_helpers_dummy_data):
                 "2020-06-01 15:10:59.898", db_helpers_dummy_data["DATETIME_PATTERN"]
             ),
             "givenHugs": 3,
-            "sentHugs": ["4"],
+            "sentHugs": [4],
         },
     ]
 

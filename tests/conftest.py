@@ -228,7 +228,7 @@ def db_helpers_dummy_data():
             "text": "new test",
             "date": datetime.strptime("2020-06-01 15:05:01.966", DATETIME_PATTERN),
             "givenHugs": 2,
-            "sentHugs": ["4"],
+            "sentHugs": [4],
         },
     }
 
