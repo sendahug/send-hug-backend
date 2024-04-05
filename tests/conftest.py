@@ -77,6 +77,7 @@ def app_client(test_app):
 
 @pytest.fixture(scope="session")
 def setup_db_dump_file(test_app):
+    """Create a snapshot of the test database to restore between tests"""
     with test_app.app_context():
         db.drop_all()
         # create all tables
