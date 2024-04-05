@@ -10,6 +10,7 @@ DATETIME_PATTERN = "%Y-%m-%d %H:%M:%S.%f"
 
 
 def create_filters(db: SQLAlchemy):
+    """Creates the filters in the test database."""
     filter_1 = Filter(id=1, filter="filtered_word_1")  # type: ignore
     filter_2 = Filter(id=2, filter="filtered_word_2")  # type: ignore
 
@@ -22,6 +23,7 @@ def create_filters(db: SQLAlchemy):
 
 
 def create_users(db: SQLAlchemy):
+    """Creates the users in the test database."""
     user_1 = User(
         id=1,
         auth0_id="auth0|5ed34765f0b8e60c8e87ca62",
@@ -131,6 +133,7 @@ def create_users(db: SQLAlchemy):
 
 
 def create_posts(db: SQLAlchemy):
+    """Creates the posts in the test database."""
     post_1 = Post(
         id=1,
         user_id=1,
@@ -384,6 +387,7 @@ def create_posts(db: SQLAlchemy):
 
 
 def create_threads(db: SQLAlchemy):
+    """Creates the threads in the test database."""
     thread_1 = Thread(
         id=1, user_1_id=1, user_2_id=1, user_1_deleted=False, user_2_deleted=False
     )  # type: ignore
@@ -417,6 +421,7 @@ def create_threads(db: SQLAlchemy):
 
 
 def create_messages(db: SQLAlchemy):
+    """Creates the messages in the test database."""
     message_1 = Message(
         id=5,
         from_id=4,
@@ -584,6 +589,7 @@ def create_messages(db: SQLAlchemy):
 
 
 def create_reports(db: SQLAlchemy):
+    """Creates the reports in the test database."""
     report_1 = Report(
         id=1,
         type="Post",
@@ -1125,6 +1131,7 @@ def create_reports(db: SQLAlchemy):
 
 
 def create_notifications(db: SQLAlchemy):
+    """Creates the notifications in the test database."""
     notification_1 = Notification(
         id=1,
         for_id=4,
@@ -1528,6 +1535,7 @@ def create_notifications(db: SQLAlchemy):
 
 
 def create_data(db: SQLAlchemy):
+    """Creates the data in the test database."""
     create_filters(db)
     create_users(db)
     create_posts(db)
