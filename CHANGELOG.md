@@ -4,14 +4,19 @@
 
 ### 2024-04-05
 
+#### Changes
+
+- Converted the posts' `sent_hugs` column from a string column to an array column. This ensures we don't need to manually split the array when pulling data from the database and to join the array back into a string when pushing data to the database. ([#600](https://github.com/sendahug/send-hug-backend/pull/600))
+
 #### Fixes
 
 - Added a missing check in the users' update endpoint to ensure users aren't setting the refresh rate to a too-low rate that crashes the API (due to too many requests). ([#599](https://github.com/sendahug/send-hug-backend/pull/599))
+- Fixed a bug where the `sent_hugs` array returned by the back-end was a list of strings, instead of a list of integers (due to us having to manually split the string saved in the database). ([#600](https://github.com/sendahug/send-hug-backend/pull/600))
 
 #### Chores
 
-- Updated the way caching works in the Circle CI workflow. Previously, the cache and restore operations used a specific key made of the branch name and the package-lock's checksum. This meant that since it was specific to each branch, we were hardly ever using the cache we built. Instead, we just kept adding to it. This update ensures we actually use the cache, which should also lower the cache-storing costs. ([#597](https://github.com/sendahug/send-hug-backend/pull/597))
 - Updated the version of the Codecov orb we use in CI to the latest version. ([#597](https://github.com/sendahug/send-hug-backend/pull/597))
+- Updated the way caching works in the Circle CI workflow. Previously, the cache and restore operations used a specific key made of the branch name and the package-lock's checksum. This meant that since it was specific to each branch, we were hardly ever using the cache we built. Instead, we just kept adding to it. This update ensures we actually use the cache, which should also lower the cache-storing costs. ([#597](https://github.com/sendahug/send-hug-backend/pull/597))
 
 ### 2024-04-03
 
