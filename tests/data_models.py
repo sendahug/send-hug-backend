@@ -1181,270 +1181,6 @@ def create_notifications(db: SQLAlchemy):
         text="You got a hug",
         date=datetime.strptime("2020-07-08 18:42:37.632753", DATETIME_PATTERN),
     )  # type: ignore
-    notification_8 = Notification(
-        id=8,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-08 18:57:28.370055", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_9 = Notification(
-        id=9,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-08 19:30:17.662651", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_10 = Notification(
-        id=10,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-08 19:34:20.655902", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_11 = Notification(
-        id=11,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-08 20:10:30.903444", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_12 = Notification(
-        id=12,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-08 20:30:46.662853", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_13 = Notification(
-        id=13,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-08 20:53:58.684166", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_14 = Notification(
-        id=14,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-08 21:02:28.006988", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_15 = Notification(
-        id=15,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-08 21:03:53.611889", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_16 = Notification(
-        id=16,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 11:55:51.856126", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_17 = Notification(
-        id=17,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 12:14:16.781994", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_18 = Notification(
-        id=18,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 12:17:19.870488", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_19 = Notification(
-        id=19,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 12:20:40.981412", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_20 = Notification(
-        id=20,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 13:03:50.612026", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_21 = Notification(
-        id=21,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 13:18:52.64558", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_22 = Notification(
-        id=22,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 13:22:14.386318", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_23 = Notification(
-        id=23,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 13:26:26.147308", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_24 = Notification(
-        id=24,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 13:46:58.322147", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_25 = Notification(
-        id=25,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 13:49:59.420843", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_26 = Notification(
-        id=26,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 13:53:31.563989", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_27 = Notification(
-        id=27,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 14:39:37.324127", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_28 = Notification(
-        id=28,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-09 15:57:50.574972", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_29 = Notification(
-        id=29,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-13 16:06:07.646147", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_31 = Notification(
-        id=31,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-13 16:12:23.553046", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_30 = Notification(
-        id=30,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-13 16:09:47.367847", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_32 = Notification(
-        id=32,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-13 16:14:33.286915", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_33 = Notification(
-        id=33,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-13 17:52:00.180463", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_34 = Notification(
-        id=34,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-13 17:52:54.081449", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_35 = Notification(
-        id=35,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-13 21:18:54.994732", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_36 = Notification(
-        id=36,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-13 21:31:14.229423", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_37 = Notification(
-        id=37,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-13 21:32:58.786522", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_38 = Notification(
-        id=38,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-13 21:35:48.566696", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_39 = Notification(
-        id=39,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-13 21:36:02.392095", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_40 = Notification(
-        id=40,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-13 21:36:12.524953", DATETIME_PATTERN),
-    )  # type: ignore
     notification_41 = Notification(
         id=41,
         for_id=4,
@@ -1469,22 +1205,6 @@ def create_notifications(db: SQLAlchemy):
         text="You got a hug",
         date=datetime.strptime("2020-07-14 11:55:51.240234", DATETIME_PATTERN),
     )  # type: ignore
-    notification_44 = Notification(
-        id=44,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-14 13:02:42.709881", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_45 = Notification(
-        id=45,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-14 13:08:21.978572", DATETIME_PATTERN),
-    )  # type: ignore
     notification_46 = Notification(
         id=46,
         for_id=1,
@@ -1492,54 +1212,6 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-14 16:00:41.414829", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_47 = Notification(
-        id=47,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-14 16:00:48.658501", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_48 = Notification(
-        id=48,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-14 16:00:52.290504", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_49 = Notification(
-        id=49,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-14 16:00:57.635331", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_50 = Notification(
-        id=50,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-20 17:30:57.513678", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_51 = Notification(
-        id=51,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-20 17:31:18.728888", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_52 = Notification(
-        id=52,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-20 17:31:45.554583", DATETIME_PATTERN),
     )  # type: ignore
     notification_53 = Notification(
         id=53,
@@ -1565,22 +1237,6 @@ def create_notifications(db: SQLAlchemy):
         text="You got a hug",
         date=datetime.strptime("2020-07-21 14:35:34.933279", DATETIME_PATTERN),
     )  # type: ignore
-    notification_56 = Notification(
-        id=56,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-21 14:36:00.316687", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_57 = Notification(
-        id=57,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-21 14:36:05.76754", DATETIME_PATTERN),
-    )  # type: ignore
     notification_58 = Notification(
         id=58,
         for_id=4,
@@ -1588,38 +1244,6 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 11:38:02.864273", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_59 = Notification(
-        id=59,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-22 11:39:45.109452", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_60 = Notification(
-        id=60,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-22 11:45:57.699555", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_61 = Notification(
-        id=61,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-22 11:47:10.258195", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_62 = Notification(
-        id=62,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-22 12:16:14.657724", DATETIME_PATTERN),
     )  # type: ignore
     notification_63 = Notification(
         id=63,
@@ -1629,22 +1253,6 @@ def create_notifications(db: SQLAlchemy):
         text="You got a hug",
         date=datetime.strptime("2020-07-22 12:18:54.286811", DATETIME_PATTERN),
     )  # type: ignore
-    notification_64 = Notification(
-        id=64,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-22 12:22:00.067407", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_65 = Notification(
-        id=65,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-22 12:22:54.884349", DATETIME_PATTERN),
-    )  # type: ignore
     notification_66 = Notification(
         id=66,
         for_id=4,
@@ -1652,30 +1260,6 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 12:23:21.062704", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_67 = Notification(
-        id=67,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-22 12:37:08.019144", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_68 = Notification(
-        id=68,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-22 13:20:59.398594", DATETIME_PATTERN),
-    )  # type: ignore
-    notification_69 = Notification(
-        id=69,
-        for_id=4,
-        from_id=4,
-        type="hug",
-        text="You got a hug",
-        date=datetime.strptime("2020-07-22 13:36:52.419098", DATETIME_PATTERN),
     )  # type: ignore
     notification_70 = Notification(
         id=70,
@@ -1896,68 +1480,16 @@ def create_notifications(db: SQLAlchemy):
                 notification_5,
                 notification_6,
                 notification_7,
-                notification_8,
-                notification_9,
-                notification_10,
-                notification_11,
-                notification_12,
-                notification_13,
-                notification_14,
-                notification_15,
-                notification_16,
-                notification_17,
-                notification_18,
-                notification_19,
-                notification_20,
-                notification_21,
-                notification_22,
-                notification_23,
-                notification_24,
-                notification_25,
-                notification_26,
-                notification_27,
-                notification_28,
-                notification_29,
-                notification_30,
-                notification_31,
-                notification_32,
-                notification_33,
-                notification_34,
-                notification_35,
-                notification_36,
-                notification_37,
-                notification_38,
-                notification_39,
-                notification_40,
                 notification_41,
                 notification_42,
                 notification_43,
-                notification_44,
-                notification_45,
                 notification_46,
-                notification_47,
-                notification_48,
-                notification_49,
-                notification_50,
-                notification_51,
-                notification_52,
                 notification_53,
                 notification_54,
                 notification_55,
-                notification_56,
-                notification_57,
                 notification_58,
-                notification_59,
-                notification_60,
-                notification_61,
-                notification_62,
                 notification_63,
-                notification_64,
-                notification_65,
                 notification_66,
-                notification_67,
-                notification_68,
-                notification_69,
                 notification_70,
                 notification_71,
                 notification_72,
