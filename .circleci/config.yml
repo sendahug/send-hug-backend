@@ -76,12 +76,12 @@ workflows:
     jobs:
       - lint
       - build:
-        post-steps:
-         - slack/notify:
-            event: fail
-            template: basic_fail_1
-            context: slack-secrets
-        - slack/notify:
-            event: pass
-            template: basic_success_1
-            context: slack-secrets
+          post-steps:
+          - slack/notify:
+              event: fail
+              template: basic_fail_1
+              context: slack-secrets
+          - slack/notify:
+              event: pass
+              template: basic_success_1
+              context: slack-secrets
