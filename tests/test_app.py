@@ -39,6 +39,7 @@ def test_get_home_page(app_client, test_db, user_headers):
     assert response.status_code == 200
     assert len(response_data["recent"]) == 10
     assert len(response_data["suggested"]) == 10
+    assert 1 == 2
 
 
 # Search Route Tests ('/', POST)
