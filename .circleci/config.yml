@@ -76,6 +76,7 @@ workflows:
     jobs:
       - lint
       - build:
+          context: slack-secrets
           post-steps:
           - slack/notify:
               event: fail
