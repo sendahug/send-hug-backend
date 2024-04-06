@@ -1,9 +1,0 @@
-{
-  "pr_number": 601,
-  "changes": [
-    {
-      "change": "Chores",
-      "description": "Adjusted the way the tests' database dump was generated. Previously, if changes were made to the database, the person making the changes had to update the file containing the database dump by manually running `pg_dump` locally. This made updating test data a complicated and sometimes frustrating process. That file has been replaced with a Python file, which contains SQLAlchemy model instances (one for each row in the database). In the beginning of the test suite's run, the database is populated with that file, and the updated database is dumped to a local file so it can be used to restore the database between tests. This makes it easier to update the test database, as all that anyone making a change needs to do is simply update the Python models."
-    }
-  ]
-}
