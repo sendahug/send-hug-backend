@@ -69,24 +69,19 @@ jobs:
           command: |
             pytest
       - codecov/upload
-  notify:
-    docker:
-      - image: 'cimg/base:stable'
-    steps:
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
-      - slack/notify:
-          event: pass
-          template: basic_success_1
 
-# Conditionally run testing depending on branch
-# Once it's done, run codecov to upload test coverage
+# Run tests and linting
 workflows:
   test:
     jobs:
       - lint
-      - build
-      - notify:
-          context: slack-secrets
-          requires: [lint, build]
+      - build:
+        post-steps:
+         - slack/notify:
+            event: fail
+            template: basic_fail_1
+            context: slack-secrets
+        - slack/notify:
+            event: pass
+            template: basic_success_1
+            context: slack-secrets
