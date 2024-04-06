@@ -5,6 +5,7 @@ parameters:
     type: boolean
 orbs:
   codecov: codecov/codecov@4.0.1
+  slack: circleci/slack@4.13.2
 
 jobs:
   lint:
@@ -76,3 +77,11 @@ workflows:
     jobs:
       - lint
       - build
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+          context: slack-secrets
+      - slack/notify:
+          event: pass
+          template: basic_success_1
+          context: slack-secrets
