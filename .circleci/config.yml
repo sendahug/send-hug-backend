@@ -69,18 +69,6 @@ jobs:
           command: |
             pytest
       - codecov/upload
-  notify:
-    docker:
-      - image: 'cimg/base:stable'
-    steps:
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
-          context: slack-secrets
-      - slack/notify:
-          event: pass
-          template: basic_success_1
-          context: slack-secrets
 
 # Run tests and linting
 workflows:
@@ -88,5 +76,10 @@ workflows:
     jobs:
       - lint
       - build:
-        post-steps:
-          - notify
+          post-steps:
+          - slack/notify:
+              event: fail
+              template: basic_fail_1
+          - slack/notify:
+              event: pass
+              template: basic_success_1
