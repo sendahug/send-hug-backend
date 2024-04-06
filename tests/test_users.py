@@ -526,7 +526,7 @@ def test_update_admin_settings_as_admin_invalid_settings(
 
     assert response_data["success"] is False
     assert response.status_code == 422
-    assert get_response_data["user"]["refreshRate"] is None
+    assert get_response_data["user"]["refreshRate"] == 20
 
 
 def test_close_report_update_user_as_admin(

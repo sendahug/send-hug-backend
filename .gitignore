@@ -109,3 +109,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Tests db
+tests/capstone_db

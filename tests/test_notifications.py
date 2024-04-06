@@ -257,7 +257,7 @@ def test_post_subscription_as_user(
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["subscribed"] == "shirb"
-    assert response_data["subId"] == 11
+    assert response_data["subId"] == 1
 
 
 # Attempt to create push subscription with a moderator's JWT
@@ -274,7 +274,7 @@ def test_post_subscription_as_mod(
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["subscribed"] == "user52"
-    assert response_data["subId"] == 11
+    assert response_data["subId"] == 1
 
 
 # Attempt to create push subscription with an admin's JWT
@@ -291,7 +291,7 @@ def test_post_subscription_as_admin(
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["subscribed"] == "user14"
-    assert response_data["subId"] == 11
+    assert response_data["subId"] == 1
 
 
 # Attempt to create push subscription with an admin's JWT
@@ -321,9 +321,9 @@ def test_update_subscription_no_auth(
     )
     # Then update it
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
-    updated_subscription["id"] = 11
+    updated_subscription["id"] = 1
     response = app_client.patch(
-        "/notifications/11", data=json.dumps(dummy_request_data["new_subscription"])
+        "/notifications/1", data=json.dumps(dummy_request_data["new_subscription"])
     )
     response_data = json.loads(response.data)
 
@@ -343,9 +343,9 @@ def test_update_subscription_malformed_auth(
     )
     # Then update it
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
-    updated_subscription["id"] = 11
+    updated_subscription["id"] = 1
     response = app_client.patch(
-        "/notifications/11",
+        "/notifications/1",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["malformed"],
     )
@@ -367,9 +367,9 @@ def test_update_subscription_as_user(
     )
     # Then update it
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
-    updated_subscription["id"] = 11
+    updated_subscription["id"] = 1
     response = app_client.patch(
-        "/notifications/11",
+        "/notifications/1",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
@@ -378,7 +378,7 @@ def test_update_subscription_as_user(
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["subscribed"] == "shirb"
-    assert response_data["subId"] == 11
+    assert response_data["subId"] == 1
 
 
 # Attempt to create push subscription with a moderator's JWT
@@ -393,9 +393,9 @@ def test_update_subscription_as_mod(
     )
     # Then update it
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
-    updated_subscription["id"] = 11
+    updated_subscription["id"] = 1
     response = app_client.patch(
-        "/notifications/11",
+        "/notifications/1",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["moderator"],
     )
@@ -404,7 +404,7 @@ def test_update_subscription_as_mod(
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["subscribed"] == "user52"
-    assert response_data["subId"] == 11
+    assert response_data["subId"] == 1
 
 
 # Attempt to create push subscription with an admin's JWT
@@ -419,9 +419,9 @@ def test_update_subscription_as_admin(
     )
     # Then update it
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
-    updated_subscription["id"] = 11
+    updated_subscription["id"] = 1
     response = app_client.patch(
-        "/notifications/11",
+        "/notifications/1",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["admin"],
     )
@@ -430,7 +430,7 @@ def test_update_subscription_as_admin(
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["subscribed"] == "user14"
-    assert response_data["subId"] == 11
+    assert response_data["subId"] == 1
 
 
 # Attempt to create push subscription with an admin's JWT
