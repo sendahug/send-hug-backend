@@ -484,7 +484,7 @@ class Filter(db.Model):  # type: ignore[name-defined]
         return {"id": self.id, "filter": self.filter}
 
 
-class Permission(db.Model):
+class Permission(db.Model):  # type: ignore[name-defined]
     __tablename__ = "permissions"
     id: Mapped[int] = db.Column(db.Integer, primary_key=True)
     permission: Mapped[str] = db.Column(db.String(), nullable=False)
@@ -499,7 +499,7 @@ class Permission(db.Model):
         }
 
 
-class Role(db.Model):
+class Role(db.Model):  # type: ignore[name-defined]
     __tablename__ = "roles"
     id: Mapped[int] = db.Column(db.Integer, primary_key=True)
     name: Mapped[str] = db.Column(db.String(), nullable=False)
