@@ -116,6 +116,7 @@ class User(db.Model):  # type: ignore[name-defined]
     role_id: Mapped[int] = db.Column(
         db.Integer,
         db.ForeignKey("roles.id", onupdate="CASCADE", ondelete="SET NULL"),
+        default=4,
     )
     role: Mapped[Optional["Role"]] = db.relationship(
         "Role", foreign_keys="User.role_id"
