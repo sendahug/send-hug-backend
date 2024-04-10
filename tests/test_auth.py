@@ -28,7 +28,7 @@
 from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError, JOSEError
 import pytest
 
-from auth import verify_jwt, check_permissions, AuthError, get_rsa_key
+from auth import verify_jwt, check_permissions_legacy, AuthError, get_rsa_key
 
 
 # Auth testing
@@ -41,7 +41,7 @@ def test_unverified_header_error():
 
 def test_no_permissions():
     with pytest.raises(AuthError) as exc:
-        check_permissions(
+        check_permissions_legacy(
             permission=["read:user"],
             payload={
                 "sub": "auth0|12345",
@@ -58,7 +58,7 @@ def test_no_permissions():
 
 def test_multiple_permissions_error():
     with pytest.raises(AuthError) as exc:
-        check_permissions(
+        check_permissions_legacy(
             permission=["read:user", "write:user"],
             payload={
                 "sub": "auth0|12345",

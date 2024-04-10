@@ -27,7 +27,8 @@
 
 import json
 import os
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional, cast, TypedDict
+from datetime import datetime
 
 from jose import jwt, exceptions
 from urllib.request import urlopen
@@ -43,6 +44,23 @@ API_AUDIENCE = os.environ.get("API_AUDIENCE", "")
 CLIENT_ID = os.environ.get("CLIENT_ID", "")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET", "")
 ALGORITHMS = ["RS256"]
+
+
+class RoleData(TypedDict):
+    id: int
+    name: str
+    permissions: list[str]
+
+
+class UserData(TypedDict):
+    id: int
+    auth0Id: str
+    displayName: str
+    role: RoleData
+    blocked: bool
+    releaseDate: Optional[datetime]
+    pushEnabled: bool
+    last_notifications_read: Optional[datetime]
 
 
 # Authentication Error
@@ -296,14 +314,25 @@ def requires_auth(permission=[""]):
         def wrapper(*args, **kwargs):
             token = get_auth_header()
             payload = verify_jwt(token)
-            current_user = get_current_user(payload)
 
             if permission[0] == "post:user":
+                returned_payload = payload
                 check_permissions_legacy(permission, payload)
             else:
+                current_user = get_current_user(payload)
+                returned_payload = {
+                    "id": current_user["id"],
+                    "auth0Id": current_user["auth0Id"],
+                    "displayName": current_user["displayName"],
+                    "role": current_user["role"],
+                    "blocked": current_user["blocked"],
+                    "releaseDate": current_user["releaseDate"],
+                    "pushEnabled": current_user["pushEnabled"],
+                    "last_notifications_read": current_user["last_notifications_read"],
+                }
                 check_user_permissions(permission, current_user)
 
-            return f(payload, *args, **kwargs)
+            return f(returned_payload, *args, **kwargs)
 
         return wrapper
 

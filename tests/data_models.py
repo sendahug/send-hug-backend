@@ -147,7 +147,7 @@ def create_users(db: SQLAlchemy):
         icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
-        role_id=1,
+        role_id=3,
     )  # type: ignore
     user_2 = User(
         id=4,
