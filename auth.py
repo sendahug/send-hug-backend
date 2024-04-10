@@ -32,7 +32,6 @@ from datetime import datetime
 
 from jose import jwt, exceptions
 from urllib.request import urlopen
-import http.client
 from functools import wraps
 from flask import request
 
@@ -42,7 +41,6 @@ from models import db, User
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
 API_AUDIENCE = os.environ.get("API_AUDIENCE", "")
 CLIENT_ID = os.environ.get("CLIENT_ID", "")
-CLIENT_SECRET = os.environ.get("CLIENT_SECRET", "")
 ALGORITHMS = ["RS256"]
 
 
@@ -337,74 +335,3 @@ def requires_auth(permission=[""]):
         return wrapper
 
     return requires_auth_decorator
-
-
-def check_mgmt_api_token() -> str:
-    """
-    Checks that the Management API token is valid and still hasn't expired.
-
-    returns: Either the verified token's payload (payload) or a 'token expired'
-    message if the token expired.
-    """
-    token = os.environ.get("MGMT_API_TOKEN", "")
-    token_header = jwt.get_unverified_header(token)
-
-    # Gets the JWKS from Auth0
-    auth_json = urlopen(f"https://{AUTH0_DOMAIN}/.well-known/jwks.json")
-    jwks = json.loads(auth_json.read())
-
-    rsa_key = {}
-
-    # If the 'kid' key doesn't exist in the token header
-    for key in jwks["keys"]:
-        if key["kid"] == token_header["kid"]:
-            rsa_key = {
-                "kty": key["kty"],
-                "kid": key["kid"],
-                "use": key["use"],
-                "n": key["n"],
-                "e": key["e"],
-            }
-
-    # Try to decode and validate the token
-    if rsa_key:
-        try:
-            jwt.decode(
-                token,
-                rsa_key,
-                algorithms=ALGORITHMS,
-                audience=API_AUDIENCE,
-                issuer=f"https://{AUTH0_DOMAIN}/",
-            )
-        # If the token expired
-        except exceptions.ExpiredSignatureError:
-            return "token expired"
-        # If there's any other error
-        except Exception as e:
-            print(e)
-
-    return token
-
-
-def get_management_api_token():
-    """
-    Gets a new Management API token from Auth0, in order to update
-    users' data in their systems.
-    """
-    # General variables for establishing an HTTPS connection to Auth0
-    connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
-    headers = {"content-type": "application/x-www-form-urlencoded"}
-    data = (
-        f"grant_type=client_credentials&client_id={CLIENT_ID}"
-        f"&client_secret={CLIENT_SECRET}&audience=https%3A%2F%2F"
-        f"{AUTH0_DOMAIN}%2Fapi%2Fv2%2F"
-    )
-
-    # Then add the 'user' role to the user's payload
-    connection.request("POST", "/oauth/token", data, headers)
-    response = connection.getresponse()
-    response_data = response.read()
-    token_data = response_data.decode("utf8").replace("'", '"')
-    token = json.loads(token_data)["access_token"]
-
-    os.environ["MGMT_API_TOKEN"] = token

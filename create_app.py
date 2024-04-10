@@ -28,7 +28,6 @@
 import os
 import json
 import math
-import http.client
 from typing import Dict, List, Any, Literal, Optional, Union, cast, Sequence
 from datetime import datetime
 
@@ -59,9 +58,6 @@ from auth import (
     AuthError,
     UserData,
     requires_auth,
-    check_mgmt_api_token,
-    get_management_api_token,
-    AUTH0_DOMAIN,
 )
 from utils.validator import Validator, ValidationError
 from utils.push_notifications import (
@@ -626,51 +622,6 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Try to add the user to the database
         added_user = db_add(new_user)["resource"]
-
-        # Get the Management API token and check that it's valid
-        MGMT_API_TOKEN = check_mgmt_api_token()
-        # If the token expired, get and check a
-        if MGMT_API_TOKEN.lower() == "token expired":
-            get_management_api_token()
-            MGMT_API_TOKEN = check_mgmt_api_token()
-
-        # Try to replace the user's role in Auth0's systems
-        try:
-            # General variables for establishing an HTTPS connection to Auth0
-            connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
-            auth_header = f"Bearer {MGMT_API_TOKEN}"
-            headers = {
-                "content-type": "application/json",
-                "authorization": auth_header,
-                "cache-control": "no-cache",
-            }
-
-            # Remove the 'new user' role from the user's payload
-            delete_payload = '{ "roles": [ "rol_QeyIIcHg326Vv1Ay" ] }'
-            connection.request(
-                "DELETE",
-                f"/api/v2/users/{user_data['id']}/roles",
-                delete_payload,
-                headers,
-            )
-            delete_response = connection.getresponse()
-            delete_response_data = delete_response.read()
-            app.logger.debug(delete_response_data)
-
-            # Then add the 'user' role to the user's payload
-            create_payload = '{ "roles": [ "rol_BhidDxUqlXDx8qIr" ] }'
-            connection.request(
-                "POST",
-                f"/api/v2/users/{user_data['id']}/roles",
-                create_payload,
-                headers,
-            )
-            create_response = connection.getresponse()
-            create_response_data = create_response.read()
-            app.logger.debug(create_response_data)
-        # If there's an error, print it
-        except Exception as e:
-            app.logger.error(e)
 
         return jsonify({"success": True, "user": added_user})
 
