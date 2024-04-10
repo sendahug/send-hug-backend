@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2024-04-10
+
+#### Chores
+
+- Updated the copyright notices to include 2024. ([#604](https://github.com/sendahug/send-hug-backend/pull/604))
+
 ### 2024-04-06
 
 #### Chores
