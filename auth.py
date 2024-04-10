@@ -265,10 +265,10 @@ def get_current_user(payload: dict[str, Any]) -> Dict[str, Any]:
     if current_user is None:
         raise AuthError(
             {
-                "code": 403,
+                "code": 401,
                 "description": "Unauthorised. User not found.",
             },
-            403,
+            401,
         )
 
     return current_user.format()

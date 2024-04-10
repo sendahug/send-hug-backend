@@ -28,7 +28,14 @@
 from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError, JOSEError
 import pytest
 
-from auth import verify_jwt, check_permissions_legacy, AuthError, get_rsa_key
+from auth import (
+    verify_jwt,
+    check_permissions_legacy,
+    AuthError,
+    get_rsa_key,
+    get_current_user,
+    check_user_permissions,
+)
 
 
 # Auth testing
@@ -91,3 +98,73 @@ def test_verify_jwt_error(mocker, error, error_message):
         verify_jwt(token="hi")
 
     assert error_message in str(exc.value)
+
+
+def test_get_current_user_error(test_app):
+    with test_app.app_context():
+        with pytest.raises(AuthError) as exc:
+            get_current_user(
+                {
+                    "sub": "auth0|12345",
+                    "aud": [
+                        "sendhug",
+                    ],
+                    "permissions": ["read:user"],
+                }
+            )
+
+        assert "Unauthorised. User not found." in str(exc.value)
+
+
+def test_get_current_user(dummy_users_data, test_app):
+    with test_app.app_context():
+        user = get_current_user({"sub": dummy_users_data["user"]["auth0"]})
+
+        assert user["id"] == int(dummy_users_data["user"]["internal"])
+
+
+def test_check_user_permissions_one_perm():
+    res = check_user_permissions(
+        ["read:user"],
+        {
+            "id": 1,
+            "role": {
+                "name": "user",
+                "permissions": ["read:user", "read:post", "patch:post"],
+            },
+        },
+    )
+    assert res is True
+
+
+def test_check_user_permissions_two_perms():
+    res = check_user_permissions(
+        ["read:user", "read:all-users"],
+        {
+            "id": 1,
+            "role": {
+                "name": "user",
+                "permissions": ["read:user", "read:post", "patch:post"],
+            },
+        },
+    )
+    assert res is True
+
+
+@pytest.mark.parametrize(
+    "required_perms, user_perms",
+    [
+        (["read:user"], ["read:post", "patch:post"]),
+        (["read:user", "read:all-users"], ["read:post", "patch:post"]),
+    ],
+)
+def test_check_user_permissions_error(required_perms, user_perms):
+    with pytest.raises(AuthError) as exc:
+        check_user_permissions(
+            required_perms,
+            {"id": 1, "role": {"name": "user", "permissions": user_perms}},
+        )
+
+    assert "Unauthorised. You do not have permission to perform this action." in str(
+        exc.value
+    )
