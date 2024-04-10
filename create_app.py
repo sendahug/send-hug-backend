@@ -617,7 +617,7 @@ def create_app(db_path: str = database_path) -> Flask:
             selected_character="kitty",
             icon_colours='{"character":"#BA9F93",lbg":"#e2a275",'
             '"rbg":"#f8eee4","item":"#f4b56a"}',
-            role_id=3,
+            role_id=3,  # Set the user role
         )
 
         # Try to add the user to the database
