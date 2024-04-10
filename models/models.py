@@ -117,8 +117,9 @@ class User(db.Model):  # type: ignore[name-defined]
         db.Integer,
         db.ForeignKey("roles.id", onupdate="CASCADE", ondelete="SET NULL"),
     )
-    # TODO: Once the roles are implemented, this should become a relationship
-    role: Mapped[Optional[str]] = db.Column(db.String(), default="user")
+    role: Mapped[Optional["Role"]] = db.relationship(
+        "Role", foreign_keys="User.role_id"
+    )  # type: ignore
     blocked: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
     release_date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
     open_report: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
@@ -156,7 +157,7 @@ class User(db.Model):  # type: ignore[name-defined]
             "receivedH": self.received_hugs,
             "givenH": self.given_hugs,
             "loginCount": self.login_count,
-            "role": self.role,
+            "role": self.role.format() if self.role else None,
             "blocked": self.blocked,
             "releaseDate": self.release_date,
             "autoRefresh": self.auto_refresh,
@@ -501,6 +502,6 @@ class Role(db.Model):
     def format(self):
         return {
             "id": self.id,
-            "role": self.name,
+            "name": self.name,
             "permissions": [perm.format() for perm in self.permissions],
         }
