@@ -633,6 +633,7 @@ def create_app(db_path: str = database_path) -> Flask:
             selected_character="kitty",
             icon_colours='{"character":"#BA9F93",lbg":"#e2a275",'
             '"rbg":"#f8eee4","item":"#f4b56a"}',
+            role_id=3,
         )
 
         # Try to add the user to the database
@@ -807,15 +808,15 @@ def create_app(db_path: str = database_path) -> Flask:
         # Checks whether the user has 'delete:any-post' permission, which
         # is given only to admins
         if "delete:any-post" in token_payload["permissions"]:
-            original_user.role = "admin"
+            original_user.role_id = 1
         # If the user doesn't have that permission but they have the
         # permission to edit any post, they're moderators
         elif "patch:any-post" in token_payload["permissions"]:
-            original_user.role = "moderator"
+            original_user.role_id = 2
         # Otherwise, the user's role is a user, so make sure to mark it
         # as such.
         else:
-            original_user.role = "user"
+            original_user.role_id = 3
 
         # Try to update it in the database
         # Update users' data
