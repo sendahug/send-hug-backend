@@ -52,6 +52,16 @@ def initialise_db(app: Flask) -> SQLAlchemy:
     return db
 
 
+# SQLAlchemy Tables
+roles_permissions_map = db.Table(
+    "roles_permissions_map",
+    db.Column("role_id", db.Integer, db.ForeignKey("roles.id"), primary_key=True),
+    db.Column(
+        "permission_id", db.Integer, db.ForeignKey("permissions.id"), primary_key=True
+    ),
+)
+
+
 # Models
 # -----------------------------------------------------------------
 # Post Model
@@ -103,6 +113,11 @@ class User(db.Model):  # type: ignore[name-defined]
     received_hugs: Mapped[int] = db.Column(db.Integer, default=0)
     given_hugs: Mapped[Optional[int]] = db.Column(db.Integer, default=0)
     login_count: Mapped[Optional[int]] = db.Column(db.Integer, default=1)
+    role_id: Mapped[int] = db.Column(
+        db.Integer,
+        db.ForeignKey("roles.id", onupdate="CASCADE", ondelete="SET NULL"),
+    )
+    # TODO: Once the roles are implemented, this should become a relationship
     role: Mapped[Optional[str]] = db.Column(db.String(), default="user")
     blocked: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
     release_date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
@@ -457,3 +472,35 @@ class Filter(db.Model):  # type: ignore[name-defined]
     # Format method
     def format(self):
         return {"id": self.id, "filter": self.filter}
+
+
+class Permission(db.Model):
+    __tablename__ = "permissions"
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    permission: Mapped[str] = db.Column(db.String(), nullable=False)
+    description: Mapped[Optional[str]] = db.Column(db.String())
+
+    # Format method
+    def format(self):
+        return {
+            "id": self.id,
+            "permission": self.permission,
+            "description": self.description,
+        }
+
+
+class Role(db.Model):
+    __tablename__ = "roles"
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    name: Mapped[str] = db.Column(db.String(), nullable=False)
+    permissions: Mapped[List[Permission]] = db.relationship(
+        "Permission", secondary=roles_permissions_map
+    )  # type: ignore
+
+    # Format method
+    def format(self):
+        return {
+            "id": self.id,
+            "role": self.name,
+            "permissions": [perm.format() for perm in self.permissions],
+        }
