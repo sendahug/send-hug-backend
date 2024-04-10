@@ -27,13 +27,15 @@
 
 import json
 import os
-from typing import Any, cast
+from typing import Any, Dict, Optional, cast
 
 from jose import jwt, exceptions
 from urllib.request import urlopen
 import http.client
 from functools import wraps
 from flask import request
+
+from models import db, User
 
 # Auth0 Configuration
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
@@ -175,12 +177,13 @@ def verify_jwt(token: str) -> dict[str, Any]:
     return payload
 
 
-def check_permissions(permission: list[str], payload: dict[str, Any]) -> bool:
+def check_permissions_legacy(permission: list[str], payload: dict[str, Any]) -> bool:
     """
     Checks the payload from of the decoded, verified JWT for
     permissions. Then compares the user's permissions to the
     required permission to check whether the user is allowed to
     access the given resource.
+    Currently only used for the 'create user' endpoint.
 
     param permission: The resource's required permissions. Can contain either one
     or two allowed types of permissions.
@@ -230,6 +233,58 @@ def check_permissions(permission: list[str], payload: dict[str, Any]) -> bool:
     return True
 
 
+def get_current_user(payload: dict[str, Any]) -> Dict[str, Any]:
+    """
+    Fetches the details of the currently logged in user from the database.
+
+    param payload: The payload from the decoded, verified JWT.
+    """
+    current_user: Optional[User] = db.session.scalar(
+        db.select(User).filter(User.auth0_id == payload["sub"])
+    )
+
+    # If the user is not found, raise an AuthError
+    if current_user is None:
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "Unauthorised. User not found.",
+            },
+            403,
+        )
+
+    return current_user.format()
+
+
+def check_user_permissions(permission: list[str], current_user: dict[str, Any]) -> bool:
+    """
+    Checks the user's permissions against the required permissions for a given
+    resource. If the user doesn't have the required permissions, an AuthError
+    is raised.
+
+    param permission: The resource's required permissions.
+    param current_user: The details of the currently logged in user from the database.
+    """
+    if (
+        len(permission) == 2
+        and permission[0] not in current_user["role"]["permissions"]
+        and permission[1] not in current_user["role"]["permissions"]
+    ) or (
+        len(permission) == 1
+        and permission[0] not in current_user["role"]["permissions"]
+    ):
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "Unauthorised. You do not have permission "
+                "to perform this action.",
+            },
+            403,
+        )
+
+    return True
+
+
 # @requires_auth() Decorator Definition
 # Description: Gets the Authorization header, verifies the JWT and checks
 #              the user has the required permissions using the functions above.
@@ -241,7 +296,13 @@ def requires_auth(permission=[""]):
         def wrapper(*args, **kwargs):
             token = get_auth_header()
             payload = verify_jwt(token)
-            check_permissions(permission, payload)
+            current_user = get_current_user(payload)
+
+            if permission[0] == "post:user":
+                check_permissions_legacy(permission, payload)
+            else:
+                check_user_permissions(permission, current_user)
+
             return f(payload, *args, **kwargs)
 
         return wrapper

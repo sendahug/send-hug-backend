@@ -158,7 +158,15 @@ class User(db.Model):  # type: ignore[name-defined]
             "receivedH": self.received_hugs,
             "givenH": self.given_hugs,
             "loginCount": self.login_count,
-            "role": self.role.format() if self.role else None,
+            "role": {
+                "id": self.role.id,
+                "name": self.role.name,
+                "permissions": [
+                    permission.permission for permission in self.role.permissions
+                ],
+            }
+            if self.role
+            else None,
             "blocked": self.blocked,
             "releaseDate": self.release_date,
             "autoRefresh": self.auto_refresh,
