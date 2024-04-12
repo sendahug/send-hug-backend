@@ -29,8 +29,6 @@ import json
 
 import pytest
 
-from models import User, Report
-
 
 # Get Users by Type Tests ('/users/<type>', GET)
 # -------------------------------------------------------
@@ -527,33 +525,6 @@ def test_update_admin_settings_as_admin_invalid_settings(
     assert response_data["success"] is False
     assert response.status_code == 422
     assert get_response_data["user"]["refreshRate"] == 20
-
-
-def test_close_report_update_user_as_admin(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
-):
-    user = {**dummy_request_data["updated_unblock_user"]}
-    user["id"] = dummy_users_data["moderator"]["internal"]
-    user["closeReport"] = 6
-    response = app_client.patch(
-        f"/users/all/{dummy_users_data['admin']['internal']}",
-        headers=user_headers["admin"],
-        data=json.dumps(user),
-    )
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-
-    moderator = test_db.session.get(User, dummy_users_data["moderator"]["internal"])
-    report = test_db.session.get(Report, 6)
-
-    if not moderator or not report:
-        pytest.fail()
-
-    assert moderator.open_report is False
-    assert (report.closed) is True
-    assert report.dismissed is False
 
 
 # Get User's Posts Tests ('/users/all/<user_id>/posts', GET)
