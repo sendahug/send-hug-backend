@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### 2024-04-12
+
+#### Features
+
+- Added roles and permissions tables to the database, as well as a mapping table between roles and permissions. ([#605](https://github.com/sendahug/send-hug-backend/pull/605))
+
+#### Changes
+
+- Updated the user table to include a role_id foreign key. The user's role was adjusted to include the full details of the role (name, ID and permissions) instead of just the name of the role. ([#605](https://github.com/sendahug/send-hug-backend/pull/605))
+
+#### Breaking Changes
+
+- The authorisation process has been rewritten to use the new roles and permissions system. This includes: 
+	- The `requires_auth` decorator now fetches the currently-logged in user and checks the required permissions against the user's permissions in our database in all endpoints except for the create user endpoint (as the user doesn't exist yet).
+	- The old process for updating a new user's role from NewUser to User was deleted. Since the only endpoint that checks the Auth0 permissions is the 'create users' endpoint, it doesn't really matter if we update the user's role in Auth0 or not; the role is checked internally in the API anyway.
+	- All endpoints that previously fetched the currently logged in user for authorisation (i.e., messaging endpoints checking the user isn't attempting to access someone else's messages) now use the user data returned by the `required_auth` decorator.
+	- The 'update user' endpoint no longer checks the Auth0 payload for permissions in order to update the users' role. A user's role is assigned in registration instead. ([#605](https://github.com/sendahug/send-hug-backend/pull/605))
+
 ### 2024-04-10
 
 #### Chores
