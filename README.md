@@ -41,8 +41,6 @@ The project is open source, so feel free to use parts of the code. However, the 
     - API_AUDIENCE - environment variable containing your Auth0 API audience.
     - CLIENT_ID - environment variable containing your Auth0 application's client ID.
     - PRIVATE_KEY - environment variable containing your private VAPID key (required for push notifications).
-    - MGMT_API_TOKEN - environment variable containing your Auth0 Management API token (required for updating user roles on signup).
-    - CLIENT_SECRET - environment variable containing your Auth0 application's client secret (required for updating user roles on signup).
 9. Set up your frontend URI.
     - The frontend URI comes from an environment variable named **FRONTEND**.
 10. Update your database using ```flask db upgrade```
@@ -96,7 +94,8 @@ Decoding and verifying the token is done by [`auth.py`](./auth.py), in three sta
 
 2. The server uses Jose to decode and verify the token. (Done by the `verify_jwt()` function.)
 
-3. Once the JWT is decoded and verified, the user's permissions (taken from the token payload) are checked. Each endpoint that requires authorisation contains a string, which is then compared to the user's permissions. (Done by the `check_permissions()` function.)
+3. Once the JWT is decoded and verified, the user's data (including permissions) is fetched from the back-end (done by the `get_current_user` function). Each endpoint that requires authorisation contains a string, which is then compared to the user's permissions. (Done by the `check_user_permissions()` function.)
+  - There's one exception to this, which is the `POST /users` endpoint. Since at that point the user doesn't exist in the internal database yet, fetching the permissions would fail. This endpoint is the only endpoint that still uses the Auth0 roles. A new user is automatically assigned the `NewUser` role, which includes the `post:user` permission, in Auth0. This allows them to create a user, which is then used for all subsequent visits.
 
 Endpoints that require authorisation are marked with the `@requires_auth` decorator. The function creating the decorator is written in full in [`auth.py`](./auth.py).
 

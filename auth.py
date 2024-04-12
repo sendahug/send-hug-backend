@@ -27,20 +27,38 @@
 
 import json
 import os
-from typing import Any, cast
+from typing import Any, Dict, Optional, cast, TypedDict
+from datetime import datetime
 
 from jose import jwt, exceptions
 from urllib.request import urlopen
-import http.client
 from functools import wraps
 from flask import request
+
+from models import db, User
 
 # Auth0 Configuration
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
 API_AUDIENCE = os.environ.get("API_AUDIENCE", "")
 CLIENT_ID = os.environ.get("CLIENT_ID", "")
-CLIENT_SECRET = os.environ.get("CLIENT_SECRET", "")
 ALGORITHMS = ["RS256"]
+
+
+class RoleData(TypedDict):
+    id: int
+    name: str
+    permissions: list[str]
+
+
+class UserData(TypedDict):
+    id: int
+    auth0Id: str
+    displayName: str
+    role: RoleData
+    blocked: bool
+    releaseDate: Optional[datetime]
+    pushEnabled: bool
+    last_notifications_read: Optional[datetime]
 
 
 # Authentication Error
@@ -175,12 +193,13 @@ def verify_jwt(token: str) -> dict[str, Any]:
     return payload
 
 
-def check_permissions(permission: list[str], payload: dict[str, Any]) -> bool:
+def check_permissions_legacy(permission: list[str], payload: dict[str, Any]) -> bool:
     """
     Checks the payload from of the decoded, verified JWT for
     permissions. Then compares the user's permissions to the
     required permission to check whether the user is allowed to
     access the given resource.
+    Currently only used for the 'create user' endpoint.
 
     param permission: The resource's required permissions. Can contain either one
     or two allowed types of permissions.
@@ -230,6 +249,58 @@ def check_permissions(permission: list[str], payload: dict[str, Any]) -> bool:
     return True
 
 
+def get_current_user(payload: dict[str, Any]) -> Dict[str, Any]:
+    """
+    Fetches the details of the currently logged in user from the database.
+
+    param payload: The payload from the decoded, verified JWT.
+    """
+    current_user: Optional[User] = db.session.scalar(
+        db.select(User).filter(User.auth0_id == payload["sub"])
+    )
+
+    # If the user is not found, raise an AuthError
+    if current_user is None:
+        raise AuthError(
+            {
+                "code": 401,
+                "description": "Unauthorised. User not found.",
+            },
+            401,
+        )
+
+    return current_user.format()
+
+
+def check_user_permissions(permission: list[str], current_user: dict[str, Any]) -> bool:
+    """
+    Checks the user's permissions against the required permissions for a given
+    resource. If the user doesn't have the required permissions, an AuthError
+    is raised.
+
+    param permission: The resource's required permissions.
+    param current_user: The details of the currently logged in user from the database.
+    """
+    if (
+        len(permission) == 2
+        and permission[0] not in current_user["role"]["permissions"]
+        and permission[1] not in current_user["role"]["permissions"]
+    ) or (
+        len(permission) == 1
+        and permission[0] not in current_user["role"]["permissions"]
+    ):
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "Unauthorised. You do not have permission "
+                "to perform this action.",
+            },
+            403,
+        )
+
+    return True
+
+
 # @requires_auth() Decorator Definition
 # Description: Gets the Authorization header, verifies the JWT and checks
 #              the user has the required permissions using the functions above.
@@ -241,80 +312,26 @@ def requires_auth(permission=[""]):
         def wrapper(*args, **kwargs):
             token = get_auth_header()
             payload = verify_jwt(token)
-            check_permissions(permission, payload)
-            return f(payload, *args, **kwargs)
+
+            if permission[0] == "post:user":
+                returned_payload = payload
+                check_permissions_legacy(permission, payload)
+            else:
+                current_user = get_current_user(payload)
+                returned_payload = {
+                    "id": current_user["id"],
+                    "auth0Id": current_user["auth0Id"],
+                    "displayName": current_user["displayName"],
+                    "role": current_user["role"],
+                    "blocked": current_user["blocked"],
+                    "releaseDate": current_user["releaseDate"],
+                    "pushEnabled": current_user["pushEnabled"],
+                    "last_notifications_read": current_user["last_notifications_read"],
+                }
+                check_user_permissions(permission, current_user)
+
+            return f(returned_payload, *args, **kwargs)
 
         return wrapper
 
     return requires_auth_decorator
-
-
-def check_mgmt_api_token() -> str:
-    """
-    Checks that the Management API token is valid and still hasn't expired.
-
-    returns: Either the verified token's payload (payload) or a 'token expired'
-    message if the token expired.
-    """
-    token = os.environ.get("MGMT_API_TOKEN", "")
-    token_header = jwt.get_unverified_header(token)
-
-    # Gets the JWKS from Auth0
-    auth_json = urlopen(f"https://{AUTH0_DOMAIN}/.well-known/jwks.json")
-    jwks = json.loads(auth_json.read())
-
-    rsa_key = {}
-
-    # If the 'kid' key doesn't exist in the token header
-    for key in jwks["keys"]:
-        if key["kid"] == token_header["kid"]:
-            rsa_key = {
-                "kty": key["kty"],
-                "kid": key["kid"],
-                "use": key["use"],
-                "n": key["n"],
-                "e": key["e"],
-            }
-
-    # Try to decode and validate the token
-    if rsa_key:
-        try:
-            jwt.decode(
-                token,
-                rsa_key,
-                algorithms=ALGORITHMS,
-                audience=API_AUDIENCE,
-                issuer=f"https://{AUTH0_DOMAIN}/",
-            )
-        # If the token expired
-        except exceptions.ExpiredSignatureError:
-            return "token expired"
-        # If there's any other error
-        except Exception as e:
-            print(e)
-
-    return token
-
-
-def get_management_api_token():
-    """
-    Gets a new Management API token from Auth0, in order to update
-    users' data in their systems.
-    """
-    # General variables for establishing an HTTPS connection to Auth0
-    connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
-    headers = {"content-type": "application/x-www-form-urlencoded"}
-    data = (
-        f"grant_type=client_credentials&client_id={CLIENT_ID}"
-        f"&client_secret={CLIENT_SECRET}&audience=https%3A%2F%2F"
-        f"{AUTH0_DOMAIN}%2Fapi%2Fv2%2F"
-    )
-
-    # Then add the 'user' role to the user's payload
-    connection.request("POST", "/oauth/token", data, headers)
-    response = connection.getresponse()
-    response_data = response.read()
-    token_data = response_data.decode("utf8").replace("'", '"')
-    token = json.loads(token_data)["access_token"]
-
-    os.environ["MGMT_API_TOKEN"] = token

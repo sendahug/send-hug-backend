@@ -28,7 +28,6 @@
 import os
 import json
 import math
-import http.client
 from typing import Dict, List, Any, Literal, Optional, Union, cast, Sequence
 from datetime import datetime
 
@@ -57,10 +56,8 @@ from models import (
 )
 from auth import (
     AuthError,
+    UserData,
     requires_auth,
-    check_mgmt_api_token,
-    get_management_api_token,
-    AUTH0_DOMAIN,
 )
 from utils.validator import Validator, ValidationError
 from utils.push_notifications import (
@@ -234,13 +231,9 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: post:post.
     @app.route("/posts", methods=["POST"])
     @requires_auth(["post:post"])
-    def add_post(token_payload):
-        current_user: User = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
-        )
-
+    def add_post(token_payload: UserData):
         # If the user is currently blocked, raise an AuthError
-        if current_user.blocked is True:
+        if token_payload["blocked"] is True:
             raise AuthError(
                 {
                     "code": 403,
@@ -277,17 +270,13 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: patch:my-post or patch:any-post.
     @app.route("/posts/<post_id>", methods=["PATCH"])
     @requires_auth(["patch:my-post", "patch:any-post"])
-    def edit_post(token_payload, post_id: int):
+    def edit_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
         updated_post = json.loads(request.data)
         original_post: Optional[Post] = db.session.scalar(
             db.select(Post).filter(Post.id == post_id)
-        )
-        # Gets the user's ID
-        current_user: User = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
         )
 
         # If there's no post with that ID
@@ -298,8 +287,8 @@ def create_app(db_path: str = database_path) -> Flask:
         # their own posts. If it's a user trying to edit the text
         # of a post that doesn't belong to them, throw an auth error
         if (
-            "patch:my-post" in token_payload["permissions"]
-            and original_post.user_id != current_user.id
+            "patch:my-post" in token_payload["role"]["permissions"]
+            and original_post.user_id != token_payload["id"]
             and original_post.text != updated_post["text"]
         ):
             raise AuthError(
@@ -329,7 +318,7 @@ def create_app(db_path: str = database_path) -> Flask:
         if "closeReport" in updated_post:
             # Check the user has permission to close reports
             # If he doesn't, raise an AuthError
-            if "read:admin-board" not in token_payload["permissions"]:
+            if "read:admin-board" not in token_payload["role"]["permissions"]:
                 raise AuthError(
                     {
                         "code": 403,
@@ -370,7 +359,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:user
     @app.route("/posts/<post_id>/hugs", methods=["POST"])
     @requires_auth(["patch:my-post", "patch:any-post"])
-    def send_hug_for_post(token_payload, post_id: int):
+    def send_hug_for_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
@@ -378,9 +367,9 @@ def create_app(db_path: str = database_path) -> Flask:
             db.select(Post).filter(Post.id == int(post_id))
         )
 
-        # Gets the current user's ID
+        # Gets the current user so we can update their 'sent hugs' value
         current_user: User = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
+            db.select(User).filter(User.id == token_payload["id"])
         )
 
         hugs = original_post.sent_hugs or []
@@ -448,7 +437,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: delete:my-post or delete:any-post.
     @app.route("/posts/<post_id>", methods=["DELETE"])
     @requires_auth(["delete:my-post", "delete:any-post"])
-    def delete_post(token_payload, post_id: int):
+    def delete_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
@@ -456,14 +445,10 @@ def create_app(db_path: str = database_path) -> Flask:
         post_data: Post = db.one_or_404(db.select(Post).filter(Post.id == post_id))
 
         # If the user only has permission to delete their own posts
-        if "delete:my-post" in token_payload["permissions"]:
-            # Gets the user's ID and compares it to the user_id of the post
-            current_user: User = db.one_or_404(
-                db.select(User).filter(User.auth0_id == token_payload["sub"])
-            )
+        if "delete:my-post" in token_payload["role"]["permissions"]:
             # If it's not the same user, they can't delete the post, so an
             # auth error is raised
-            if post_data.user_id != current_user.id:
+            if post_data.user_id != token_payload["id"]:
                 raise AuthError(
                     {
                         "code": 403,
@@ -516,7 +501,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/users/<type>")
     @requires_auth(["read:admin-board"])
-    def get_users_by_type(token_payload, type: str):
+    def get_users_by_type(token_payload: UserData, type: str):
         page = request.args.get("page", 1, type=int)
 
         # If the type of users to fetch is blocked users
@@ -562,7 +547,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:user.
     @app.route("/users/all/<user_id>")
     @requires_auth(["read:user"])
-    def get_user_data(token_payload, user_id: Union[int, str]):
+    def get_user_data(token_payload: UserData, user_id: Union[int, str]):
         # Try to convert it to a number; if it's a number, it's a
         # regular ID, so try to find the user with that ID
         try:
@@ -622,7 +607,6 @@ def create_app(db_path: str = database_path) -> Flask:
         new_user = User(  # type: ignore
             auth0_id=user_data["id"],
             display_name=user_data["displayName"],
-            role="user",
             last_notifications_read=datetime.now(),
             login_count=0,
             blocked=False,
@@ -631,57 +615,13 @@ def create_app(db_path: str = database_path) -> Flask:
             refresh_rate=20,
             push_enabled=False,
             selected_character="kitty",
-            icon_colours='{"character":"#BA9F93",lbg":"#e2a275",'
+            icon_colours='{"character":"#BA9F93","lbg":"#e2a275",'
             '"rbg":"#f8eee4","item":"#f4b56a"}',
+            role_id=3,  # Set the user role
         )
 
         # Try to add the user to the database
         added_user = db_add(new_user)["resource"]
-
-        # Get the Management API token and check that it's valid
-        MGMT_API_TOKEN = check_mgmt_api_token()
-        # If the token expired, get and check a
-        if MGMT_API_TOKEN.lower() == "token expired":
-            get_management_api_token()
-            MGMT_API_TOKEN = check_mgmt_api_token()
-
-        # Try to replace the user's role in Auth0's systems
-        try:
-            # General variables for establishing an HTTPS connection to Auth0
-            connection = http.client.HTTPSConnection(AUTH0_DOMAIN)
-            auth_header = f"Bearer {MGMT_API_TOKEN}"
-            headers = {
-                "content-type": "application/json",
-                "authorization": auth_header,
-                "cache-control": "no-cache",
-            }
-
-            # Remove the 'new user' role from the user's payload
-            delete_payload = '{ "roles": [ "rol_QeyIIcHg326Vv1Ay" ] }'
-            connection.request(
-                "DELETE",
-                f"/api/v2/users/{user_data['id']}/roles",
-                delete_payload,
-                headers,
-            )
-            delete_response = connection.getresponse()
-            delete_response_data = delete_response.read()
-            app.logger.debug(delete_response_data)
-
-            # Then add the 'user' role to the user's payload
-            create_payload = '{ "roles": [ "rol_BhidDxUqlXDx8qIr" ] }'
-            connection.request(
-                "POST",
-                f"/api/v2/users/{user_data['id']}/roles",
-                create_payload,
-                headers,
-            )
-            create_response = connection.getresponse()
-            create_response_data = create_response.read()
-            app.logger.debug(create_response_data)
-        # If there's an error, print it
-        except Exception as e:
-            app.logger.error(e)
 
         return jsonify({"success": True, "user": added_user})
 
@@ -691,17 +631,17 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: patch:user or patch:any-user.
     @app.route("/users/all/<user_id>", methods=["PATCH"])
     @requires_auth(["patch:user", "patch:any-user"])
-    def edit_user(token_payload, user_id: int):
+    def edit_user(token_payload: UserData, user_id: int):
         # Check if the user ID isn't an integer; if it isn't, abort
         validator.check_type(user_id, "User ID")
 
         updated_user = json.loads(request.data)
-        original_user: User = db.one_or_404(db.select(User).filter(User.id == user_id))
+        user_to_update: User = db.one_or_404(db.select(User).filter(User.id == user_id))
 
         # If there's a login count (meaning, the user is editing their own
         # data), update it
-        original_user.login_count = updated_user.get(
-            "loginCount", original_user.login_count
+        user_to_update.login_count = updated_user.get(
+            "loginCount", user_to_update.login_count
         )
 
         # If the user is attempting to change a user's display name, check
@@ -710,11 +650,11 @@ def create_app(db_path: str = database_path) -> Flask:
             # if the name changed and the user is only allowed to
             # change their own name (user / mod)
             if (
-                updated_user["displayName"] != original_user.display_name
-                and "patch:user" in token_payload["permissions"]
+                updated_user["displayName"] != user_to_update.display_name
+                and "patch:user" in token_payload["role"]["permissions"]
             ):
                 # If it's not the current user, abort
-                if token_payload["sub"] != original_user.auth0_id:
+                if token_payload["id"] != user_to_update.id:
                     raise AuthError(
                         {
                             "code": 403,
@@ -728,12 +668,12 @@ def create_app(db_path: str = database_path) -> Flask:
             validator.check_length(updated_user["displayName"], "display name")
             validator.check_type(updated_user["displayName"], "display name")
 
-            original_user.display_name = updated_user["displayName"]
+            user_to_update.display_name = updated_user["displayName"]
 
         # If the request was in done in order to block or unlock a user
         if "blocked" in updated_user:
             # If the user doesn't have permission to block/unblock a user
-            if "block:user" not in token_payload["permissions"]:
+            if "block:user" not in token_payload["role"]["permissions"]:
                 raise AuthError(
                     {
                         "code": 403,
@@ -744,8 +684,8 @@ def create_app(db_path: str = database_path) -> Flask:
 
             # Otherwise, the user is a manager, so they can block a user.
             # In that case, block / unblock the user as requested.
-            original_user.blocked = updated_user["blocked"]
-            original_user.release_date = updated_user["releaseDate"]
+            user_to_update.blocked = updated_user["blocked"]
+            user_to_update.release_date = updated_user["releaseDate"]
 
         open_report: Optional[Report] = None
 
@@ -760,7 +700,7 @@ def create_app(db_path: str = database_path) -> Flask:
             if open_report:
                 open_report.dismissed = False
                 open_report.closed = True
-                original_user.open_report = False
+                user_to_update.open_report = False
 
         # If the user is attempting to change a user's settings, check
         # whether it's the current user
@@ -770,7 +710,7 @@ def create_app(db_path: str = database_path) -> Flask:
             or "refreshRate" in updated_user
         ):
             # If it's not the current user, abort
-            if token_payload["sub"] != original_user.auth0_id:
+            if token_payload["id"] != user_to_update.id:
                 raise AuthError(
                     {
                         "code": 403,
@@ -785,41 +725,26 @@ def create_app(db_path: str = database_path) -> Flask:
             abort(422)
 
         # If the user is changing their settings
-        original_user.auto_refresh = updated_user.get(
-            "autoRefresh", original_user.auto_refresh
+        user_to_update.auto_refresh = updated_user.get(
+            "autoRefresh", user_to_update.auto_refresh
         )
-        original_user.push_enabled = updated_user.get(
-            "pushEnabled", original_user.push_enabled
+        user_to_update.push_enabled = updated_user.get(
+            "pushEnabled", user_to_update.push_enabled
         )
-        original_user.refresh_rate = updated_user.get(
-            "refreshRate", original_user.refresh_rate
+        user_to_update.refresh_rate = updated_user.get(
+            "refreshRate", user_to_update.refresh_rate
         )
-        original_user.selected_character = updated_user.get(
-            "selectedIcon", original_user.selected_character
+        user_to_update.selected_character = updated_user.get(
+            "selectedIcon", user_to_update.selected_character
         )
 
         # If the user is changing their character colours
         if "iconColours" in updated_user:
-            original_user.icon_colours = json.dumps(updated_user["iconColours"])
-
-        # Checks if the user's role is updated based on the
-        # permissions in the JWT
-        # Checks whether the user has 'delete:any-post' permission, which
-        # is given only to admins
-        if "delete:any-post" in token_payload["permissions"]:
-            original_user.role = "admin"
-        # If the user doesn't have that permission but they have the
-        # permission to edit any post, they're moderators
-        elif "patch:any-post" in token_payload["permissions"]:
-            original_user.role = "moderator"
-        # Otherwise, the user's role is a user, so make sure to mark it
-        # as such.
-        else:
-            original_user.role = "user"
+            user_to_update.icon_colours = json.dumps(updated_user["iconColours"])
 
         # Try to update it in the database
         # Update users' data
-        to_update: List[Any] = [original_user]
+        to_update: List[Any] = [user_to_update]
 
         if "closeReport" in updated_user:
             to_update.append(open_report)
@@ -838,7 +763,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:user.
     @app.route("/users/all/<user_id>/posts")
     @requires_auth(["read:user"])
-    def get_user_posts(token_payload, user_id):
+    def get_user_posts(token_payload: UserData, user_id):
         page = request.args.get("page", 1, type=int)
 
         # if there's no user ID provided, abort with 'Bad Request'
@@ -870,19 +795,16 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: delete:my-post or delete:any-post
     @app.route("/users/all/<user_id>/posts", methods=["DELETE"])
     @requires_auth(["delete:my-post", "delete:any-post"])
-    def delete_user_posts(token_payload, user_id: int):
+    def delete_user_posts(token_payload: UserData, user_id: int):
         validator.check_type(user_id, "User ID")
-        current_user: User = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
-        )
 
         # If the user making the request isn't the same as the user
         # whose posts should be deleted
         # If the user can only delete their own posts, they're not
         # allowed to delete others' posts, so raise an AuthError
         if (
-            current_user.id != int(user_id)
-            and "delete:my-post" in token_payload["permissions"]
+            token_payload["id"] != int(user_id)
+            and "delete:my-post" in token_payload["role"]["permissions"]
         ):
             raise AuthError(
                 {
@@ -914,11 +836,12 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:user
     @app.route("/users/all/<user_id>/hugs", methods=["POST"])
     @requires_auth(["read:user"])
-    def send_hug_to_user(token_payload, user_id: int):
+    def send_hug_to_user(token_payload: UserData, user_id: int):
         validator.check_type(user_id, "User ID")
         user_to_hug: User = db.one_or_404(db.select(User).filter(User.id == user_id))
+        # Fetch the current user to update their 'given hugs' value
         current_user: User = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
+            db.select(User).filter(User.id == token_payload["id"])
         )
 
         if not current_user.given_hugs:
@@ -959,7 +882,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:messages.
     @app.route("/messages")
     @requires_auth(["read:messages"])
-    def get_user_messages(token_payload):
+    def get_user_messages(token_payload: UserData):
         page = request.args.get("page", 1, type=int)
         type = request.args.get("type", "inbox", type=str)
         thread_id = request.args.get("threadID", None, type=int)
@@ -971,13 +894,8 @@ def create_app(db_path: str = database_path) -> Flask:
         if user_id is None:
             abort(400)
 
-        # The user making the request
-        requesting_user: User = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
-        )
-
         # If the user is attempting to read another user's messages
-        if requesting_user.id != int(user_id):
+        if token_payload["id"] != int(user_id):
             raise AuthError(
                 {
                     "code": 403,
@@ -1009,8 +927,8 @@ def create_app(db_path: str = database_path) -> Flask:
                 if message:
                     # If the user is trying to view a thread that belongs to other
                     # users, raise an AuthError
-                    if (message.user_1_id != requesting_user.id) and (
-                        message.user_2_id != requesting_user.id
+                    if (message.user_1_id != token_payload["id"]) and (
+                        message.user_2_id != token_payload["id"]
                     ):
                         raise AuthError(
                             {
@@ -1082,16 +1000,12 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: post:message.
     @app.route("/messages", methods=["POST"])
     @requires_auth(["post:message"])
-    def add_message(token_payload):
+    def add_message(token_payload: UserData):
         # Gets the new message's data
         message_data = json.loads(request.data)
 
-        logged_user: User = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
-        )
-
         # Checks that the user isn't trying to send a message from someone else
-        if logged_user.id != message_data["fromId"]:
+        if token_payload["id"] != message_data["fromId"]:
             raise AuthError(
                 {
                     "code": 403,
@@ -1143,12 +1057,6 @@ def create_app(db_path: str = database_path) -> Flask:
                 # Update the thread in the database
                 db_update(thread)
 
-        # If a new thread was created and the database session ended, we need
-        # to get the logged user's data again.
-        logged_user = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
-        )
-
         # Create a new message
         new_message = Message(  # type: ignore
             from_id=message_data["fromId"],
@@ -1168,7 +1076,7 @@ def create_app(db_path: str = database_path) -> Flask:
         )
         push_notification: RawPushData = {
             "type": "message",
-            "text": f"{logged_user.display_name} sent you a message",
+            "text": f"{token_payload['displayName']} sent you a message",
         }
         notification_for = message_data["forId"]
 
@@ -1187,7 +1095,7 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/messages/<mailbox_type>/<item_id>", methods=["DELETE"])
     @requires_auth(["delete:messages"])
     def delete_thread(  # TODO: This should be renamed to delete_message
-        token_payload,
+        token_payload: UserData,
         mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
         item_id: int,
     ):
@@ -1212,22 +1120,21 @@ def create_app(db_path: str = database_path) -> Flask:
         if delete_item is None:
             abort(404)
 
-        request_user = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
-        )
-
         # If the user is attempting to delete another user's messages
         # TODO: This condition is so overcomplicated, it really needs to be simpler.
         if (
             isinstance(delete_item, Message)
             and (
-                (mailbox_type == "inbox" and request_user.id != delete_item.for_id)
-                or (mailbox_type == "outbox" and request_user.id != delete_item.from_id)
+                (mailbox_type == "inbox" and token_payload["id"] != delete_item.for_id)
+                or (
+                    mailbox_type == "outbox"
+                    and token_payload["id"] != delete_item.from_id
+                )
             )
             or (
                 isinstance(delete_item, Thread)
-                and (request_user.id != delete_item.user_1_id)
-                and (request_user.id != delete_item.user_2_id)
+                and (token_payload["id"] != delete_item.user_1_id)
+                and (token_payload["id"] != delete_item.user_2_id)
             )
         ):
             raise AuthError(
@@ -1245,7 +1152,7 @@ def create_app(db_path: str = database_path) -> Flask:
             "outbox",
             "thread",
         ]:
-            if delete_item.for_id == request_user.id:
+            if delete_item.for_id == token_payload["id"]:
                 delete_item.for_deleted = True
             else:
                 delete_item.from_deleted = True
@@ -1253,7 +1160,7 @@ def create_app(db_path: str = database_path) -> Flask:
         elif isinstance(delete_item, Thread) and mailbox_type == "threads":
             # Otherwise, if the current user is the thread's user_1, set
             # the appropriate deleted property
-            if request_user.id == delete_item.user_1_id:
+            if token_payload["id"] == delete_item.user_1_id:
                 delete_item.user_1_deleted = True
             # Or, if the current user is the thread's user_2, set
             # the appropriate deleted property
@@ -1283,7 +1190,9 @@ def create_app(db_path: str = database_path) -> Flask:
             db_delete(delete_item)
         # Otherwise, just update the appropriate deleted property
         else:
-            db_update(delete_item, {"set_deleted": True, "user_id": request_user.id})
+            db_update(
+                delete_item, {"set_deleted": True, "user_id": token_payload["id"]}
+            )
 
         return jsonify({"success": True, "deleted": int(item_id)})
 
@@ -1294,7 +1203,8 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/messages/<mailbox_type>", methods=["DELETE"])
     @requires_auth(["delete:messages"])
     def clear_mailbox(
-        token_payload, mailbox_type: Literal["inbox", "outbox", "thread", "threads"]
+        token_payload: UserData,
+        mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
     ):
         user_id = request.args.get("userID", type=int)
 
@@ -1302,12 +1212,8 @@ def create_app(db_path: str = database_path) -> Flask:
         if user_id is None:
             abort(400)
 
-        current_user = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
-        )
-
         # If the user is attempting to delete another user's messages
-        if current_user.id != int(user_id):
+        if token_payload["id"] != int(user_id):
             raise AuthError(
                 {
                     "code": 403,
@@ -1368,7 +1274,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/reports")
     @requires_auth(["read:admin-board"])
-    def get_open_reports(token_payload):
+    def get_open_reports(token_payload: UserData):
         reports: Dict[str, List[Dict[str, Any]]] = {
             "User": [],
             "Post": [],
@@ -1413,7 +1319,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: post:report.
     @app.route("/reports", methods=["POST"])
     @requires_auth(["post:report"])
-    def create_new_report(token_payload):
+    def create_new_report(token_payload: UserData):
         report_data = json.loads(request.data)
 
         # Check the length adn  type of the report reason
@@ -1480,7 +1386,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/reports/<report_id>", methods=["PATCH"])
     @requires_auth(["read:admin-board"])
-    def update_report_status(token_payload, report_id: int):
+    def update_report_status(token_payload: UserData, report_id: int):
         updated_report = json.loads(request.data)
         report: Optional[Report] = db.session.scalar(
             db.select(Report).filter(Report.id == report_id)
@@ -1534,7 +1440,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/filters")
     @requires_auth(["read:admin-board"])
-    def get_filters(token_payload):
+    def get_filters(token_payload: UserData):
         page = request.args.get("page", 1, type=int)
         words_per_page = 10
         filtered_words = db.paginate(
@@ -1551,7 +1457,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/filters", methods=["POST"])
     @requires_auth(["read:admin-board"])
-    def add_filter(token_payload):
+    def add_filter(token_payload: UserData):
         new_filter = json.loads(request.data)["word"]
 
         # Check if the filter is empty; if it is, abort
@@ -1577,7 +1483,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/filters/<filter_id>", methods=["DELETE"])
     @requires_auth(["read:admin-board"])
-    def delete_filter(token_payload, filter_id: int):
+    def delete_filter(token_payload: UserData, filter_id: int):
         validator.check_type(filter_id, "Filter ID")
 
         # If there's no word in that index
@@ -1597,10 +1503,10 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications")
     @requires_auth(["read:messages"])
-    def get_latest_notifications(token_payload):
+    def get_latest_notifications(token_payload: UserData):
         silent_refresh = request.args.get("silentRefresh", True)
         user: User = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
+            db.select(User).filter(User.id == token_payload["id"])
         )
 
         user_id = user.id
@@ -1640,7 +1546,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications", methods=["POST"])
     @requires_auth(["read:messages"])
-    def add_notification_subscription(token_payload):
+    def add_notification_subscription(token_payload: UserData):
         # if the request is empty, return 204. This happens due to a bug
         # in the frontend that causes the request to be sent twice, once
         # with subscription data and once with an empty object
@@ -1649,19 +1555,16 @@ def create_app(db_path: str = database_path) -> Flask:
 
         subscription_json = request.data.decode("utf8").replace("'", '"')
         subscription_data = json.loads(subscription_json)
-        user: User = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
-        )
 
         # Create a new subscription object with the given data
         subscription = NotificationSub(  # type: ignore
-            user=user.id,
+            user=token_payload["id"],
             endpoint=subscription_data["endpoint"],
             subscription_data=json.dumps(subscription_data),
         )
 
         # Try to add it to the database
-        subscribed = user.display_name
+        subscribed = token_payload["displayName"]
         sub = db_add(subscription)["resource"]
 
         return {
@@ -1677,7 +1580,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications/<sub_id>", methods=["PATCH"])
     @requires_auth(["read:messages"])
-    def update_notification_subscription(token_payload, sub_id: int):
+    def update_notification_subscription(token_payload: UserData, sub_id: int):
         # if the request is empty, return 204. This happens due to a bug
         # in the frontend that causes the request to be sent twice, once
         # with subscription data and once with an empty object
@@ -1686,9 +1589,6 @@ def create_app(db_path: str = database_path) -> Flask:
 
         subscription_json = request.data.decode("utf8").replace("'", '"')
         subscription_data = json.loads(subscription_json)
-        user: User = db.one_or_404(
-            db.select(User).filter(User.auth0_id == token_payload["sub"])
-        )
         old_sub: NotificationSub = db.one_or_404(
             db.select(NotificationSub).filter(NotificationSub.id == sub_id)
         )
@@ -1697,7 +1597,7 @@ def create_app(db_path: str = database_path) -> Flask:
         old_sub.subscription_data = cast(Text, json.dumps(subscription_data))
 
         # Try to add it to the database
-        subscribed = user.display_name
+        subscribed = token_payload["displayName"]
         subId = old_sub.id
         db_update(old_sub)
 

@@ -3,7 +3,17 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 
-from models.models import Post, User, Message, Thread, Report, Notification, Filter
+from models.models import (
+    Permission,
+    Post,
+    User,
+    Message,
+    Thread,
+    Report,
+    Notification,
+    Filter,
+    Role,
+)
 
 
 DATETIME_PATTERN = "%Y-%m-%d %H:%M:%S.%f"
@@ -22,6 +32,102 @@ def create_filters(db: SQLAlchemy):
         db.session.close()
 
 
+def create_permissions(db):
+    permission_1 = Permission(
+        id=1, permission="block:user", description="Block or unblock a user"
+    )  # type: ignore
+    permission_2 = Permission(
+        id=2, permission="delete:any-post", description="Delete anyones post"
+    )  # type: ignore
+    permission_3 = Permission(
+        id=3, permission="delete:messages", description="Delete my messages"
+    )  # type: ignore
+    permission_4 = Permission(
+        id=4, permission="patch:any-post", description="Edit any post"
+    )  # type: ignore
+    permission_5 = Permission(
+        id=5, permission="patch:any-user", description="Edit any users display name"
+    )  # type: ignore
+    permission_6 = Permission(
+        id=6, permission="post:message", description="Create a new message"
+    )  # type: ignore
+    permission_7 = Permission(
+        id=7, permission="post:post", description="Create a new post"
+    )  # type: ignore
+    permission_8 = Permission(
+        id=8, permission="post:report", description="Create a new report."
+    )  # type: ignore
+    permission_9 = Permission(
+        id=9, permission="read:admin-board", description="View admin dashboard"
+    )  # type: ignore
+    permission_10 = Permission(
+        id=10, permission="read:messages", description="Read user messages"
+    )  # type: ignore
+    permission_11 = Permission(
+        id=11, permission="read:user", description="Read user data"
+    )  # type: ignore
+    permission_12 = Permission(
+        id=12, permission="delete:my-post", description="Delete my own post"
+    )  # type: ignore
+    permission_13 = Permission(
+        id=13, permission="patch:user", description="Edit user data"
+    )  # type: ignore
+    permission_14 = Permission(
+        id=14, permission="patch:my-post", description="Edit my post"
+    )  # type: ignore
+    permission_15 = Permission(
+        id=15, permission="post:user", description="Create a new user"
+    )  # type: ignore
+
+    try:
+        db.session.add_all(
+            [
+                permission_1,
+                permission_2,
+                permission_3,
+                permission_4,
+                permission_5,
+                permission_6,
+                permission_7,
+                permission_8,
+                permission_9,
+                permission_10,
+                permission_11,
+                permission_12,
+                permission_13,
+                permission_14,
+                permission_15,
+            ]
+        )
+        db.session.execute(text("ALTER SEQUENCE permissions_id_seq RESTART WITH 16;"))
+        db.session.commit()
+    finally:
+        db.session.close()
+
+
+def create_roles(db):
+    role_1 = Role(id=1, name="admin")  # type: ignore
+    role_2 = Role(id=2, name="moderator")  # type: ignore
+    role_3 = Role(id=3, name="user")  # type: ignore
+    role_4 = Role(id=4, name="new user")  # type: ignore
+
+    try:
+        permissions = db.session.scalars(
+            db.select(Permission).order_by(Permission.id)
+        ).all()
+
+        role_1.permissions = permissions[0:11]
+        role_2.permissions = [*permissions[2:4], *permissions[5:8], *permissions[9:13]]
+        role_3.permissions = [permissions[2], *permissions[5:8], *permissions[9:14]]
+        role_4.permissions = [permissions[2], *permissions[5:7], *permissions[9:]]
+
+        db.session.add_all([role_1, role_2, role_3, role_4])
+        db.session.execute(text("ALTER SEQUENCE roles_id_seq RESTART WITH 5;"))
+        db.session.commit()
+    finally:
+        db.session.close()
+
+
 def create_users(db: SQLAlchemy):
     """Creates the users in the test database."""
     user_1 = User(
@@ -31,7 +137,6 @@ def create_users(db: SQLAlchemy):
         given_hugs=2,
         display_name="shirb",
         login_count=60,
-        role="admin",
         blocked=False,
         open_report=False,
         release_date=None,
@@ -42,6 +147,7 @@ def create_users(db: SQLAlchemy):
         icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
+        role_id=3,
     )  # type: ignore
     user_2 = User(
         id=4,
@@ -50,7 +156,6 @@ def create_users(db: SQLAlchemy):
         given_hugs=117,
         display_name="user14",
         login_count=55,
-        role="admin",
         blocked=False,
         open_report=False,
         release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
@@ -63,6 +168,7 @@ def create_users(db: SQLAlchemy):
         icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
+        role_id=1,
     )  # type: ignore
     user_3 = User(
         id=5,
@@ -71,7 +177,6 @@ def create_users(db: SQLAlchemy):
         given_hugs=0,
         display_name="user52",
         login_count=7,
-        role="moderator",
         blocked=False,
         open_report=False,
         release_date=None,
@@ -82,6 +187,7 @@ def create_users(db: SQLAlchemy):
         icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
+        role_id=2,
     )  # type: ignore
     user_4 = User(
         id=9,
@@ -90,7 +196,6 @@ def create_users(db: SQLAlchemy):
         given_hugs=1,
         display_name="user93",
         login_count=2,
-        role="admin",
         blocked=False,
         open_report=False,
         release_date=None,
@@ -101,6 +206,7 @@ def create_users(db: SQLAlchemy):
         icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
+        role_id=1,
     )  # type: ignore
     user_5 = User(
         id=20,
@@ -109,7 +215,6 @@ def create_users(db: SQLAlchemy):
         given_hugs=0,
         display_name="user24",
         login_count=4,
-        role="user",
         blocked=True,
         open_report=False,
         release_date=datetime.strptime("2120-08-11 08:33:22.473", DATETIME_PATTERN),
@@ -122,6 +227,7 @@ def create_users(db: SQLAlchemy):
         icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
+        role_id=3,
     )  # type: ignore
 
     try:
@@ -1537,6 +1643,8 @@ def create_notifications(db: SQLAlchemy):
 def create_data(db: SQLAlchemy):
     """Creates the data in the test database."""
     create_filters(db)
+    create_permissions(db)
+    create_roles(db)
     create_users(db)
     create_posts(db)
     create_threads(db)
