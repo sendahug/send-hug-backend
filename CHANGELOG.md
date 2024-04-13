@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2024-04-13
+
+#### Changes
+
+- Deleted the report update from 'edit user' and 'edit post' endpoints. Including the extra complication of updating reports in unrelated endpoints was bad practice. Each endpoint should be specific to its purpose. Now, in order to close reports, users need to make a request to the 'edit report' endpoint, as it should've been in the first place. ([#606](https://github.com/sendahug/send-hug-backend/pull/606))
+
 ### 2024-04-12
 
 #### Features
