@@ -222,22 +222,6 @@ def test_update_other_users_post_as_mod(
     assert post_text["text"] == post["text"]
 
 
-# Attempt to close the report on another user's post (with mod's JWT)
-def test_update_other_users_post_report_as_mod(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
-):
-    post = dummy_request_data["report_post"]
-    post["userId"] = dummy_users_data["user"]["internal"]
-    post["givenHugs"] = 2
-    response = app_client.patch(
-        "/posts/4", headers=user_headers["moderator"], data=json.dumps(post)
-    )
-    response_data = json.loads(response.data)
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
 # Attempt to update the admin's post (with same admin's JWT)
 def test_update_own_post_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data

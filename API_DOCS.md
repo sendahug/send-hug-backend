@@ -278,7 +278,6 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Required Data**: A JSON containing the post's updated data, in the following format:
   - text (String) - The updated post's text.
   - given_hugs (Number) - The updated hugs count.
-  - closeReport (Number) - the ID of the report to close (if there is one). This variable is only needed if the post is edited from the Admin Dashboard.
 
 **Required Permission:** 'patch:my-post' or 'patch:any-post'.
 
@@ -567,7 +566,6 @@ For full instructions check the [`backend README`](./backend/README.md)
   - loginCount (Number) - The user's login count.
   - blocked (Boolean) - Whether or not the user is blocked.
   - releaseDate (Date) - When the user will be unblocked. Must be in request data if 'blocked' is set to true in the request data.
-  - closeReport (Number) - the ID of the report to close (if the edit request was sent from the Admin Dashboard).
 
 **Required Permission:** 'patch:user' or 'patch:any-user'.
 

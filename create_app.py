@@ -310,48 +310,10 @@ def create_app(db_path: str = database_path) -> Flask:
             )
             original_post.text = updated_post["text"]
 
-        open_report: Optional[Report] = None
-
-        # If there's a 'closeReport' value, this update is the result of
-        # a report, which means the report with the given ID needs to be
-        # closed.
-        if "closeReport" in updated_post:
-            # Check the user has permission to close reports
-            # If he doesn't, raise an AuthError
-            if "read:admin-board" not in token_payload["role"]["permissions"]:
-                raise AuthError(
-                    {
-                        "code": 403,
-                        "description": "You do not have permission to close "
-                        "this post's report.",
-                    },
-                    403,
-                )
-
-            # Otherwise get the open report and close it
-            open_report = db.session.scalar(
-                db.select(Report).filter(Report.id == updated_post["closeReport"])
-            )
-
-            if open_report:
-                open_report.dismissed = False
-                open_report.closed = True
-                original_post.open_report = False
-
         # Try to update the database
-        # Objects to update
-        to_update: List[Any] = [original_post]
+        updated = db_update(obj=original_post)
 
-        # If there's a report to close, add it to the list of objects
-        # to update.
-        if "closeReport" in updated_post and open_report:
-            to_update.append(open_report)
-
-        updated = db_update_multi(objs=to_update)
-        data = [item for item in updated["resource"] if "sentHugs" in item.keys()]
-        db_updated_post = data[0]
-
-        return jsonify({"success": True, "updated": db_updated_post})
+        return jsonify({"success": True, "updated": updated["resource"]})
 
     # Endpoint: POST /posts/<post_id>/hugs
     # Description: Sends a hug to a specific user.
@@ -687,21 +649,6 @@ def create_app(db_path: str = database_path) -> Flask:
             user_to_update.blocked = updated_user["blocked"]
             user_to_update.release_date = updated_user["releaseDate"]
 
-        open_report: Optional[Report] = None
-
-        # If there's a 'closeReport' value, this update is the result of
-        # a report, which means the report with the given ID needs to be
-        # closed.
-        if "closeReport" in updated_user:
-            open_report = db.session.scalar(
-                db.select(Report).filter(Report.id == updated_user["closeReport"])
-            )
-
-            if open_report:
-                open_report.dismissed = False
-                open_report.closed = True
-                user_to_update.open_report = False
-
         # If the user is attempting to change a user's settings, check
         # whether it's the current user
         if (
@@ -743,19 +690,9 @@ def create_app(db_path: str = database_path) -> Flask:
             user_to_update.icon_colours = json.dumps(updated_user["iconColours"])
 
         # Try to update it in the database
-        # Update users' data
-        to_update: List[Any] = [user_to_update]
+        updated = db_update(obj=user_to_update)
 
-        if "closeReport" in updated_user:
-            to_update.append(open_report)
-
-        updated = db_update_multi(objs=to_update)
-        updated_original_user = [
-            item for item in updated["resource"] if "selectedIcon" in item.keys()
-        ]
-        updated_user = updated_original_user[0]
-
-        return jsonify({"success": True, "updated": updated_user})
+        return jsonify({"success": True, "updated": updated["resource"]})
 
     # Endpoint: GET /users/all/<user_id>/posts
     # Description: Gets a specific user's posts.
