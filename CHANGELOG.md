@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2024-04-15
+
+#### Fixes
+
+- Added several missing security-related headers to all responses made by the server (as per OWASP best practices). ([#607](https://github.com/sendahug/send-hug-backend/pull/607))
+
 ### 2024-04-13
 
 #### Changes
