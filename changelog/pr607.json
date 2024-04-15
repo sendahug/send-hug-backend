@@ -1,0 +1,9 @@
+{
+  "pr_number": 607,
+  "changes": [
+    {
+      "change": "Fixes",
+      "description": "Added several missing security-related headers to all responses made by the server (as per OWASP best practices)."
+    }
+  ]
+}

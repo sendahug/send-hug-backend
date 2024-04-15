@@ -86,9 +86,9 @@ def create_app(db_path: str = database_path) -> Flask:
     )
     ITEMS_PER_PAGE = 5
 
-    # CORS Setup
     @app.after_request
     def after_request(response):
+        # CORS Setup
         response.headers.add("Access-Control-Allow-Origin", os.environ.get("FRONTEND"))
         response.headers.add(
             "Access-Control-Allow-Methods",
@@ -98,6 +98,28 @@ def create_app(db_path: str = database_path) -> Flask:
             "Access-Control-Allow-Headers",
             "Authorization, Content-Type",
         )
+        # Security Headers, based on
+        # https://owasp.org/www-project-secure-headers/index.html#div-bestpractices
+        response.headers.add(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
+        response.headers.add("X-Frame-Options", "deny")
+        response.headers.add("X-Content-Type-Options", "nosniff")
+        response.headers.add(
+            "Content-Security-Policy",
+            (
+                "default-src 'self'; form-action 'self'; object-src 'none'; "
+                "frame-ancestors 'none'; upgrade-insecure-requests; "
+                "block-all-mixed-content"
+            ),
+        )
+        response.headers.add("X-Permitted-Cross-Domain-Policies", "none")
+        response.headers.add("Referrer-Policy", "no-referrer")
+        response.headers.add("Cross-Origin-Resource-Policy", "same-origin")
+        response.headers.add("Cross-Origin-Embedder-Policy", "require-corp")
+        response.headers.add("Cross-Origin-Opener-Policy", "same-origin")
+        response.headers.add("Cache-Control", "no-store, max-age=0")
+        response.headers.add("Pragma", "no-cache")  # HTTP 1.0
 
         return response
 
