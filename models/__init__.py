@@ -43,6 +43,6 @@ from .db_helpers import (
     update,
     update_multiple,
     delete_object,
-    delete_all,
     add_or_update_multiple,
+    bulk_delete_and_update,
 )
