@@ -1149,9 +1149,37 @@ def create_app(db_path: str = database_path) -> Flask:
             db_delete(delete_item)
         # Otherwise, just update the appropriate deleted property
         else:
-            db_update(
-                delete_item, {"set_deleted": True, "user_id": token_payload["id"]}
-            )
+            if type(delete_item) == Thread:
+                # For each message that wasn't deleted by the other user, the
+                # value of for_deleted/from_deleted (depending on which of the users
+                # it is) is updated to True
+                current_user_messages: Sequence[Message] = db.session.scalars(
+                    db.select(Message)
+                    .filter(Message.thread == delete_item.id)
+                    .filter(
+                        or_(
+                            and_(
+                                Message.for_id == token_payload["id"],
+                                Message.from_deleted == db.false(),
+                            ),
+                            and_(
+                                Message.from_id == token_payload["id"],
+                                Message.for_deleted == db.false(),
+                            ),
+                        )
+                    )
+                ).all()
+
+                for message in current_user_messages:
+                    if message.for_id == token_payload["id"]:
+                        message.for_deleted = True
+                    else:
+                        message.from_deleted = True
+
+                db_update_multi(objs=[*current_user_messages, delete_item])
+
+            else:
+                db_update(delete_item)
 
         return jsonify({"success": True, "deleted": int(item_id)})
 

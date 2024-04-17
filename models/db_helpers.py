@@ -79,7 +79,7 @@ def add(obj: db.Model) -> DBReturnModel:  # type: ignore[name-defined]
     return {"success": True, "resource": return_object}
 
 
-def update(obj: db.Model, params={}) -> DBReturnModel:  # type: ignore[name-defined]
+def update(obj: db.Model) -> DBReturnModel:  # type: ignore[name-defined]
     """
     Updates an existing record.
 
@@ -90,37 +90,6 @@ def update(obj: db.Model, params={}) -> DBReturnModel:  # type: ignore[name-defi
 
     # Try to update the object in the database
     try:
-        # If the item to update is a thread and 'set_deleted' appears in
-        # params, this means the messages in the thread need to be updated
-        # as deleted
-        if type(obj) == Thread and "set_deleted" in params:
-            # Just in case, makes sure that set_deleted was set to true
-            if params["set_deleted"]:
-                messages_for = db.session.scalars(
-                    db.select(Message)
-                    .filter(Message.thread == obj.id)
-                    .filter(Message.for_id == params["user_id"])
-                    .filter(Message.from_deleted == db.false())
-                ).all()
-                messages_from = db.session.scalars(
-                    db.select(Message)
-                    .filter(Message.thread == obj.id)
-                    .filter(Message.from_id == params["user_id"])
-                    .filter(Message.for_deleted == db.false())
-                ).all()
-
-                # For each message that wasn't deleted by the other user, the
-                # value of for_deleted (indicating whether the user the message
-                # is for deleted it) is updated to True
-                for message in messages_for:
-                    message.for_deleted = True
-
-                # For each message that wasn't deleted by the other user, the
-                # value of from_deleted (indicating whether the user who wrote
-                # the message deleted it) is updated to True
-                for message in messages_from:
-                    message.from_deleted = True
-
         db.session.commit()
         updated_object = obj.format()
     # If there's a database error
