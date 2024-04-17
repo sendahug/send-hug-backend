@@ -1228,7 +1228,7 @@ def create_app(db_path: str = database_path) -> Flask:
             delete_stmt = delete(Message).where(
                 and_(Message.for_id == user_id, Message.from_deleted == db.true())
             )
-            messages_to_update = db.session.scalars(
+            messages_to_update: Sequence[Message] = db.session.scalars(
                 db.select(Message)
                 .filter(Message.for_id == user_id)
                 .filter(Message.from_deleted == db.false())
@@ -1294,7 +1294,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
             # Fetch all the messages that need to be updated, then the threads
             # that need to be updated
-            messages_to_update: Sequence[Message] = db.session.scalars(
+            messages_to_update = db.session.scalars(
                 db.select(Message).filter(
                     or_(
                         and_(
