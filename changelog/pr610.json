@@ -1,9 +1,0 @@
-{
-  "pr_number": 610,
-  "changes": [
-    {
-      "change": "Chores",
-      "description": "Upgraded the minimum Python version for running the app to Python 3.11. This includes updating the version in CI and in the README, as well as updating the type hints to match the 3.10+ style."
-    }
-  ]
-}

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2024-04-19
+
+#### Chores
+
+- Upgraded the minimum Python version for running the app to Python 3.11. This includes updating the version in CI and in the README, as well as updating the type hints to match the 3.10+ style. ([#610](https://github.com/sendahug/send-hug-backend/pull/610))
+
 ### 2024-04-18
 
 #### Changes
