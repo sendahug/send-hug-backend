@@ -25,7 +25,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Union, Optional, Literal
+from typing import Literal
 
 from .filter import WordFilter
 
@@ -58,7 +58,7 @@ class Validator:
         too_short_error = (
             "Your {} cannot be empty. Please write something and then try again."
         )
-        error_message: Optional[str] = None
+        error_message: str | None = None
 
         if obj_type.lower() in self.constraints.keys():
             if obj_type.lower() == "report":
@@ -108,7 +108,7 @@ class Validator:
         return True
 
     # Checks the type of the given item
-    def check_type(self, data: Union[str, int], obj_type: str) -> bool:
+    def check_type(self, data: str | int, obj_type: str) -> bool:
         """
         Checks the type of the data matches the expected type.
 
