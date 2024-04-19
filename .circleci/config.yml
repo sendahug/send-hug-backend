@@ -4,12 +4,12 @@ parameters:
     default: false
     type: boolean
 orbs:
-  codecov: codecov/codecov@4.0.1
+  codecov: codecov/codecov@4.1.0
 
 jobs:
   lint:
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.11
         environment:
           FLASK_CONFIG: testing
           TEST_DATABASE_URL: postgresql://postgres:password@localhost:5432/test_sah?sslmode=disable
@@ -27,7 +27,7 @@ jobs:
       - run: mypy . --exclude 'migrations/' --check-untyped-defs
   build:
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.11
         environment:
           FLASK_CONFIG: testing
           TEST_DATABASE_URL: postgresql://postgres:password@localhost:5432/test_sah?sslmode=disable

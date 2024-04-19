@@ -25,7 +25,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import List, Any, TypedDict, Union
+from typing import Any, TypedDict
 
 from flask import abort
 from sqlalchemy import Delete
@@ -46,7 +46,7 @@ class DBBulkModel(TypedDict):
 
 class DBDeleteModel(TypedDict):
     success: bool
-    deleted: Union[int, str]
+    deleted: int | str
 
 
 # Database management methods
@@ -201,8 +201,8 @@ def delete_object(obj: db.Model) -> DBDeleteModel:  # type: ignore[name-defined]
 
 
 def bulk_delete_and_update(
-    delete_stmts: List[Delete],
-    to_update: List[db.Model] = [],  # type: ignore[name-defined]
+    delete_stmts: list[Delete],
+    to_update: list[db.Model] = [],  # type: ignore[name-defined]
 ) -> DBBulkModel:
     """
     Run multiple delete statements and possible updates within the same

@@ -28,7 +28,7 @@
 import os
 import json
 import math
-from typing import Dict, List, Any, Literal, Optional, Union, cast, Sequence
+from typing import Any, Literal, cast, Sequence
 from datetime import datetime
 
 from flask import Flask, request, abort, jsonify
@@ -124,7 +124,7 @@ def create_app(db_path: str = database_path) -> Flask:
         return response
 
     # TODO: Replace with an internal pagination mechanism
-    def calculate_total_pages(items_count: Optional[int]) -> int:
+    def calculate_total_pages(items_count: int | None) -> int:
         """Caculates the number of pages for the query"""
         if items_count:
             return math.ceil(items_count / ITEMS_PER_PAGE)
@@ -148,7 +148,7 @@ def create_app(db_path: str = database_path) -> Flask:
                     subscription_info=sub_data,
                     data=json.dumps(notification_data),
                     vapid_private_key=vapid_key,
-                    vapid_claims=cast(Dict, vapid_claims),
+                    vapid_claims=cast(dict, vapid_claims),
                 )
         # If there's an error, print the details
         except WebPushException as e:
@@ -167,7 +167,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: None.
     @app.route("/")
     def index():
-        posts: Dict[str, List[Dict[str, Any]]] = {
+        posts: dict[str, list[dict[str, Any]]] = {
             "recent": [],
             "suggested": [],
         }
@@ -297,7 +297,7 @@ def create_app(db_path: str = database_path) -> Flask:
         validator.check_type(post_id, "Post ID")
 
         updated_post = json.loads(request.data)
-        original_post: Optional[Post] = db.session.scalar(
+        original_post: Post | None = db.session.scalar(
             db.select(Post).filter(Post.id == post_id)
         )
 
@@ -357,11 +357,11 @@ def create_app(db_path: str = database_path) -> Flask:
         )
 
         hugs = original_post.sent_hugs or []
-        post_author: Optional[User] = db.session.scalar(
+        post_author: User | None = db.session.scalar(
             db.select(User).filter(User.id == original_post.user_id)
         )
-        notification: Optional[Notification] = None
-        push_notification: Optional[RawPushData] = None
+        notification: Notification | None = None
+        push_notification: RawPushData | None = None
 
         # If the current user already sent a hug on this post, abort
         if current_user.id in hugs:
@@ -531,7 +531,7 @@ def create_app(db_path: str = database_path) -> Flask:
     # Authorization: read:user.
     @app.route("/users/all/<user_id>")
     @requires_auth(["read:user"])
-    def get_user_data(token_payload: UserData, user_id: Union[int, str]):
+    def get_user_data(token_payload: UserData, user_id: int | str):
         # Try to convert it to a number; if it's a number, it's a
         # regular ID, so try to find the user with that ID
         try:
@@ -581,7 +581,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Checks whether a user with that Auth0 ID already exists
         # If it is, aborts
-        database_user: Optional[User] = db.session.scalar(
+        database_user: User | None = db.session.scalar(
             db.select(User).filter(User.auth0_id == user_data["id"])
         )
 
@@ -776,7 +776,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Otherwise, the user is either trying to delete their own posts or
         # they're allowed to delete others' posts, so let them continue
-        post_count: Optional[int] = db.session.scalar(
+        post_count: int | None = db.session.scalar(
             db.select(db.func.count(Post.id)).filter(Post.user_id == user_id)
         )
 
@@ -982,7 +982,7 @@ def create_app(db_path: str = database_path) -> Flask:
 
         # Checks if there's an existing thread between the users (with user 1
         # being the sender and user 2 being the recipient)
-        thread: Optional[Thread] = db.session.scalar(
+        thread: Thread | None = db.session.scalar(
             db.select(Thread).filter(
                 or_(
                     and_(
@@ -1061,7 +1061,7 @@ def create_app(db_path: str = database_path) -> Flask:
         # Variable indicating whether to delete the message from the databse
         # or leave it in it (for the other user)
         delete_message: bool = False
-        delete_item: Optional[Union[Message, Thread]] = None
+        delete_item: Message | Thread | None = None
 
         validator.check_type(item_id, "Message ID")
 
@@ -1372,12 +1372,12 @@ def create_app(db_path: str = database_path) -> Flask:
     @app.route("/reports")
     @requires_auth(["read:admin-board"])
     def get_open_reports(token_payload: UserData):
-        reports: Dict[str, List[Dict[str, Any]]] = {
+        reports: dict[str, list[dict[str, Any]]] = {
             "User": [],
             "Post": [],
         }
 
-        total_pages: Dict[str, int] = {
+        total_pages: dict[str, int] = {
             "User": 0,
             "Post": 0,
         }
@@ -1485,7 +1485,7 @@ def create_app(db_path: str = database_path) -> Flask:
     @requires_auth(["read:admin-board"])
     def update_report_status(token_payload: UserData, report_id: int):
         updated_report = json.loads(request.data)
-        report: Optional[Report] = db.session.scalar(
+        report: Report | None = db.session.scalar(
             db.select(Report).filter(Report.id == report_id)
         )
 
@@ -1561,7 +1561,7 @@ def create_app(db_path: str = database_path) -> Flask:
         validator.check_length(new_filter, "Phrase to filter")
 
         # If the word already exists in the filters list, abort
-        existing_filter: Optional[Filter] = db.session.scalar(
+        existing_filter: Filter | None = db.session.scalar(
             db.select(Filter).filter(Filter.filter == new_filter.lower())
         )
 

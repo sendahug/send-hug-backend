@@ -27,7 +27,7 @@
 
 import json
 import os
-from typing import Any, Dict, Optional, cast, TypedDict
+from typing import Any, cast, TypedDict
 from datetime import datetime
 
 from jose import jwt, exceptions
@@ -56,9 +56,9 @@ class UserData(TypedDict):
     displayName: str
     role: RoleData
     blocked: bool
-    releaseDate: Optional[datetime]
+    releaseDate: datetime | None
     pushEnabled: bool
-    last_notifications_read: Optional[datetime]
+    last_notifications_read: datetime | None
 
 
 # Authentication Error
@@ -249,13 +249,13 @@ def check_permissions_legacy(permission: list[str], payload: dict[str, Any]) -> 
     return True
 
 
-def get_current_user(payload: dict[str, Any]) -> Dict[str, Any]:
+def get_current_user(payload: dict[str, Any]) -> dict[str, Any]:
     """
     Fetches the details of the currently logged in user from the database.
 
     param payload: The payload from the decoded, verified JWT.
     """
-    current_user: Optional[User] = db.session.scalar(
+    current_user: User | None = db.session.scalar(
         db.select(User).filter(User.auth0_id == payload["sub"])
     )
 
