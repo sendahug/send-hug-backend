@@ -31,17 +31,39 @@ import json
 from typing import List, Optional
 
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate  # type: ignore
+from flask_migrate import Migrate
 from flask import Flask
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Mapped, column_property
-from sqlalchemy import DateTime, Text, select
+from sqlalchemy.orm import (
+    Mapped,
+    column_property,
+    DeclarativeBase,
+    mapped_column,
+    relationship,
+)
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    func,
+    select,
+    Table,
+)
 from sqlalchemy.dialects.postgresql import ARRAY
 
 # Database configuration
 database_path = os.environ.get("DATABASE_URL", "")
 
-db = SQLAlchemy()
+
+class BaseModel(DeclarativeBase):
+    pass
+
+
+db = SQLAlchemy(metadata=BaseModel.metadata)
 
 
 # Database setup
@@ -53,38 +75,32 @@ def initialise_db(app: Flask) -> SQLAlchemy:
 
 
 # SQLAlchemy Tables
-roles_permissions_map = db.Table(
+roles_permissions_map = Table(
     "roles_permissions_map",
-    db.Column("role_id", db.Integer, db.ForeignKey("roles.id"), primary_key=True),
-    db.Column(
-        "permission_id", db.Integer, db.ForeignKey("permissions.id"), primary_key=True
-    ),
+    BaseModel.metadata,
+    Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True),
+    Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True),
 )
 
 
 # Models
 # -----------------------------------------------------------------
 # Post Model
-class Post(db.Model):  # type: ignore[name-defined]
+class Post(BaseModel):
     __tablename__ = "posts"
-    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    user_id: Mapped[int] = db.Column(
-        db.Integer,
-        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    user: Mapped["User"] = db.relationship(
-        "User", back_populates="posts"
-    )  # type: ignore
-    text: Mapped[str] = db.Column(db.String(480), nullable=False)
-    date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
-    given_hugs: Mapped[Optional[int]] = db.Column(db.Integer, default=0)
-    open_report: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
-    # TODO: This should be a list of integers
-    sent_hugs: Mapped[Optional[List[int]]] = db.Column(ARRAY(db.Integer))
-    report: Mapped[Optional["Report"]] = db.relationship(
-        "Report", back_populates="post"
-    )  # type: ignore
+    user: Mapped["User"] = relationship("User", back_populates="posts")
+    text: Mapped[str] = mapped_column(String(480), nullable=False)
+    date: Mapped[Optional[DateTime]] = mapped_column(DateTime)
+    given_hugs: Mapped[Optional[int]] = mapped_column(Integer, default=0)
+    open_report: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    sent_hugs: Mapped[Optional[List[int]]] = mapped_column(ARRAY(Integer))
+    report: Mapped[Optional["Report"]] = relationship("Report", back_populates="post")
 
     @hybrid_property
     def user_name(self):
@@ -105,47 +121,45 @@ class Post(db.Model):  # type: ignore[name-defined]
 
 
 # User Model
-class User(db.Model):  # type: ignore[name-defined]
+class User(BaseModel):
     __tablename__ = "users"
-    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    display_name: Mapped[str] = db.Column(db.String(60), nullable=False)
-    auth0_id: Mapped[str] = db.Column(db.String(), nullable=False)
-    received_hugs: Mapped[int] = db.Column(db.Integer, default=0)
-    given_hugs: Mapped[Optional[int]] = db.Column(db.Integer, default=0)
-    login_count: Mapped[Optional[int]] = db.Column(db.Integer, default=1)
-    role_id: Mapped[int] = db.Column(
-        db.Integer,
-        db.ForeignKey("roles.id", onupdate="CASCADE", ondelete="SET NULL"),
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    display_name: Mapped[str] = mapped_column(String(60), nullable=False)
+    auth0_id: Mapped[str] = mapped_column(String(), nullable=False)
+    received_hugs: Mapped[int] = mapped_column(Integer, default=0)
+    given_hugs: Mapped[Optional[int]] = mapped_column(Integer, default=0)
+    login_count: Mapped[Optional[int]] = mapped_column(Integer, default=1)
+    role_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("roles.id", onupdate="CASCADE", ondelete="SET NULL"),
         default=4,
     )
-    role: Mapped[Optional["Role"]] = db.relationship(
-        "Role", foreign_keys="User.role_id"
-    )  # type: ignore
-    blocked: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
-    release_date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
-    open_report: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
-    last_notifications_read: Mapped[Optional[datetime]] = db.Column(db.DateTime)
-    auto_refresh: Mapped[Optional[bool]] = db.Column(db.Boolean, default=True)
-    refresh_rate: Mapped[Optional[int]] = db.Column(db.Integer, default=20)
-    push_enabled: Mapped[Optional[bool]] = db.Column(db.Boolean, default=False)
-    selected_character: Mapped[Optional[str]] = db.Column(db.String(6), default="kitty")
-    icon_colours: Mapped[Optional[str]] = db.Column(
-        db.String(),
+    role: Mapped[Optional["Role"]] = relationship("Role", foreign_keys="User.role_id")
+    blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    release_date: Mapped[Optional[DateTime]] = mapped_column(DateTime)
+    open_report: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    last_notifications_read: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    auto_refresh: Mapped[Optional[bool]] = mapped_column(Boolean, default=True)
+    refresh_rate: Mapped[Optional[int]] = mapped_column(Integer, default=20)
+    push_enabled: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)
+    selected_character: Mapped[Optional[str]] = mapped_column(
+        String(6), default="kitty"
+    )
+    icon_colours: Mapped[Optional[str]] = mapped_column(
+        String(),
         default='{"character":"#BA9F93", "lbg":"#e2a275",'
         '"rbg":"#f8eee4", "item":"#f4b56a"}',
     )
-    posts: Mapped[Optional[List["Post"]]] = db.relationship(
-        "Post", back_populates="user"
-    )  # type: ignore
-    sent_messages: Mapped[Optional[List["Message"]]] = db.relationship(
+    posts: Mapped[Optional[List["Post"]]] = relationship("Post", back_populates="user")
+    sent_messages: Mapped[Optional[List["Message"]]] = relationship(
         "Message", back_populates="from_user", foreign_keys="Message.from_id"
-    )  # type: ignore
-    received_messages: Mapped[Optional[List["Message"]]] = db.relationship(
+    )
+    received_messages: Mapped[Optional[List["Message"]]] = relationship(
         "Message", back_populates="for_user", foreign_keys="Message.for_id"
-    )  # type: ignore
-    # Column properties
+    )
+    # mapped_column properties
     post_count = column_property(
-        select(db.func.count(Post.id)).where(Post.user_id == id).scalar_subquery()
+        select(func.count(Post.id)).where(Post.user_id == id).scalar_subquery()
     )
 
     # Format method
@@ -182,41 +196,39 @@ class User(db.Model):  # type: ignore[name-defined]
 
 
 # Message Model
-class Message(db.Model):  # type: ignore[name-defined]
+class Message(BaseModel):
     __tablename__ = "messages"
-    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    from_id: Mapped[int] = db.Column(
-        db.Integer,
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    from_id: Mapped[int] = mapped_column(
+        Integer,
         # TODO: This will fail if the user is deleted
-        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    from_user: Mapped["User"] = db.relationship(
+    from_user: Mapped["User"] = relationship(
         "User", back_populates="sent_messages", foreign_keys="Message.from_id"
-    )  # type: ignore
-    for_id: Mapped[int] = db.Column(
-        db.Integer,
+    )
+    for_id: Mapped[int] = mapped_column(
+        Integer,
         # TODO: This will fail if the user is deleted
-        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    for_user: Mapped["User"] = db.relationship(
+    for_user: Mapped["User"] = relationship(
         "User", back_populates="received_messages", foreign_keys="Message.for_id"
-    )  # type: ignore
-    text: Mapped[str] = db.Column(db.String(480), nullable=False)
-    date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
-    thread: Mapped[int] = db.Column(
-        db.Integer,
+    )
+    text: Mapped[str] = mapped_column(String(480), nullable=False)
+    date: Mapped[Optional[DateTime]] = mapped_column(DateTime)
+    thread: Mapped[int] = mapped_column(
+        Integer,
         # TODO: This will fail if the thread is deleted
-        db.ForeignKey("threads.id", onupdate="CASCADE", ondelete="CASCADE"),
+        ForeignKey("threads.id", onupdate="CASCADE", ondelete="CASCADE"),
         nullable=False,
     )
-    thread_details: Mapped["Thread"] = db.relationship(
-        "Thread", back_populates="messages"
-    )  # type: ignore
-    from_deleted: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
-    for_deleted: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
-    # Column Properties
+    thread_details: Mapped["Thread"] = relationship("Thread", back_populates="messages")
+    from_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    for_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # mapped_column Properties
     from_name = column_property(
         select(User.display_name).where(User.id == from_id).scalar_subquery()
     )
@@ -263,42 +275,38 @@ class Message(db.Model):  # type: ignore[name-defined]
         }
 
 
-# Thread Model
-class Thread(db.Model):  # type: ignore[name-defined]
+# Thread BaseModel
+class Thread(BaseModel):
     __tablename__ = "threads"
-    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    user_1_id: Mapped[int] = db.Column(
-        db.Integer,
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_1_id: Mapped[int] = mapped_column(
+        Integer,
         # TODO: This will fail if the user is deleted
-        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    user_1: Mapped["User"] = db.relationship(
-        "User", foreign_keys="Thread.user_1_id"
-    )  # type: ignore
-    user_2_id: Mapped[int] = db.Column(
-        db.Integer,
+    user_1: Mapped["User"] = relationship("User", foreign_keys="Thread.user_1_id")
+    user_2_id: Mapped[int] = mapped_column(
+        Integer,
         # TODO: This will fail if the user is deleted
-        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    user_2: Mapped["User"] = db.relationship(
-        "User", foreign_keys="Thread.user_2_id"
-    )  # type: ignore
-    user_1_deleted: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
-    user_2_deleted: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
-    messages: Mapped[List[Message]] = db.relationship(
+    user_2: Mapped["User"] = relationship("User", foreign_keys="Thread.user_2_id")
+    user_1_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    user_2_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    messages: Mapped[List[Message]] = relationship(
         "Message", back_populates="thread_details"
-    )  # type: ignore
-    # Column properties
+    )
+    # mapped_column properties
     message_count = column_property(
-        select(db.func.count(Message.id))
+        select(func.count(Message.id))
         .where(Message.thread == id)
         .group_by(Message.thread)
         .scalar_subquery()
     )
     latest_message_date = column_property(
-        select(db.func.max(Message.date))
+        select(func.max(Message.date))
         .where(Message.thread == id)
         .group_by(Message.thread)
         .scalar_subquery()
@@ -348,37 +356,33 @@ class Thread(db.Model):  # type: ignore[name-defined]
         }
 
 
-# Report Model
-class Report(db.Model):  # type: ignore[name-defined]
+# Report BaseModel
+class Report(BaseModel):
     __tablename__ = "reports"
-    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    type: Mapped[str] = db.Column(db.String(10), nullable=False)
-    user_id: Mapped[int] = db.Column(
-        db.Integer,
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type: Mapped[str] = mapped_column(String(10), nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        Integer,
         # TODO: This will fail if the user is deleted
-        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    user: Mapped["User"] = db.relationship(
-        "User", foreign_keys="Report.user_id"
-    )  # type: ignore
-    post_id: Mapped[Optional[int]] = db.Column(
-        db.Integer, db.ForeignKey("posts.id", onupdate="CASCADE", ondelete="SET NULL")
+    user: Mapped["User"] = relationship("User", foreign_keys="Report.user_id")
+    post_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("posts.id", onupdate="CASCADE", ondelete="SET NULL")
     )
-    post: Mapped[Optional["Post"]] = db.relationship(
-        "Post", back_populates="report"
-    )  # type: ignore
-    reporter: Mapped[int] = db.Column(
-        db.Integer,
+    post: Mapped[Optional["Post"]] = relationship("Post", back_populates="report")
+    reporter: Mapped[int] = mapped_column(
+        Integer,
         # TODO: This will fail if the user is deleted
-        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    report_reason: Mapped[str] = db.Column(db.String(120), nullable=False)
-    date: Mapped[Optional[DateTime]] = db.Column(db.DateTime)
-    dismissed: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
-    closed: Mapped[bool] = db.Column(db.Boolean, nullable=False, default=False)
-    # Column properties
+    report_reason: Mapped[str] = mapped_column(String(120), nullable=False)
+    date: Mapped[Optional[DateTime]] = mapped_column(DateTime)
+    dismissed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    closed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # mapped_column properties
     user_name = column_property(
         select(User.display_name).where(User.id == user_id).scalar_subquery()
     )
@@ -411,25 +415,25 @@ class Report(db.Model):  # type: ignore[name-defined]
         return return_report
 
 
-# Notification Model
-class Notification(db.Model):  # type: ignore[name-defined]
+# Notification BaseModel
+class Notification(BaseModel):
     __tablename__ = "notifications"
-    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    for_id: Mapped[int] = db.Column(
-        db.Integer,
-        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    for_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
         nullable=False,
     )
-    from_id: Mapped[int] = db.Column(
-        db.Integer,
+    from_id: Mapped[int] = mapped_column(
+        Integer,
         # TODO: This will fail if the user is deleted
-        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    type: Mapped[str] = db.Column(db.String(), nullable=False)
-    text: Mapped[str] = db.Column(db.String(), nullable=False)
-    date: Mapped[DateTime] = db.Column(db.DateTime, nullable=False)
-    # Column properties
+    type: Mapped[str] = mapped_column(String(), nullable=False)
+    text: Mapped[str] = mapped_column(String(), nullable=False)
+    date: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
+    # mapped_column properties
     from_name = column_property(
         select(User.display_name).where(User.id == from_id).scalar_subquery()
     )
@@ -451,17 +455,17 @@ class Notification(db.Model):  # type: ignore[name-defined]
         }
 
 
-# Notification Subscription Model
-class NotificationSub(db.Model):  # type: ignore[name-defined]
+# Notification Subscription BaseModel
+class NotificationSub(BaseModel):
     __tablename__ = "subscriptions"
-    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    user: Mapped[int] = db.Column(
-        db.Integer,
-        db.ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
         nullable=False,
     )
-    endpoint: Mapped[str] = db.Column(db.String(), nullable=False)
-    subscription_data: Mapped[Text] = db.Column(db.Text, nullable=False)
+    endpoint: Mapped[str] = mapped_column(String(), nullable=False)
+    subscription_data: Mapped[Text] = mapped_column(Text, nullable=False)
 
     # Format method
     def format(self):
@@ -474,21 +478,21 @@ class NotificationSub(db.Model):  # type: ignore[name-defined]
 
 
 # Filter
-class Filter(db.Model):  # type: ignore[name-defined]
+class Filter(BaseModel):
     __tablename__ = "filters"
-    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    filter: Mapped[str] = db.Column(db.String(), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    filter: Mapped[str] = mapped_column(String(), nullable=False)
 
     # Format method
     def format(self):
         return {"id": self.id, "filter": self.filter}
 
 
-class Permission(db.Model):  # type: ignore[name-defined]
+class Permission(BaseModel):
     __tablename__ = "permissions"
-    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    permission: Mapped[str] = db.Column(db.String(), nullable=False)
-    description: Mapped[Optional[str]] = db.Column(db.String())
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    permission: Mapped[str] = mapped_column(String(), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String())
 
     # Format method
     def format(self):
@@ -499,13 +503,13 @@ class Permission(db.Model):  # type: ignore[name-defined]
         }
 
 
-class Role(db.Model):  # type: ignore[name-defined]
+class Role(BaseModel):
     __tablename__ = "roles"
-    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    name: Mapped[str] = db.Column(db.String(), nullable=False)
-    permissions: Mapped[List[Permission]] = db.relationship(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(), nullable=False)
+    permissions: Mapped[List[Permission]] = relationship(
         "Permission", secondary=roles_permissions_map
-    )  # type: ignore
+    )
 
     # Format method
     def format(self):
