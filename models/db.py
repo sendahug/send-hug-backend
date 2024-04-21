@@ -61,13 +61,6 @@ class PaginationResult:
     total_pages: int
 
 
-# TODO: Add number of deleted items
-@dataclass
-class BulkActionResult:
-    added: list[DumpedModel]
-    updated: list[DumpedModel]
-
-
 class SendADatabase:
     """
     The main database handler for running all CRUD operations against
@@ -323,44 +316,6 @@ class SendADatabase:
         try:
             self.session.execute(delete_stmt)
             self.session.commit()
-        # If there's a database error
-        except (DataError, IntegrityError) as err:
-            self.session.rollback()
-            abort(422, str(err.orig))
-        # If there's an error, rollback
-        except Exception as err:
-            self.session.rollback()
-            abort(500, str(err))
-
-    # MIXED BULK ACTIONS
-    # -----------------------------------------------------------------
-    # TODO: We really shouldn't be doing it all at the same time.
-    def make_bulk_updates(
-        self,
-        add_objects: list[CoreSAHModel],
-        update_objects: list[CoreSAHModel],
-        delete_stmts: list[Delete],
-    ):
-        """
-        Runs the given list of bulk updates (create and/or edit and/or delete).
-
-        param add_objects: Objects to add.
-        param update_objects: Objects to update.
-        param delete_stmts: Delete statements to execute to delete multiple items.
-        """
-        # Try to update the object in the database
-        try:
-            self.session.add_all(add_objects)
-
-            for delete_stmt in delete_stmts:
-                self.session.execute(delete_stmt)
-
-            self.session.commit()
-
-            return BulkActionResult(
-                added=[item.format() for item in add_objects],
-                updated=[item.format() for item in update_objects],
-            )
         # If there's a database error
         except (DataError, IntegrityError) as err:
             self.session.rollback()
