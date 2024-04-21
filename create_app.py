@@ -1111,32 +1111,33 @@ def create_app() -> Flask:
                 # For each message that wasn't deleted by the other user, the
                 # value of for_deleted/from_deleted (depending on which of the users
                 # it is) is updated to True
-                current_user_messages: Sequence[Message] = db.session.scalars(
-                    select(Message)
-                    .filter(Message.thread == delete_item.id)
-                    .filter(
-                        or_(
-                            and_(
-                                Message.for_id == token_payload["id"],
-                                Message.from_deleted == false(),
-                            ),
-                            and_(
-                                Message.from_id == token_payload["id"],
-                                Message.for_deleted == false(),
-                            ),
+                from_stmt = (
+                    update(Message)
+                    .where(
+                        and_(
+                            Message.thread == delete_item.id,
+                            Message.for_id == token_payload["id"],
+                            Message.from_deleted == false(),
                         )
                     )
-                ).all()
-
-                for message in current_user_messages:
-                    if message.for_id == token_payload["id"]:
-                        message.for_deleted = True
-                    else:
-                        message.from_deleted = True
-
-                db.update_multiple_objects(
-                    objects=[*current_user_messages, delete_item]
+                    .values(for_deleted=True)
                 )
+
+                for_stmt = (
+                    update(Message)
+                    .where(
+                        and_(
+                            Message.thread == delete_item.id,
+                            Message.from_id == token_payload["id"],
+                            Message.for_deleted == false(),
+                        )
+                    )
+                    .values(from_deleted=True)
+                )
+
+                db.update_object(obj=delete_item)
+                db.update_multiple_objects_with_statement(update_stmt=from_stmt)
+                db.update_multiple_objects_with_statement(update_stmt=for_stmt)
 
             else:
                 db.update_object(delete_item)
