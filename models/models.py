@@ -77,13 +77,14 @@ class Post(BaseModel):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(
         Integer,
+        # TODO: This will break if a user is deleted
         ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
     user: Mapped["User"] = relationship("User", back_populates="posts")
     text: Mapped[str] = mapped_column(String(480), nullable=False)
     date: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    given_hugs: Mapped[Optional[int]] = mapped_column(Integer, default=0)
+    given_hugs: Mapped[int] = mapped_column(Integer, default=0)
     open_report: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     sent_hugs: Mapped[Optional[List[int]]] = mapped_column(ARRAY(Integer))
     report: Mapped[Optional["Report"]] = relationship("Report", back_populates="post")
@@ -113,9 +114,9 @@ class User(BaseModel):
     display_name: Mapped[str] = mapped_column(String(60), nullable=False)
     auth0_id: Mapped[str] = mapped_column(String(), nullable=False)
     received_hugs: Mapped[int] = mapped_column(Integer, default=0)
-    given_hugs: Mapped[Optional[int]] = mapped_column(Integer, default=0)
+    given_hugs: Mapped[int] = mapped_column(Integer, default=0)
     login_count: Mapped[Optional[int]] = mapped_column(Integer, default=1)
-    role_id: Mapped[int] = mapped_column(
+    role_id: Mapped[Optional[int]] = mapped_column(
         Integer,
         ForeignKey("roles.id", onupdate="CASCADE", ondelete="SET NULL"),
         default=4,
