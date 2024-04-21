@@ -354,12 +354,6 @@ def create_app() -> Flask:
             abort(409)
 
         # Otherwise, continue adding the new hug
-        if not original_post.given_hugs:
-            original_post.given_hugs = 0
-
-        if not current_user.given_hugs:
-            current_user.given_hugs = 0
-
         original_post.given_hugs += 1
         current_user.given_hugs += 1
         hugs.append(current_user.id)
@@ -787,9 +781,6 @@ def create_app() -> Flask:
         )
         # Fetch the current user to update their 'given hugs' value
         current_user: User = db.one_or_404(item_id=token_payload["id"], item_type=User)
-
-        if not current_user.given_hugs:
-            current_user.given_hugs = 0
 
         current_user.given_hugs += 1
         user_to_hug.received_hugs += 1
