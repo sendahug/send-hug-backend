@@ -27,11 +27,10 @@
 
 import os
 import json
-import math
 from typing import Any, Literal, cast, Sequence
 from datetime import datetime
 
-from flask import Flask, request, abort, jsonify
+from flask import Flask, Response, request, abort, jsonify
 from flask_cors import CORS
 from pywebpush import webpush, WebPushException
 from sqlalchemy import Text, and_, delete, desc, false, func, or_, select, true
@@ -65,6 +64,7 @@ def create_app() -> Flask:
     # create and configure the app
     app = Flask(__name__)
     db.init_app(app=app)
+    db.set_default_per_page(per_page=5)
     # Utilities
     CORS(app, origins="")
     validator = Validator(
@@ -75,12 +75,13 @@ def create_app() -> Flask:
             "report": {"max": 120, "min": 1},
         }
     )
-    ITEMS_PER_PAGE = 5
 
     @app.after_request
-    def after_request(response):
+    def after_request(response: Response):
         # CORS Setup
-        response.headers.add("Access-Control-Allow-Origin", os.environ.get("FRONTEND"))
+        response.headers.add(
+            "Access-Control-Allow-Origin", str(os.environ.get("FRONTEND"))
+        )
         response.headers.add(
             "Access-Control-Allow-Methods",
             "GET, POST, PATCH, DELETE, OPTIONS",
@@ -113,14 +114,6 @@ def create_app() -> Flask:
         response.headers.add("Pragma", "no-cache")  # HTTP 1.0
 
         return response
-
-    # TODO: Replace with an internal pagination mechanism
-    def calculate_total_pages(items_count: int | None) -> int:
-        """Caculates the number of pages for the query"""
-        if items_count:
-            return math.ceil(items_count / ITEMS_PER_PAGE)
-
-        return 0
 
     # Send push notification
     def send_push_notification(user_id: int, data: RawPushData):
@@ -213,7 +206,6 @@ def create_app() -> Flask:
             .filter(Post.text.ilike(f"%{search_query}%"))
             .filter(Post.open_report == false()),
             current_page=current_page,
-            per_page=ITEMS_PER_PAGE,
         )
 
         # Formats the users' data
@@ -281,13 +273,10 @@ def create_app() -> Flask:
         validator.check_type(post_id, "Post ID")
 
         updated_post = json.loads(request.data)
-        original_post: Post | None = db.session.scalar(
-            select(Post).filter(Post.id == post_id)
+        original_post: Post | None = db.one_or_404(
+            item_id=post_id,
+            item_type=Post,
         )
-
-        # If there's no post with that ID
-        if original_post is None:
-            abort(404)
 
         # If the user's permission is 'patch my' the user can only edit
         # their own posts. If it's a user trying to edit the text
@@ -446,9 +435,7 @@ def create_app() -> Flask:
         else:
             full_posts_query = full_posts_query.order_by(Post.given_hugs, Post.date)
 
-        paginated_posts = db.paginate(
-            full_posts_query, current_page=page, per_page=ITEMS_PER_PAGE
-        )
+        paginated_posts = db.paginate(full_posts_query, current_page=page)
 
         return jsonify(
             {
@@ -488,7 +475,6 @@ def create_app() -> Flask:
             paginated_users = db.paginate(
                 select(User).filter(User.blocked == true()).order_by(User.release_date),
                 current_page=page,
-                per_page=ITEMS_PER_PAGE,
             )
 
         else:
@@ -512,9 +498,10 @@ def create_app() -> Flask:
         # Try to convert it to a number; if it's a number, it's a
         # regular ID, so try to find the user with that ID
         try:
+            int(user_id)
             user_data = db.session.scalar(select(User).filter(User.id == int(user_id)))
         # Otherwise, it's an Auth0 ID
-        except Exception:
+        except ValueError:
             user_data = db.session.scalar(select(User).filter(User.auth0_id == user_id))
 
         # If there's no user with that Auth0 ID, abort
@@ -531,10 +518,9 @@ def create_app() -> Flask:
                 user_data.release_date = None
 
                 # Try to update the database
-                formatted_user_data = db.update_object(user_data).format()
+                user_data = db.update_object(user_data)
 
-        else:
-            formatted_user_data = user_data.format()
+        formatted_user_data = user_data.format()
 
         return jsonify({"success": True, "user": formatted_user_data})
 
@@ -712,7 +698,6 @@ def create_app() -> Flask:
         user_posts = db.paginate(
             select(Post).filter(Post.user_id == user_id).order_by(Post.date),
             current_page=page,
-            per_page=ITEMS_PER_PAGE,
         )
 
         return jsonify(
@@ -884,7 +869,6 @@ def create_app() -> Flask:
             messages = db.paginate(
                 messages_query.order_by(desc(Message.date)),
                 current_page=page,
-                per_page=ITEMS_PER_PAGE,
             )
 
             # formats each message in the list
@@ -910,7 +894,6 @@ def create_app() -> Flask:
                 )
                 .order_by(Thread.id),
                 current_page=page,
-                per_page=ITEMS_PER_PAGE,
             )
 
             total_pages = threads_messages.total_pages
@@ -1369,11 +1352,9 @@ def create_app() -> Flask:
                 .filter(Report.type == report_type)
                 .order_by(Report.date),
                 current_page=reports_page,
-                per_page=ITEMS_PER_PAGE,
             )
 
             total_pages[report_type] = paginated_reports.total_pages
-            # Formats the reports
             reports[report_type] = paginated_reports.resource
 
         return jsonify(

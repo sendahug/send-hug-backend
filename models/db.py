@@ -128,6 +128,12 @@ class SendADatabase:
         """
         self.session.remove()
 
+    def set_default_per_page(self, per_page: int):
+        """
+        Updates the default 'per page' value.
+        """
+        self.default_per_page = per_page
+
     # READ
     # -----------------------------------------------------------------
     def paginate(
