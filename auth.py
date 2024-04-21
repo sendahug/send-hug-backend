@@ -311,9 +311,8 @@ def requires_auth(permission=[""]):
     def requires_auth_decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            # token = get_auth_header()
-            # payload = verify_jwt(token)
-            payload = {"sub": "auth0|5ed8e3d0def75d0befbc7e50"}
+            token = get_auth_header()
+            payload = verify_jwt(token)
 
             if permission[0] == "post:user":
                 returned_payload = payload
