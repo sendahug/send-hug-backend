@@ -82,7 +82,7 @@ class Post(BaseModel):
     )
     user: Mapped["User"] = relationship("User", back_populates="posts")
     text: Mapped[str] = mapped_column(String(480), nullable=False)
-    date: Mapped[Optional[DateTime]] = mapped_column(DateTime)
+    date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     given_hugs: Mapped[Optional[int]] = mapped_column(Integer, default=0)
     open_report: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     sent_hugs: Mapped[Optional[List[int]]] = mapped_column(ARRAY(Integer))
@@ -122,7 +122,7 @@ class User(BaseModel):
     )
     role: Mapped[Optional["Role"]] = relationship("Role", foreign_keys="User.role_id")
     blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    release_date: Mapped[Optional[DateTime]] = mapped_column(DateTime)
+    release_date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     open_report: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     last_notifications_read: Mapped[Optional[datetime]] = mapped_column(DateTime)
     auto_refresh: Mapped[Optional[bool]] = mapped_column(Boolean, default=True)
@@ -204,7 +204,7 @@ class Message(BaseModel):
         "User", back_populates="received_messages", foreign_keys="Message.for_id"
     )
     text: Mapped[str] = mapped_column(String(480), nullable=False)
-    date: Mapped[Optional[DateTime]] = mapped_column(DateTime)
+    date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     thread: Mapped[int] = mapped_column(
         Integer,
         # TODO: This will fail if the thread is deleted
@@ -365,7 +365,7 @@ class Report(BaseModel):
         nullable=False,
     )
     report_reason: Mapped[str] = mapped_column(String(120), nullable=False)
-    date: Mapped[Optional[DateTime]] = mapped_column(DateTime)
+    date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     dismissed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     closed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # mapped_column properties
@@ -418,7 +418,7 @@ class Notification(BaseModel):
     )
     type: Mapped[str] = mapped_column(String(), nullable=False)
     text: Mapped[str] = mapped_column(String(), nullable=False)
-    date: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
+    date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     # mapped_column properties
     from_name = column_property(
         select(User.display_name).where(User.id == from_id).scalar_subquery()
