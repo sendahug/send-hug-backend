@@ -1136,8 +1136,7 @@ def create_app() -> Flask:
                 )
 
                 db.update_object(obj=delete_item)
-                db.update_multiple_objects_with_statement(update_stmt=from_stmt)
-                db.update_multiple_objects_with_statement(update_stmt=for_stmt)
+                db.update_multiple_objects_with_dml(update_stmts=[from_stmt, for_stmt])
 
             else:
                 db.update_object(delete_item)
@@ -1200,7 +1199,7 @@ def create_app() -> Flask:
             )
 
             db.delete_multiple_objects(delete_stmt=delete_stmt)
-            db.update_multiple_objects_with_statement(update_stmt=update_stmt)
+            db.update_multiple_objects_with_dml(update_stmts=update_stmt)
 
         # If the user is trying to clear their outbox
         if mailbox_type == "outbox":
@@ -1229,7 +1228,7 @@ def create_app() -> Flask:
             )
 
             db.delete_multiple_objects(delete_stmt=delete_stmt)
-            db.update_multiple_objects_with_statement(update_stmt=update_stmt)
+            db.update_multiple_objects_with_dml(update_stmts=update_stmt)
 
         # If the user is trying to clear their threads mailbox
         if mailbox_type == "threads":
@@ -1322,9 +1321,7 @@ def create_app() -> Flask:
 
             db.delete_multiple_objects(delete_stmt=delete_messages_stmt)
             db.delete_multiple_objects(delete_stmt=delete_threads_stmt)
-
-            for stmt in update_stmts:
-                db.update_multiple_objects_with_statement(update_stmt=stmt)
+            db.update_multiple_objects_with_dml(update_stmts=update_stmts)
 
         return jsonify(
             {"success": True, "userID": int(user_id), "deleted": num_messages}

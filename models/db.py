@@ -27,7 +27,7 @@
 
 from dataclasses import dataclass
 import math
-from typing import Protocol, Sequence, Type, TypeVar
+from typing import Protocol, Sequence, Type, TypeVar, overload
 import os
 
 from flask import Flask, abort
@@ -284,14 +284,26 @@ class SendADatabase:
             self.session.rollback()
             abort(500, str(err))
 
-    def update_multiple_objects_with_statement(self, update_stmt: Update):
+    @overload
+    def update_multiple_objects_with_dml(self, update_stmts: list[Update]):
+        ...
+
+    @overload
+    def update_multiple_objects_with_dml(self, update_stmts: Update):
+        ...
+
+    def update_multiple_objects_with_dml(self, update_stmts):
         """
         Updates multiple objects with a single UPDATE statement.
 
         param update_stmt: The UPDATE statement to execute.
         """
         try:
-            self.session.execute(update_stmt)
+            if isinstance(update_stmts, list):
+                for stmt in update_stmts:
+                    self.session.execute(stmt)
+            else:
+                self.session.execute(update_stmts)
         # If there's a database error
         except (DataError, IntegrityError) as err:
             self.session.rollback()
