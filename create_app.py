@@ -33,7 +33,7 @@ from datetime import datetime
 from flask import Flask, Response, request, abort, jsonify
 from flask_cors import CORS
 from pywebpush import webpush, WebPushException
-from sqlalchemy import Text, and_, delete, desc, false, func, or_, select, true
+from sqlalchemy import Text, and_, delete, desc, false, func, or_, select, true, update
 
 from models import (
     Post,
@@ -1034,10 +1034,8 @@ def create_app() -> Flask:
                 item_id=item_id,
                 item_type=Thread,
             )
-
-        # If this message/thread doesn't exist, abort
-        if delete_item is None:
-            abort(404)
+        else:
+            abort(400)
 
         # If the user is attempting to delete another user's messages
         # TODO: This condition is so overcomplicated, it really needs to be simpler.
@@ -1190,20 +1188,18 @@ def create_app() -> Flask:
             delete_stmt = delete(Message).where(
                 and_(Message.for_id == user_id, Message.from_deleted == true())
             )
-            messages_to_update: Sequence[Message] = db.session.scalars(
-                select(Message)
-                .filter(Message.for_id == user_id)
-                .filter(Message.from_deleted == false())
-            ).all()
 
             # For each message that wasn't deleted by the other user, the
             # value of for_deleted (indicating whether the user the message
             # is for deleted it) is updated to True
-            for message in messages_to_update:
-                message.for_deleted = True
+            update_stmt = (
+                update(Message)
+                .where(and_(Message.for_id == user_id, Message.from_deleted == false()))
+                .values(for_deleted=True)
+            )
 
             db.delete_multiple_objects(delete_stmt=delete_stmt)
-            db.update_multiple_objects(objects=list(messages_to_update))
+            db.update_multiple_objects_with_statement(update_stmt=update_stmt)
 
         # If the user is trying to clear their outbox
         if mailbox_type == "outbox":
@@ -1221,20 +1217,18 @@ def create_app() -> Flask:
             delete_stmt = delete(Message).where(
                 and_(Message.from_id == user_id, Message.for_deleted == true())
             )
-            messages_to_update = db.session.scalars(
-                select(Message)
-                .filter(Message.from_id == user_id)
-                .filter(Message.for_deleted == false())
-            ).all()
 
             # For each message that wasn't deleted by the other user, the
             # value of from_deleted (indicating whether the user who wrote
             # the message deleted it) is updated to True
-            for message in messages_to_update:
-                message.from_deleted = True
+            update_stmt = (
+                update(Message)
+                .where(and_(Message.from_id == user_id, Message.for_deleted == false()))
+                .values(from_deleted=True)
+            )
 
             db.delete_multiple_objects(delete_stmt=delete_stmt)
-            db.update_multiple_objects(objects=list(messages_to_update))
+            db.update_multiple_objects_with_statement(update_stmt=update_stmt)
 
         # If the user is trying to clear their threads mailbox
         if mailbox_type == "threads":
@@ -1258,47 +1252,56 @@ def create_app() -> Flask:
 
             # Fetch all the messages that need to be updated, then the threads
             # that need to be updated
-            messages_to_update = db.session.scalars(
-                select(Message).filter(
-                    or_(
-                        and_(
-                            Message.for_id == user_id,
-                            Message.from_deleted == false(),
-                        ),
-                        and_(
-                            Message.from_id == user_id,
-                            Message.for_deleted == false(),
-                        ),
+            from_messages_stmt = (
+                update(Message)
+                .where(
+                    and_(
+                        Message.from_id == user_id,
+                        Message.for_deleted == false(),
                     )
                 )
-            ).all()
+                .values(from_deleted=True)
+            )
 
-            for message in messages_to_update:
-                if message.for_id == user_id:
-                    message.for_deleted = True
-                else:
-                    message.from_deleted = True
-
-            threads_to_update: Sequence[Thread] = db.session.scalars(
-                select(Thread).filter(
-                    or_(
-                        and_(
-                            Thread.user_1_id == user_id,
-                            Thread.user_2_deleted == false(),
-                        ),
-                        and_(
-                            Thread.user_2_id == user_id,
-                            Thread.user_1_deleted == false(),
-                        ),
+            for_messages_stmt = (
+                update(Message)
+                .where(
+                    and_(
+                        Message.for_id == user_id,
+                        Message.from_deleted == false(),
                     )
                 )
-            ).all()
+                .values(for_deleted=True)
+            )
 
-            for thread in threads_to_update:
-                if thread.user_1_id == user_id:
-                    thread.user_1_deleted = True
-                else:
-                    thread.user_2_deleted = True
+            user_one_stmt = (
+                update(Thread)
+                .where(
+                    and_(
+                        Thread.user_1_id == user_id,
+                        Thread.user_2_deleted == false(),
+                    )
+                )
+                .values(user_1_deleted=True)
+            )
+
+            user_two_stmt = (
+                update(Thread)
+                .where(
+                    and_(
+                        Thread.user_2_id == user_id,
+                        Thread.user_1_deleted == false(),
+                    )
+                )
+                .values(user_2_deleted=True)
+            )
+
+            update_stmts = [
+                from_messages_stmt,
+                for_messages_stmt,
+                user_one_stmt,
+                user_two_stmt,
+            ]
 
             # The compile the delete statements for everything that needs to be
             # deleted.
@@ -1318,9 +1321,9 @@ def create_app() -> Flask:
 
             db.delete_multiple_objects(delete_stmt=delete_messages_stmt)
             db.delete_multiple_objects(delete_stmt=delete_threads_stmt)
-            db.update_multiple_objects(
-                objects=[*messages_to_update, *threads_to_update]
-            )
+
+            for stmt in update_stmts:
+                db.update_multiple_objects_with_statement(update_stmt=stmt)
 
         return jsonify(
             {"success": True, "userID": int(user_id), "deleted": num_messages}

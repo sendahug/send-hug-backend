@@ -31,7 +31,7 @@ from typing import Protocol, Sequence, Type, TypeVar
 import os
 
 from flask import Flask, abort
-from sqlalchemy import Delete, Engine, create_engine, Select, func, select
+from sqlalchemy import Delete, Engine, Update, create_engine, Select, func, select
 from sqlalchemy.orm import sessionmaker, Session, scoped_session, Mapped
 from sqlalchemy.exc import DataError, IntegrityError
 
@@ -39,10 +39,6 @@ from .models import BaseModel, HugModelType, DumpedModel
 
 
 T = TypeVar("T", bound=BaseModel)
-
-
-# Database configuration
-DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
 
 class CoreSAHModel(Protocol[HugModelType]):
@@ -85,7 +81,7 @@ class SendADatabase:
         param db_url: The URL of the database.
         """
         self.default_per_page = default_per_page
-        self.database_url = DATABASE_URL
+        self.database_url = os.environ.get("DATABASE_URL", "")
 
         if app is not None:
             self.init_app(app=app)
@@ -288,6 +284,23 @@ class SendADatabase:
             self.session.rollback()
             abort(500, str(err))
 
+    def update_multiple_objects_with_statement(self, update_stmt: Update):
+        """
+        Updates multiple objects with a single UPDATE statement.
+
+        param update_stmt: The UPDATE statement to execute.
+        """
+        try:
+            self.session.execute(update_stmt)
+        # If there's a database error
+        except (DataError, IntegrityError) as err:
+            self.session.rollback()
+            abort(422, str(err.orig))
+        # If there's an error, rollback
+        except Exception as err:
+            self.session.rollback()
+            abort(500, str(err))
+
     # DELETE
     # -----------------------------------------------------------------
     def delete_object(self, object: CoreSAHModel) -> int:
@@ -316,7 +329,7 @@ class SendADatabase:
         """
         Executes a delete statement to delete multiple objects.
 
-        param delete_stmt: The delete statement to execute.
+        param delete_stmt: The DELETE statement to execute.
         """
         # Try to delete the objects from the database
         try:
