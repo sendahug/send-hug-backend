@@ -26,13 +26,9 @@
 # SOFTWARE.
 
 from datetime import datetime
-import os
 import json
-from typing import List, Optional
+from typing import Any, List, Optional, TypeAlias, TypeVar
 
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask import Flask
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import (
     Mapped,
@@ -55,23 +51,13 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 
-# Database configuration
-database_path = os.environ.get("DATABASE_URL", "")
-
 
 class BaseModel(DeclarativeBase):
     pass
 
 
-db = SQLAlchemy(metadata=BaseModel.metadata)
-
-
-# Database setup
-def initialise_db(app: Flask) -> SQLAlchemy:
-    db.init_app(app)
-    migrate = Migrate(app, db)  # NOQA - required by flask-migrate
-
-    return db
+HugModelType = TypeVar("HugModelType", bound=BaseModel, covariant=True)
+DumpedModel: TypeAlias = dict[str, Any]
 
 
 # SQLAlchemy Tables
@@ -108,7 +94,7 @@ class Post(BaseModel):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self):
+    def format(self) -> DumpedModel:
         return {
             "id": self.id,
             "userId": self.user_id,
@@ -164,7 +150,7 @@ class User(BaseModel):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self):
+    def format(self) -> DumpedModel:
         return {
             "id": self.id,
             "auth0Id": self.auth0_id,
@@ -250,7 +236,7 @@ class Message(BaseModel):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self):
+    def format(self) -> DumpedModel:
         return {
             "id": self.id,
             "fromId": self.from_id,
@@ -332,7 +318,7 @@ class Thread(BaseModel):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self):
+    def format(self) -> DumpedModel:
         return {
             "id": self.id,
             "user1": {
@@ -392,7 +378,7 @@ class Report(BaseModel):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self):
+    def format(self) -> DumpedModel:
         return_report = {
             "id": self.id,
             "type": self.type,
@@ -442,7 +428,7 @@ class Notification(BaseModel):
     )
 
     # Format method
-    def format(self):
+    def format(self) -> DumpedModel:
         return {
             "id": self.id,
             "fromId": self.from_id,
@@ -468,7 +454,7 @@ class NotificationSub(BaseModel):
     subscription_data: Mapped[Text] = mapped_column(Text, nullable=False)
 
     # Format method
-    def format(self):
+    def format(self) -> DumpedModel:
         return {
             "id": self.id,
             "user_id": self.user,
@@ -484,7 +470,7 @@ class Filter(BaseModel):
     filter: Mapped[str] = mapped_column(String(), nullable=False)
 
     # Format method
-    def format(self):
+    def format(self) -> DumpedModel:
         return {"id": self.id, "filter": self.filter}
 
 
@@ -495,7 +481,7 @@ class Permission(BaseModel):
     description: Mapped[Optional[str]] = mapped_column(String())
 
     # Format method
-    def format(self):
+    def format(self) -> DumpedModel:
         return {
             "id": self.id,
             "permission": self.permission,
@@ -512,7 +498,7 @@ class Role(BaseModel):
     )
 
     # Format method
-    def format(self):
+    def format(self) -> DumpedModel:
         return {
             "id": self.id,
             "name": self.name,

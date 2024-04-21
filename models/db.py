@@ -27,22 +27,26 @@
 
 from dataclasses import dataclass
 import math
-from typing import Any, Protocol, Type, TypeAlias, TypeVar
+from typing import Protocol, Sequence, Type, TypeVar
+import os
 
 from flask import Flask, abort
 from sqlalchemy import Delete, Engine, create_engine, Select, func, select
-from sqlalchemy.orm import sessionmaker, Session, scoped_session
+from sqlalchemy.orm import sessionmaker, Session, scoped_session, Mapped
 from sqlalchemy.exc import DataError, IntegrityError
 
-from .models import BaseModel
+from .models import BaseModel, HugModelType, DumpedModel
 
 
-HugModelType = TypeVar("HugModelType", bound=BaseModel, covariant=True)
-DumpedModel: TypeAlias = dict[str, Any]
+T = TypeVar("T", bound=BaseModel)
+
+
+# Database configuration
+database_path = os.environ.get("DATABASE_URL", "")
 
 
 class CoreSAHModel(Protocol[HugModelType]):
-    id: int
+    id: Mapped[int]
 
     def format(self) -> DumpedModel:
         ...
@@ -77,10 +81,9 @@ class SendADatabase:
 
     def __init__(
         self,
-        default_per_page: int,
+        default_per_page: int = 5,
         app: Flask | None = None,
         db_url: str | None = None,
-        **kwargs
     ):
         """
         Initialises the class.
@@ -136,7 +139,7 @@ class SendADatabase:
     # -----------------------------------------------------------------
     def paginate(
         self,
-        query: Select[tuple[CoreSAHModel]],
+        query: Select,  # TODO: This select needs to be Select[tuple[CoreSAHModel]]
         current_page: int,
         per_page: int | None = None,
     ) -> PaginationResult:
@@ -173,7 +176,7 @@ class SendADatabase:
             except Exception as err:
                 abort(422, str(err))
 
-    def one_or_404(self, item_id: int, item_type: Type[CoreSAHModel]) -> CoreSAHModel:
+    def one_or_404(self, item_id: int, item_type: Type[T]) -> T:
         """
         Fetch a single item or return 404 if it doesn't exist. Inspired by
         Flask-SQLAlchemy 3's `get_or_404` method.
@@ -197,23 +200,20 @@ class SendADatabase:
 
         param obj: Object to insert.
         """
-        session = self.create_scoped_session()
+        # Try to add the object to the database
+        try:
+            self.session.add(obj)
+            self.session.commit()
 
-        with session() as sess:
-            # Try to add the object to the database
-            try:
-                sess.add(obj)
-                sess.commit()
-
-                return obj
-            # If there's a database error
-            except (DataError, IntegrityError) as err:
-                sess.rollback()
-                abort(422, str(err.orig))
-            # If there's an error, rollback
-            except Exception as err:
-                sess.rollback()
-                abort(500, str(err))
+            return obj
+        # If there's a database error
+        except (DataError, IntegrityError) as err:
+            self.session.rollback()
+            abort(422, str(err.orig))
+        # If there's an error, rollback
+        except Exception as err:
+            self.session.rollback()
+            abort(500, str(err))
 
     # Bulk add
     def add_multiple_objects(self, objects: list[CoreSAHModel]) -> list[DumpedModel]:
@@ -222,23 +222,20 @@ class SendADatabase:
 
         param objects: The list of objects to add to the database.
         """
-        session = self.create_scoped_session()
+        # Try to add the objects to the database
+        try:
+            self.session.add_all(objects)
+            self.session.commit()
 
-        with session() as sess:
-            # Try to add the objects to the database
-            try:
-                sess.add_all(objects)
-                sess.commit()
-
-                return [item.format() for item in objects]
-            # If there's a database error
-            except (DataError, IntegrityError) as err:
-                sess.rollback()
-                abort(422, str(err.orig))
-            # If there's an error, rollback
-            except Exception as err:
-                sess.rollback()
-                abort(500, str(err))
+            return [item.format() for item in objects]
+        # If there's a database error
+        except (DataError, IntegrityError) as err:
+            self.session.rollback()
+            abort(422, str(err.orig))
+        # If there's an error, rollback
+        except Exception as err:
+            self.session.rollback()
+            abort(500, str(err))
 
     # UPDATE
     # -----------------------------------------------------------------
@@ -262,12 +259,11 @@ class SendADatabase:
         except Exception as err:
             self.session.rollback()
             abort(500, str(err))
-        # Close the connection once the attempt is complete
-        finally:
-            self.session.close()
 
     # Bulk Update
-    def update_multiple_objects(self, objects: list[CoreSAHModel]) -> list[DumpedModel]:
+    def update_multiple_objects(
+        self, objects: Sequence[CoreSAHModel]
+    ) -> list[DumpedModel]:
         """
         Updates multiple records.
 
@@ -292,9 +288,6 @@ class SendADatabase:
         except Exception as err:
             self.session.rollback()
             abort(500, str(err))
-        # Close the connection once the attempt is complete
-        finally:
-            self.session.close()
 
     # DELETE
     # -----------------------------------------------------------------
@@ -304,22 +297,19 @@ class SendADatabase:
 
         param obj: Object to delete.
         """
-        session = self.create_scoped_session()
-
-        with session() as sess:
-            # Try to delete the record from the database
-            try:
-                sess.delete(object)
-                sess.commit()
-                return object.id
-            # If there's a database error
-            except (DataError, IntegrityError) as err:
-                sess.rollback()
-                abort(422, str(err.orig))
-            # If there's an error, rollback
-            except Exception as err:
-                sess.rollback()
-                abort(500, str(err))
+        # Try to delete the record from the database
+        try:
+            self.session.delete(object)
+            self.session.commit()
+            return object.id
+        # If there's a database error
+        except (DataError, IntegrityError) as err:
+            self.session.rollback()
+            abort(422, str(err.orig))
+        # If there's an error, rollback
+        except Exception as err:
+            self.session.rollback()
+            abort(500, str(err))
 
     # Bulk delete
     # TODO: Return the number of deleted items
@@ -329,21 +319,18 @@ class SendADatabase:
 
         param delete_stmt: The delete statement to execute.
         """
-        session = self.create_scoped_session()
-
-        with session() as sess:
-            # Try to delete the objects from the database
-            try:
-                sess.execute(delete_stmt)
-                sess.commit()
-            # If there's a database error
-            except (DataError, IntegrityError) as err:
-                sess.rollback()
-                abort(422, str(err.orig))
-            # If there's an error, rollback
-            except Exception as err:
-                sess.rollback()
-                abort(500, str(err))
+        # Try to delete the objects from the database
+        try:
+            self.session.execute(delete_stmt)
+            self.session.commit()
+        # If there's a database error
+        except (DataError, IntegrityError) as err:
+            self.session.rollback()
+            abort(422, str(err.orig))
+        # If there's an error, rollback
+        except Exception as err:
+            self.session.rollback()
+            abort(500, str(err))
 
     # MIXED BULK ACTIONS
     # -----------------------------------------------------------------
@@ -361,27 +348,27 @@ class SendADatabase:
         param update_objects: Objects to update.
         param delete_stmts: Delete statements to execute to delete multiple items.
         """
-        session = self.create_scoped_session()
+        # Try to update the object in the database
+        try:
+            self.session.add_all(add_objects)
 
-        with session() as sess:
-            # Try to update the object in the database
-            try:
-                sess.add_all(add_objects)
+            for delete_stmt in delete_stmts:
+                self.session.execute(delete_stmt)
 
-                for delete_stmt in delete_stmts:
-                    sess.execute(delete_stmt)
+            self.session.commit()
 
-                sess.commit()
+            return BulkActionResult(
+                added=[item.format() for item in add_objects],
+                updated=[item.format() for item in update_objects],
+            )
+        # If there's a database error
+        except (DataError, IntegrityError) as err:
+            self.session.rollback()
+            abort(422, str(err.orig))
+        # If there's an error, rollback
+        except Exception as err:
+            self.session.rollback()
+            abort(500, str(err))
 
-                return BulkActionResult(
-                    added=[item.format() for item in add_objects],
-                    updated=[item.format() for item in update_objects],
-                )
-            # If there's a database error
-            except (DataError, IntegrityError) as err:
-                sess.rollback()
-                abort(422, str(err.orig))
-            # If there's an error, rollback
-            except Exception as err:
-                sess.rollback()
-                abort(500, str(err))
+
+db = SendADatabase()
