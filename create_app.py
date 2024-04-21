@@ -46,8 +46,9 @@ from models import (
     Notification,
     NotificationSub,
     Filter,
+    db,
+    CoreSAHModel,
 )
-from models.db import CoreSAHModel, db
 from auth import (
     AuthError,
     UserData,

@@ -36,8 +36,7 @@ from functools import wraps
 from flask import request
 from sqlalchemy import select
 
-from models import User
-from models.db import db
+from models import User, db
 
 # Auth0 Configuration
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
