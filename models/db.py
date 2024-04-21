@@ -42,7 +42,7 @@ T = TypeVar("T", bound=BaseModel)
 
 
 # Database configuration
-database_path = os.environ.get("DATABASE_URL", "")
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
 
 class CoreSAHModel(Protocol[HugModelType]):
@@ -76,7 +76,6 @@ class SendADatabase:
         self,
         default_per_page: int = 5,
         app: Flask | None = None,
-        db_url: str | None = None,
     ):
         """
         Initialises the class.
@@ -86,21 +85,22 @@ class SendADatabase:
         param db_url: The URL of the database.
         """
         self.default_per_page = default_per_page
+        self.database_url = DATABASE_URL
 
-        if app is not None and db_url is not None:
-            self.init_app(db_url=db_url, app=app)
+        if app is not None:
+            self.init_app(app=app)
 
-    def init_app(self, db_url: str, app: Flask) -> None:
+    def init_app(self, app: Flask) -> None:
         """
         Initialises the connection w ith the Flask App (Flask-SQLAlchemy style).
 
         param db_url: The URL of the database.
         param app: The Flask app to connect to.
         """
-        app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+        app.config["SQLALCHEMY_DATABASE_URI"] = self.database_url
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
         self.app = app
-        self.engine = create_engine(db_url)
+        self.engine = create_engine(self.database_url)
         self._create_session_factory()
         self.session = self.create_scoped_session()
         self.app.teardown_appcontext(self._remove_session)

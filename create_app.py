@@ -37,7 +37,6 @@ from pywebpush import webpush, WebPushException
 from sqlalchemy import Text, and_, delete, desc, false, func, or_, select, true
 
 from models import (
-    database_path,
     Post,
     User,
     Message,
@@ -62,10 +61,10 @@ from utils.push_notifications import (
 )
 
 
-def create_app(db_path: str = database_path) -> Flask:
+def create_app() -> Flask:
     # create and configure the app
     app = Flask(__name__)
-    db.init_app(db_url=db_path, app=app)
+    db.init_app(app=app)
     # Utilities
     CORS(app, origins="")
     validator = Validator(
