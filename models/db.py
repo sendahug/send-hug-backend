@@ -62,7 +62,8 @@ class SendADatabase:
     The main database handler for running all CRUD operations against
     SQLAlchemy (as well as manage engines and sessions).
 
-    Named this way primarily for amusement.
+    Named this way primarily for amusement. The design is loosely based
+    on Flask-SQLAlchemy's `SQLAlchemy` class.
     """
 
     database_url: str
