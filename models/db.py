@@ -28,7 +28,6 @@
 from dataclasses import dataclass
 import math
 from typing import Protocol, Sequence, Type, TypeVar, overload
-import os
 
 from flask import Flask, abort
 from sqlalchemy import Delete, Engine, Update, create_engine, Select, func, select
@@ -65,13 +64,14 @@ class SendADatabase:
     Named this way primarily for amusement.
     """
 
+    database_url: str
     engine: Engine
     session_factory: sessionmaker[Session]
 
     def __init__(
         self,
+        database_url: str,
         default_per_page: int = 5,
-        app: Flask | None = None,
     ):
         """
         Initialises the class.
@@ -81,14 +81,14 @@ class SendADatabase:
         param db_url: The URL of the database.
         """
         self.default_per_page = default_per_page
-        self.database_url = os.environ.get("DATABASE_URL", "")
-
-        if app is not None:
-            self.init_app(app=app)
+        self.database_url = database_url
+        self.engine = create_engine(self.database_url)
+        self._create_session_factory()
+        self.session = self.create_scoped_session()
 
     def init_app(self, app: Flask) -> None:
         """
-        Initialises the connection w ith the Flask App (Flask-SQLAlchemy style).
+        Initialises the connection with the Flask App (Flask-SQLAlchemy style).
 
         param db_url: The URL of the database.
         param app: The Flask app to connect to.
@@ -96,9 +96,7 @@ class SendADatabase:
         app.config["SQLALCHEMY_DATABASE_URI"] = self.database_url
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
         self.app = app
-        self.engine = create_engine(self.database_url)
-        self._create_session_factory()
-        self.session = self.create_scoped_session()
+
         self.app.teardown_appcontext(self._remove_session)
 
     def _create_session_factory(self):
@@ -355,6 +353,3 @@ class SendADatabase:
         except Exception as err:
             self.session.rollback()
             abort(500, str(err))
-
-
-db = SendADatabase()

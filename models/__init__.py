@@ -35,4 +35,4 @@ from .models import (
     NotificationSub,
     Filter,
 )
-from .db import db, CoreSAHModel
+from .db import SendADatabase, CoreSAHModel

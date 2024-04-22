@@ -8,24 +8,24 @@ from sqlalchemy import pool
 from alembic import context
 
 from models.models import BaseModel
-from models.db import db
+from app import config as app_config  # type: ignore
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-config = context.config
+alembic_config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-fileConfig(config.config_file_name)
+fileConfig(alembic_config.config_file_name)  # type: ignore
 logger = logging.getLogger("alembic.env")
 
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-config.set_main_option(
+alembic_config.set_main_option(
     "sqlalchemy.url",
-    str(db.database_url).replace("%", "%%"),
+    str(app_config.database_url).replace("%", "%%"),
 )
 target_metadata = BaseModel.metadata
 
@@ -47,7 +47,7 @@ def run_migrations_offline():
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = alembic_config.get_main_option("sqlalchemy.url")
     context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
 
     with context.begin_transaction():
@@ -66,14 +66,14 @@ def run_migrations_online():
     # when there are no changes to the schema
     # reference: http://alembic.zzzcomputing.com/en/latest/cookbook.html
     def process_revision_directives(context, revision, directives):
-        if getattr(config.cmd_opts, "autogenerate", False):
+        if getattr(alembic_config.cmd_opts, "autogenerate", False):
             script = directives[0]
             if script.upgrade_ops.is_empty():
                 directives[:] = []
                 logger.info("No changes in schema detected.")
 
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        alembic_config.get_section(alembic_config.config_ini_section),  # type: ignore
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

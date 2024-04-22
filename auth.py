@@ -36,7 +36,7 @@ from functools import wraps
 from flask import request
 from sqlalchemy import select
 
-from models import User, db
+from models import User, SendADatabase
 
 # Auth0 Configuration
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
@@ -250,7 +250,7 @@ def check_permissions_legacy(permission: list[str], payload: dict[str, Any]) -> 
     return True
 
 
-def get_current_user(payload: dict[str, Any]) -> dict[str, Any]:
+def get_current_user(payload: dict[str, Any], db: SendADatabase) -> dict[str, Any]:
     """
     Fetches the details of the currently logged in user from the database.
 
@@ -302,12 +302,17 @@ def check_user_permissions(permission: list[str], current_user: dict[str, Any]) 
     return True
 
 
-# @requires_auth() Decorator Definition
-# Description: Gets the Authorization header, verifies the JWT and checks
-#              the user has the required permissions using the functions above.
-# Parameters: permission (list) - The resource's required permission(s).
-# Returns: @requires_auth decorator.
-def requires_auth(permission=[""]):
+# TODO: Ideally we shouldn't pass the DB in, but right now because the
+# whole app initialisation happens within a function, we kind of have to...
+def requires_auth(db: SendADatabase, permission=[""]):
+    """
+    @requires_auth() Decorator Definition
+    Gets the Authorization header, verifies the JWT and checks
+    the user has the required permissions using the functions above.
+
+    param permission: - The resource's required permission(s).
+    """
+
     def requires_auth_decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -318,7 +323,7 @@ def requires_auth(permission=[""]):
                 returned_payload = payload
                 check_permissions_legacy(permission, payload)
             else:
-                current_user = get_current_user(payload)
+                current_user = get_current_user(payload, db)
                 returned_payload = {
                     "id": current_user["id"],
                     "auth0Id": current_user["auth0Id"],
