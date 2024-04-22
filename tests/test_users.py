@@ -614,9 +614,15 @@ def test_delete_own_posts(
     )
     response_data = json.loads(response.data)
 
+    get_response = app_client.get(
+        f"/users/all/{user_id}/posts", headers=user_headers[user]
+    )
+    get_response_data = json.loads(get_response.data)
+
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["deleted"] == deleted_post
+    assert len(get_response_data["posts"]) == 0
 
 
 # Attempt to delete another user's posts without permission
