@@ -33,6 +33,7 @@ from flask import Flask, abort
 from sqlalchemy import Delete, Engine, Update, create_engine, Select, func, select
 from sqlalchemy.orm import sessionmaker, Session, scoped_session, Mapped
 from sqlalchemy.exc import DataError, IntegrityError
+from werkzeug.exceptions import HTTPException
 
 from .models import BaseModel, HugModelType, DumpedModel
 
@@ -181,6 +182,9 @@ class SendADatabase:
                 abort(404)
 
             return item
+
+        except HTTPException as exc:
+            raise exc
 
         except Exception as err:
             abort(422, str(err))
