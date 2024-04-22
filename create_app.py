@@ -1126,7 +1126,7 @@ def create_app(config: SAHConfig) -> Flask:
                             Message.from_deleted == false(),
                         )
                     )
-                    .values(for_deleted=True)
+                    .values(for_deleted=true())
                 )
 
                 for_stmt = (
@@ -1138,13 +1138,30 @@ def create_app(config: SAHConfig) -> Flask:
                             Message.for_deleted == false(),
                         )
                     )
-                    .values(from_deleted=True)
+                    .values(from_deleted=true())
+                )
+
+                delete_stmt = delete(Message).where(
+                    and_(
+                        Message.thread == delete_item.id,
+                        or_(
+                            and_(
+                                Message.for_id == token_payload["id"],
+                                Message.from_deleted == true(),
+                            ),
+                            and_(
+                                Message.from_id == token_payload["id"],
+                                Message.for_deleted == true(),
+                            ),
+                        ),
+                    )
                 )
 
                 config.db.update_object(obj=delete_item)
                 config.db.update_multiple_objects_with_dml(
                     update_stmts=[from_stmt, for_stmt]
                 )
+                config.db.delete_multiple_objects(delete_stmt=delete_stmt)
 
             else:
                 config.db.update_object(delete_item)
@@ -1193,9 +1210,9 @@ def create_app(config: SAHConfig) -> Flask:
             # thus okay to delete completely) from messages that weren't
             # (so that these will only be deleted for one user rather than
             # for both)
-            delete_stmt = delete(Message).where(
-                and_(Message.for_id == user_id, Message.from_deleted == true())
-            )
+            # delete_stmt = delete(Message).where(
+            #     and_(Message.for_id == user_id, Message.from_deleted == true())
+            # )
 
             # For each message that wasn't deleted by the other user, the
             # value of for_deleted (indicating whether the user the message
@@ -1203,10 +1220,10 @@ def create_app(config: SAHConfig) -> Flask:
             update_stmt = (
                 update(Message)
                 .where(and_(Message.for_id == user_id, Message.from_deleted == false()))
-                .values(for_deleted=True)
+                .values(for_deleted=true())
             )
 
-            config.db.delete_multiple_objects(delete_stmt=delete_stmt)
+            # config.db.delete_multiple_objects(delete_stmt=delete_stmt)
             config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
 
         # If the user is trying to clear their outbox
@@ -1232,7 +1249,7 @@ def create_app(config: SAHConfig) -> Flask:
             update_stmt = (
                 update(Message)
                 .where(and_(Message.from_id == user_id, Message.for_deleted == false()))
-                .values(from_deleted=True)
+                .values(from_deleted=true())
             )
 
             config.db.delete_multiple_objects(delete_stmt=delete_stmt)
@@ -1268,7 +1285,7 @@ def create_app(config: SAHConfig) -> Flask:
                         Message.for_deleted == false(),
                     )
                 )
-                .values(from_deleted=True)
+                .values(from_deleted=true())
             )
 
             for_messages_stmt = (
@@ -1279,7 +1296,7 @@ def create_app(config: SAHConfig) -> Flask:
                         Message.from_deleted == false(),
                     )
                 )
-                .values(for_deleted=True)
+                .values(for_deleted=true())
             )
 
             user_one_stmt = (
@@ -1290,7 +1307,7 @@ def create_app(config: SAHConfig) -> Flask:
                         Thread.user_2_deleted == false(),
                     )
                 )
-                .values(user_1_deleted=True)
+                .values(user_1_deleted=true())
             )
 
             user_two_stmt = (
@@ -1301,7 +1318,7 @@ def create_app(config: SAHConfig) -> Flask:
                         Thread.user_1_deleted == false(),
                     )
                 )
-                .values(user_2_deleted=True)
+                .values(user_2_deleted=true())
             )
 
             update_stmts = [
