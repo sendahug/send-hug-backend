@@ -592,10 +592,18 @@ def test_empty_mailbox_as_user(app_client, test_db, user_headers, dummy_users_da
     )
     response_data = json.loads(response.data)
 
+    get_response = app_client.get(
+        f"/messages?type=inbox&userID={dummy_users_data['user']['internal']}",
+        headers=user_headers["user"],
+    )
+    get_response_data = json.loads(get_response.data)
+    print(get_response_data)
+
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["deleted"] == 7
     assert response_data["userID"] == 1
+    assert len(get_response_data["messages"]) == 0
 
 
 # Attempt to empty another user's inbox (user JWT)
