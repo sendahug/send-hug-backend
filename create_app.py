@@ -32,7 +32,7 @@ from datetime import datetime
 
 from flask import Flask, Response, request, abort, jsonify
 from flask_cors import CORS
-from pywebpush import webpush, WebPushException
+from pywebpush import webpush, WebPushException  # type: ignore
 from sqlalchemy import Text, and_, delete, desc, false, func, or_, select, true, update
 
 from models import (
@@ -273,7 +273,7 @@ def create_app(config: SAHConfig) -> Flask:
         validator.check_type(post_id, "Post ID")
 
         updated_post = json.loads(request.data)
-        original_post: Post | None = config.db.one_or_404(
+        original_post: Post = config.db.one_or_404(
             item_id=post_id,
             item_type=Post,
         )
@@ -366,7 +366,11 @@ def create_app(config: SAHConfig) -> Flask:
 
         # Try to update the database
         # Objects to update
-        to_update = [original_post, current_user, post_author]
+        to_update: list[CoreSAHModel] = [
+            original_post,
+            current_user,
+            cast(User, post_author),
+        ]
 
         if notification:
             config.db.add_object(notification)
