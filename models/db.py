@@ -27,7 +27,7 @@
 
 from dataclasses import dataclass
 import math
-from typing import Protocol, Sequence, Type, TypeVar, overload
+from typing import Protocol, Sequence, Type, TypeVar, cast, overload
 
 from flask import Flask, abort
 from sqlalchemy import Delete, Engine, Update, create_engine, Select, func, select
@@ -302,10 +302,12 @@ class SendADatabase:
         """
         try:
             if isinstance(update_stmts, list):
-                for stmt in update_stmts:
+                for stmt in cast(list[Update], update_stmts):
                     self.session.execute(stmt)
             else:
                 self.session.execute(update_stmts)
+
+            self.session.commit()
         # If there's a database error
         except (DataError, IntegrityError) as err:
             self.session.rollback()
