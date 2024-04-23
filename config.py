@@ -25,14 +25,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .models import (
-    Post,
-    User,
-    Message,
-    Thread,
-    Report,
-    Notification,
-    NotificationSub,
-    Filter,
-)
-from .db import SendADatabase, CoreSAHModel
+from models.db import SendADatabase
+
+
+class SAHConfig:
+    """
+    Configuration class for the Send A Hug backend.
+    """
+
+    def __init__(self, database_url: str):
+        self.database_url = database_url
+        self.db = SendADatabase(database_url=database_url)

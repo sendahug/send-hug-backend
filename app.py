@@ -25,9 +25,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from create_app import create_app
+import os
 
-app = create_app()
+from create_app import create_app
+from config import SAHConfig
+
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
+config = SAHConfig(database_url=DATABASE_URL)
+
+app = create_app(config=config)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

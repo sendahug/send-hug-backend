@@ -3,11 +3,13 @@ import urllib.request
 import json
 from datetime import datetime
 
+from flask import Flask
 import pytest
 from sh import pg_restore, pg_dump  # type: ignore
 
 from create_app import create_app
-from models import db
+from config import SAHConfig
+from models.models import BaseModel
 from tests.data_models import create_data, DATETIME_PATTERN
 
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
@@ -62,10 +64,16 @@ def user_headers():
 
 
 @pytest.fixture(scope="session")
-def test_app():
-    """Set up the test app"""
+def test_config():
+    """Set up the config"""
     test_db_path = "postgresql://postgres:password@localhost:5432/test_sah"
-    app = create_app(db_path=test_db_path)
+    return SAHConfig(database_url=test_db_path)
+
+
+@pytest.fixture(scope="session")
+def test_app(test_config: SAHConfig):
+    """Set up the test app"""
+    app = create_app(config=test_config)
     yield app
 
 
@@ -76,13 +84,13 @@ def app_client(test_app):
 
 
 @pytest.fixture(scope="session")
-def setup_db_dump_file(test_app):
+def setup_db_dump_file(test_app: Flask, test_config: SAHConfig):
     """Create a snapshot of the test database to restore between tests"""
     with test_app.app_context():
-        db.drop_all()
+        BaseModel.metadata.drop_all(test_config.db.engine)
         # create all tables
-        db.create_all()
-        create_data(db)
+        BaseModel.metadata.create_all(test_config.db.engine)
+        create_data(test_config.db)
         pg_dump(
             "test_sah",
             "-Fc",
@@ -101,7 +109,7 @@ def setup_db_dump_file(test_app):
 
 
 @pytest.fixture(scope="function")
-def test_db(setup_db_dump_file, test_app):
+def test_db(setup_db_dump_file, test_app: Flask, test_config: SAHConfig):
     """Restore the test database from the db snapshot"""
     pg_restore(
         "-d",
@@ -121,13 +129,10 @@ def test_db(setup_db_dump_file, test_app):
 
     # binds the app to the current context
     with test_app.app_context():
-        # create all tables
-        db.create_all()
-
         try:
-            yield db
+            yield test_config.db
         finally:
-            db.session.close()
+            test_config.db.session.close()
 
 
 @pytest.fixture

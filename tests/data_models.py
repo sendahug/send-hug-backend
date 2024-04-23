@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 from models.models import (
     Permission,
@@ -14,15 +13,16 @@ from models.models import (
     Filter,
     Role,
 )
+from models.db import SendADatabase
 
 
 DATETIME_PATTERN = "%Y-%m-%d %H:%M:%S.%f"
 
 
-def create_filters(db: SQLAlchemy):
+def create_filters(db: SendADatabase):
     """Creates the filters in the test database."""
-    filter_1 = Filter(id=1, filter="filtered_word_1")  # type: ignore
-    filter_2 = Filter(id=2, filter="filtered_word_2")  # type: ignore
+    filter_1 = Filter(id=1, filter="filtered_word_1")
+    filter_2 = Filter(id=2, filter="filtered_word_2")
 
     try:
         db.session.add_all([filter_1, filter_2])
@@ -35,49 +35,49 @@ def create_filters(db: SQLAlchemy):
 def create_permissions(db):
     permission_1 = Permission(
         id=1, permission="block:user", description="Block or unblock a user"
-    )  # type: ignore
+    )
     permission_2 = Permission(
         id=2, permission="delete:any-post", description="Delete anyones post"
-    )  # type: ignore
+    )
     permission_3 = Permission(
         id=3, permission="delete:messages", description="Delete my messages"
-    )  # type: ignore
+    )
     permission_4 = Permission(
         id=4, permission="patch:any-post", description="Edit any post"
-    )  # type: ignore
+    )
     permission_5 = Permission(
         id=5, permission="patch:any-user", description="Edit any users display name"
-    )  # type: ignore
+    )
     permission_6 = Permission(
         id=6, permission="post:message", description="Create a new message"
-    )  # type: ignore
+    )
     permission_7 = Permission(
         id=7, permission="post:post", description="Create a new post"
-    )  # type: ignore
+    )
     permission_8 = Permission(
         id=8, permission="post:report", description="Create a new report."
-    )  # type: ignore
+    )
     permission_9 = Permission(
         id=9, permission="read:admin-board", description="View admin dashboard"
-    )  # type: ignore
+    )
     permission_10 = Permission(
         id=10, permission="read:messages", description="Read user messages"
-    )  # type: ignore
+    )
     permission_11 = Permission(
         id=11, permission="read:user", description="Read user data"
-    )  # type: ignore
+    )
     permission_12 = Permission(
         id=12, permission="delete:my-post", description="Delete my own post"
-    )  # type: ignore
+    )
     permission_13 = Permission(
         id=13, permission="patch:user", description="Edit user data"
-    )  # type: ignore
+    )
     permission_14 = Permission(
         id=14, permission="patch:my-post", description="Edit my post"
-    )  # type: ignore
+    )
     permission_15 = Permission(
         id=15, permission="post:user", description="Create a new user"
-    )  # type: ignore
+    )
 
     try:
         db.session.add_all(
@@ -106,14 +106,14 @@ def create_permissions(db):
 
 
 def create_roles(db):
-    role_1 = Role(id=1, name="admin")  # type: ignore
-    role_2 = Role(id=2, name="moderator")  # type: ignore
-    role_3 = Role(id=3, name="user")  # type: ignore
-    role_4 = Role(id=4, name="new user")  # type: ignore
+    role_1 = Role(id=1, name="admin")
+    role_2 = Role(id=2, name="moderator")
+    role_3 = Role(id=3, name="user")
+    role_4 = Role(id=4, name="new user")
 
     try:
         permissions = db.session.scalars(
-            db.select(Permission).order_by(Permission.id)
+            select(Permission).order_by(Permission.id)
         ).all()
 
         role_1.permissions = permissions[0:11]
@@ -128,7 +128,7 @@ def create_roles(db):
         db.session.close()
 
 
-def create_users(db: SQLAlchemy):
+def create_users(db: SendADatabase):
     """Creates the users in the test database."""
     user_1 = User(
         id=1,
@@ -148,7 +148,7 @@ def create_users(db: SQLAlchemy):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=3,
-    )  # type: ignore
+    )
     user_2 = User(
         id=4,
         auth0_id="auth0|5ed8e3d0def75d0befbc7e50",
@@ -169,7 +169,7 @@ def create_users(db: SQLAlchemy):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=1,
-    )  # type: ignore
+    )
     user_3 = User(
         id=5,
         auth0_id="auth0|5ede3e7a0793080013259050",
@@ -188,7 +188,7 @@ def create_users(db: SQLAlchemy):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=2,
-    )  # type: ignore
+    )
     user_4 = User(
         id=9,
         auth0_id="auth0|5edf7b060793080013276746",
@@ -207,7 +207,7 @@ def create_users(db: SQLAlchemy):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=1,
-    )  # type: ignore
+    )
     user_5 = User(
         id=20,
         auth0_id="auth0|5f4b9fd9915cd400670f4633",
@@ -228,7 +228,7 @@ def create_users(db: SQLAlchemy):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=3,
-    )  # type: ignore
+    )
 
     try:
         db.session.add_all([user_1, user_2, user_3, user_4, user_5])
@@ -238,7 +238,7 @@ def create_users(db: SQLAlchemy):
         db.session.close()
 
 
-def create_posts(db: SQLAlchemy):
+def create_posts(db: SendADatabase):
     """Creates the posts in the test database."""
     post_1 = Post(
         id=1,
@@ -248,7 +248,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=2,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_2 = Post(
         id=2,
         user_id=1,
@@ -257,7 +257,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=2,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_3 = Post(
         id=4,
         user_id=1,
@@ -266,7 +266,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=2,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_4 = Post(
         id=6,
         user_id=1,
@@ -275,7 +275,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_5 = Post(
         id=7,
         user_id=1,
@@ -284,7 +284,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_6 = Post(
         id=9,
         user_id=1,
@@ -293,7 +293,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_7 = Post(
         id=10,
         user_id=1,
@@ -302,7 +302,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_8 = Post(
         id=11,
         user_id=1,
@@ -311,7 +311,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=2,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_9 = Post(
         id=12,
         user_id=5,
@@ -320,7 +320,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_10 = Post(
         id=13,
         user_id=5,
@@ -329,7 +329,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_11 = Post(
         id=22,
         user_id=4,
@@ -338,7 +338,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_12 = Post(
         id=23,
         user_id=4,
@@ -347,7 +347,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=2,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_13 = Post(
         id=25,
         user_id=4,
@@ -356,7 +356,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=67,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_14 = Post(
         id=26,
         user_id=4,
@@ -365,7 +365,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_15 = Post(
         id=28,
         user_id=4,
@@ -374,7 +374,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=9,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_16 = Post(
         id=30,
         user_id=4,
@@ -383,7 +383,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=24,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_17 = Post(
         id=35,
         user_id=4,
@@ -392,7 +392,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_18 = Post(
         id=36,
         user_id=4,
@@ -401,7 +401,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_19 = Post(
         id=38,
         user_id=4,
@@ -410,7 +410,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_20 = Post(
         id=39,
         user_id=4,
@@ -419,7 +419,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_21 = Post(
         id=42,
         user_id=4,
@@ -428,7 +428,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=1,
         open_report=False,
         sent_hugs=[4],
-    )  # type: ignore
+    )
     post_22 = Post(
         id=43,
         user_id=4,
@@ -437,7 +437,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=0,
         open_report=False,
         sent_hugs=[],
-    )  # type: ignore
+    )
     post_23 = Post(
         id=44,
         user_id=4,
@@ -446,7 +446,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=0,
         open_report=False,
         sent_hugs=[],
-    )  # type: ignore
+    )
     post_24 = Post(
         id=45,
         user_id=4,
@@ -455,7 +455,7 @@ def create_posts(db: SQLAlchemy):
         given_hugs=0,
         open_report=False,
         sent_hugs=[],
-    )  # type: ignore
+    )
 
     try:
         db.session.add_all(
@@ -492,29 +492,29 @@ def create_posts(db: SQLAlchemy):
         db.session.close()
 
 
-def create_threads(db: SQLAlchemy):
+def create_threads(db: SendADatabase):
     """Creates the threads in the test database."""
     thread_1 = Thread(
         id=1, user_1_id=1, user_2_id=1, user_1_deleted=False, user_2_deleted=False
-    )  # type: ignore
+    )
     thread_2 = Thread(
         id=2, user_1_id=1, user_2_id=5, user_1_deleted=False, user_2_deleted=False
-    )  # type: ignore
+    )
     thread_3 = Thread(
         id=3, user_1_id=1, user_2_id=4, user_1_deleted=False, user_2_deleted=False
-    )  # type: ignore
+    )
     thread_4 = Thread(
         id=6, user_1_id=9, user_2_id=5, user_1_deleted=False, user_2_deleted=False
-    )  # type: ignore
+    )
     thread_5 = Thread(
         id=7, user_1_id=20, user_2_id=4, user_1_deleted=False, user_2_deleted=False
-    )  # type: ignore
+    )
     thread_6 = Thread(
         id=8, user_1_id=20, user_2_id=1, user_1_deleted=True, user_2_deleted=False
-    )  # type: ignore
+    )
     thread_7 = Thread(
         id=4, user_1_id=4, user_2_id=5, user_1_deleted=True, user_2_deleted=False
-    )  # type: ignore
+    )
 
     try:
         db.session.add_all(
@@ -526,7 +526,7 @@ def create_threads(db: SQLAlchemy):
         db.session.close()
 
 
-def create_messages(db: SQLAlchemy):
+def create_messages(db: SendADatabase):
     """Creates the messages in the test database."""
     message_1 = Message(
         id=5,
@@ -537,7 +537,7 @@ def create_messages(db: SQLAlchemy):
         thread=4,
         for_deleted=False,
         from_deleted=True,
-    )  # type: ignore
+    )
     message_2 = Message(
         id=8,
         from_id=5,
@@ -547,7 +547,7 @@ def create_messages(db: SQLAlchemy):
         thread=4,
         for_deleted=False,
         from_deleted=True,
-    )  # type: ignore
+    )
     message_3 = Message(
         id=1,
         from_id=1,
@@ -557,7 +557,7 @@ def create_messages(db: SQLAlchemy):
         thread=1,
         for_deleted=False,
         from_deleted=False,
-    )  # type: ignore
+    )
     message_4 = Message(
         id=3,
         from_id=5,
@@ -567,7 +567,7 @@ def create_messages(db: SQLAlchemy):
         thread=2,
         for_deleted=False,
         from_deleted=False,
-    )  # type: ignore
+    )
     message_5 = Message(
         id=7,
         from_id=1,
@@ -577,7 +577,7 @@ def create_messages(db: SQLAlchemy):
         thread=2,
         for_deleted=False,
         from_deleted=False,
-    )  # type: ignore
+    )
     message_6 = Message(
         id=9,
         from_id=4,
@@ -587,7 +587,7 @@ def create_messages(db: SQLAlchemy):
         thread=3,
         for_deleted=False,
         from_deleted=False,
-    )  # type: ignore
+    )
     message_7 = Message(
         id=16,
         from_id=9,
@@ -597,7 +597,7 @@ def create_messages(db: SQLAlchemy):
         thread=6,
         for_deleted=False,
         from_deleted=False,
-    )  # type: ignore
+    )
     message_8 = Message(
         id=10,
         from_id=4,
@@ -607,7 +607,7 @@ def create_messages(db: SQLAlchemy):
         thread=3,
         for_deleted=True,
         from_deleted=False,
-    )  # type: ignore
+    )
     message_9 = Message(
         id=21,
         from_id=4,
@@ -617,7 +617,7 @@ def create_messages(db: SQLAlchemy):
         thread=3,
         for_deleted=False,
         from_deleted=False,
-    )  # type: ignore
+    )
     message_10 = Message(
         id=25,
         from_id=20,
@@ -627,7 +627,7 @@ def create_messages(db: SQLAlchemy):
         thread=7,
         for_deleted=False,
         from_deleted=False,
-    )  # type: ignore
+    )
     message_11 = Message(
         id=22,
         from_id=4,
@@ -637,7 +637,7 @@ def create_messages(db: SQLAlchemy):
         thread=3,
         for_deleted=False,
         from_deleted=False,
-    )  # type: ignore
+    )
     message_12 = Message(
         id=26,
         from_id=20,
@@ -647,7 +647,7 @@ def create_messages(db: SQLAlchemy):
         thread=8,
         for_deleted=True,
         from_deleted=False,
-    )  # type: ignore
+    )
     message_13 = Message(
         id=23,
         from_id=4,
@@ -657,7 +657,7 @@ def create_messages(db: SQLAlchemy):
         thread=4,
         for_deleted=False,
         from_deleted=True,
-    )  # type: ignore
+    )
     message_14 = Message(
         id=24,
         from_id=4,
@@ -667,7 +667,7 @@ def create_messages(db: SQLAlchemy):
         thread=4,
         for_deleted=False,
         from_deleted=True,
-    )  # type: ignore
+    )
 
     try:
         db.session.add_all(
@@ -694,7 +694,7 @@ def create_messages(db: SQLAlchemy):
         db.session.close()
 
 
-def create_reports(db: SQLAlchemy):
+def create_reports(db: SendADatabase):
     """Creates the reports in the test database."""
     report_1 = Report(
         id=1,
@@ -706,7 +706,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 13:38:58.052", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_2 = Report(
         id=2,
         type="Post",
@@ -717,7 +717,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 14:08:10.401", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_3 = Report(
         id=3,
         type="Post",
@@ -728,7 +728,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=False,
         closed=True,
         date=datetime.strptime("2020-06-22 14:13:25.667", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_4 = Report(
         id=4,
         type="Post",
@@ -739,7 +739,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=False,
         closed=True,
         date=datetime.strptime("2020-06-22 14:30:33.051", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_5 = Report(
         id=26,
         type="Post",
@@ -750,7 +750,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 20:09:42.139", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_6 = Report(
         id=5,
         type="Post",
@@ -761,7 +761,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 14:34:46.527", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_7 = Report(
         id=6,
         type="User",
@@ -772,7 +772,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 14:41:30.361", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_8 = Report(
         id=7,
         type="User",
@@ -783,7 +783,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 15:03:27.242", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_9 = Report(
         id=8,
         type="Post",
@@ -794,7 +794,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 16:27:32.399", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_10 = Report(
         id=9,
         type="Post",
@@ -805,7 +805,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 16:31:45.47", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_11 = Report(
         id=10,
         type="Post",
@@ -816,7 +816,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 16:42:40.316", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_12 = Report(
         id=11,
         type="Post",
@@ -827,7 +827,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 16:44:17.816", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_13 = Report(
         id=12,
         type="Post",
@@ -838,7 +838,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 19:30:00.082", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_14 = Report(
         id=13,
         type="Post",
@@ -849,7 +849,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 19:31:40.851", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_15 = Report(
         id=14,
         type="Post",
@@ -860,7 +860,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 19:32:25.102", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_16 = Report(
         id=15,
         type="Post",
@@ -871,7 +871,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 19:53:04.05", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_17 = Report(
         id=16,
         type="Post",
@@ -882,7 +882,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 19:54:08.875", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_18 = Report(
         id=17,
         type="Post",
@@ -893,7 +893,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 19:55:17.798", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_19 = Report(
         id=18,
         type="Post",
@@ -904,7 +904,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 19:57:20.996", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_20 = Report(
         id=19,
         type="Post",
@@ -915,7 +915,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 19:59:34.313", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_21 = Report(
         id=20,
         type="Post",
@@ -926,7 +926,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 20:00:24.779", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_22 = Report(
         id=21,
         type="Post",
@@ -937,7 +937,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 20:03:32.287", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_23 = Report(
         id=22,
         type="Post",
@@ -948,7 +948,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 20:04:34.395", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_24 = Report(
         id=23,
         type="Post",
@@ -959,7 +959,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 20:05:31.173", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_25 = Report(
         id=24,
         type="Post",
@@ -970,7 +970,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 20:07:16.256", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_26 = Report(
         id=25,
         type="Post",
@@ -981,7 +981,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 20:08:09.871", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_27 = Report(
         id=27,
         type="Post",
@@ -992,7 +992,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=False,
         closed=True,
         date=datetime.strptime("2020-06-22 20:10:45.884", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_28 = Report(
         id=28,
         type="Post",
@@ -1003,7 +1003,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=False,
         closed=True,
         date=datetime.strptime("2020-06-22 20:11:24.518", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_29 = Report(
         id=29,
         type="Post",
@@ -1014,7 +1014,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=False,
         closed=True,
         date=datetime.strptime("2020-06-22 20:13:27.256", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_30 = Report(
         id=30,
         type="Post",
@@ -1025,7 +1025,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 20:18:46.182", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_31 = Report(
         id=31,
         type="Post",
@@ -1036,7 +1036,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 20:27:24.199", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_32 = Report(
         id=32,
         type="Post",
@@ -1047,7 +1047,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=False,
         closed=True,
         date=datetime.strptime("2020-06-22 20:34:40.16", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_33 = Report(
         id=33,
         type="Post",
@@ -1058,7 +1058,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=False,
         closed=True,
         date=datetime.strptime("2020-06-22 20:36:13.622", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_34 = Report(
         id=34,
         type="Post",
@@ -1069,7 +1069,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 20:40:57.717", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_35 = Report(
         id=35,
         type="User",
@@ -1080,7 +1080,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-06-22 20:41:47.885", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_36 = Report(
         id=36,
         type="Post",
@@ -1091,7 +1091,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-07-06 08:14:31.918", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_37 = Report(
         id=37,
         type="Post",
@@ -1102,7 +1102,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-07-06 10:02:46.046", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_38 = Report(
         id=38,
         type="Post",
@@ -1113,7 +1113,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-07-06 10:10:34.082", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_39 = Report(
         id=41,
         type="Post",
@@ -1124,7 +1124,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-07-06 10:17:29.549", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_40 = Report(
         id=40,
         type="Post",
@@ -1135,7 +1135,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-07-06 10:17:21.702", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_41 = Report(
         id=39,
         type="Post",
@@ -1146,7 +1146,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-07-06 10:15:07.428", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_42 = Report(
         id=42,
         type="Post",
@@ -1157,7 +1157,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-07-06 10:20:37.963", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_43 = Report(
         id=43,
         type="Post",
@@ -1168,7 +1168,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-07-06 10:36:53.98", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     report_44 = Report(
         id=44,
         type="Post",
@@ -1179,7 +1179,7 @@ def create_reports(db: SQLAlchemy):
         dismissed=True,
         closed=True,
         date=datetime.strptime("2020-07-13 19:13:48.279", DATETIME_PATTERN),
-    )  # type: ignore
+    )
 
     try:
         db.session.add_all(
@@ -1236,7 +1236,7 @@ def create_reports(db: SQLAlchemy):
         db.session.close()
 
 
-def create_notifications(db: SQLAlchemy):
+def create_notifications(db: SendADatabase):
     """Creates the notifications in the test database."""
     notification_1 = Notification(
         id=1,
@@ -1245,7 +1245,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 13:05:21.045101", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_2 = Notification(
         id=2,
         for_id=4,
@@ -1253,7 +1253,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 13:06:14.900956", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_3 = Notification(
         id=3,
         for_id=4,
@@ -1261,7 +1261,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 13:06:46.626559", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_4 = Notification(
         id=4,
         for_id=4,
@@ -1269,7 +1269,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 13:14:32.762052", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_5 = Notification(
         id=5,
         for_id=4,
@@ -1277,7 +1277,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 13:21:54.464433", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_6 = Notification(
         id=6,
         for_id=4,
@@ -1285,7 +1285,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 18:37:35.118498", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_7 = Notification(
         id=7,
         for_id=4,
@@ -1293,7 +1293,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 18:42:37.632753", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_41 = Notification(
         id=41,
         for_id=4,
@@ -1301,7 +1301,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-14 11:30:07.354089", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_42 = Notification(
         id=42,
         for_id=4,
@@ -1309,7 +1309,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-14 11:30:12.560007", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_43 = Notification(
         id=43,
         for_id=4,
@@ -1317,7 +1317,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-14 11:55:51.240234", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_46 = Notification(
         id=46,
         for_id=1,
@@ -1325,7 +1325,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-14 16:00:41.414829", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_53 = Notification(
         id=53,
         for_id=4,
@@ -1333,7 +1333,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-20 17:32:19.808169", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_54 = Notification(
         id=54,
         for_id=4,
@@ -1341,7 +1341,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-21 14:35:20.297422", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_55 = Notification(
         id=55,
         for_id=4,
@@ -1349,7 +1349,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-21 14:35:34.933279", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_58 = Notification(
         id=58,
         for_id=4,
@@ -1357,7 +1357,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 11:38:02.864273", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_63 = Notification(
         id=63,
         for_id=4,
@@ -1365,7 +1365,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 12:18:54.286811", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_66 = Notification(
         id=66,
         for_id=4,
@@ -1373,7 +1373,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 12:23:21.062704", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_70 = Notification(
         id=70,
         for_id=1,
@@ -1381,7 +1381,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 13:40:25.495938", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_71 = Notification(
         id=71,
         for_id=1,
@@ -1389,7 +1389,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 13:41:51.227895", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_72 = Notification(
         id=72,
         for_id=4,
@@ -1397,7 +1397,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 13:42:35.797629", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_73 = Notification(
         id=73,
         for_id=5,
@@ -1405,7 +1405,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 13:42:40.059274", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_74 = Notification(
         id=74,
         for_id=1,
@@ -1413,7 +1413,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 13:42:44.75568", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_75 = Notification(
         id=75,
         for_id=1,
@@ -1421,7 +1421,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 14:09:01.457204", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_76 = Notification(
         id=76,
         for_id=1,
@@ -1429,7 +1429,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 15:01:45.393836", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_77 = Notification(
         id=77,
         for_id=1,
@@ -1437,7 +1437,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 15:09:58.206196", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_78 = Notification(
         id=78,
         for_id=1,
@@ -1445,7 +1445,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 15:18:49.469451", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_79 = Notification(
         id=79,
         for_id=4,
@@ -1453,7 +1453,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 15:30:06.395028", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_80 = Notification(
         id=80,
         for_id=5,
@@ -1461,7 +1461,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-08-10 19:40:21.244178", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_81 = Notification(
         id=81,
         for_id=1,
@@ -1469,7 +1469,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-09-16 11:08:35.311236", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_82 = Notification(
         id=82,
         for_id=4,
@@ -1477,7 +1477,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-30 13:36:31.188385", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_83 = Notification(
         id=83,
         for_id=4,
@@ -1485,7 +1485,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 14:01:09.923613", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_84 = Notification(
         id=84,
         for_id=4,
@@ -1493,7 +1493,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 14:19:46.89522", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_85 = Notification(
         id=85,
         for_id=4,
@@ -1501,7 +1501,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 14:26:04.690362", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_86 = Notification(
         id=86,
         for_id=1,
@@ -1509,7 +1509,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 14:44:07.598229", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_87 = Notification(
         id=87,
         for_id=4,
@@ -1517,7 +1517,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 14:46:21.747038", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_88 = Notification(
         id=88,
         for_id=4,
@@ -1525,7 +1525,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 14:59:11.313138", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_89 = Notification(
         id=89,
         for_id=4,
@@ -1533,7 +1533,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 15:06:12.339448", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_90 = Notification(
         id=90,
         for_id=4,
@@ -1541,7 +1541,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 15:07:41.99315", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_91 = Notification(
         id=91,
         for_id=4,
@@ -1549,7 +1549,7 @@ def create_notifications(db: SQLAlchemy):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 15:09:55.344578", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_92 = Notification(
         id=92,
         for_id=5,
@@ -1557,7 +1557,7 @@ def create_notifications(db: SQLAlchemy):
         type="message",
         text="You have a new message",
         date=datetime.strptime("2020-11-03 16:38:06.351", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_93 = Notification(
         id=93,
         for_id=5,
@@ -1565,7 +1565,7 @@ def create_notifications(db: SQLAlchemy):
         type="message",
         text="You have a new message",
         date=datetime.strptime("2020-11-03 16:48:33.213", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_94 = Notification(
         id=94,
         for_id=4,
@@ -1573,7 +1573,7 @@ def create_notifications(db: SQLAlchemy):
         type="message",
         text="You have a new message",
         date=datetime.strptime("2020-11-03 20:16:58.027", DATETIME_PATTERN),
-    )  # type: ignore
+    )
     notification_95 = Notification(
         id=95,
         for_id=1,
@@ -1581,7 +1581,7 @@ def create_notifications(db: SQLAlchemy):
         type="message",
         text="You have a new message",
         date=datetime.strptime("2020-11-03 20:21:30.972", DATETIME_PATTERN),
-    )  # type: ignore
+    )
 
     try:
         db.session.add_all(
@@ -1640,7 +1640,7 @@ def create_notifications(db: SQLAlchemy):
 # TODO: Add subscriptions
 
 
-def create_data(db: SQLAlchemy):
+def create_data(db: SendADatabase):
     """Creates the data in the test database."""
     create_filters(db)
     create_permissions(db)
