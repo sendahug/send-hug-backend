@@ -82,7 +82,7 @@ class Post(BaseModel):
         ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    user: Mapped["User"] = relationship("User", back_populates="posts")
+    user: Mapped["User"] = relationship("User", back_populates="posts", lazy="selectin")
     text: Mapped[str] = mapped_column(String(480), nullable=False)
     date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     given_hugs: Mapped[int] = mapped_column(Integer, default=0)
