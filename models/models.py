@@ -144,7 +144,7 @@ class User(BaseModel):
     received_messages: Mapped[Optional[List["Message"]]] = relationship(
         "Message", back_populates="for_user", foreign_keys="Message.for_id"
     )
-    # mapped_column properties
+    # Column properties
     post_count = column_property(
         select(func.count(Post.id)).where(Post.user_id == id).scalar_subquery()
     )
@@ -285,7 +285,7 @@ class Thread(BaseModel):
     messages: Mapped[List[Message]] = relationship(
         "Message", back_populates="thread_details"
     )
-    # mapped_column properties
+    # Column properties
     message_count = column_property(
         select(func.count(Message.id))
         .where(Message.thread == id)
@@ -369,7 +369,7 @@ class Report(BaseModel):
     date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     dismissed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     closed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    # mapped_column properties
+    # Column properties
     user_name = column_property(
         select(User.display_name).where(User.id == user_id).scalar_subquery()
     )
@@ -420,7 +420,7 @@ class Notification(BaseModel):
     type: Mapped[str] = mapped_column(String(), nullable=False)
     text: Mapped[str] = mapped_column(String(), nullable=False)
     date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    # mapped_column properties
+    # Column properties
     from_name = column_property(
         select(User.display_name).where(User.id == from_id).scalar_subquery()
     )
