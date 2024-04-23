@@ -122,7 +122,9 @@ class User(BaseModel):
         ForeignKey("roles.id", onupdate="CASCADE", ondelete="SET NULL"),
         default=4,
     )
-    role: Mapped[Optional["Role"]] = relationship("Role", foreign_keys="User.role_id")
+    role: Mapped[Optional["Role"]] = relationship(
+        "Role", foreign_keys="User.role_id", lazy="selectin"
+    )
     blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     release_date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     open_report: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -496,7 +498,7 @@ class Role(BaseModel):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(), nullable=False)
     permissions: Mapped[List[Permission]] = relationship(
-        "Permission", secondary=roles_permissions_map
+        "Permission", secondary=roles_permissions_map, lazy="selectin"
     )
 
     # Format method
