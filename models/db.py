@@ -169,7 +169,7 @@ class SendADatabase:
                 )
 
             except Exception as err:
-                abort(422, str(err))
+                abort(500, str(err))
 
     def one_or_404(self, item_id: int, item_type: Type[T]) -> T:
         """
