@@ -3,6 +3,7 @@ Flask[async]==3.0.3
 Flask-Cors==4.0.0
 gunicorn==22.0.0
 psycopg2-binary==2.9.9
+asyncpg==0.29.0
 python-jose==3.3.0
 pywebpush==2.0.0
 SQLAlchemy[asyncio]==2.0.29
