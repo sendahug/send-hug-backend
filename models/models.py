@@ -30,6 +30,7 @@ import json
 from typing import Any, List, Optional, TypeAlias, TypeVar
 
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import (
     Mapped,
     column_property,
@@ -52,7 +53,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY
 
 
-class BaseModel(DeclarativeBase):
+class BaseModel(AsyncAttrs, DeclarativeBase):
     pass
 
 
