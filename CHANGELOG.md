@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+### 2024-04-23
+
+#### Features
+
+- Added a new configuration class to handle all the app's config and the setup of the database. ([#611](https://github.com/sendahug/send-hug-backend/pull/611))
+- Added a new Database Controller class, which is responsible for setting up the database and the sessions for interacting with it, as well as performing the various CRUD operations the app performs. ([#611](https://github.com/sendahug/send-hug-backend/pull/611))
+
+#### Changes
+
+- Replaced Flask-Migrate with pure Alembic (which Flask-Migrate uses under the hood to handle database migrations). ([#611](https://github.com/sendahug/send-hug-backend/pull/611))
+- Replaced Flask-SQLAlchemy with pure SQLAlchemy. The models now use a new `BaseModel` class as the declarative base (as per SQLAlchemy guidelines), and the helper functions previously provided by Flask-SQLAlchemy (e.g., paginate) have been replaced with the new implementations in the database controller. The syntax of all queries has been updated appropriately. ([#611](https://github.com/sendahug/send-hug-backend/pull/611))
+- Moved all the helper methods from `db_helpers` to the new database controller class, as it makes more sense to keep all generic database functionality in one place. ([#611](https://github.com/sendahug/send-hug-backend/pull/611))
+- Bulk edit/delete operations (e.g., delete all posts, set all messages to 'deleted' by user) now use the SQLAlchemy constructs for building DELETE/UPDATE statements. Previously, they were handled on a row-by-row basis, which was extremely inefficient. Now, they're grouped together into single (or a couple of) statements, which simplifies the process and properly uses the database's abilities to handle bulk actions. ([#611](https://github.com/sendahug/send-hug-backend/pull/611))
+- All hug-related columns (sent/received hugs in users and posts) are now non-nullable (which they shouldn't have been in the first place). ([#611](https://github.com/sendahug/send-hug-backend/pull/611))
+
 ### 2024-04-19
 
 #### Chores
