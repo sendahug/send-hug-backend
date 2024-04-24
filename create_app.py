@@ -230,16 +230,6 @@ def create_app(config: SAHConfig) -> Flask:
     @app.route("/posts", methods=["POST"])
     @requires_auth(config.db, ["post:post"])
     def add_post(token_payload: UserData):
-        # If the user is currently blocked, raise an AuthError
-        if token_payload["blocked"] is True:
-            raise AuthError(
-                {
-                    "code": 403,
-                    "description": "You cannot create posts while being blocked.",
-                },
-                403,
-            )
-
         new_post_data = json.loads(request.data)
         validator.validate_post_or_message(
             text=new_post_data["text"],
@@ -470,6 +460,7 @@ def create_app(config: SAHConfig) -> Flask:
             for user in users_to_unblock:
                 user.blocked = False
                 user.release_date = None
+                user.role_id = 3
                 to_unblock.append(user)
 
             # Try to update the database
@@ -524,6 +515,7 @@ def create_app(config: SAHConfig) -> Flask:
             if user_data.release_date < current_date:
                 user_data.blocked = False
                 user_data.release_date = None
+                user_data.role_id = 3
 
                 # Try to update the database
                 user_data = config.db.update_object(user_data)
@@ -641,6 +633,7 @@ def create_app(config: SAHConfig) -> Flask:
             # In that case, block / unblock the user as requested.
             user_to_update.blocked = updated_user["blocked"]
             user_to_update.release_date = updated_user["releaseDate"]
+            user_to_update.role_id = 5
 
         # If the user is attempting to change a user's settings, check
         # whether it's the current user
