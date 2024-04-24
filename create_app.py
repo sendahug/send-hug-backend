@@ -116,13 +116,14 @@ def create_app(config: SAHConfig) -> Flask:
         return response
 
     # Send push notification
-    def send_push_notification(user_id: int, data: RawPushData):
+    async def send_push_notification(user_id: int, data: RawPushData):
         vapid_key = os.environ.get("PRIVATE_KEY")
         notification_data = generate_push_data(data)
         vapid_claims = generate_vapid_claims()
-        subscriptions: Sequence[NotificationSub] = config.db.session.scalars(
+        subscriptions_scalars = await config.db.async_session.scalars(
             select(NotificationSub).filter(NotificationSub.user == user_id)
-        ).all()
+        )
+        subscriptions: Sequence[NotificationSub] = subscriptions_scalars.all()
 
         # Try to send the push notification
         try:
@@ -138,10 +139,10 @@ def create_app(config: SAHConfig) -> Flask:
         except WebPushException as e:
             app.logger.error(e)
 
-    def get_current_filters() -> list[str]:
+    async def get_current_filters() -> list[str]:
         """Fetches the current filters from the database."""
-        filters: Sequence[Filter] = config.db.session.scalars(select(Filter)).all()
-        return [filter.filter for filter in filters]
+        filters = await config.db.async_session.scalars(select(Filter))
+        return [filter.filter for filter in filters.all()]
 
     # Routes
     # -----------------------------------------------------------------
@@ -150,7 +151,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Parameters: None.
     # Authorization: None.
     @app.route("/")
-    def index():
+    async def index():
         posts: dict[str, list[dict[str, Any]]] = {
             "recent": [],
             "suggested": [],
@@ -166,9 +167,8 @@ def create_app(config: SAHConfig) -> Flask:
             else:
                 posts_query = posts_query.order_by(Post.given_hugs, Post.date)
 
-            post_instances: Sequence[Post] = config.db.session.scalars(
-                posts_query.limit(10)
-            ).all()
+            posts_scalars = await config.db.async_session.scalars(posts_query.limit(10))
+            post_instances: Sequence[Post] = posts_scalars.all()
 
             # formats each post in the list
             posts[target] = [post.format() for post in post_instances]
@@ -186,7 +186,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Parameters: None.
     # Authorization: None.
     @app.route("/", methods=["POST"])
-    def search():
+    async def search():
         search_query = json.loads(request.data)["search"]
         current_page = request.args.get("page", 1, type=int)
 
@@ -196,11 +196,12 @@ def create_app(config: SAHConfig) -> Flask:
         validator.check_type(search_query, "Search query")
 
         # Get the users with the search query in their display name
-        users: Sequence[User] = config.db.session.scalars(
+        users_scalars = await config.db.async_session.scalars(
             select(User).filter(User.display_name.ilike(f"%{search_query}%"))
-        ).all()
+        )
+        users: Sequence[User] = users_scalars.all()
 
-        posts = config.db.paginate(
+        posts = await config.db.async_paginate(
             select(Post)
             .order_by(desc(Post.date))
             .filter(Post.text.ilike(f"%{search_query}%"))
@@ -229,7 +230,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: post:post.
     @app.route("/posts", methods=["POST"])
     @requires_auth(config.db, ["post:post"])
-    def add_post(token_payload: UserData):
+    async def add_post(token_payload: UserData):
         # If the user is currently blocked, raise an AuthError
         if token_payload["blocked"] is True:
             raise AuthError(
@@ -244,7 +245,7 @@ def create_app(config: SAHConfig) -> Flask:
         validator.validate_post_or_message(
             text=new_post_data["text"],
             type="post",
-            filtered_words=get_current_filters(),
+            filtered_words=await get_current_filters(),
         )
 
         # Create a new post object
@@ -257,9 +258,10 @@ def create_app(config: SAHConfig) -> Flask:
         )
 
         # Try to add the post to the database
-        added_post = config.db.add_object(new_post).format()
+        added_post = await config.db.async_add_object(new_post)
+        formatted_post = added_post.format()
 
-        return jsonify({"success": True, "posts": added_post})
+        return jsonify({"success": True, "posts": formatted_post})
 
     # Endpoint: PATCH /posts/<post_id>
     # Description: Updates a post (either its text or its hugs) in the
@@ -268,12 +270,12 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: patch:my-post or patch:any-post.
     @app.route("/posts/<post_id>", methods=["PATCH"])
     @requires_auth(config.db, ["patch:my-post", "patch:any-post"])
-    def edit_post(token_payload: UserData, post_id: int):
+    async def edit_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
         updated_post = json.loads(request.data)
-        original_post: Post = config.db.one_or_404(
+        original_post: Post = await config.db.async_one_or_404(
             item_id=post_id,
             item_type=Post,
         )
@@ -301,12 +303,12 @@ def create_app(config: SAHConfig) -> Flask:
             validator.validate_post_or_message(
                 text=updated_post["text"],
                 type="post",
-                filtered_words=get_current_filters(),
+                filtered_words=await get_current_filters(),
             )
             original_post.text = updated_post["text"]
 
         # Try to update the database
-        updated = config.db.update_object(obj=original_post)
+        updated = await config.db.async_update_object(obj=original_post)
 
         return jsonify({"success": True, "updated": updated.format()})
 
@@ -316,23 +318,23 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:user
     @app.route("/posts/<post_id>/hugs", methods=["POST"])
     @requires_auth(config.db, ["patch:my-post", "patch:any-post"])
-    def send_hug_for_post(token_payload: UserData, post_id: int):
+    async def send_hug_for_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
-        original_post: Post = config.db.one_or_404(
+        original_post: Post = await config.db.async_one_or_404(
             item_id=int(post_id),
             item_type=Post,
         )
 
         # Gets the current user so we can update their 'sent hugs' value
-        current_user: User = config.db.one_or_404(
+        current_user: User = await config.db.async_one_or_404(
             item_id=token_payload["id"],
             item_type=User,
         )
 
         hugs = original_post.sent_hugs or []
-        post_author: User | None = config.db.session.scalar(
+        post_author: User | None = await config.db.async_session.scalar(
             select(User).filter(User.id == original_post.user_id)
         )
         notification: Notification | None = None
@@ -373,12 +375,12 @@ def create_app(config: SAHConfig) -> Flask:
         ]
 
         if notification:
-            config.db.add_object(notification)
+            await config.db.async_add_object(notification)
 
-        config.db.update_multiple_objects(objects=to_update)
+        await config.db.async_update_multiple_objects(objects=to_update)
 
         if post_author and push_notification:
-            send_push_notification(user_id=post_author.id, data=push_notification)
+            await send_push_notification(user_id=post_author.id, data=push_notification)
 
         return jsonify(
             {
@@ -393,12 +395,12 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: delete:my-post or delete:any-post.
     @app.route("/posts/<post_id>", methods=["DELETE"])
     @requires_auth(config.db, ["delete:my-post", "delete:any-post"])
-    def delete_post(token_payload: UserData, post_id: int):
+    async def delete_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
         # Gets the post to delete
-        post_data: Post = config.db.one_or_404(
+        post_data: Post = await config.db.async_one_or_404(
             item_id=post_id,
             item_type=Post,
         )
@@ -420,7 +422,7 @@ def create_app(config: SAHConfig) -> Flask:
         # Otherwise, it's either their post or they're allowed to delete any
         # post.
         # Try to delete the post
-        config.db.delete_object(post_data)
+        await config.db.async_delete_object(post_data)
 
         return jsonify({"success": True, "deleted": int(post_id)})
 
@@ -429,7 +431,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Parameters: type - Type of posts (new or suggested) to fetch.
     # Authorization: None.
     @app.route("/posts/<type>")
-    def get_new_posts(type: Literal["new", "suggested"]):
+    async def get_new_posts(type: Literal["new", "suggested"]):
         page = request.args.get("page", 1, type=int)
 
         full_posts_query = select(Post).filter(Post.open_report == false())
@@ -439,7 +441,9 @@ def create_app(config: SAHConfig) -> Flask:
         else:
             full_posts_query = full_posts_query.order_by(Post.given_hugs, Post.date)
 
-        paginated_posts = config.db.paginate(full_posts_query, current_page=page)
+        paginated_posts = await config.db.async_paginate(
+            full_posts_query, current_page=page
+        )
 
         return jsonify(
             {
@@ -455,16 +459,17 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/users/<type>")
     @requires_auth(config.db, ["read:admin-board"])
-    def get_users_by_type(token_payload: UserData, type: str):
+    async def get_users_by_type(token_payload: UserData, type: str):
         page = request.args.get("page", 1, type=int)
 
         # If the type of users to fetch is blocked users
         if type.lower() == "blocked":
             # Check which users need to be unblocked
             current_date = datetime.now()
-            users_to_unblock: Sequence[User] = config.db.session.scalars(
+            user_scalars = await config.db.async_session.scalars(
                 select(User).filter(User.release_date < current_date)
-            ).all()
+            )
+            users_to_unblock: Sequence[User] = user_scalars.all()
             to_unblock = []
 
             for user in users_to_unblock:
@@ -473,10 +478,10 @@ def create_app(config: SAHConfig) -> Flask:
                 to_unblock.append(user)
 
             # Try to update the database
-            config.db.update_multiple_objects(objects=to_unblock)
+            await config.db.async_update_multiple_objects(objects=to_unblock)
 
             # Get all blocked users
-            paginated_users = config.db.paginate(
+            paginated_users = await config.db.async_paginate(
                 select(User).filter(User.blocked == true()).order_by(User.release_date),
                 current_page=page,
             )
@@ -498,17 +503,17 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:user.
     @app.route("/users/all/<user_id>")
     @requires_auth(config.db, ["read:user"])
-    def get_user_data(token_payload: UserData, user_id: int | str):
+    async def get_user_data(token_payload: UserData, user_id: int | str):
         # Try to convert it to a number; if it's a number, it's a
         # regular ID, so try to find the user with that ID
         try:
             int(user_id)
-            user_data = config.db.session.scalar(
+            user_data = await config.db.async_session.scalar(
                 select(User).filter(User.id == int(user_id))
             )
         # Otherwise, it's an Auth0 ID
         except ValueError:
-            user_data = config.db.session.scalar(
+            user_data = await config.db.async_session.scalar(
                 select(User).filter(User.auth0_id == user_id)
             )
 
@@ -526,7 +531,7 @@ def create_app(config: SAHConfig) -> Flask:
                 user_data.release_date = None
 
                 # Try to update the database
-                user_data = config.db.update_object(user_data)
+                user_data = await config.db.async_update_object(user_data)
 
         formatted_user_data = user_data.format()
 
@@ -538,7 +543,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: post:user.
     @app.route("/users", methods=["POST"])
     @requires_auth(config.db, ["post:user"])
-    def add_user(token_payload):
+    async def add_user(token_payload):
         # Gets the user's data
         user_data = json.loads(request.data)
 
@@ -549,7 +554,7 @@ def create_app(config: SAHConfig) -> Flask:
 
         # Checks whether a user with that Auth0 ID already exists
         # If it is, aborts
-        database_user: User | None = config.db.session.scalar(
+        database_user: User | None = await config.db.async_session.scalar(
             select(User).filter(User.auth0_id == user_data["id"])
         )
 
@@ -573,9 +578,9 @@ def create_app(config: SAHConfig) -> Flask:
         )
 
         # Try to add the user to the database
-        added_user = config.db.add_object(new_user).format()
+        added_user = await config.db.async_add_object(new_user)
 
-        return jsonify({"success": True, "user": added_user})
+        return jsonify({"success": True, "user": added_user.format()})
 
     # Endpoint: PATCH /users/all/<user_id>
     # Description: Updates a user in the database.
@@ -583,12 +588,12 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: patch:user or patch:any-user.
     @app.route("/users/all/<user_id>", methods=["PATCH"])
     @requires_auth(config.db, ["patch:user", "patch:any-user"])
-    def edit_user(token_payload: UserData, user_id: int):
+    async def edit_user(token_payload: UserData, user_id: int):
         # Check if the user ID isn't an integer; if it isn't, abort
         validator.check_type(user_id, "User ID")
 
         updated_user = json.loads(request.data)
-        user_to_update: User = config.db.one_or_404(
+        user_to_update: User = await config.db.async_one_or_404(
             item_id=user_id,
             item_type=User,
         )
@@ -683,7 +688,7 @@ def create_app(config: SAHConfig) -> Flask:
             user_to_update.icon_colours = json.dumps(updated_user["iconColours"])
 
         # Try to update it in the database
-        updated = config.db.update_object(obj=user_to_update)
+        updated = await config.db.async_update_object(obj=user_to_update)
 
         return jsonify({"success": True, "updated": updated.format()})
 
@@ -693,7 +698,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:user.
     @app.route("/users/all/<user_id>/posts")
     @requires_auth(config.db, ["read:user"])
-    def get_user_posts(token_payload: UserData, user_id):
+    async def get_user_posts(token_payload: UserData, user_id: int):
         page = request.args.get("page", 1, type=int)
 
         # if there's no user ID provided, abort with 'Bad Request'
@@ -703,8 +708,8 @@ def create_app(config: SAHConfig) -> Flask:
         validator.check_type(user_id, "User ID")
 
         # Gets all posts written by the given user
-        user_posts = config.db.paginate(
-            select(Post).filter(Post.user_id == user_id).order_by(Post.date),
+        user_posts = await config.db.async_paginate(
+            select(Post).filter(Post.user_id == int(user_id)).order_by(Post.date),
             current_page=page,
         )
 
@@ -723,7 +728,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: delete:my-post or delete:any-post
     @app.route("/users/all/<user_id>/posts", methods=["DELETE"])
     @requires_auth(config.db, ["delete:my-post", "delete:any-post"])
-    def delete_user_posts(token_payload: UserData, user_id: int):
+    async def delete_user_posts(token_payload: UserData, user_id: int):
         validator.check_type(user_id, "User ID")
 
         # If the user making the request isn't the same as the user
@@ -745,8 +750,8 @@ def create_app(config: SAHConfig) -> Flask:
 
         # Otherwise, the user is either trying to delete their own posts or
         # they're allowed to delete others' posts, so let them continue
-        post_count: int | None = config.db.session.scalar(
-            select(func.count(Post.id)).filter(Post.user_id == user_id)
+        post_count: int | None = await config.db.async_session.scalar(
+            select(func.count(Post.id)).filter(Post.user_id == int(user_id))
         )
 
         # If the user has no posts, abort
@@ -754,8 +759,8 @@ def create_app(config: SAHConfig) -> Flask:
             abort(404)
 
         # Try to delete
-        config.db.delete_multiple_objects(
-            delete_stmt=delete(Post).where(Post.user_id == user_id)
+        await config.db.async_delete_multiple_objects(
+            delete_stmt=delete(Post).where(Post.user_id == int(user_id))
         )
 
         return jsonify({"success": True, "userID": int(user_id), "deleted": post_count})
@@ -766,14 +771,14 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:user
     @app.route("/users/all/<user_id>/hugs", methods=["POST"])
     @requires_auth(config.db, ["read:user"])
-    def send_hug_to_user(token_payload: UserData, user_id: int):
+    async def send_hug_to_user(token_payload: UserData, user_id: int):
         validator.check_type(user_id, "User ID")
-        user_to_hug: User = config.db.one_or_404(
+        user_to_hug: User = await config.db.async_one_or_404(
             item_id=user_id,
             item_type=User,
         )
         # Fetch the current user to update their 'given hugs' value
-        current_user: User = config.db.one_or_404(
+        current_user: User = await config.db.async_one_or_404(
             item_id=token_payload["id"], item_type=User
         )
 
@@ -795,9 +800,9 @@ def create_app(config: SAHConfig) -> Flask:
         # Try to update it in the database
         to_update = [user_to_hug, current_user]
 
-        config.db.add_object(obj=notification)
-        config.db.update_multiple_objects(objects=to_update)
-        send_push_notification(user_id=user_to_hug.id, data=push_notification)
+        await config.db.async_add_object(obj=notification)
+        await config.db.async_update_multiple_objects(objects=to_update)
+        await send_push_notification(user_id=user_to_hug.id, data=push_notification)
 
         return jsonify(
             {
@@ -812,7 +817,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:messages.
     @app.route("/messages")
     @requires_auth(config.db, ["read:messages"])
-    def get_user_messages(token_payload: UserData):
+    async def get_user_messages(token_payload: UserData):
         page = request.args.get("page", 1, type=int)
         type = request.args.get("type", "inbox", type=str)
         thread_id = request.args.get("threadID", None, type=int)
@@ -850,7 +855,7 @@ def create_app(config: SAHConfig) -> Flask:
                 ).filter(Message.from_id == user_id)
             # Gets a specific thread's messages
             else:
-                message = config.db.session.scalar(
+                message = await config.db.async_session.scalar(
                     select(Thread).filter(Thread.id == thread_id)
                 )
                 # Check if there's a thread with that ID at all
@@ -876,7 +881,7 @@ def create_app(config: SAHConfig) -> Flask:
                     | ((Message.from_id == user_id) & (Message.from_deleted == false()))
                 ).filter(Message.thread == thread_id)
 
-            messages = config.db.paginate(
+            messages = await config.db.async_paginate(
                 messages_query.order_by(desc(Message.date)),
                 current_page=page,
             )
@@ -888,7 +893,7 @@ def create_app(config: SAHConfig) -> Flask:
         # For threads, gets all threads' data
         else:
             # Get the thread ID, and users' names and IDs
-            threads_messages = config.db.paginate(
+            threads_messages = await config.db.async_paginate(
                 select(Thread)
                 .filter(
                     or_(
@@ -925,7 +930,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: post:message.
     @app.route("/messages", methods=["POST"])
     @requires_auth(config.db, ["post:message"])
-    def add_message(token_payload: UserData):
+    async def add_message(token_payload: UserData):
         # Gets the new message's data
         message_data = json.loads(request.data)
 
@@ -943,12 +948,12 @@ def create_app(config: SAHConfig) -> Flask:
         validator.validate_post_or_message(
             text=message_data["messageText"],
             type="message",
-            filtered_words=get_current_filters(),
+            filtered_words=await get_current_filters(),
         )
 
         # Checks if there's an existing thread between the users (with user 1
         # being the sender and user 2 being the recipient)
-        thread: Thread | None = config.db.session.scalar(
+        thread: Thread | None = await config.db.async_session.scalar(
             select(Thread).filter(
                 or_(
                     and_(
@@ -969,7 +974,7 @@ def create_app(config: SAHConfig) -> Flask:
                 user_1_id=message_data["fromId"], user_2_id=message_data["forId"]
             )
             # Try to create the new thread
-            added_thread = config.db.add_object(new_thread)
+            added_thread = await config.db.async_add_object(new_thread)
             thread_id = added_thread.id
         # If there's a thread between the users
         else:
@@ -980,7 +985,7 @@ def create_app(config: SAHConfig) -> Flask:
                 thread.user_1_deleted = False
                 thread.user_2_deleted = False
                 # Update the thread in the database
-                config.db.update_object(obj=thread)
+                await config.db.async_update_object(obj=thread)
 
         # Create a new message
         new_message = Message(
@@ -1006,9 +1011,11 @@ def create_app(config: SAHConfig) -> Flask:
         notification_for = message_data["forId"]
 
         # Try to add the message to the database
-        added = config.db.add_multiple_objects(objects=[new_message, notification])
+        added = await config.db.async_add_multiple_objects(
+            objects=[new_message, notification]
+        )
         sent_message = [item for item in added if "threadID" in item.keys()]
-        send_push_notification(user_id=notification_for, data=push_notification)
+        await send_push_notification(user_id=notification_for, data=push_notification)
 
         return jsonify({"success": True, "message": sent_message[0]})
 
@@ -1019,7 +1026,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>/<item_id>", methods=["DELETE"])
     @requires_auth(config.db, ["delete:messages"])
-    def delete_thread(  # TODO: This should be renamed to delete_message
+    async def delete_thread(  # TODO: This should be renamed to delete_message
         token_payload: UserData,
         mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
         item_id: int,
@@ -1034,13 +1041,13 @@ def create_app(config: SAHConfig) -> Flask:
         # If the mailbox type is inbox or outbox, search for a message
         # with that ID
         if mailbox_type in ["inbox", "outbox", "thread"]:
-            delete_item = config.db.one_or_404(
+            delete_item = await config.db.async_one_or_404(
                 item_id=item_id,
                 item_type=Message,
             )
         # If the mailbox type is threads, search for a thread with that ID
         elif mailbox_type == "threads":
-            delete_item = config.db.one_or_404(
+            delete_item = await config.db.async_one_or_404(
                 item_id=item_id,
                 item_type=Thread,
             )
@@ -1114,7 +1121,7 @@ def create_app(config: SAHConfig) -> Flask:
         # If both users deleted the message/thread, delete it from
         # the database entirely
         if delete_message:
-            config.db.delete_object(delete_item)
+            await config.db.async_delete_object(delete_item)
         # Otherwise, just update the appropriate deleted property
         else:
             if type(delete_item) == Thread:
@@ -1161,14 +1168,14 @@ def create_app(config: SAHConfig) -> Flask:
                     )
                 )
 
-                config.db.update_object(obj=delete_item)
-                config.db.update_multiple_objects_with_dml(
+                await config.db.async_update_object(obj=delete_item)
+                await config.db.async_update_multiple_objects_with_dml(
                     update_stmts=[from_stmt, for_stmt]
                 )
-                config.db.delete_multiple_objects(delete_stmt=delete_stmt)
+                await config.db.async_delete_multiple_objects(delete_stmt=delete_stmt)
 
             else:
-                config.db.update_object(delete_item)
+                await config.db.async_update_object(delete_item)
 
         return jsonify({"success": True, "deleted": int(item_id)})
 
@@ -1178,7 +1185,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>", methods=["DELETE"])
     @requires_auth(config.db, ["delete:messages"])
-    def clear_mailbox(
+    async def clear_mailbox(
         token_payload: UserData,
         mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
     ):
@@ -1203,7 +1210,7 @@ def create_app(config: SAHConfig) -> Flask:
 
         # If the user is trying to clear their inbox
         if mailbox_type == "inbox":
-            num_messages = config.db.session.scalar(
+            num_messages = await config.db.async_session.scalar(
                 select(func.count(Message.id)).filter(Message.for_id == user_id)
             )
             # If there are no messages, abort
@@ -1228,11 +1235,13 @@ def create_app(config: SAHConfig) -> Flask:
             )
 
             # config.db.delete_multiple_objects(delete_stmt=delete_stmt)
-            config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
+            await config.db.async_update_multiple_objects_with_dml(
+                update_stmts=update_stmt
+            )
 
         # If the user is trying to clear their outbox
         if mailbox_type == "outbox":
-            num_messages = config.db.session.scalar(
+            num_messages = await config.db.async_session.scalar(
                 select(func.count(Message.id)).filter(Message.from_id == user_id)
             )
             # If there are no messages, abort
@@ -1256,12 +1265,14 @@ def create_app(config: SAHConfig) -> Flask:
                 .values(from_deleted=true())
             )
 
-            config.db.delete_multiple_objects(delete_stmt=delete_stmt)
-            config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
+            await config.db.async_delete_multiple_objects(delete_stmt=delete_stmt)
+            await config.db.async_update_multiple_objects_with_dml(
+                update_stmts=update_stmt
+            )
 
         # If the user is trying to clear their threads mailbox
         if mailbox_type == "threads":
-            num_messages = config.db.session.scalar(
+            num_messages = await config.db.async_session.scalar(
                 select(func.count(Thread.id)).filter(
                     or_(
                         and_(
@@ -1348,9 +1359,15 @@ def create_app(config: SAHConfig) -> Flask:
                 )
             )
 
-            config.db.delete_multiple_objects(delete_stmt=delete_messages_stmt)
-            config.db.delete_multiple_objects(delete_stmt=delete_threads_stmt)
-            config.db.update_multiple_objects_with_dml(update_stmts=update_stmts)
+            await config.db.async_delete_multiple_objects(
+                delete_stmt=delete_messages_stmt
+            )
+            await config.db.async_delete_multiple_objects(
+                delete_stmt=delete_threads_stmt
+            )
+            await config.db.async_update_multiple_objects_with_dml(
+                update_stmts=update_stmts
+            )
 
         return jsonify(
             {"success": True, "userID": int(user_id), "deleted": num_messages}
@@ -1362,7 +1379,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/reports")
     @requires_auth(config.db, ["read:admin-board"])
-    def get_open_reports(token_payload: UserData):
+    async def get_open_reports(token_payload: UserData):
         reports: dict[str, list[dict[str, Any]]] = {
             "User": [],
             "Post": [],
@@ -1376,7 +1393,7 @@ def create_app(config: SAHConfig) -> Flask:
         for report_type in reports.keys():
             reports_page = request.args.get(f"{report_type.lower()}Page", 1, type=int)
 
-            paginated_reports = config.db.paginate(
+            paginated_reports = await config.db.async_paginate(
                 select(Report)
                 .filter(Report.closed == false())
                 .filter(Report.type == report_type)
@@ -1403,7 +1420,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: post:report.
     @app.route("/reports", methods=["POST"])
     @requires_auth(config.db, ["post:report"])
-    def create_new_report(token_payload: UserData):
+    async def create_new_report(token_payload: UserData):
         report_data = json.loads(request.data)
 
         # Check the length adn  type of the report reason
@@ -1417,7 +1434,7 @@ def create_app(config: SAHConfig) -> Flask:
                 abort(422)
 
             # Get the post. If this post doesn't exist, abort
-            reported_item: Post | User = config.db.one_or_404(
+            reported_item: Post | User = await config.db.async_one_or_404(
                 item_id=report_data["postID"],
                 item_type=Post,
             )
@@ -1441,7 +1458,7 @@ def create_app(config: SAHConfig) -> Flask:
                 abort(422)
 
             # Get the user. If this user doesn't exist, abort
-            reported_item = config.db.one_or_404(
+            reported_item = await config.db.async_one_or_404(
                 item_id=report_data["userID"],
                 item_type=User,
             )
@@ -1459,8 +1476,8 @@ def create_app(config: SAHConfig) -> Flask:
             reported_item.open_report = True
 
         # Try to add the report to the database
-        added_report = config.db.add_object(obj=report)
-        config.db.update_object(obj=reported_item)
+        added_report = await config.db.async_add_object(obj=report)
+        await config.db.async_update_object(obj=reported_item)
 
         return jsonify({"success": True, "report": added_report.format()})
 
@@ -1470,9 +1487,9 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/reports/<report_id>", methods=["PATCH"])
     @requires_auth(config.db, ["read:admin-board"])
-    def update_report_status(token_payload: UserData, report_id: int):
+    async def update_report_status(token_payload: UserData, report_id: int):
         updated_report = json.loads(request.data)
-        report: Report | None = config.db.session.scalar(
+        report: Report | None = await config.db.async_session.scalar(
             select(Report).filter(Report.id == report_id)
         )
 
@@ -1487,7 +1504,7 @@ def create_app(config: SAHConfig) -> Flask:
             if not updated_report.get("userID", None):
                 abort(422)
 
-            reported_item = config.db.session.scalar(
+            reported_item = await config.db.async_session.scalar(
                 select(User).filter(User.id == updated_report["userID"])
             )
         # If the item reported is a post
@@ -1495,7 +1512,7 @@ def create_app(config: SAHConfig) -> Flask:
             if not updated_report.get("postID", None):
                 abort(422)
 
-            reported_item = config.db.session.scalar(
+            reported_item = await config.db.async_session.scalar(
                 select(Post).filter(Post.id == updated_report["postID"])
             )
 
@@ -1511,7 +1528,7 @@ def create_app(config: SAHConfig) -> Flask:
             to_update.append(reported_item)
 
         # Try to update the report in the database
-        updated = config.db.update_multiple_objects(objects=to_update)
+        updated = await config.db.async_update_multiple_objects(objects=to_update)
         return_report = [item for item in updated if "reporter" in item.keys()]
 
         return jsonify({"success": True, "updated": return_report[0]})
@@ -1522,10 +1539,10 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/filters")
     @requires_auth(config.db, ["read:admin-board"])
-    def get_filters(token_payload: UserData):
+    async def get_filters(token_payload: UserData):
         page = request.args.get("page", 1, type=int)
         words_per_page = 10
-        filtered_words = config.db.paginate(
+        filtered_words = await config.db.async_paginate(
             select(Filter).order_by(Filter.id),
             current_page=page,
             per_page=words_per_page,
@@ -1545,14 +1562,14 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/filters", methods=["POST"])
     @requires_auth(config.db, ["read:admin-board"])
-    def add_filter(token_payload: UserData):
+    async def add_filter(token_payload: UserData):
         new_filter = json.loads(request.data)["word"]
 
         # Check if the filter is empty; if it is, abort
         validator.check_length(new_filter, "Phrase to filter")
 
         # If the word already exists in the filters list, abort
-        existing_filter: Filter | None = config.db.session.scalar(
+        existing_filter: Filter | None = await config.db.async_session.scalar(
             select(Filter).filter(Filter.filter == new_filter.lower())
         )
 
@@ -1561,9 +1578,9 @@ def create_app(config: SAHConfig) -> Flask:
 
         # Try to add the word to the filters list
         filter = Filter(filter=new_filter.lower())
-        added = config.db.add_object(filter).format()
+        added = await config.db.async_add_object(filter)
 
-        return jsonify({"success": True, "added": added})
+        return jsonify({"success": True, "added": added.format()})
 
     # Endpoint: DELETE /filters/<filter_id>
     # Description: Delete a word from the filtered words list.
@@ -1571,18 +1588,18 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/filters/<filter_id>", methods=["DELETE"])
     @requires_auth(config.db, ["read:admin-board"])
-    def delete_filter(token_payload: UserData, filter_id: int):
+    async def delete_filter(token_payload: UserData, filter_id: int):
         validator.check_type(filter_id, "Filter ID")
 
         # If there's no word in that index
-        to_delete: Filter = config.db.one_or_404(
+        to_delete: Filter = await config.db.async_one_or_404(
             item_id=filter_id,
             item_type=Filter,
         )
 
         # Otherwise, try to delete it
         removed = to_delete.format()
-        config.db.delete_object(to_delete)
+        await config.db.async_delete_object(to_delete)
 
         return jsonify({"success": True, "deleted": removed})
 
@@ -1592,9 +1609,9 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications")
     @requires_auth(config.db, ["read:messages"])
-    def get_latest_notifications(token_payload: UserData):
+    async def get_latest_notifications(token_payload: UserData):
         silent_refresh = request.args.get("silentRefresh", True)
-        user: User = config.db.one_or_404(
+        user: User = await config.db.async_one_or_404(
             item_id=token_payload["id"],
             item_type=User,
         )
@@ -1608,12 +1625,13 @@ def create_app(config: SAHConfig) -> Flask:
             last_read = datetime(2020, 7, 1, 12, 00)
 
         # Gets all new notifications
-        notifications: Sequence[Notification] = config.db.session.scalars(
+        notifications_scalars = await config.db.async_session.scalars(
             select(Notification)
             .filter(Notification.for_id == user_id)
             .filter(Notification.date > last_read)
             .order_by(Notification.date)
-        ).all()
+        )
+        notifications: Sequence[Notification] = notifications_scalars.all()
 
         formatted_notifications = [
             notification.format() for notification in notifications
@@ -1625,7 +1643,7 @@ def create_app(config: SAHConfig) -> Flask:
         if silent_refresh == "false":
             # Update the user's last-read date
             user.last_notifications_read = datetime.now()
-            config.db.update_object(obj=user)
+            await config.db.async_update_object(obj=user)
 
         return jsonify({"success": True, "notifications": formatted_notifications})
 
@@ -1636,7 +1654,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications", methods=["POST"])
     @requires_auth(config.db, ["read:messages"])
-    def add_notification_subscription(token_payload: UserData):
+    async def add_notification_subscription(token_payload: UserData):
         # if the request is empty, return 204. This happens due to a bug
         # in the frontend that causes the request to be sent twice, once
         # with subscription data and once with an empty object
@@ -1655,12 +1673,13 @@ def create_app(config: SAHConfig) -> Flask:
 
         # Try to add it to the database
         subscribed = token_payload["displayName"]
-        sub = config.db.add_object(subscription).format()
+        sub = await config.db.async_add_object(subscription)
+        formatted_sub = sub.format()
 
         return {
             "success": True,
             "subscribed": subscribed,
-            "subId": sub["id"],
+            "subId": formatted_sub["id"],
         }
 
     # Endpoint: PATCH /notifications
@@ -1670,7 +1689,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications/<sub_id>", methods=["PATCH"])
     @requires_auth(config.db, ["read:messages"])
-    def update_notification_subscription(token_payload: UserData, sub_id: int):
+    async def update_notification_subscription(token_payload: UserData, sub_id: int):
         # if the request is empty, return 204. This happens due to a bug
         # in the frontend that causes the request to be sent twice, once
         # with subscription data and once with an empty object
@@ -1679,7 +1698,7 @@ def create_app(config: SAHConfig) -> Flask:
 
         subscription_json = request.data.decode("utf8").replace("'", '"')
         subscription_data = json.loads(subscription_json)
-        old_sub: NotificationSub = config.db.one_or_404(
+        old_sub: NotificationSub = await config.db.async_one_or_404(
             item_id=sub_id, item_type=NotificationSub
         )
 
@@ -1689,7 +1708,7 @@ def create_app(config: SAHConfig) -> Flask:
         # Try to add it to the database
         subscribed = token_payload["displayName"]
         subId = old_sub.id
-        config.db.update_object(obj=old_sub)
+        await config.db.async_update_object(obj=old_sub)
 
         return {"success": True, "subscribed": subscribed, "subId": subId}
 

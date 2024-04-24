@@ -250,7 +250,9 @@ def check_permissions_legacy(permission: list[str], payload: dict[str, Any]) -> 
     return True
 
 
-def get_current_user(payload: dict[str, Any], db: SendADatabase) -> dict[str, Any]:
+async def get_current_user(
+    payload: dict[str, Any], db: SendADatabase
+) -> dict[str, Any]:
     """
     Fetches the details of the currently logged in user from the database.
 
@@ -315,7 +317,7 @@ def requires_auth(db: SendADatabase, permission=[""]):
 
     def requires_auth_decorator(f):
         @wraps(f)
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             token = get_auth_header()
             payload = verify_jwt(token)
 
@@ -323,7 +325,7 @@ def requires_auth(db: SendADatabase, permission=[""]):
                 returned_payload = payload
                 check_permissions_legacy(permission, payload)
             else:
-                current_user = get_current_user(payload, db)
+                current_user = await get_current_user(payload, db)
                 returned_payload = {
                     "id": current_user["id"],
                     "auth0Id": current_user["auth0Id"],
@@ -336,7 +338,7 @@ def requires_auth(db: SendADatabase, permission=[""]):
                 }
                 check_user_permissions(permission, current_user)
 
-            return f(returned_payload, *args, **kwargs)
+            return await f(returned_payload, *args, **kwargs)
 
         return wrapper
 
