@@ -594,6 +594,7 @@ class SendADatabase:
 
     # Bulk delete
     # TODO: Return the number of deleted items
+    @deprecated("User async_delete_multiple_objects instead")
     def delete_multiple_objects(self, delete_stmt: Delete):
         """
         Executes a delete statement to delete multiple objects.
