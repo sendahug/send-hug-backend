@@ -460,7 +460,7 @@ def create_app(config: SAHConfig) -> Flask:
             for user in users_to_unblock:
                 user.blocked = False
                 user.release_date = None
-                user.role_id = 3
+                user.role_id = 3  # regular user
                 to_unblock.append(user)
 
             # Try to update the database
@@ -515,7 +515,7 @@ def create_app(config: SAHConfig) -> Flask:
             if user_data.release_date < current_date:
                 user_data.blocked = False
                 user_data.release_date = None
-                user_data.role_id = 3
+                user_data.role_id = 3  # regular user
 
                 # Try to update the database
                 user_data = config.db.update_object(user_data)
@@ -633,7 +633,7 @@ def create_app(config: SAHConfig) -> Flask:
             # In that case, block / unblock the user as requested.
             user_to_update.blocked = updated_user["blocked"]
             user_to_update.release_date = updated_user["releaseDate"]
-            user_to_update.role_id = 5
+            user_to_update.role_id = 5  # blocked user
 
         # If the user is attempting to change a user's settings, check
         # whether it's the current user
