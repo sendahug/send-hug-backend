@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2024-04-25
+
+#### Changes
+
+- The blocking and unblocking process for users now changes the user's role to a 'blocked user'/'user' when blocking/unblocking (respectively) users. This means we can use the regular authorisation check in the POST '/posts' endpoint instead of adding an extra check for whether a user is blocked. ([#614](https://github.com/sendahug/send-hug-backend/pull/614))
+
 ### 2024-04-23
 
 #### Features
