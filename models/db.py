@@ -32,7 +32,7 @@ import os
 from typing import Protocol, Sequence, Type, TypeVar, cast, overload
 from typing_extensions import deprecated
 
-from flask import Flask, abort
+from quart import Quart, abort
 from sqlalchemy import Delete, Engine, Update, create_engine, Select, func, select
 from sqlalchemy.orm import sessionmaker, Session, scoped_session, Mapped
 from sqlalchemy.exc import DataError, IntegrityError
@@ -89,7 +89,6 @@ class SendADatabase:
         Initialises the class.
 
         param default_per_page: A default per_page value for the pagination method.
-        param app: The Flask app to connect to.
         param db_url: The URL of the database.
         """
         # Temporary second variable
@@ -104,12 +103,12 @@ class SendADatabase:
         self.session = self.create_scoped_session()
         self.async_session = self.create_async_session()
 
-    def init_app(self, app: Flask) -> None:
+    def init_app(self, app: Quart) -> None:
         """
-        Initialises the connection with the Flask App (Flask-SQLAlchemy style).
+        Initialises the connection with the Quart App (Flask-SQLAlchemy style).
 
         param db_url: The URL of the database.
-        param app: The Flask app to connect to.
+        param app: The Quart app to connect to.
         """
         app.config["SQLALCHEMY_DATABASE_URI"] = self.database_url
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -133,7 +132,7 @@ class SendADatabase:
         """
         Creates the async session factory to be used to generate scoped sessions.
         """
-        session_factory = async_sessionmaker(self.async_engine)
+        session_factory = async_sessionmaker(self.async_engine, expire_on_commit=False)
         self.async_session_factory = session_factory
 
     @deprecated("Use create_async_session instead")
@@ -143,6 +142,9 @@ class SendADatabase:
         """
         return scoped_session(session_factory=self.session_factory)
 
+    # TODO: Do we want to continue with this pattern? According to
+    # https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#using-asyncio-scoped-session
+    # it's not really recommended anymore.
     def create_async_session(self):
         """
         Creates a new async scoped session.
