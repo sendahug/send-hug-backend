@@ -69,17 +69,11 @@ def test_config():
     return SAHConfig(database_url=test_db_path)
 
 
-@pytest.fixture(scope="session")
-def test_app(test_config: SAHConfig):
-    """Set up the test app"""
-    app = create_app(config=test_config)
-    yield app
-
-
-@pytest.fixture(scope="function", autouse=True)
-def app_client(test_app, event_loop):
+@pytest.fixture(scope="function")
+def app_client(test_config: SAHConfig):
     """Get the test client for the test app"""
-    yield test_app.test_client()
+    app = create_app(config=test_config)
+    yield app.test_client()
 
 
 @pytest.fixture(scope="session")
