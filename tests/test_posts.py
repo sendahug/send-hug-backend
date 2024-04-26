@@ -33,41 +33,44 @@ import pytest
 # Create Post Route Tests ('/posts', POST)
 # -------------------------------------------------------
 # Attempt to create a post without auth header
-def test_send_post_no_auth(app_client, test_db, user_headers, dummy_request_data):
-    response = app_client.post(
+@pytest.mark.asyncio
+async def test_send_post_no_auth(app_client, test_db, user_headers, dummy_request_data):
+    response = await app_client.post(
         "/posts", data=json.dumps(dummy_request_data["new_post"])
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to create a post with a malformed auth header
-def test_send_post_malformed_auth(
+@pytest.mark.asyncio
+async def test_send_post_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
-    response = app_client.post(
+    response = await app_client.post(
         "/posts",
         headers=user_headers["malformed"],
         data=json.dumps(dummy_request_data["new_post"]),
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to create a post with a user's JWT
-def test_send_post_as_user(
+@pytest.mark.asyncio
+async def test_send_post_as_user(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
-    response = app_client.post(
+    response = await app_client.post(
         "/posts", headers=user_headers["user"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
     response_post = response_data["posts"]
 
     assert response_data["success"] is True
@@ -76,15 +79,16 @@ def test_send_post_as_user(
 
 
 # Attempt to create a post with a moderator's JWT
-def test_send_post_as_mod(
+@pytest.mark.asyncio
+async def test_send_post_as_mod(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["moderator"]["internal"]
-    response = app_client.post(
+    response = await app_client.post(
         "/posts", headers=user_headers["moderator"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
     response_post = response_data["posts"]
 
     assert response_data["success"] is True
@@ -93,15 +97,16 @@ def test_send_post_as_mod(
 
 
 # Attempt to create a post with an admin's JWT
-def test_send_post_as_admin(
+@pytest.mark.asyncio
+async def test_send_post_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["admin"]["internal"]
-    response = app_client.post(
+    response = await app_client.post(
         "/posts", headers=user_headers["admin"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
     response_post = response_data["posts"]
 
     assert response_data["success"] is True
@@ -110,15 +115,16 @@ def test_send_post_as_admin(
 
 
 # Attempt to create a post with a blocked user's JWT
-def test_send_post_as_blocked(
+@pytest.mark.asyncio
+async def test_send_post_as_blocked(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["blocked"]["internal"]
-    response = app_client.post(
+    response = await app_client.post(
         "/posts", headers=user_headers["blocked"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -127,42 +133,47 @@ def test_send_post_as_blocked(
 # Update Post Route Tests ('/posts/<post_id>', PATCH)
 # -------------------------------------------------------
 # Attempt to update a post with no authorisation header
-def test_update_post_no_auth(app_client, test_db, user_headers, dummy_request_data):
-    response = app_client.patch(
+@pytest.mark.asyncio
+async def test_update_post_no_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
+    response = await app_client.patch(
         "/posts/4", data=json.dumps(dummy_request_data["updated_post"])
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to update a post with a malformed auth header
-def test_update_post_malformed_auth(
+@pytest.mark.asyncio
+async def test_update_post_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
-    response = app_client.patch(
+    response = await app_client.patch(
         "/posts/4",
         headers=user_headers["malformed"],
         data=json.dumps(dummy_request_data["updated_post"]),
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to update the user's post (with same user's JWT)
-def test_update_own_post_as_user(
+@pytest.mark.asyncio
+async def test_update_own_post_as_user(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
-    response = app_client.patch(
+    response = await app_client.patch(
         "/posts/4", headers=user_headers["user"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
     post_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -171,32 +182,34 @@ def test_update_own_post_as_user(
 
 
 # Attempt to update another user's post (with user's JWT)
-def test_update_other_users_post_as_user(
+@pytest.mark.asyncio
+async def test_update_other_users_post_as_user(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["moderator"]["internal"]
     post["givenHugs"] = 1
-    response = app_client.patch(
+    response = await app_client.patch(
         "/posts/13", headers=user_headers["user"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
 
 
 # Attempt to update the moderator's post (with same moderator's JWT)
-def test_update_own_post_as_mod(
+@pytest.mark.asyncio
+async def test_update_own_post_as_mod(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["moderator"]["internal"]
     post["givenHugs"] = 1
-    response = app_client.patch(
+    response = await app_client.patch(
         "/posts/13", headers=user_headers["moderator"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
     post_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -205,16 +218,17 @@ def test_update_own_post_as_mod(
 
 
 # Attempt to update another user's post (with moderator's JWT)
-def test_update_other_users_post_as_mod(
+@pytest.mark.asyncio
+async def test_update_other_users_post_as_mod(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
-    response = app_client.patch(
+    response = await app_client.patch(
         "/posts/4", headers=user_headers["moderator"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
     post_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -223,16 +237,17 @@ def test_update_other_users_post_as_mod(
 
 
 # Attempt to update the admin's post (with same admin's JWT)
-def test_update_own_post_as_admin(
+@pytest.mark.asyncio
+async def test_update_own_post_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["admin"]["internal"]
     post["givenHugs"] = 2
-    response = app_client.patch(
+    response = await app_client.patch(
         "/posts/23", headers=user_headers["admin"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
     post_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -241,16 +256,17 @@ def test_update_own_post_as_admin(
 
 
 # Attempt to update another user's post (with admin's JWT)
-def test_update_other_users_post_as_admin(
+@pytest.mark.asyncio
+async def test_update_other_users_post_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
-    response = app_client.patch(
+    response = await app_client.patch(
         "/posts/4", headers=user_headers["admin"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
     post_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -259,16 +275,17 @@ def test_update_other_users_post_as_admin(
 
 
 # Attempt to close the report on another user's post (with admin's JWT)
-def test_update_other_users_post_report_as_admin(
+@pytest.mark.asyncio
+async def test_update_other_users_post_report_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["report_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
-    response = app_client.patch(
+    response = await app_client.patch(
         "/posts/4", headers=user_headers["admin"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
     post_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -277,30 +294,32 @@ def test_update_other_users_post_report_as_admin(
 
 
 # Attempt to update a post that doesn't exist (with admin's JWT)
-def test_update_nonexistent_post_as_admin(
+@pytest.mark.asyncio
+async def test_update_nonexistent_post_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
-    response = app_client.patch(
+    response = await app_client.patch(
         "/posts/100", headers=user_headers["admin"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
 
 
 # Attempt to update a post without post ID (with admin's JWT)
-def test_update_post_no_id_as_admin(
+@pytest.mark.asyncio
+async def test_update_post_no_id_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
-    response = app_client.patch(
+    response = await app_client.patch(
         "/posts/", headers=user_headers["admin"], data=json.dumps(post)
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -309,27 +328,30 @@ def test_update_post_no_id_as_admin(
 # Send a Hug for post Tests ('/posts/<post_id>/hugs', POST)
 # -------------------------------------------------------
 # Attempt to send hugs for post you already sent hugs for
-def test_post_hugs_given_duplicate_hugs(app_client, test_db, user_headers):
-    response = app_client.post("/posts/1/hugs", headers=user_headers["admin"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_post_hugs_given_duplicate_hugs(app_client, test_db, user_headers):
+    response = await app_client.post("/posts/1/hugs", headers=user_headers["admin"])
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 409
 
 
 # Attempt to send hugs for a post that doesn't exist
-def test_post_hugs_post_no_existing(app_client, test_db, user_headers):
-    response = app_client.post("/posts/1000/hugs", headers=user_headers["admin"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_post_hugs_post_no_existing(app_client, test_db, user_headers):
+    response = await app_client.post("/posts/1000/hugs", headers=user_headers["admin"])
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
 
 
 # Attempt to send hugs
-def test_post_hugs(app_client, test_db, user_headers):
-    response = app_client.post("/posts/1/hugs", headers=user_headers["moderator"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_post_hugs(app_client, test_db, user_headers):
+    response = await app_client.post("/posts/1/hugs", headers=user_headers["moderator"])
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -339,18 +361,20 @@ def test_post_hugs(app_client, test_db, user_headers):
 # Delete Post Route Tests ('/posts/<post_id>', DELETE)
 # -------------------------------------------------------
 # Attempt to delete a post with no authorisation header
-def test_delete_post_no_auth(app_client, test_db, user_headers):
-    response = app_client.delete("/posts/3")
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_delete_post_no_auth(app_client, test_db, user_headers):
+    response = await app_client.delete("/posts/3")
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to delete a post with a malformed auth header
-def test_delete_post_malformed_auth(app_client, test_db, user_headers):
-    response = app_client.delete("/posts/3", headers=user_headers["malformed"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_delete_post_malformed_auth(app_client, test_db, user_headers):
+    response = await app_client.delete("/posts/3", headers=user_headers["malformed"])
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -368,9 +392,10 @@ def test_delete_post_malformed_auth(app_client, test_db, user_headers):
         (23, "admin"),
     ],
 )
-def test_delete_own_post(app_client, test_db, user_headers, post_id, user):
-    response = app_client.delete(f"/posts/{post_id}", headers=user_headers[user])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_delete_own_post(app_client, test_db, user_headers, post_id, user):
+    response = await app_client.delete(f"/posts/{post_id}", headers=user_headers[user])
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -378,27 +403,30 @@ def test_delete_own_post(app_client, test_db, user_headers, post_id, user):
 
 
 # Attempt to delete another user's post (with user's JWT)
-def test_delete_other_users_post_as_user(app_client, test_db, user_headers):
-    response = app_client.delete("/posts/12", headers=user_headers["user"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_delete_other_users_post_as_user(app_client, test_db, user_headers):
+    response = await app_client.delete("/posts/12", headers=user_headers["user"])
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
 
 
 # Attempt to delete another user's post (with moderator's JWT)
-def test_delete_other_users_post_as_mod(app_client, test_db, user_headers):
-    response = app_client.delete("/posts/25", headers=user_headers["moderator"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_delete_other_users_post_as_mod(app_client, test_db, user_headers):
+    response = await app_client.delete("/posts/25", headers=user_headers["moderator"])
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
 
 
 # Attempt to delete another user's post (with admin's JWT)
-def test_delete_other_users_post_as_admin(app_client, test_db, user_headers):
-    response = app_client.delete("/posts/1", headers=user_headers["admin"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_delete_other_users_post_as_admin(app_client, test_db, user_headers):
+    response = await app_client.delete("/posts/1", headers=user_headers["admin"])
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -406,18 +434,20 @@ def test_delete_other_users_post_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to delete a post that doesn't exist (with admin's JWT)
-def test_delete_nonexistent_post_as_admin(app_client, test_db, user_headers):
-    response = app_client.delete("/posts/100", headers=user_headers["admin"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_delete_nonexistent_post_as_admin(app_client, test_db, user_headers):
+    response = await app_client.delete("/posts/100", headers=user_headers["admin"])
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
 
 
 # Attempt to delete a post without post ID (with admin's JWT)
-def test_delete_post_no_id_as_admin(app_client, test_db, user_headers):
-    response = app_client.delete("/posts/", headers=user_headers["admin"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_delete_post_no_id_as_admin(app_client, test_db, user_headers):
+    response = await app_client.delete("/posts/", headers=user_headers["admin"])
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -433,9 +463,10 @@ def test_delete_post_no_id_as_admin(app_client, test_db, user_headers):
         ("suggested"),
     ],
 )
-def test_get_full_posts_page_1(app_client, test_db, post_type):
-    response = app_client.get(f"/posts/{post_type}")
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_get_full_posts_page_1(app_client, test_db, post_type):
+    response = await app_client.get(f"/posts/{post_type}")
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -451,9 +482,10 @@ def test_get_full_posts_page_1(app_client, test_db, post_type):
         ("suggested"),
     ],
 )
-def test_get_full_posts_page_2(app_client, test_db, post_type):
-    response = app_client.get(f"/posts/{post_type}?page=2")
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_get_full_posts_page_2(app_client, test_db, post_type):
+    response = await app_client.get(f"/posts/{post_type}?page=2")
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200

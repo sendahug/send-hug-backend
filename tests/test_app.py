@@ -27,13 +27,16 @@
 
 import json
 
+import pytest
+
 
 # App testing
 # Index Route Tests ('/', GET)
 # -------------------------------------------------------
-def test_get_home_page(app_client, test_db, user_headers):
-    response = app_client.get("/")
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_get_home_page(app_client, test_db, user_headers):
+    response = await app_client.get("/")
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -44,9 +47,10 @@ def test_get_home_page(app_client, test_db, user_headers):
 # Search Route Tests ('/', POST)
 # -------------------------------------------------------
 # Run a search
-def test_search(app_client, test_db, user_headers):
-    response = app_client.post("/", data=json.dumps({"search": "user"}))
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_search(app_client, test_db, user_headers):
+    response = await app_client.post("/", data=json.dumps({"search": "user"}))
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -55,9 +59,10 @@ def test_search(app_client, test_db, user_headers):
 
 
 # Run a search which returns multiple pages of results
-def test_search_multiple_pages(app_client, test_db, user_headers):
-    response = app_client.post("/", data=json.dumps({"search": "test"}))
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_search_multiple_pages(app_client, test_db, user_headers):
+    response = await app_client.post("/", data=json.dumps({"search": "test"}))
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -69,9 +74,10 @@ def test_search_multiple_pages(app_client, test_db, user_headers):
 
 
 # Run a search which returns multiple pages of results - get page 2
-def test_search_multiple_pages_page_2(app_client, test_db, user_headers):
-    response = app_client.post("/?page=2", data=json.dumps({"search": "test"}))
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_search_multiple_pages_page_2(app_client, test_db, user_headers):
+    response = await app_client.post("/?page=2", data=json.dumps({"search": "test"}))
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200

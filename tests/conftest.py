@@ -3,7 +3,6 @@ import urllib.request
 import json
 from datetime import datetime
 
-from flask import Flask
 import pytest
 from sh import pg_restore, pg_dump  # type: ignore
 
@@ -71,45 +70,38 @@ def test_config():
 
 
 @pytest.fixture(scope="session")
-def test_app(test_config: SAHConfig):
-    """Set up the test app"""
-    app = create_app(config=test_config)
-    yield app
-
-
-@pytest.fixture(scope="session")
-def app_client(test_app):
+def app_client(test_config: SAHConfig):
     """Get the test client for the test app"""
-    yield test_app.test_client()
+    app = create_app(config=test_config)
+    yield app.test_client()
 
 
 @pytest.fixture(scope="session")
-def setup_db_dump_file(test_app: Flask, test_config: SAHConfig):
+def setup_db_dump_file(test_config: SAHConfig):
     """Create a snapshot of the test database to restore between tests"""
-    with test_app.app_context():
-        BaseModel.metadata.drop_all(test_config.db.engine)
-        # create all tables
-        BaseModel.metadata.create_all(test_config.db.engine)
-        create_data(test_config.db)
-        pg_dump(
-            "test_sah",
-            "-Fc",
-            "-c",
-            "-O",
-            "-x",
-            "-f",
-            "tests/capstone_db",
-            "-h",
-            "localhost",
-            "-p",
-            "5432",
-            "-U",
-            "postgres",
-        )
+    BaseModel.metadata.drop_all(test_config.db.engine)
+    # create all tables
+    BaseModel.metadata.create_all(test_config.db.engine)
+    create_data(test_config.db)
+    pg_dump(
+        "test_sah",
+        "-Fc",
+        "-c",
+        "-O",
+        "-x",
+        "-f",
+        "tests/capstone_db",
+        "-h",
+        "localhost",
+        "-p",
+        "5432",
+        "-U",
+        "postgres",
+    )
 
 
 @pytest.fixture(scope="function")
-def test_db(setup_db_dump_file, test_app: Flask, test_config: SAHConfig):
+def test_db(setup_db_dump_file, test_config: SAHConfig):
     """Restore the test database from the db snapshot"""
     pg_restore(
         "-d",
@@ -127,12 +119,10 @@ def test_db(setup_db_dump_file, test_app: Flask, test_config: SAHConfig):
         "postgres",
     )
 
-    # binds the app to the current context
-    with test_app.app_context():
-        try:
-            yield test_config.db
-        finally:
-            test_config.db.session.close()
+    try:
+        yield test_config.db
+    finally:
+        test_config.db.session.close()
 
 
 @pytest.fixture

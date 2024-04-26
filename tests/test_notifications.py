@@ -28,43 +28,48 @@
 from typing import Any
 import json
 
+import pytest
+
 
 # Get New Notifications Route Tests ('/notifications', GET)
 # -------------------------------------------------------
 # Attempt to get user notifications without auth header
-def test_get_notifications_no_auth(app_client, test_db, user_headers):
-    response = app_client.get("/notifications")
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_get_notifications_no_auth(app_client, test_db, user_headers):
+    response = await app_client.get("/notifications")
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to get user notifications with malformed auth header
-def test_get_notifications_malformed_auth(app_client, test_db, user_headers):
-    response = app_client.get("/notifications", headers=user_headers["malformed"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_get_notifications_malformed_auth(app_client, test_db, user_headers):
+    response = await app_client.get("/notifications", headers=user_headers["malformed"])
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to get user notifications with a user's JWT (silent refresh)
-def test_get_silent_notifications_as_user(
+@pytest.mark.asyncio
+async def test_get_silent_notifications_as_user(
     app_client, test_db, user_headers, dummy_users_data
 ):
-    pre_user_query = app_client.get(
+    pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
-    pre_user_data = json.loads(pre_user_query.data)["user"]
-    response = app_client.get(
+    pre_user_data = json.loads(await pre_user_query.data)["user"]
+    response = await app_client.get(
         "/notifications?silentRefresh=true", headers=user_headers["user"]
     )
-    response_data = json.loads(response.data)
-    post_user_query = app_client.get(
+    response_data = await response.get_json()
+    post_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
-    post_user_data = json.loads(post_user_query.data)["user"]
+    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -76,21 +81,22 @@ def test_get_silent_notifications_as_user(
 
 
 # Attempt to get user notifications with a user's JWT (non-silent refresh)
-def test_get_non_silent_notifications_as_user(
+@pytest.mark.asyncio
+async def test_get_non_silent_notifications_as_user(
     app_client, test_db, user_headers, dummy_users_data
 ):
-    pre_user_query = app_client.get(
+    pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
-    pre_user_data = json.loads(pre_user_query.data)["user"]
-    response = app_client.get(
+    pre_user_data = json.loads(await pre_user_query.data)["user"]
+    response = await app_client.get(
         "/notifications?silentRefresh=false", headers=user_headers["user"]
     )
-    response_data = json.loads(response.data)
-    post_user_query = app_client.get(
+    response_data = await response.get_json()
+    post_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
-    post_user_data = json.loads(post_user_query.data)["user"]
+    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -102,23 +108,24 @@ def test_get_non_silent_notifications_as_user(
 
 
 # Attempt to get user notifications with a mod's JWT (silent refresh)
-def test_get_silent_notifications_as_mod(
+@pytest.mark.asyncio
+async def test_get_silent_notifications_as_mod(
     app_client, test_db, user_headers, dummy_users_data
 ):
-    pre_user_query = app_client.get(
+    pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['moderator']['auth0']}",
         headers=user_headers["moderator"],
     )
-    pre_user_data = json.loads(pre_user_query.data)["user"]
-    response = app_client.get(
+    pre_user_data = json.loads(await pre_user_query.data)["user"]
+    response = await app_client.get(
         "/notifications?silentRefresh=true", headers=user_headers["moderator"]
     )
-    response_data = json.loads(response.data)
-    post_user_query = app_client.get(
+    response_data = await response.get_json()
+    post_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['moderator']['auth0']}",
         headers=user_headers["moderator"],
     )
-    post_user_data = json.loads(post_user_query.data)["user"]
+    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -130,23 +137,24 @@ def test_get_silent_notifications_as_mod(
 
 
 # Attempt to get user notifications with a mod's JWT (non-silent refresh)
-def test_get_non_silent_notifications_as_mod(
+@pytest.mark.asyncio
+async def test_get_non_silent_notifications_as_mod(
     app_client, test_db, user_headers, dummy_users_data
 ):
-    pre_user_query = app_client.get(
+    pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['moderator']['auth0']}",
         headers=user_headers["moderator"],
     )
-    pre_user_data = json.loads(pre_user_query.data)["user"]
-    response = app_client.get(
+    pre_user_data = json.loads(await pre_user_query.data)["user"]
+    response = await app_client.get(
         "/notifications?silentRefresh=false", headers=user_headers["moderator"]
     )
-    response_data = json.loads(response.data)
-    post_user_query = app_client.get(
+    response_data = await response.get_json()
+    post_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['moderator']['auth0']}",
         headers=user_headers["moderator"],
     )
-    post_user_data = json.loads(post_user_query.data)["user"]
+    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -158,23 +166,24 @@ def test_get_non_silent_notifications_as_mod(
 
 
 # Attempt to get user notifications with an admin's JWT (silently)
-def test_get_silent_notifications_as_admin(
+@pytest.mark.asyncio
+async def test_get_silent_notifications_as_admin(
     app_client, test_db, user_headers, dummy_users_data
 ):
-    pre_user_query = app_client.get(
+    pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['admin']['auth0']}",
         headers=user_headers["admin"],
     )
-    pre_user_data = json.loads(pre_user_query.data)["user"]
-    response = app_client.get(
+    pre_user_data = json.loads(await pre_user_query.data)["user"]
+    response = await app_client.get(
         "/notifications?silentRefresh=true", headers=user_headers["admin"]
     )
-    response_data = json.loads(response.data)
-    post_user_query = app_client.get(
+    response_data = await response.get_json()
+    post_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['admin']['auth0']}",
         headers=user_headers["admin"],
     )
-    post_user_data = json.loads(post_user_query.data)["user"]
+    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -186,23 +195,24 @@ def test_get_silent_notifications_as_admin(
 
 
 # Attempt to get user notifications with an admin's JWT (non-silently)
-def test_get_non_silent_notifications_as_admin(
+@pytest.mark.asyncio
+async def test_get_non_silent_notifications_as_admin(
     app_client, test_db, user_headers, dummy_users_data
 ):
-    pre_user_query = app_client.get(
+    pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['admin']['auth0']}",
         headers=user_headers["admin"],
     )
-    pre_user_data = json.loads(pre_user_query.data)["user"]
-    response = app_client.get(
+    pre_user_data = json.loads(await pre_user_query.data)["user"]
+    response = await app_client.get(
         "/notifications?silentRefresh=false", headers=user_headers["admin"]
     )
-    response_data = json.loads(response.data)
-    post_user_query = app_client.get(
+    response_data = await response.get_json()
+    post_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['admin']['auth0']}",
         headers=user_headers["admin"],
     )
-    post_user_data = json.loads(post_user_query.data)["user"]
+    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -216,43 +226,46 @@ def test_get_non_silent_notifications_as_admin(
 # Add New Push Subscription Route Tests ('/notifications', POST)
 # -------------------------------------------------------
 # Attempt to create push subscription without auth header
-def test_post_subscription_no_auth(
+@pytest.mark.asyncio
+async def test_post_subscription_no_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
-    response = app_client.post(
+    response = await app_client.post(
         "/notifications", data=json.dumps(dummy_request_data["new_subscription"])
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to create push subscription with malformed auth header
-def test_post_subscription_malformed_auth(
+@pytest.mark.asyncio
+async def test_post_subscription_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
-    response = app_client.post(
+    response = await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["malformed"],
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to create push subscription with a user's JWT
-def test_post_subscription_as_user(
+@pytest.mark.asyncio
+async def test_post_subscription_as_user(
     app_client, test_db, user_headers, dummy_request_data
 ):
-    response = app_client.post(
+    response = await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -261,15 +274,16 @@ def test_post_subscription_as_user(
 
 
 # Attempt to create push subscription with a moderator's JWT
-def test_post_subscription_as_mod(
+@pytest.mark.asyncio
+async def test_post_subscription_as_mod(
     app_client, test_db, user_headers, dummy_request_data
 ):
-    response = app_client.post(
+    response = await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["moderator"],
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -278,15 +292,16 @@ def test_post_subscription_as_mod(
 
 
 # Attempt to create push subscription with an admin's JWT
-def test_post_subscription_as_admin(
+@pytest.mark.asyncio
+async def test_post_subscription_as_admin(
     app_client, test_db, user_headers, dummy_request_data
 ):
-    response = app_client.post(
+    response = await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["admin"],
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -295,13 +310,14 @@ def test_post_subscription_as_admin(
 
 
 # Attempt to create push subscription with an admin's JWT
-def test_post_subscription_empty_data_as_admin(app_client, test_db, user_headers):
-    response = app_client.post(
+@pytest.mark.asyncio
+async def test_post_subscription_empty_data_as_admin(app_client, test_db, user_headers):
+    response = await app_client.post(
         "/notifications",
         data=None,
         headers=user_headers["admin"],
     )
-    response_data = response.data
+    response_data = await response.data
 
     assert response_data == bytes("", encoding="utf-8")
     assert response.status_code == 204
@@ -310,11 +326,12 @@ def test_post_subscription_empty_data_as_admin(app_client, test_db, user_headers
 # Update Push Subscription Route Tests ('/notifications/<sub_id>', PATCH)
 # -------------------------------------------------------
 # Attempt to update push subscription without auth header
-def test_update_subscription_no_auth(
+@pytest.mark.asyncio
+async def test_update_subscription_no_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
     # Create the subscription
-    app_client.post(
+    await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
@@ -322,21 +339,22 @@ def test_update_subscription_no_auth(
     # Then update it
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 1
-    response = app_client.patch(
+    response = await app_client.patch(
         "/notifications/1", data=json.dumps(dummy_request_data["new_subscription"])
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to update push subscription with malformed auth header
-def test_update_subscription_malformed_auth(
+@pytest.mark.asyncio
+async def test_update_subscription_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
     # Create the subscription
-    app_client.post(
+    await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
@@ -344,23 +362,24 @@ def test_update_subscription_malformed_auth(
     # Then update it
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 1
-    response = app_client.patch(
+    response = await app_client.patch(
         "/notifications/1",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["malformed"],
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to update push subscription with a user's JWT
-def test_update_subscription_as_user(
+@pytest.mark.asyncio
+async def test_update_subscription_as_user(
     app_client, test_db, user_headers, dummy_request_data
 ):
     # Create the subscription
-    app_client.post(
+    await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
@@ -368,12 +387,12 @@ def test_update_subscription_as_user(
     # Then update it
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 1
-    response = app_client.patch(
+    response = await app_client.patch(
         "/notifications/1",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -382,11 +401,12 @@ def test_update_subscription_as_user(
 
 
 # Attempt to create push subscription with a moderator's JWT
-def test_update_subscription_as_mod(
+@pytest.mark.asyncio
+async def test_update_subscription_as_mod(
     app_client, test_db, user_headers, dummy_request_data
 ):
     # Create the subscription
-    app_client.post(
+    await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["moderator"],
@@ -394,12 +414,12 @@ def test_update_subscription_as_mod(
     # Then update it
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 1
-    response = app_client.patch(
+    response = await app_client.patch(
         "/notifications/1",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["moderator"],
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -408,11 +428,12 @@ def test_update_subscription_as_mod(
 
 
 # Attempt to create push subscription with an admin's JWT
-def test_update_subscription_as_admin(
+@pytest.mark.asyncio
+async def test_update_subscription_as_admin(
     app_client, test_db, user_headers, dummy_request_data
 ):
     # Create the subscription
-    app_client.post(
+    await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["admin"],
@@ -420,12 +441,12 @@ def test_update_subscription_as_admin(
     # Then update it
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 1
-    response = app_client.patch(
+    response = await app_client.patch(
         "/notifications/1",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["admin"],
     )
-    response_data = json.loads(response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -434,13 +455,16 @@ def test_update_subscription_as_admin(
 
 
 # Attempt to create push subscription with an admin's JWT
-def test_update_subscription_empty_data_as_admin(app_client, test_db, user_headers):
-    response = app_client.patch(
+@pytest.mark.asyncio
+async def test_update_subscription_empty_data_as_admin(
+    app_client, test_db, user_headers
+):
+    response = await app_client.patch(
         "/notifications/1",
         data=None,
         headers=user_headers["admin"],
     )
-    response_data = response.data
+    response_data = await response.data
 
     assert response_data == bytes("", encoding="utf-8")
     assert response.status_code == 204
