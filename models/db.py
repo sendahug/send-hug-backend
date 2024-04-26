@@ -29,7 +29,7 @@ from dataclasses import dataclass
 import math
 from typing import Protocol, Sequence, Type, TypeVar, cast, overload
 
-from flask import Flask, abort
+from quart import Quart, abort
 from sqlalchemy import Delete, Engine, Update, create_engine, Select, func, select
 from sqlalchemy.orm import sessionmaker, Session, scoped_session, Mapped
 from sqlalchemy.exc import DataError, IntegrityError
@@ -79,7 +79,6 @@ class SendADatabase:
         Initialises the class.
 
         param default_per_page: A default per_page value for the pagination method.
-        param app: The Flask app to connect to.
         param db_url: The URL of the database.
         """
         self.default_per_page = default_per_page
@@ -88,12 +87,12 @@ class SendADatabase:
         self._create_session_factory()
         self.session = self.create_scoped_session()
 
-    def init_app(self, app: Flask) -> None:
+    def init_app(self, app: Quart) -> None:
         """
-        Initialises the connection with the Flask App (Flask-SQLAlchemy style).
+        Initialises the connection with the Quart App (Flask-SQLAlchemy style).
 
         param db_url: The URL of the database.
-        param app: The Flask app to connect to.
+        param app: The Quart app to connect to.
         """
         app.config["SQLALCHEMY_DATABASE_URI"] = self.database_url
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False

@@ -30,8 +30,8 @@ import json
 from typing import Any, Literal, cast, Sequence
 from datetime import datetime
 
-from flask import Flask, Response, request, abort, jsonify
-from flask_cors import CORS
+from quart import Quart, Response, request, abort, jsonify
+from quart_cors import cors
 from pywebpush import webpush, WebPushException  # type: ignore
 from sqlalchemy import Text, and_, delete, desc, false, func, or_, select, true, update
 
@@ -60,13 +60,13 @@ from utils.push_notifications import (
 from config import SAHConfig
 
 
-def create_app(config: SAHConfig) -> Flask:
+def create_app(config: SAHConfig) -> Quart:
     # create and configure the app
-    app = Flask(__name__)
+    app = Quart(__name__)
     config.db.init_app(app=app)
     config.db.set_default_per_page(per_page=5)
     # Utilities
-    CORS(app, origins="")
+    cors(app)
     validator = Validator(
         {
             "post": {"max": 480, "min": 1},
@@ -186,8 +186,8 @@ def create_app(config: SAHConfig) -> Flask:
     # Parameters: None.
     # Authorization: None.
     @app.route("/", methods=["POST"])
-    def search():
-        search_query = json.loads(request.data)["search"]
+    async def search():
+        search_query = json.loads(await request.data)["search"]
         current_page = request.args.get("page", 1, type=int)
 
         # Check if the search query is empty; if it is, abort
@@ -229,8 +229,8 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: post:post.
     @app.route("/posts", methods=["POST"])
     @requires_auth(config.db, ["post:post"])
-    def add_post(token_payload: UserData):
-        new_post_data = json.loads(request.data)
+    async def add_post(token_payload: UserData):
+        new_post_data = json.loads(await request.data)
         validator.validate_post_or_message(
             text=new_post_data["text"],
             type="post",
@@ -258,11 +258,11 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: patch:my-post or patch:any-post.
     @app.route("/posts/<post_id>", methods=["PATCH"])
     @requires_auth(config.db, ["patch:my-post", "patch:any-post"])
-    def edit_post(token_payload: UserData, post_id: int):
+    async def edit_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
-        updated_post = json.loads(request.data)
+        updated_post = json.loads(await request.data)
         original_post: Post = config.db.one_or_404(
             item_id=post_id,
             item_type=Post,
@@ -530,9 +530,9 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: post:user.
     @app.route("/users", methods=["POST"])
     @requires_auth(config.db, ["post:user"])
-    def add_user(token_payload):
+    async def add_user(token_payload):
         # Gets the user's data
-        user_data = json.loads(request.data)
+        user_data = json.loads(await request.data)
 
         # If the user is attempting to add a user that isn't themselves to
         # the database, aborts
@@ -575,11 +575,11 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: patch:user or patch:any-user.
     @app.route("/users/all/<user_id>", methods=["PATCH"])
     @requires_auth(config.db, ["patch:user", "patch:any-user"])
-    def edit_user(token_payload: UserData, user_id: int):
+    async def edit_user(token_payload: UserData, user_id: int):
         # Check if the user ID isn't an integer; if it isn't, abort
         validator.check_type(user_id, "User ID")
 
-        updated_user = json.loads(request.data)
+        updated_user = json.loads(await request.data)
         user_to_update: User = config.db.one_or_404(
             item_id=user_id,
             item_type=User,
@@ -918,9 +918,9 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: post:message.
     @app.route("/messages", methods=["POST"])
     @requires_auth(config.db, ["post:message"])
-    def add_message(token_payload: UserData):
+    async def add_message(token_payload: UserData):
         # Gets the new message's data
-        message_data = json.loads(request.data)
+        message_data = json.loads(await request.data)
 
         # Checks that the user isn't trying to send a message from someone else
         if token_payload["id"] != message_data["fromId"]:
@@ -1396,8 +1396,8 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: post:report.
     @app.route("/reports", methods=["POST"])
     @requires_auth(config.db, ["post:report"])
-    def create_new_report(token_payload: UserData):
-        report_data = json.loads(request.data)
+    async def create_new_report(token_payload: UserData):
+        report_data = json.loads(await request.data)
 
         # Check the length adn  type of the report reason
         validator.check_length(report_data["reportReason"], "report")
@@ -1463,8 +1463,8 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/reports/<report_id>", methods=["PATCH"])
     @requires_auth(config.db, ["read:admin-board"])
-    def update_report_status(token_payload: UserData, report_id: int):
-        updated_report = json.loads(request.data)
+    async def update_report_status(token_payload: UserData, report_id: int):
+        updated_report = json.loads(await request.data)
         report: Report | None = config.db.session.scalar(
             select(Report).filter(Report.id == report_id)
         )
@@ -1538,8 +1538,8 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/filters", methods=["POST"])
     @requires_auth(config.db, ["read:admin-board"])
-    def add_filter(token_payload: UserData):
-        new_filter = json.loads(request.data)["word"]
+    async def add_filter(token_payload: UserData):
+        new_filter = json.loads(await request.data)["word"]
 
         # Check if the filter is empty; if it is, abort
         validator.check_length(new_filter, "Phrase to filter")
@@ -1629,14 +1629,16 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications", methods=["POST"])
     @requires_auth(config.db, ["read:messages"])
-    def add_notification_subscription(token_payload: UserData):
+    async def add_notification_subscription(token_payload: UserData):
+        request_data = await request.data
+
         # if the request is empty, return 204. This happens due to a bug
         # in the frontend that causes the request to be sent twice, once
         # with subscription data and once with an empty object
-        if not request.data:
+        if not request_data:
             return ("", 204)
 
-        subscription_json = request.data.decode("utf8").replace("'", '"')
+        subscription_json = request_data.decode("utf8").replace("'", '"')
         subscription_data = json.loads(subscription_json)
 
         # Create a new subscription object with the given data
@@ -1663,14 +1665,16 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications/<sub_id>", methods=["PATCH"])
     @requires_auth(config.db, ["read:messages"])
-    def update_notification_subscription(token_payload: UserData, sub_id: int):
+    async def update_notification_subscription(token_payload: UserData, sub_id: int):
+        request_data = await request.data
+
         # if the request is empty, return 204. This happens due to a bug
         # in the frontend that causes the request to be sent twice, once
         # with subscription data and once with an empty object
-        if not request.data:
+        if not request_data:
             return ("", 204)
 
-        subscription_json = request.data.decode("utf8").replace("'", '"')
+        subscription_json = request_data.decode("utf8").replace("'", '"')
         subscription_data = json.loads(subscription_json)
         old_sub: NotificationSub = config.db.one_or_404(
             item_id=sub_id, item_type=NotificationSub

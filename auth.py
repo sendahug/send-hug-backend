@@ -33,7 +33,7 @@ from datetime import datetime
 from jose import jwt, exceptions
 from urllib.request import urlopen
 from functools import wraps
-from flask import request
+from quart import request
 from sqlalchemy import select
 
 from models import User, SendADatabase
