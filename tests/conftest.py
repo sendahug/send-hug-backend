@@ -66,7 +66,7 @@ def user_headers():
 @pytest.fixture(scope="session")
 def test_config():
     """Set up the config"""
-    test_db_path = "postgresql://postgres:password@localhost:5432/test_sah"
+    test_db_path = "postgresql+asyncpg://postgres:password@localhost:5432/test_sah"
     return SAHConfig(database_url=test_db_path)
 
 
@@ -84,32 +84,33 @@ def app_client(test_app):
 
 
 @pytest.fixture(scope="session")
-def setup_db_dump_file(test_app: Flask, test_config: SAHConfig):
+async def setup_db_dump_file(test_app: Flask, test_config: SAHConfig):
     """Create a snapshot of the test database to restore between tests"""
-    with test_app.app_context():
-        BaseModel.metadata.drop_all(test_config.db.engine)
-        # create all tables
-        BaseModel.metadata.create_all(test_config.db.engine)
-        create_data(test_config.db)
-        pg_dump(
-            "test_sah",
-            "-Fc",
-            "-c",
-            "-O",
-            "-x",
-            "-f",
-            "tests/capstone_db",
-            "-h",
-            "localhost",
-            "-p",
-            "5432",
-            "-U",
-            "postgres",
-        )
+    # create all tables
+    async with test_config.db.async_engine.begin() as conn:
+        await conn.run_sync(BaseModel.metadata.drop_all)
+        await conn.run_sync(BaseModel.metadata.create_all)
+
+    await create_data(test_config.db)
+    pg_dump(
+        "test_sah",
+        "-Fc",
+        "-c",
+        "-O",
+        "-x",
+        "-f",
+        "tests/capstone_db",
+        "-h",
+        "localhost",
+        "-p",
+        "5432",
+        "-U",
+        "postgres",
+    )
 
 
 @pytest.fixture(scope="function")
-def test_db(setup_db_dump_file, test_app: Flask, test_config: SAHConfig):
+async def test_db(setup_db_dump_file, test_app: Flask, test_config: SAHConfig):
     """Restore the test database from the db snapshot"""
     pg_restore(
         "-d",
@@ -127,12 +128,11 @@ def test_db(setup_db_dump_file, test_app: Flask, test_config: SAHConfig):
         "postgres",
     )
 
-    # binds the app to the current context
-    with test_app.app_context():
-        try:
-            yield test_config.db
-        finally:
-            test_config.db.session.close()
+    # returns the db
+    try:
+        yield test_config.db
+    finally:
+        await test_config.db._remove_async_session(None)
 
 
 @pytest.fixture

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Sequence
 
 from sqlalchemy import select, text
 
@@ -19,20 +20,22 @@ from models.db import SendADatabase
 DATETIME_PATTERN = "%Y-%m-%d %H:%M:%S.%f"
 
 
-def create_filters(db: SendADatabase):
+async def create_filters(db: SendADatabase):
     """Creates the filters in the test database."""
     filter_1 = Filter(id=1, filter="filtered_word_1")
     filter_2 = Filter(id=2, filter="filtered_word_2")
 
     try:
-        db.session.add_all([filter_1, filter_2])
-        db.session.execute(text("ALTER SEQUENCE filters_id_seq RESTART WITH 3;"))
-        db.session.commit()
+        db.async_session.add_all([filter_1, filter_2])
+        await db.async_session.execute(
+            text("ALTER SEQUENCE filters_id_seq RESTART WITH 3;")
+        )
+        await db.async_session.commit()
     finally:
-        db.session.close()
+        await db.async_session.remove()
 
 
-def create_permissions(db):
+async def create_permissions(db: SendADatabase):
     permission_1 = Permission(
         id=1, permission="block:user", description="Block or unblock a user"
     )
@@ -80,7 +83,7 @@ def create_permissions(db):
     )
 
     try:
-        db.session.add_all(
+        db.async_session.add_all(
             [
                 permission_1,
                 permission_2,
@@ -99,36 +102,41 @@ def create_permissions(db):
                 permission_15,
             ]
         )
-        db.session.execute(text("ALTER SEQUENCE permissions_id_seq RESTART WITH 16;"))
-        db.session.commit()
+        await db.async_session.execute(
+            text("ALTER SEQUENCE permissions_id_seq RESTART WITH 16;")
+        )
+        await db.async_session.commit()
     finally:
-        db.session.close()
+        await db.async_session.remove()
 
 
-def create_roles(db):
+async def create_roles(db: SendADatabase):
     role_1 = Role(id=1, name="admin")
     role_2 = Role(id=2, name="moderator")
     role_3 = Role(id=3, name="user")
     role_4 = Role(id=4, name="new user")
 
     try:
-        permissions = db.session.scalars(
+        permissions_scalars = await db.async_session.scalars(
             select(Permission).order_by(Permission.id)
-        ).all()
+        )
+        permissions: Sequence[Permission] = permissions_scalars.all()
 
-        role_1.permissions = permissions[0:11]
+        role_1.permissions = [*permissions[0:11]]
         role_2.permissions = [*permissions[2:4], *permissions[5:8], *permissions[9:13]]
         role_3.permissions = [permissions[2], *permissions[5:8], *permissions[9:14]]
         role_4.permissions = [permissions[2], *permissions[5:7], *permissions[9:]]
 
-        db.session.add_all([role_1, role_2, role_3, role_4])
-        db.session.execute(text("ALTER SEQUENCE roles_id_seq RESTART WITH 5;"))
-        db.session.commit()
+        db.async_session.add_all([role_1, role_2, role_3, role_4])
+        await db.async_session.execute(
+            text("ALTER SEQUENCE roles_id_seq RESTART WITH 5;")
+        )
+        await db.async_session.commit()
     finally:
-        db.session.close()
+        await db.async_session.remove()
 
 
-def create_users(db: SendADatabase):
+async def create_users(db: SendADatabase):
     """Creates the users in the test database."""
     user_1 = User(
         id=1,
@@ -231,14 +239,16 @@ def create_users(db: SendADatabase):
     )
 
     try:
-        db.session.add_all([user_1, user_2, user_3, user_4, user_5])
-        db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 21;"))
-        db.session.commit()
+        db.async_session.add_all([user_1, user_2, user_3, user_4, user_5])
+        await db.async_session.execute(
+            text("ALTER SEQUENCE users_id_seq RESTART WITH 21;")
+        )
+        await db.async_session.commit()
     finally:
-        db.session.close()
+        await db.async_session.remove()
 
 
-def create_posts(db: SendADatabase):
+async def create_posts(db: SendADatabase):
     """Creates the posts in the test database."""
     post_1 = Post(
         id=1,
@@ -458,7 +468,7 @@ def create_posts(db: SendADatabase):
     )
 
     try:
-        db.session.add_all(
+        db.async_session.add_all(
             [
                 post_1,
                 post_2,
@@ -486,13 +496,15 @@ def create_posts(db: SendADatabase):
                 post_24,
             ]
         )
-        db.session.execute(text("ALTER SEQUENCE posts_id_seq RESTART WITH 46;"))
-        db.session.commit()
+        await db.async_session.execute(
+            text("ALTER SEQUENCE posts_id_seq RESTART WITH 46;")
+        )
+        await db.async_session.commit()
     finally:
-        db.session.close()
+        await db.async_session.remove()
 
 
-def create_threads(db: SendADatabase):
+async def create_threads(db: SendADatabase):
     """Creates the threads in the test database."""
     thread_1 = Thread(
         id=1, user_1_id=1, user_2_id=1, user_1_deleted=False, user_2_deleted=False
@@ -517,16 +529,18 @@ def create_threads(db: SendADatabase):
     )
 
     try:
-        db.session.add_all(
+        db.async_session.add_all(
             [thread_1, thread_2, thread_3, thread_4, thread_5, thread_6, thread_7]
         )
-        db.session.execute(text("ALTER SEQUENCE threads_id_seq RESTART WITH 9;"))
-        db.session.commit()
+        await db.async_session.execute(
+            text("ALTER SEQUENCE threads_id_seq RESTART WITH 9;")
+        )
+        await db.async_session.commit()
     finally:
-        db.session.close()
+        await db.async_session.remove()
 
 
-def create_messages(db: SendADatabase):
+async def create_messages(db: SendADatabase):
     """Creates the messages in the test database."""
     message_1 = Message(
         id=5,
@@ -670,7 +684,7 @@ def create_messages(db: SendADatabase):
     )
 
     try:
-        db.session.add_all(
+        db.async_session.add_all(
             [
                 message_1,
                 message_2,
@@ -688,13 +702,15 @@ def create_messages(db: SendADatabase):
                 message_14,
             ]
         )
-        db.session.execute(text("ALTER SEQUENCE messages_id_seq RESTART WITH 27;"))
-        db.session.commit()
+        await db.async_session.execute(
+            text("ALTER SEQUENCE messages_id_seq RESTART WITH 27;")
+        )
+        await db.async_session.commit()
     finally:
-        db.session.close()
+        await db.async_session.remove()
 
 
-def create_reports(db: SendADatabase):
+async def create_reports(db: SendADatabase):
     """Creates the reports in the test database."""
     report_1 = Report(
         id=1,
@@ -1182,7 +1198,7 @@ def create_reports(db: SendADatabase):
     )
 
     try:
-        db.session.add_all(
+        db.async_session.add_all(
             [
                 report_1,
                 report_2,
@@ -1230,13 +1246,15 @@ def create_reports(db: SendADatabase):
                 report_44,
             ]
         )
-        db.session.execute(text("ALTER SEQUENCE reports_id_seq RESTART WITH 45;"))
-        db.session.commit()
+        await db.async_session.execute(
+            text("ALTER SEQUENCE reports_id_seq RESTART WITH 45;")
+        )
+        await db.async_session.commit()
     finally:
-        db.session.close()
+        await db.async_session.remove()
 
 
-def create_notifications(db: SendADatabase):
+async def create_notifications(db: SendADatabase):
     """Creates the notifications in the test database."""
     notification_1 = Notification(
         id=1,
@@ -1584,7 +1602,7 @@ def create_notifications(db: SendADatabase):
     )
 
     try:
-        db.session.add_all(
+        db.async_session.add_all(
             [
                 notification_1,
                 notification_2,
@@ -1631,26 +1649,28 @@ def create_notifications(db: SendADatabase):
                 notification_95,
             ]
         )
-        db.session.execute(text("ALTER SEQUENCE notifications_id_seq RESTART WITH 96;"))
-        db.session.commit()
+        await db.async_session.execute(
+            text("ALTER SEQUENCE notifications_id_seq RESTART WITH 96;")
+        )
+        await db.async_session.commit()
     finally:
-        db.session.close()
+        await db.async_session.remove()
 
 
 # TODO: Add subscriptions
 
 
-def create_data(db: SendADatabase):
+async def create_data(db: SendADatabase):
     """Creates the data in the test database."""
-    create_filters(db)
-    create_permissions(db)
-    create_roles(db)
-    create_users(db)
-    create_posts(db)
-    create_threads(db)
-    create_messages(db)
-    create_reports(db)
-    create_notifications(db)
+    await create_filters(db)
+    await create_permissions(db)
+    await create_roles(db)
+    await create_users(db)
+    await create_posts(db)
+    await create_threads(db)
+    await create_messages(db)
+    await create_reports(db)
+    await create_notifications(db)
     # create_subscriptions(db)
 
-    db.session.close()
+    await db.async_session.remove()

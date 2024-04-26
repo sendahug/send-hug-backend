@@ -27,49 +27,56 @@
 
 import json
 
+import pytest
+
 
 # Get Open Reports Tests ('/reports', GET)
 # -------------------------------------------------------
 # Attempt to get open reports without auth header
-def test_get_open_reports_no_auth(app_client, test_db, user_headers):
-    response = app_client.get("/reports")
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_get_open_reports_no_auth(app_client, test_db, user_headers):
+    response = await app_client.get("/reports")
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to get open reports with malformed auth header
-def test_get_open_reports_malformed_auth(app_client, test_db, user_headers):
-    response = app_client.get("/reports", headers=user_headers["malformed"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_get_open_reports_malformed_auth(app_client, test_db, user_headers):
+    response = await app_client.get("/reports", headers=user_headers["malformed"])
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to get open reports with a user's JWT
-def test_get_open_reports_as_user(app_client, test_db, user_headers):
-    response = app_client.get("/reports", headers=user_headers["user"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_get_open_reports_as_user(app_client, test_db, user_headers):
+    response = await app_client.get("/reports", headers=user_headers["user"])
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 403
 
 
 #  Attempt to get open reports with a moderator's JWT
-def test_get_open_reports_as_mod(app_client, test_db, user_headers):
-    response = app_client.get("/reports", headers=user_headers["moderator"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_get_open_reports_as_mod(app_client, test_db, user_headers):
+    response = await app_client.get("/reports", headers=user_headers["moderator"])
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 403
 
 
 # Attempt to get open reports with an admin's JWT
-def test_get_open_reports_as_admin(app_client, test_db, user_headers):
-    response = app_client.get("/reports", headers=user_headers["admin"])
-    response_data = json.loads(response.data)
+@pytest.mark.asyncio
+async def test_get_open_reports_as_admin(app_client, test_db, user_headers):
+    response = await app_client.get("/reports", headers=user_headers["admin"])
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -82,43 +89,48 @@ def test_get_open_reports_as_admin(app_client, test_db, user_headers):
 # Create Report Route Tests ('/reports', POST)
 # -------------------------------------------------------
 # Attempt to create a report with no authorisation header
-def test_send_report_no_auth(app_client, test_db, user_headers, dummy_request_data):
-    response = app_client.post(
+@pytest.mark.asyncio
+async def test_send_report_no_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
+    response = await app_client.post(
         "/reports", data=json.dumps(dummy_request_data["new_report"])
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to create a report with a malformed auth header
-def test_send_report_malformed_auth(
+@pytest.mark.asyncio
+async def test_send_report_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
-    response = app_client.post(
+    response = await app_client.post(
         "/reports",
         headers=user_headers["malformed"],
         data=json.dumps(dummy_request_data["new_report"]),
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to create a report with a user's JWT
-def test_send_report_as_user(
+@pytest.mark.asyncio
+async def test_send_report_as_user(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
     report["reporter"] = dummy_users_data["user"]["internal"]
-    response = app_client.post(
+    response = await app_client.post(
         "/reports", headers=user_headers["user"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
     response_report = response_data["report"]
 
     assert response_data["success"] is True
@@ -128,17 +140,18 @@ def test_send_report_as_user(
 
 
 # Attempt to create a report with a moderator's JWT
-def test_send_report_as_mod(
+@pytest.mark.asyncio
+async def test_send_report_as_mod(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
     report["reporter"] = dummy_users_data["moderator"]["internal"]
-    response = app_client.post(
+    response = await app_client.post(
         "/reports", headers=user_headers["moderator"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
     response_report = response_data["report"]
 
     assert response_data["success"] is True
@@ -148,17 +161,18 @@ def test_send_report_as_mod(
 
 
 # Attempt to create a report with an admin's JWT
-def test_send_report_as_admin(
+@pytest.mark.asyncio
+async def test_send_report_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
     report["reporter"] = dummy_users_data["admin"]["internal"]
-    response = app_client.post(
+    response = await app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
     response_report = response_data["report"]
 
     assert response_data["success"] is True
@@ -168,50 +182,53 @@ def test_send_report_as_admin(
 
 
 # Attempt to create a post report without post ID with an admin's JWT
-def test_send_malformed_report_as_admin(
+@pytest.mark.asyncio
+async def test_send_malformed_report_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = None
     report["reporter"] = dummy_users_data["admin"]["internal"]
-    response = app_client.post(
+    response = await app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 422
 
 
 # Attempt to create a post report for post that doesn't exist
-def test_send_report_nonexistent_post_as_admin(
+@pytest.mark.asyncio
+async def test_send_report_nonexistent_post_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 1000
     report["reporter"] = dummy_users_data["admin"]["internal"]
-    response = app_client.post(
+    response = await app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 404
 
 
 # Attempt to create a report with an admin's JWT
-def test_send_user_report_as_admin(
+@pytest.mark.asyncio
+async def test_send_user_report_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_user_report"]
     report["userID"] = 1
     report["reporter"] = dummy_users_data["admin"]["internal"]
-    response = app_client.post(
+    response = await app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
     response_report = response_data["report"]
 
     assert response_data["success"] is True
@@ -221,16 +238,17 @@ def test_send_user_report_as_admin(
 
 
 # Attempt to create a report for user that doesn't exist
-def test_send_user_report_nonexistent_user_as_admin(
+@pytest.mark.asyncio
+async def test_send_user_report_nonexistent_user_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_user_report"]
     report["userID"] = 100
     report["reporter"] = dummy_users_data["admin"]["internal"]
-    response = app_client.post(
+    response = await app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -239,67 +257,74 @@ def test_send_user_report_nonexistent_user_as_admin(
 # Update Report Route Tests ('/reports/<report_id>', PATCH)
 # -------------------------------------------------------
 # Attempt to update a report with no authorisation header
-def test_update_report_no_auth(app_client, test_db, user_headers, dummy_request_data):
-    response = app_client.patch(
+@pytest.mark.asyncio
+async def test_update_report_no_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
+    response = await app_client.patch(
         "/reports/36", data=json.dumps(dummy_request_data["new_report"])
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to update a report with a malformed auth header
-def test_update_report_malformed_auth(
+@pytest.mark.asyncio
+async def test_update_report_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
-    response = app_client.patch(
+    response = await app_client.patch(
         "/reports/36",
         headers=user_headers["malformed"],
         data=json.dumps(dummy_request_data["new_report"]),
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to update a report (with user's JWT)
-def test_update_report_as_user(
+@pytest.mark.asyncio
+async def test_update_report_as_user(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
     report["reporter"] = dummy_users_data["user"]["internal"]
-    response = app_client.patch(
+    response = await app_client.patch(
         "/reports/36", headers=user_headers["user"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 403
 
 
 # Attempt to update a report (with moderator's JWT)
-def test_update_report_as_mod(
+@pytest.mark.asyncio
+async def test_update_report_as_mod(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
     report["reporter"] = dummy_users_data["moderator"]["internal"]
-    response = app_client.patch(
+    response = await app_client.patch(
         "/reports/36", headers=user_headers["moderator"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 403
 
 
 # Attempt to update a report (with admin's JWT)
-def test_update_report_as_admin(
+@pytest.mark.asyncio
+async def test_update_report_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_report"]
@@ -309,10 +334,10 @@ def test_update_report_as_admin(
     report["reporter"] = dummy_users_data["admin"]["internal"]
     report["dismissed"] = False
     report["closed"] = False
-    response = app_client.patch(
+    response = await app_client.patch(
         "/reports/36", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
     report_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -321,7 +346,8 @@ def test_update_report_as_admin(
 
 
 # Attempt to update a report (with admin's JWT)
-def test_update_user_report_as_admin(
+@pytest.mark.asyncio
+async def test_update_user_report_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_user_report"]
@@ -330,10 +356,10 @@ def test_update_user_report_as_admin(
     report["reporter"] = dummy_users_data["admin"]["internal"]
     report["dismissed"] = False
     report["closed"] = False
-    response = app_client.patch(
+    response = await app_client.patch(
         "/reports/35", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
     report_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -343,7 +369,8 @@ def test_update_user_report_as_admin(
 
 
 # Attempt to update a report with no ID (with admin's JWT)
-def test_update_no_id_report_as_admin(
+@pytest.mark.asyncio
+async def test_update_no_id_report_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_report"]
@@ -353,17 +380,18 @@ def test_update_no_id_report_as_admin(
     report["reporter"] = dummy_users_data["admin"]["internal"]
     report["dismissed"] = False
     report["closed"] = False
-    response = app_client.patch(
+    response = await app_client.patch(
         "/reports/", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 404
 
 
 # Attempt to update a report that doesn't exist (with admin's JWT)
-def test_update_nonexistent_report_as_admin(
+@pytest.mark.asyncio
+async def test_update_nonexistent_report_as_admin(
     app_client, test_db, user_headers, dummy_request_data, dummy_users_data
 ):
     report = dummy_request_data["new_report"]
@@ -373,10 +401,10 @@ def test_update_nonexistent_report_as_admin(
     report["reporter"] = dummy_users_data["admin"]["internal"]
     report["dismissed"] = False
     report["closed"] = False
-    response = app_client.patch(
+    response = await app_client.patch(
         "/reports/100", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(response.data)
+    response_data = json.loads(await response.data)
 
     assert response_data["success"] is False
     assert response.status_code == 404
