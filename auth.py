@@ -258,7 +258,7 @@ async def get_current_user(
 
     param payload: The payload from the decoded, verified JWT.
     """
-    current_user: User | None = db.session.scalar(
+    current_user: User | None = await db.async_session.scalar(
         select(User).filter(User.auth0_id == payload["sub"])
     )
 
