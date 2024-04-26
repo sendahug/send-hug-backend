@@ -30,17 +30,17 @@ from dataclasses import dataclass
 import math
 import os
 from typing import Protocol, Sequence, Type, TypeVar, cast, overload
-from typing_extensions import deprecated
 
 from quart import Quart, abort
-from sqlalchemy import Delete, Engine, Update, create_engine, Select, func, select
-from sqlalchemy.orm import sessionmaker, Session, scoped_session, Mapped
+from sqlalchemy import Delete, Update, Select, func, select
+from sqlalchemy.orm import Mapped
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
     AsyncEngine,
     async_scoped_session,
+    AsyncSession,
 )
 from werkzeug.exceptions import HTTPException
 
@@ -76,9 +76,8 @@ class SendADatabase:
     """
 
     database_url: str
-    engine: Engine
     async_engine: AsyncEngine
-    session_factory: sessionmaker[Session]
+    async_session_factory: async_sessionmaker[AsyncSession]
 
     def __init__(
         self,
@@ -96,11 +95,8 @@ class SendADatabase:
 
         self.default_per_page = default_per_page
         self.database_url = database_url
-        self.engine = create_engine(self.database_url)
         self.async_engine = create_async_engine(self.async_database_url)
-        self._create_session_factory()
         self._create_async_session_factory()
-        self.session = self.create_scoped_session()
         self.async_session = self.create_async_session()
 
     def init_app(self, app: Quart) -> None:
@@ -115,30 +111,12 @@ class SendADatabase:
         self.app = app
         self.app.teardown_appcontext(self._remove_async_session)
 
-    @deprecated("Use _create_async_session_factory instead")
-    def _create_session_factory(self):
-        """
-        Creates the session factory to be used to generate scoped sessions.
-        """
-        session_factory = sessionmaker(
-            bind=self.engine,
-            class_=Session,
-        )
-        self.session_factory = session_factory
-
     def _create_async_session_factory(self):
         """
         Creates the async session factory to be used to generate scoped sessions.
         """
         session_factory = async_sessionmaker(self.async_engine, expire_on_commit=False)
         self.async_session_factory = session_factory
-
-    @deprecated("Use create_async_session instead")
-    def create_scoped_session(self):
-        """
-        Creates a new scoped session.
-        """
-        return scoped_session(session_factory=self.session_factory)
 
     # TODO: Do we want to continue with this pattern? According to
     # https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#using-asyncio-scoped-session
