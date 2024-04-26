@@ -3,7 +3,6 @@ import urllib.request
 import json
 from datetime import datetime
 
-from flask import Flask
 import pytest
 from sh import pg_restore, pg_dump  # type: ignore
 
@@ -77,14 +76,14 @@ def test_app(test_config: SAHConfig):
     yield app
 
 
-@pytest.fixture(scope="session")
-def app_client(test_app):
+@pytest.fixture(scope="function", autouse=True)
+def app_client(test_app, event_loop):
     """Get the test client for the test app"""
     yield test_app.test_client()
 
 
 @pytest.fixture(scope="session")
-async def setup_db_dump_file(test_app: Flask, test_config: SAHConfig):
+async def setup_db_dump_file(test_config: SAHConfig):
     """Create a snapshot of the test database to restore between tests"""
     # create all tables
     async with test_config.db.async_engine.begin() as conn:
@@ -109,8 +108,8 @@ async def setup_db_dump_file(test_app: Flask, test_config: SAHConfig):
     )
 
 
-@pytest.fixture(scope="function")
-async def test_db(setup_db_dump_file, test_app: Flask, test_config: SAHConfig):
+@pytest.fixture(scope="function", autouse=True)
+async def test_db(setup_db_dump_file, test_config: SAHConfig):
     """Restore the test database from the db snapshot"""
     pg_restore(
         "-d",
