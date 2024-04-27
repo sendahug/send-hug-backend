@@ -80,9 +80,7 @@ The site uses several tools to maximise compatibility:
 
 6. **PyWebPush** - This application uses pywebpush in order to handle push notifications. For more information, check their [GitHub repo](https://github.com/web-push-libs/pywebpush).
 
-7. **sh** - This application uses sh during testing (in order to handle the database). For more information, check the [sh PyPi page](https://pypi.org/project/sh/).
-
-8. **Coverage** - This application uses coverage in order to provide code coverage for testing. For more information, check the [Coverage documentation](https://coverage.readthedocs.io/en/coverage-5.2.1/).
+7. **Coverage** - This application uses coverage in order to provide code coverage for testing. For more information, check the [Coverage documentation](https://coverage.readthedocs.io/en/coverage-5.2.1/).
 
 ## Authentication
 
