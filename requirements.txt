@@ -1,8 +1,6 @@
 alembic==1.13.1
-Flask==3.0.3
-Flask-Cors==4.0.0
-Flask-Migrate==4.0.7
-Flask-SQLAlchemy==3.1.1
+quart==0.19.5
+quart-cors==0.7.0
 gunicorn==22.0.0
 psycopg2-binary==2.9.9
 python-jose==3.3.0

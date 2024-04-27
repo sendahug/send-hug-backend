@@ -30,8 +30,8 @@ import json
 from typing import Any, Literal, cast, Sequence
 from datetime import datetime
 
-from flask import Flask, Response, request, abort, jsonify
-from flask_cors import CORS
+from quart import Quart, Response, request, abort, jsonify
+from quart_cors import cors
 from pywebpush import webpush, WebPushException  # type: ignore
 from sqlalchemy import Text, and_, delete, desc, false, func, or_, select, true, update
 
@@ -60,13 +60,13 @@ from utils.push_notifications import (
 from config import SAHConfig
 
 
-def create_app(config: SAHConfig) -> Flask:
+def create_app(config: SAHConfig) -> Quart:
     # create and configure the app
-    app = Flask(__name__)
+    app = Quart(__name__)
     config.db.init_app(app=app)
     config.db.set_default_per_page(per_page=5)
     # Utilities
-    CORS(app, origins="")
+    cors(app)
     validator = Validator(
         {
             "post": {"max": 480, "min": 1},
@@ -150,7 +150,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Parameters: None.
     # Authorization: None.
     @app.route("/")
-    def index():
+    async def index():
         posts: dict[str, list[dict[str, Any]]] = {
             "recent": [],
             "suggested": [],
@@ -186,8 +186,8 @@ def create_app(config: SAHConfig) -> Flask:
     # Parameters: None.
     # Authorization: None.
     @app.route("/", methods=["POST"])
-    def search():
-        search_query = json.loads(request.data)["search"]
+    async def search():
+        search_query = json.loads(await request.data)["search"]
         current_page = request.args.get("page", 1, type=int)
 
         # Check if the search query is empty; if it is, abort
@@ -229,8 +229,8 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: post:post.
     @app.route("/posts", methods=["POST"])
     @requires_auth(config.db, ["post:post"])
-    def add_post(token_payload: UserData):
-        new_post_data = json.loads(request.data)
+    async def add_post(token_payload: UserData):
+        new_post_data = json.loads(await request.data)
         validator.validate_post_or_message(
             text=new_post_data["text"],
             type="post",
@@ -258,11 +258,11 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: patch:my-post or patch:any-post.
     @app.route("/posts/<post_id>", methods=["PATCH"])
     @requires_auth(config.db, ["patch:my-post", "patch:any-post"])
-    def edit_post(token_payload: UserData, post_id: int):
+    async def edit_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
-        updated_post = json.loads(request.data)
+        updated_post = json.loads(await request.data)
         original_post: Post = config.db.one_or_404(
             item_id=post_id,
             item_type=Post,
@@ -306,7 +306,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:user
     @app.route("/posts/<post_id>/hugs", methods=["POST"])
     @requires_auth(config.db, ["patch:my-post", "patch:any-post"])
-    def send_hug_for_post(token_payload: UserData, post_id: int):
+    async def send_hug_for_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
@@ -383,7 +383,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: delete:my-post or delete:any-post.
     @app.route("/posts/<post_id>", methods=["DELETE"])
     @requires_auth(config.db, ["delete:my-post", "delete:any-post"])
-    def delete_post(token_payload: UserData, post_id: int):
+    async def delete_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
@@ -419,7 +419,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Parameters: type - Type of posts (new or suggested) to fetch.
     # Authorization: None.
     @app.route("/posts/<type>")
-    def get_new_posts(type: Literal["new", "suggested"]):
+    async def get_new_posts(type: Literal["new", "suggested"]):
         page = request.args.get("page", 1, type=int)
 
         full_posts_query = select(Post).filter(Post.open_report == false())
@@ -445,7 +445,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/users/<type>")
     @requires_auth(config.db, ["read:admin-board"])
-    def get_users_by_type(token_payload: UserData, type: str):
+    async def get_users_by_type(token_payload: UserData, type: str):
         page = request.args.get("page", 1, type=int)
 
         # If the type of users to fetch is blocked users
@@ -489,7 +489,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:user.
     @app.route("/users/all/<user_id>")
     @requires_auth(config.db, ["read:user"])
-    def get_user_data(token_payload: UserData, user_id: int | str):
+    async def get_user_data(token_payload: UserData, user_id: int | str):
         # Try to convert it to a number; if it's a number, it's a
         # regular ID, so try to find the user with that ID
         try:
@@ -522,6 +522,8 @@ def create_app(config: SAHConfig) -> Flask:
 
         formatted_user_data = user_data.format()
 
+        print(jsonify({"success": True, "user": formatted_user_data}))
+
         return jsonify({"success": True, "user": formatted_user_data})
 
     # Endpoint: POST /users
@@ -530,9 +532,9 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: post:user.
     @app.route("/users", methods=["POST"])
     @requires_auth(config.db, ["post:user"])
-    def add_user(token_payload):
+    async def add_user(token_payload):
         # Gets the user's data
-        user_data = json.loads(request.data)
+        user_data = json.loads(await request.data)
 
         # If the user is attempting to add a user that isn't themselves to
         # the database, aborts
@@ -575,11 +577,11 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: patch:user or patch:any-user.
     @app.route("/users/all/<user_id>", methods=["PATCH"])
     @requires_auth(config.db, ["patch:user", "patch:any-user"])
-    def edit_user(token_payload: UserData, user_id: int):
+    async def edit_user(token_payload: UserData, user_id: int):
         # Check if the user ID isn't an integer; if it isn't, abort
         validator.check_type(user_id, "User ID")
 
-        updated_user = json.loads(request.data)
+        updated_user = json.loads(await request.data)
         user_to_update: User = config.db.one_or_404(
             item_id=user_id,
             item_type=User,
@@ -686,7 +688,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:user.
     @app.route("/users/all/<user_id>/posts")
     @requires_auth(config.db, ["read:user"])
-    def get_user_posts(token_payload: UserData, user_id):
+    async def get_user_posts(token_payload: UserData, user_id):
         page = request.args.get("page", 1, type=int)
 
         # if there's no user ID provided, abort with 'Bad Request'
@@ -716,7 +718,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: delete:my-post or delete:any-post
     @app.route("/users/all/<user_id>/posts", methods=["DELETE"])
     @requires_auth(config.db, ["delete:my-post", "delete:any-post"])
-    def delete_user_posts(token_payload: UserData, user_id: int):
+    async def delete_user_posts(token_payload: UserData, user_id: int):
         validator.check_type(user_id, "User ID")
 
         # If the user making the request isn't the same as the user
@@ -759,7 +761,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:user
     @app.route("/users/all/<user_id>/hugs", methods=["POST"])
     @requires_auth(config.db, ["read:user"])
-    def send_hug_to_user(token_payload: UserData, user_id: int):
+    async def send_hug_to_user(token_payload: UserData, user_id: int):
         validator.check_type(user_id, "User ID")
         user_to_hug: User = config.db.one_or_404(
             item_id=user_id,
@@ -805,7 +807,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:messages.
     @app.route("/messages")
     @requires_auth(config.db, ["read:messages"])
-    def get_user_messages(token_payload: UserData):
+    async def get_user_messages(token_payload: UserData):
         page = request.args.get("page", 1, type=int)
         type = request.args.get("type", "inbox", type=str)
         thread_id = request.args.get("threadID", None, type=int)
@@ -918,9 +920,9 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: post:message.
     @app.route("/messages", methods=["POST"])
     @requires_auth(config.db, ["post:message"])
-    def add_message(token_payload: UserData):
+    async def add_message(token_payload: UserData):
         # Gets the new message's data
-        message_data = json.loads(request.data)
+        message_data = json.loads(await request.data)
 
         # Checks that the user isn't trying to send a message from someone else
         if token_payload["id"] != message_data["fromId"]:
@@ -1012,7 +1014,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>/<item_id>", methods=["DELETE"])
     @requires_auth(config.db, ["delete:messages"])
-    def delete_thread(  # TODO: This should be renamed to delete_message
+    async def delete_thread(  # TODO: This should be renamed to delete_message
         token_payload: UserData,
         mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
         item_id: int,
@@ -1171,7 +1173,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>", methods=["DELETE"])
     @requires_auth(config.db, ["delete:messages"])
-    def clear_mailbox(
+    async def clear_mailbox(
         token_payload: UserData,
         mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
     ):
@@ -1355,7 +1357,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/reports")
     @requires_auth(config.db, ["read:admin-board"])
-    def get_open_reports(token_payload: UserData):
+    async def get_open_reports(token_payload: UserData):
         reports: dict[str, list[dict[str, Any]]] = {
             "User": [],
             "Post": [],
@@ -1396,8 +1398,8 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: post:report.
     @app.route("/reports", methods=["POST"])
     @requires_auth(config.db, ["post:report"])
-    def create_new_report(token_payload: UserData):
-        report_data = json.loads(request.data)
+    async def create_new_report(token_payload: UserData):
+        report_data = json.loads(await request.data)
 
         # Check the length adn  type of the report reason
         validator.check_length(report_data["reportReason"], "report")
@@ -1463,8 +1465,8 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/reports/<report_id>", methods=["PATCH"])
     @requires_auth(config.db, ["read:admin-board"])
-    def update_report_status(token_payload: UserData, report_id: int):
-        updated_report = json.loads(request.data)
+    async def update_report_status(token_payload: UserData, report_id: int):
+        updated_report = json.loads(await request.data)
         report: Report | None = config.db.session.scalar(
             select(Report).filter(Report.id == report_id)
         )
@@ -1515,7 +1517,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/filters")
     @requires_auth(config.db, ["read:admin-board"])
-    def get_filters(token_payload: UserData):
+    async def get_filters(token_payload: UserData):
         page = request.args.get("page", 1, type=int)
         words_per_page = 10
         filtered_words = config.db.paginate(
@@ -1538,8 +1540,8 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/filters", methods=["POST"])
     @requires_auth(config.db, ["read:admin-board"])
-    def add_filter(token_payload: UserData):
-        new_filter = json.loads(request.data)["word"]
+    async def add_filter(token_payload: UserData):
+        new_filter = json.loads(await request.data)["word"]
 
         # Check if the filter is empty; if it is, abort
         validator.check_length(new_filter, "Phrase to filter")
@@ -1564,7 +1566,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:admin-board.
     @app.route("/filters/<filter_id>", methods=["DELETE"])
     @requires_auth(config.db, ["read:admin-board"])
-    def delete_filter(token_payload: UserData, filter_id: int):
+    async def delete_filter(token_payload: UserData, filter_id: int):
         validator.check_type(filter_id, "Filter ID")
 
         # If there's no word in that index
@@ -1585,7 +1587,7 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications")
     @requires_auth(config.db, ["read:messages"])
-    def get_latest_notifications(token_payload: UserData):
+    async def get_latest_notifications(token_payload: UserData):
         silent_refresh = request.args.get("silentRefresh", True)
         user: User = config.db.one_or_404(
             item_id=token_payload["id"],
@@ -1629,14 +1631,16 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications", methods=["POST"])
     @requires_auth(config.db, ["read:messages"])
-    def add_notification_subscription(token_payload: UserData):
+    async def add_notification_subscription(token_payload: UserData):
+        request_data = await request.data
+
         # if the request is empty, return 204. This happens due to a bug
         # in the frontend that causes the request to be sent twice, once
         # with subscription data and once with an empty object
-        if not request.data:
+        if not request_data:
             return ("", 204)
 
-        subscription_json = request.data.decode("utf8").replace("'", '"')
+        subscription_json = request_data.decode("utf8").replace("'", '"')
         subscription_data = json.loads(subscription_json)
 
         # Create a new subscription object with the given data
@@ -1663,14 +1667,16 @@ def create_app(config: SAHConfig) -> Flask:
     # Authorization: read:messages.
     @app.route("/notifications/<sub_id>", methods=["PATCH"])
     @requires_auth(config.db, ["read:messages"])
-    def update_notification_subscription(token_payload: UserData, sub_id: int):
+    async def update_notification_subscription(token_payload: UserData, sub_id: int):
+        request_data = await request.data
+
         # if the request is empty, return 204. This happens due to a bug
         # in the frontend that causes the request to be sent twice, once
         # with subscription data and once with an empty object
-        if not request.data:
+        if not request_data:
             return ("", 204)
 
-        subscription_json = request.data.decode("utf8").replace("'", '"')
+        subscription_json = request_data.decode("utf8").replace("'", '"')
         subscription_data = json.loads(subscription_json)
         old_sub: NotificationSub = config.db.one_or_404(
             item_id=sub_id, item_type=NotificationSub

@@ -33,7 +33,7 @@ from datetime import datetime
 from jose import jwt, exceptions
 from urllib.request import urlopen
 from functools import wraps
-from flask import request
+from quart import request
 from sqlalchemy import select
 
 from models import User, SendADatabase
@@ -315,7 +315,7 @@ def requires_auth(db: SendADatabase, permission=[""]):
 
     def requires_auth_decorator(f):
         @wraps(f)
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             token = get_auth_header()
             payload = verify_jwt(token)
 
@@ -336,7 +336,7 @@ def requires_auth(db: SendADatabase, permission=[""]):
                 }
                 check_user_permissions(permission, current_user)
 
-            return f(returned_payload, *args, **kwargs)
+            return await f(returned_payload, *args, **kwargs)
 
         return wrapper
 
