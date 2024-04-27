@@ -71,10 +71,9 @@ def test_config():
 
 
 @pytest.fixture(scope="session")
-def app_client(test_config: SAHConfig, session_mocker: MockerFixture):
+def app_client(test_config: SAHConfig):
     """Get the test client for the test app"""
     app = create_app(config=test_config)
-    session_mocker.patch("pywebpush.webpush")
     yield app.test_client()
 
 
@@ -90,7 +89,7 @@ def db(test_config: SAHConfig):
 
 
 @pytest.fixture(scope="function")
-def test_db(db):
+def test_db(db, mocker: MockerFixture):
     """
     Generates the session to use in tests. Once tests are done, rolls
     back the transaction and closes the session. Also updates the values
@@ -111,6 +110,7 @@ def test_db(db):
     update_sequences(db)
 
     db.session.begin_nested()
+    mocker.patch("pywebpush.webpush")
 
     yield db
 
