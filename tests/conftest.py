@@ -78,7 +78,7 @@ def app_client(test_config: SAHConfig):
 
 @pytest.fixture(scope="session")
 def db(test_config: SAHConfig):
-    """Create a snapshot of the test database to restore between tests"""
+    """Creates the database and inserts the test data."""
     BaseModel.metadata.drop_all(test_config.db.engine)
     # create all tables
     BaseModel.metadata.create_all(test_config.db.engine)
@@ -89,7 +89,13 @@ def db(test_config: SAHConfig):
 
 @pytest.fixture(scope="function")
 def test_db(db):
-    """Restore the test database from the db snapshot"""
+    """
+    Generates the session to use in tests. Once tests are done, rolls
+    back the transaction and closes the session. Also updates the values
+    of all sequences.
+    Credit to gmassman; the code is mostly copied from
+    https://github.com/gmassman/fsa-rollback-per-test-example.
+    """
     connection = db.engine.connect()
     transaction = connection.begin_nested()
 
