@@ -134,9 +134,9 @@ async def create_roles(db: SendADatabase):
             *permissions[9:],
         ]
 
-        db.async_session.add_all([role_1, role_2, role_3, role_4])
+        db.async_session.add_all([role_1, role_2, role_3, role_4, role_5])
         await db.async_session.execute(
-            text("ALTER SEQUENCE roles_id_seq RESTART WITH 5;")
+            text("ALTER SEQUENCE roles_id_seq RESTART WITH 6;")
         )
         await db.async_session.commit()
     finally:
