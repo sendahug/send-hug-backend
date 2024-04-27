@@ -4,12 +4,13 @@ import json
 from datetime import datetime
 
 import pytest
-from sh import pg_restore, pg_dump  # type: ignore
+from pytest_mock import MockerFixture
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 from create_app import create_app
 from config import SAHConfig
 from models.models import BaseModel
-from tests.data_models import create_data, DATETIME_PATTERN
+from tests.data_models import create_data, DATETIME_PATTERN, update_sequences
 
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
 API_AUDIENCE = os.environ.get("API_AUDIENCE", "")
@@ -77,52 +78,49 @@ def app_client(test_config: SAHConfig):
 
 
 @pytest.fixture(scope="session")
-def setup_db_dump_file(test_config: SAHConfig):
-    """Create a snapshot of the test database to restore between tests"""
+def db(test_config: SAHConfig):
+    """Creates the database and inserts the test data."""
     BaseModel.metadata.drop_all(test_config.db.engine)
     # create all tables
     BaseModel.metadata.create_all(test_config.db.engine)
     create_data(test_config.db)
-    pg_dump(
-        "test_sah",
-        "-Fc",
-        "-c",
-        "-O",
-        "-x",
-        "-f",
-        "tests/capstone_db",
-        "-h",
-        "localhost",
-        "-p",
-        "5432",
-        "-U",
-        "postgres",
-    )
+
+    yield test_config.db
 
 
 @pytest.fixture(scope="function")
-def test_db(setup_db_dump_file, test_config: SAHConfig):
-    """Restore the test database from the db snapshot"""
-    pg_restore(
-        "-d",
-        "test_sah",
-        "tests/capstone_db",
-        "--clean",
-        "--if-exists",
-        "-Fc",
-        "--no-owner",
-        "-h",
-        "localhost",
-        "-p",
-        "5432",
-        "-U",
-        "postgres",
+def test_db(db, mocker: MockerFixture):
+    """
+    Generates the session to use in tests. Once tests are done, rolls
+    back the transaction and closes the session. Also updates the values
+    of all sequences.
+    Credit to gmassman; the code is mostly copied from
+    https://github.com/gmassman/fsa-rollback-per-test-example.
+    """
+    connection = db.engine.connect()
+    transaction = connection.begin_nested()
+
+    db.session_factory = sessionmaker(
+        bind=connection,
+        join_transaction_mode="create_savepoint",
     )
 
-    try:
-        yield test_config.db
-    finally:
-        test_config.db.session.close()
+    db.session = scoped_session(session_factory=db.session_factory)
+
+    update_sequences(db)
+
+    db.session.begin_nested()
+    mocker.patch("pywebpush.webpush")
+    mocker.patch("create_app.webpush")
+
+    yield db
+
+    # Delete the session
+    db.session.remove()
+
+    # Rollback the transaction and return the connection to the pool
+    transaction.rollback()
+    connection.close()
 
 
 @pytest.fixture
