@@ -766,6 +766,7 @@ async def test_user_hugs(app_client, test_db, user_headers):
         "/users/all/1/hugs", headers=user_headers["moderator"]
     )
     response_data = await response.get_json()
+    print(response_data)
 
     assert response_data["success"] is True
     assert response.status_code == 200
