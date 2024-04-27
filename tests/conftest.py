@@ -2,15 +2,17 @@ import os
 import urllib.request
 import json
 from datetime import datetime
+from asyncio import current_task
 
 import pytest
-from sh import pg_restore, pg_dump  # type: ignore
+from pytest_mock import MockerFixture
+from sqlalchemy.ext.asyncio import async_sessionmaker, async_scoped_session
 
 from create_app import create_app
 from config import SAHConfig
 from models.models import BaseModel
 from models import SendADatabase
-from tests.data_models import create_data, DATETIME_PATTERN
+from tests.data_models import create_data, DATETIME_PATTERN, update_sequences
 
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
 API_AUDIENCE = os.environ.get("API_AUDIENCE", "")
@@ -79,13 +81,12 @@ def app_client(test_config: SAHConfig):
 
 @pytest.fixture(scope="session")
 async def db(test_config: SAHConfig):
-    """Creates and drops the database before/after tests."""
+    """Creates the database and inserts the test data."""
     try:
         async with test_config.db.async_engine.begin() as conn:
             await conn.run_sync(BaseModel.metadata.drop_all)
             await conn.run_sync(BaseModel.metadata.create_all)
-
-        await create_data(test_config.db)
+            await create_data(test_config.db)
 
         yield test_config.db
 
@@ -94,49 +95,42 @@ async def db(test_config: SAHConfig):
             await conn.run_sync(BaseModel.metadata.drop_all)
 
 
-@pytest.fixture(scope="session")
-async def setup_db_dump_file(db: SendADatabase):
-    """Create a snapshot of the test database to restore between tests"""
-    pg_dump(
-        "test_sah",
-        "-Fc",
-        "-c",
-        "-O",
-        "-x",
-        "-f",
-        "tests/capstone_db",
-        "-h",
-        "localhost",
-        "-p",
-        "5432",
-        "-U",
-        "postgres",
+@pytest.fixture(scope="function")
+async def test_db(db: SendADatabase, mocker: MockerFixture):
+    """
+    Generates the session to use in tests. Once tests are done, rolls
+    back the transaction and closes the session. Also updates the values
+    of all sequences.
+    Credit to gmassman; the code is mostly copied from
+    https://github.com/gmassman/fsa-rollback-per-test-example.
+    """
+    connection = db.async_engine.connect()
+    transaction = connection.begin_nested()
+
+    db.async_session_factory = async_sessionmaker(
+        bind=connection,
+        expire_on_commit=False,
+        join_transaction_mode="create_savepoint",
     )
 
-    yield
-
-
-@pytest.fixture(scope="function", autouse=True)
-def test_db(db: SendADatabase, setup_db_dump_file):
-    """Restore the test database from the db snapshot"""
-    pg_restore(
-        "-d",
-        "test_sah",
-        "tests/capstone_db",
-        "--clean",
-        "--if-exists",
-        "-Fc",
-        "--no-owner",
-        "-h",
-        "localhost",
-        "-p",
-        "5432",
-        "-U",
-        "postgres",
+    db.async_session = async_scoped_session(
+        session_factory=db.async_session_factory, scopefunc=current_task
     )
 
-    # returns the db
+    await update_sequences(db)
+
+    db.async_session.begin_nested()
+    mocker.patch("pywebpush.webpush")
+    mocker.patch("create_app.webpush")
+
     yield db
+
+    # Delete the session
+    await db.async_session.remove()
+
+    # Rollback the transaction and return the connection to the pool
+    await transaction.rollback()
+    await connection.close()
 
 
 @pytest.fixture

@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Sequence
+import json
 
 from sqlalchemy import select, text
 
@@ -13,6 +14,7 @@ from models.models import (
     Notification,
     Filter,
     Role,
+    NotificationSub,
 )
 from models.db import SendADatabase
 
@@ -1664,7 +1666,91 @@ async def create_notifications(db: SendADatabase):
         await db.async_session.remove()
 
 
-# TODO: Add subscriptions
+async def create_subscriptions(db: SendADatabase):
+    """Creates the push subscriptions in the database"""
+    sub_1 = NotificationSub(
+        id=1,
+        user=1,
+        endpoint="https://fcm.googleapis.com/fcm/send/epyhl2GD",
+        subscription_data=json.dumps(
+            {
+                "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",
+                "expirationTime": None,
+                "keys": {"p256dh": "fdsfd", "auth": "dfs"},
+            }
+        ),
+    )
+    sub_2 = NotificationSub(
+        id=2,
+        user=5,
+        endpoint="https://fcm.googleapis.com/fcm/send/epyhl2GD",
+        subscription_data=json.dumps(
+            {
+                "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",
+                "expirationTime": None,
+                "keys": {"p256dh": "fdsfd", "auth": "dfs"},
+            }
+        ),
+    )
+    sub_3 = NotificationSub(
+        id=3,
+        user=4,
+        endpoint="https://fcm.googleapis.com/fcm/send/epyhl2GD",
+        subscription_data=json.dumps(
+            {
+                "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",
+                "expirationTime": None,
+                "keys": {"p256dh": "fdsfd", "auth": "dfs"},
+            }
+        ),
+    )
+
+    try:
+        db.async_session.add_all([sub_1, sub_2, sub_3])
+        await db.async_session.execute(
+            text("ALTER SEQUENCE subscriptions_id_seq RESTART WITH 4;")
+        )
+        await db.async_session.commit()
+    finally:
+        await db.async_session.close()
+
+
+async def update_sequences(db: SendADatabase):
+    """Updates the values of all sequences."""
+    try:
+        await db.async_session.execute(
+            text("ALTER SEQUENCE permissions_id_seq RESTART WITH 16;")
+        )
+        await db.async_session.execute(
+            text("ALTER SEQUENCE filters_id_seq RESTART WITH 3;")
+        )
+        await db.async_session.execute(
+            text("ALTER SEQUENCE roles_id_seq RESTART WITH 6;")
+        )
+        await db.async_session.execute(
+            text("ALTER SEQUENCE users_id_seq RESTART WITH 21;")
+        )
+        await db.async_session.execute(
+            text("ALTER SEQUENCE posts_id_seq RESTART WITH 46;")
+        )
+        await db.async_session.execute(
+            text("ALTER SEQUENCE messages_id_seq RESTART WITH 27;")
+        )
+        await db.async_session.execute(
+            text("ALTER SEQUENCE threads_id_seq RESTART WITH 9;")
+        )
+        await db.async_session.execute(
+            text("ALTER SEQUENCE reports_id_seq RESTART WITH 45;")
+        )
+        await db.async_session.execute(
+            text("ALTER SEQUENCE notifications_id_seq RESTART WITH 96;")
+        )
+        await db.async_session.execute(
+            text("ALTER SEQUENCE subscriptions_id_seq RESTART WITH 4;")
+        )
+        await db.async_session.commit()
+    finally:
+        await db.async_session.close()
 
 
 async def create_data(db: SendADatabase):
@@ -1678,6 +1764,6 @@ async def create_data(db: SendADatabase):
     await create_messages(db)
     await create_reports(db)
     await create_notifications(db)
-    # create_subscriptions(db)
+    await create_subscriptions(db)
 
     await db.async_session.remove()
