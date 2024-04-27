@@ -201,7 +201,7 @@ class SendADatabase:
 
     # CREATE
     # -----------------------------------------------------------------
-    async def async_add_object(self, obj: CoreSAHModel) -> CoreSAHModel:
+    async def async_add_object(self, obj: CoreSAHModel) -> DumpedModel:
         """
         Inserts a new record into the database.
 
@@ -212,7 +212,7 @@ class SendADatabase:
             self.async_session.add(obj)
             await self.async_session.commit()
 
-            return obj
+            return obj.format()
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.async_session.rollback()
@@ -248,7 +248,7 @@ class SendADatabase:
 
     # UPDATE
     # -----------------------------------------------------------------
-    async def async_update_object(self, obj: CoreSAHModel) -> CoreSAHModel:
+    async def async_update_object(self, obj: CoreSAHModel) -> DumpedModel:
         """
         Updates an existing record.
 
@@ -259,7 +259,7 @@ class SendADatabase:
             await self.async_session.commit()
             await self.async_session.refresh(obj)
 
-            return obj
+            return obj.format()
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.async_session.rollback()

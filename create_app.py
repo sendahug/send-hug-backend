@@ -249,9 +249,8 @@ def create_app(config: SAHConfig) -> Quart:
 
         # Try to add the post to the database
         added_post = await config.db.async_add_object(new_post)
-        formatted_post = added_post.format()
 
-        return jsonify({"success": True, "posts": formatted_post})
+        return jsonify({"success": True, "posts": added_post})
 
     # Endpoint: PATCH /posts/<post_id>
     # Description: Updates a post (either its text or its hugs) in the
@@ -300,7 +299,7 @@ def create_app(config: SAHConfig) -> Quart:
         # Try to update the database
         updated = await config.db.async_update_object(obj=original_post)
 
-        return jsonify({"success": True, "updated": updated.format()})
+        return jsonify({"success": True, "updated": updated})
 
     # Endpoint: POST /posts/<post_id>/hugs
     # Description: Sends a hug to a specific user.
@@ -525,11 +524,7 @@ def create_app(config: SAHConfig) -> Quart:
                 # Try to update the database
                 user_data = await config.db.async_update_object(user_data)
 
-        formatted_user_data = user_data.format()
-
-        print(jsonify({"success": True, "user": formatted_user_data}))
-
-        return jsonify({"success": True, "user": formatted_user_data})
+        return jsonify({"success": True, "user": user_data})
 
     # Endpoint: POST /users
     # Description: Adds a new user to the users table.
@@ -574,7 +569,7 @@ def create_app(config: SAHConfig) -> Quart:
         # Try to add the user to the database
         added_user = await config.db.async_add_object(new_user)
 
-        return jsonify({"success": True, "user": added_user.format()})
+        return jsonify({"success": True, "user": added_user})
 
     # Endpoint: PATCH /users/all/<user_id>
     # Description: Updates a user in the database.
@@ -685,7 +680,7 @@ def create_app(config: SAHConfig) -> Quart:
         # Try to update it in the database
         updated = await config.db.async_update_object(obj=user_to_update)
 
-        return jsonify({"success": True, "updated": updated.format()})
+        return jsonify({"success": True, "updated": updated})
 
     # Endpoint: GET /users/all/<user_id>/posts
     # Description: Gets a specific user's posts.
@@ -970,7 +965,7 @@ def create_app(config: SAHConfig) -> Quart:
             )
             # Try to create the new thread
             added_thread = await config.db.async_add_object(new_thread)
-            thread_id = added_thread.id
+            thread_id = added_thread["id"]
         # If there's a thread between the users
         else:
             thread_id = thread.id
@@ -1474,7 +1469,7 @@ def create_app(config: SAHConfig) -> Quart:
         added_report = await config.db.async_add_object(obj=report)
         await config.db.async_update_object(obj=reported_item)
 
-        return jsonify({"success": True, "report": added_report.format()})
+        return jsonify({"success": True, "report": added_report})
 
     # Endpoint: PATCH /reports/<report_id>
     # Description: Update the status of the report with the given ID.
@@ -1575,7 +1570,7 @@ def create_app(config: SAHConfig) -> Quart:
         filter = Filter(filter=new_filter.lower())
         added = await config.db.async_add_object(filter)
 
-        return jsonify({"success": True, "added": added.format()})
+        return jsonify({"success": True, "added": added})
 
     # Endpoint: DELETE /filters/<filter_id>
     # Description: Delete a word from the filtered words list.
@@ -1671,12 +1666,11 @@ def create_app(config: SAHConfig) -> Quart:
         # Try to add it to the database
         subscribed = token_payload["displayName"]
         sub = await config.db.async_add_object(subscription)
-        formatted_sub = sub.format()
 
         return {
             "success": True,
             "subscribed": subscribed,
-            "subId": formatted_sub["id"],
+            "subId": sub["id"],
         }
 
     # Endpoint: PATCH /notifications
