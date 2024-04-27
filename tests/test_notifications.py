@@ -37,7 +37,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_get_notifications_no_auth(app_client, test_db, user_headers):
     response = await app_client.get("/notifications")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -47,7 +47,7 @@ async def test_get_notifications_no_auth(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_get_notifications_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.get("/notifications", headers=user_headers["malformed"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -61,15 +61,15 @@ async def test_get_silent_notifications_as_user(
     pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
-    pre_user_data = json.loads(pre_user_query.data)["user"]
+    pre_user_data = json.loads(await pre_user_query.data)["user"]
     response = await app_client.get(
         "/notifications?silentRefresh=true", headers=user_headers["user"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     post_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
-    post_user_data = json.loads(post_user_query.data)["user"]
+    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -88,15 +88,15 @@ async def test_get_non_silent_notifications_as_user(
     pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
-    pre_user_data = json.loads(pre_user_query.data)["user"]
+    pre_user_data = json.loads(await pre_user_query.data)["user"]
     response = await app_client.get(
         "/notifications?silentRefresh=false", headers=user_headers["user"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     post_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
-    post_user_data = json.loads(post_user_query.data)["user"]
+    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -116,16 +116,16 @@ async def test_get_silent_notifications_as_mod(
         f"/users/all/{dummy_users_data['moderator']['auth0']}",
         headers=user_headers["moderator"],
     )
-    pre_user_data = json.loads(pre_user_query.data)["user"]
+    pre_user_data = json.loads(await pre_user_query.data)["user"]
     response = await app_client.get(
         "/notifications?silentRefresh=true", headers=user_headers["moderator"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     post_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['moderator']['auth0']}",
         headers=user_headers["moderator"],
     )
-    post_user_data = json.loads(post_user_query.data)["user"]
+    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -145,16 +145,16 @@ async def test_get_non_silent_notifications_as_mod(
         f"/users/all/{dummy_users_data['moderator']['auth0']}",
         headers=user_headers["moderator"],
     )
-    pre_user_data = json.loads(pre_user_query.data)["user"]
+    pre_user_data = json.loads(await pre_user_query.data)["user"]
     response = await app_client.get(
         "/notifications?silentRefresh=false", headers=user_headers["moderator"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     post_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['moderator']['auth0']}",
         headers=user_headers["moderator"],
     )
-    post_user_data = json.loads(post_user_query.data)["user"]
+    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -174,16 +174,16 @@ async def test_get_silent_notifications_as_admin(
         f"/users/all/{dummy_users_data['admin']['auth0']}",
         headers=user_headers["admin"],
     )
-    pre_user_data = json.loads(pre_user_query.data)["user"]
+    pre_user_data = json.loads(await pre_user_query.data)["user"]
     response = await app_client.get(
         "/notifications?silentRefresh=true", headers=user_headers["admin"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     post_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['admin']['auth0']}",
         headers=user_headers["admin"],
     )
-    post_user_data = json.loads(post_user_query.data)["user"]
+    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -203,16 +203,16 @@ async def test_get_non_silent_notifications_as_admin(
         f"/users/all/{dummy_users_data['admin']['auth0']}",
         headers=user_headers["admin"],
     )
-    pre_user_data = json.loads(pre_user_query.data)["user"]
+    pre_user_data = json.loads(await pre_user_query.data)["user"]
     response = await app_client.get(
         "/notifications?silentRefresh=false", headers=user_headers["admin"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     post_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['admin']['auth0']}",
         headers=user_headers["admin"],
     )
-    post_user_data = json.loads(post_user_query.data)["user"]
+    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -233,7 +233,7 @@ async def test_post_subscription_no_auth(
     response = await app_client.post(
         "/notifications", data=json.dumps(dummy_request_data["new_subscription"])
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -249,7 +249,7 @@ async def test_post_subscription_malformed_auth(
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["malformed"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -265,7 +265,7 @@ async def test_post_subscription_as_user(
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -283,7 +283,7 @@ async def test_post_subscription_as_mod(
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["moderator"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -301,7 +301,7 @@ async def test_post_subscription_as_admin(
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["admin"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -317,7 +317,7 @@ async def test_post_subscription_empty_data_as_admin(app_client, test_db, user_h
         data=None,
         headers=user_headers["admin"],
     )
-    response_data = response.data
+    response_data = await response.data
 
     assert response_data == bytes("", encoding="utf-8")
     assert response.status_code == 204
@@ -331,7 +331,7 @@ async def test_update_subscription_no_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
     # Create the subscription
-    app_client.post(
+    await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
@@ -342,7 +342,7 @@ async def test_update_subscription_no_auth(
     response = await app_client.patch(
         "/notifications/1", data=json.dumps(dummy_request_data["new_subscription"])
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -354,7 +354,7 @@ async def test_update_subscription_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
     # Create the subscription
-    app_client.post(
+    await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
@@ -367,7 +367,7 @@ async def test_update_subscription_malformed_auth(
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["malformed"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -379,7 +379,7 @@ async def test_update_subscription_as_user(
     app_client, test_db, user_headers, dummy_request_data
 ):
     # Create the subscription
-    app_client.post(
+    await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
@@ -392,7 +392,7 @@ async def test_update_subscription_as_user(
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -406,7 +406,7 @@ async def test_update_subscription_as_mod(
     app_client, test_db, user_headers, dummy_request_data
 ):
     # Create the subscription
-    app_client.post(
+    await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["moderator"],
@@ -419,7 +419,7 @@ async def test_update_subscription_as_mod(
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["moderator"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -433,7 +433,7 @@ async def test_update_subscription_as_admin(
     app_client, test_db, user_headers, dummy_request_data
 ):
     # Create the subscription
-    app_client.post(
+    await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["admin"],
@@ -446,7 +446,7 @@ async def test_update_subscription_as_admin(
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["admin"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -464,7 +464,7 @@ async def test_update_subscription_empty_data_as_admin(
         data=None,
         headers=user_headers["admin"],
     )
-    response_data = response.data
+    response_data = await response.data
 
     assert response_data == bytes("", encoding="utf-8")
     assert response.status_code == 204

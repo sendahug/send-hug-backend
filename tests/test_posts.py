@@ -38,7 +38,7 @@ async def test_send_post_no_auth(app_client, test_db, user_headers, dummy_reques
     response = await app_client.post(
         "/posts", data=json.dumps(dummy_request_data["new_post"])
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -54,7 +54,7 @@ async def test_send_post_malformed_auth(
         headers=user_headers["malformed"],
         data=json.dumps(dummy_request_data["new_post"]),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -70,7 +70,7 @@ async def test_send_post_as_user(
     response = await app_client.post(
         "/posts", headers=user_headers["user"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     response_post = response_data["posts"]
 
     assert response_data["success"] is True
@@ -88,7 +88,7 @@ async def test_send_post_as_mod(
     response = await app_client.post(
         "/posts", headers=user_headers["moderator"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     response_post = response_data["posts"]
 
     assert response_data["success"] is True
@@ -106,7 +106,7 @@ async def test_send_post_as_admin(
     response = await app_client.post(
         "/posts", headers=user_headers["admin"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     response_post = response_data["posts"]
 
     assert response_data["success"] is True
@@ -124,7 +124,7 @@ async def test_send_post_as_blocked(
     response = await app_client.post(
         "/posts", headers=user_headers["blocked"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -140,7 +140,7 @@ async def test_update_post_no_auth(
     response = await app_client.patch(
         "/posts/4", data=json.dumps(dummy_request_data["updated_post"])
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -156,7 +156,7 @@ async def test_update_post_malformed_auth(
         headers=user_headers["malformed"],
         data=json.dumps(dummy_request_data["updated_post"]),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -173,7 +173,7 @@ async def test_update_own_post_as_user(
     response = await app_client.patch(
         "/posts/4", headers=user_headers["user"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     post_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -192,7 +192,7 @@ async def test_update_other_users_post_as_user(
     response = await app_client.patch(
         "/posts/13", headers=user_headers["user"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -209,7 +209,7 @@ async def test_update_own_post_as_mod(
     response = await app_client.patch(
         "/posts/13", headers=user_headers["moderator"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     post_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -228,7 +228,7 @@ async def test_update_other_users_post_as_mod(
     response = await app_client.patch(
         "/posts/4", headers=user_headers["moderator"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     post_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -247,7 +247,7 @@ async def test_update_own_post_as_admin(
     response = await app_client.patch(
         "/posts/23", headers=user_headers["admin"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     post_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -266,7 +266,7 @@ async def test_update_other_users_post_as_admin(
     response = await app_client.patch(
         "/posts/4", headers=user_headers["admin"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     post_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -285,7 +285,7 @@ async def test_update_other_users_post_report_as_admin(
     response = await app_client.patch(
         "/posts/4", headers=user_headers["admin"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     post_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -303,7 +303,7 @@ async def test_update_nonexistent_post_as_admin(
     response = await app_client.patch(
         "/posts/100", headers=user_headers["admin"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -319,7 +319,7 @@ async def test_update_post_no_id_as_admin(
     response = await app_client.patch(
         "/posts/", headers=user_headers["admin"], data=json.dumps(post)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -331,7 +331,7 @@ async def test_update_post_no_id_as_admin(
 @pytest.mark.asyncio
 async def test_post_hugs_given_duplicate_hugs(app_client, test_db, user_headers):
     response = await app_client.post("/posts/1/hugs", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 409
@@ -341,7 +341,7 @@ async def test_post_hugs_given_duplicate_hugs(app_client, test_db, user_headers)
 @pytest.mark.asyncio
 async def test_post_hugs_post_no_existing(app_client, test_db, user_headers):
     response = await app_client.post("/posts/1000/hugs", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -351,7 +351,7 @@ async def test_post_hugs_post_no_existing(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_post_hugs(app_client, test_db, user_headers):
     response = await app_client.post("/posts/1/hugs", headers=user_headers["moderator"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -364,7 +364,7 @@ async def test_post_hugs(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_delete_post_no_auth(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/3")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -374,14 +374,13 @@ async def test_delete_post_no_auth(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_delete_post_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/3", headers=user_headers["malformed"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to delete the user's post
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "post_id, user",
     [
@@ -393,9 +392,10 @@ async def test_delete_post_malformed_auth(app_client, test_db, user_headers):
         (23, "admin"),
     ],
 )
+@pytest.mark.asyncio
 async def test_delete_own_post(app_client, test_db, user_headers, post_id, user):
     response = await app_client.delete(f"/posts/{post_id}", headers=user_headers[user])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -406,7 +406,7 @@ async def test_delete_own_post(app_client, test_db, user_headers, post_id, user)
 @pytest.mark.asyncio
 async def test_delete_other_users_post_as_user(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/12", headers=user_headers["user"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -416,7 +416,7 @@ async def test_delete_other_users_post_as_user(app_client, test_db, user_headers
 @pytest.mark.asyncio
 async def test_delete_other_users_post_as_mod(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/25", headers=user_headers["moderator"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -426,7 +426,7 @@ async def test_delete_other_users_post_as_mod(app_client, test_db, user_headers)
 @pytest.mark.asyncio
 async def test_delete_other_users_post_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/1", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -437,7 +437,7 @@ async def test_delete_other_users_post_as_admin(app_client, test_db, user_header
 @pytest.mark.asyncio
 async def test_delete_nonexistent_post_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/100", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -447,7 +447,7 @@ async def test_delete_nonexistent_post_as_admin(app_client, test_db, user_header
 @pytest.mark.asyncio
 async def test_delete_post_no_id_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -456,7 +456,6 @@ async def test_delete_post_no_id_as_admin(app_client, test_db, user_headers):
 # Get Posts by Type Tests ('posts/<type>', GET)
 # -------------------------------------------------------
 # Attempt to get page 1 of each full page
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "post_type",
     [
@@ -464,9 +463,10 @@ async def test_delete_post_no_id_as_admin(app_client, test_db, user_headers):
         ("suggested"),
     ],
 )
+@pytest.mark.asyncio
 async def test_get_full_posts_page_1(app_client, test_db, post_type):
     response = await app_client.get(f"/posts/{post_type}")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -475,7 +475,6 @@ async def test_get_full_posts_page_1(app_client, test_db, post_type):
 
 
 # Attempt to get page 2 of each full page
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "post_type",
     [
@@ -483,9 +482,10 @@ async def test_get_full_posts_page_1(app_client, test_db, post_type):
         ("suggested"),
     ],
 )
+@pytest.mark.asyncio
 async def test_get_full_posts_page_2(app_client, test_db, post_type):
     response = await app_client.get(f"/posts/{post_type}?page=2")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200

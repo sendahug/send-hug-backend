@@ -43,10 +43,10 @@ The project is open source, so feel free to use parts of the code. However, the 
     - PRIVATE_KEY - environment variable containing your private VAPID key (required for push notifications).
 9. Set up your frontend URI.
     - The frontend URI comes from an environment variable named **FRONTEND**.
-10. Update your database using ```flask db upgrade```
-11. Run flask with:
-    - ```export FLASK_APP=app.py```
-    - ```flask --debug run```
+10. Update your database using ```alembic upgrade head```
+11. Run Quart with:
+    - ```export QUART_APP=app.py```
+    - ```quart --debug run```
 
 ### Users
 
@@ -68,13 +68,13 @@ The app contains several files and folders:
 
 The site uses several tools to maximise compatibility:
 
-1. **Flask** - Flask is a microframework used to build and run the local server on which the app is running. For full Flask documentation, try the [Flask website](https://flask.palletsprojects.com/en/1.1.x/). Flask is a Python framework, so it requires installing Python (or Python3).
+1. **Quart** - Quart is a Python microframework used to build and run the local server on which the app is running. As Quart is an async reimplementation of Flask, its API is mostly the same as Flask's. For full Quart documentation, try the [Quart website](https://quart.palletsprojects.com/en/latest/).
 
-2. **Flask-SQLAlchemy** - This application uses the SQLAlchemy ORM in order to interact with the database, using the Flask-SQLAlchemy extension. You can read more about SQLAlchemy (including API documentation) on the [SQLAlchemy website](https://docs.sqlalchemy.org/en/13/), and about Flask-SQLAlchemy on the [Flask-SQLAlchemy website](https://flask-sqlalchemy.palletsprojects.com/en/2.x/).
+2. **SQLAlchemy** - This application uses the SQLAlchemy ORM in order to interact with the database. You can read more about SQLAlchemy (including API documentation) on the [SQLAlchemy website](https://docs.sqlalchemy.org/en/20/contents.html).
 
-3. **Flask-Migrate** - This application uses Flask-Migrate in order to manage model versions. You can read more on the [Flask-Migrate](https://flask-migrate.readthedocs.io/en/latest/) website.
+3. **Alembic** - This application uses Alembic, a database migration tool made by the SQLAlchemy team, in order to manage model versions. You can read more on the [Alembic docs](https://alembic.sqlalchemy.org).
 
-4. **Flask-CORS** - This application uses Flask-CORS in order to enable communication from the frontend. You can read more on the [Flask-CORS](https://flask-cors.readthedocs.io/en/latest/) website.
+4. **Quart-CORS** - This application uses Quart-CORS in order to enable communication from the frontend. You can read more about it in the [Quart-CORS repository](https://github.com/pgjones/quart-cors).
 
 5. **Python-Jose** - This application uses Python-Jose in order to decode and verify the authenticity of a given JWT (see Contents -> auth.py). You can read more on the [Python-Jose](https://python-jose.readthedocs.io/en/latest/) website.
 
@@ -166,7 +166,7 @@ The project was hosted live on Heroku (we're currently looking at alternatives, 
     - CLIENT_ID - set with your own client ID from Auth0
     - FRONTEND - set with your own frontend URL (necessary for setting up CORS!)
     - PRIVATE_KEY - The private VAPID key (required for sending push notifications).
-  9. Enter `flask db upgrade` to trigger database migrations and bring your live database up to date.
+  9. Enter `alembic upgrade head` to trigger database migrations and bring your live database up to date.
   10. All done! Now you can visit your <GIT_URL> to see the live app.
 
 ## Known Issues

@@ -115,6 +115,7 @@ async def create_roles(db: SendADatabase):
     role_2 = Role(id=2, name="moderator")
     role_3 = Role(id=3, name="user")
     role_4 = Role(id=4, name="new user")
+    role_5 = Role(id=5, name="blocked user")
 
     try:
         permissions_scalars = await db.async_session.scalars(
@@ -126,6 +127,12 @@ async def create_roles(db: SendADatabase):
         role_2.permissions = [*permissions[2:4], *permissions[5:8], *permissions[9:13]]
         role_3.permissions = [permissions[2], *permissions[5:8], *permissions[9:14]]
         role_4.permissions = [permissions[2], *permissions[5:7], *permissions[9:]]
+        role_5.permissions = [
+            permissions[2],
+            permissions[5],
+            permissions[7],
+            *permissions[9:],
+        ]
 
         db.async_session.add_all([role_1, role_2, role_3, role_4])
         await db.async_session.execute(
@@ -235,7 +242,7 @@ async def create_users(db: SendADatabase):
         icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
-        role_id=3,
+        role_id=5,
     )
 
     try:

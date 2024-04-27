@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### 2024-04-27
+
+#### Changes
+
+- Replaced Flask with Quart as the primary framework powering the back-end. This includes:
+	- Replaced Flask-CORS with Quart-cors to handle cross-origin resource sharing.
+	- All endpoints, as well as the `requires_auth` decorator, now use the async/await pattern. ([#615](https://github.com/sendahug/send-hug-backend/pull/615))
+
+#### Chores
+
+- Added pytest-asyncio and updated all tests to use the async/await pattern as well (since the test client's HTTP-based methods and the request's data both return a coroutine). ([#615](https://github.com/sendahug/send-hug-backend/pull/615))
+
+### 2024-04-25
+
+#### Changes
+
+- The blocking and unblocking process for users now changes the user's role to a 'blocked user'/'user' when blocking/unblocking (respectively) users. This means we can use the regular authorisation check in the POST '/posts' endpoint instead of adding an extra check for whether a user is blocked. ([#614](https://github.com/sendahug/send-hug-backend/pull/614))
+
 ### 2024-04-23
 
 #### Features

@@ -36,7 +36,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_get_open_reports_no_auth(app_client, test_db, user_headers):
     response = await app_client.get("/reports")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -46,7 +46,7 @@ async def test_get_open_reports_no_auth(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_get_open_reports_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.get("/reports", headers=user_headers["malformed"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -56,7 +56,7 @@ async def test_get_open_reports_malformed_auth(app_client, test_db, user_headers
 @pytest.mark.asyncio
 async def test_get_open_reports_as_user(app_client, test_db, user_headers):
     response = await app_client.get("/reports", headers=user_headers["user"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -66,7 +66,7 @@ async def test_get_open_reports_as_user(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_get_open_reports_as_mod(app_client, test_db, user_headers):
     response = await app_client.get("/reports", headers=user_headers["moderator"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -76,7 +76,7 @@ async def test_get_open_reports_as_mod(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_get_open_reports_as_admin(app_client, test_db, user_headers):
     response = await app_client.get("/reports", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -96,7 +96,7 @@ async def test_send_report_no_auth(
     response = await app_client.post(
         "/reports", data=json.dumps(dummy_request_data["new_report"])
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -112,7 +112,7 @@ async def test_send_report_malformed_auth(
         headers=user_headers["malformed"],
         data=json.dumps(dummy_request_data["new_report"]),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -130,7 +130,7 @@ async def test_send_report_as_user(
     response = await app_client.post(
         "/reports", headers=user_headers["user"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     response_report = response_data["report"]
 
     assert response_data["success"] is True
@@ -151,7 +151,7 @@ async def test_send_report_as_mod(
     response = await app_client.post(
         "/reports", headers=user_headers["moderator"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     response_report = response_data["report"]
 
     assert response_data["success"] is True
@@ -172,7 +172,7 @@ async def test_send_report_as_admin(
     response = await app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     response_report = response_data["report"]
 
     assert response_data["success"] is True
@@ -193,7 +193,7 @@ async def test_send_malformed_report_as_admin(
     response = await app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 422
@@ -211,7 +211,7 @@ async def test_send_report_nonexistent_post_as_admin(
     response = await app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -228,7 +228,7 @@ async def test_send_user_report_as_admin(
     response = await app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     response_report = response_data["report"]
 
     assert response_data["success"] is True
@@ -248,7 +248,7 @@ async def test_send_user_report_nonexistent_user_as_admin(
     response = await app_client.post(
         "/reports", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -264,7 +264,7 @@ async def test_update_report_no_auth(
     response = await app_client.patch(
         "/reports/36", data=json.dumps(dummy_request_data["new_report"])
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -280,7 +280,7 @@ async def test_update_report_malformed_auth(
         headers=user_headers["malformed"],
         data=json.dumps(dummy_request_data["new_report"]),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -298,7 +298,7 @@ async def test_update_report_as_user(
     response = await app_client.patch(
         "/reports/36", headers=user_headers["user"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -316,7 +316,7 @@ async def test_update_report_as_mod(
     response = await app_client.patch(
         "/reports/36", headers=user_headers["moderator"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -337,7 +337,7 @@ async def test_update_report_as_admin(
     response = await app_client.patch(
         "/reports/36", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     report_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -359,7 +359,7 @@ async def test_update_user_report_as_admin(
     response = await app_client.patch(
         "/reports/35", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     report_text = response_data["updated"]
 
     assert response_data["success"] is True
@@ -383,7 +383,7 @@ async def test_update_no_id_report_as_admin(
     response = await app_client.patch(
         "/reports/", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -404,7 +404,7 @@ async def test_update_nonexistent_report_as_admin(
     response = await app_client.patch(
         "/reports/100", headers=user_headers["admin"], data=json.dumps(report)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404

@@ -36,14 +36,13 @@ import pytest
 @pytest.mark.asyncio
 async def test_get_filters_no_auth(app_client, test_db):
     response = await app_client.get("/filters")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to get filters without permission
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "user, status_code",
     [
@@ -55,11 +54,12 @@ async def test_get_filters_no_auth(app_client, test_db):
         ("moderator", 403),
     ],
 )
+@pytest.mark.asyncio
 async def test_get_filters_auth_error(
     app_client, test_db, user_headers, user, status_code
 ):
     response = await app_client.get("/filters", headers=user_headers[user])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == status_code
@@ -69,7 +69,7 @@ async def test_get_filters_auth_error(
 @pytest.mark.asyncio
 async def test_get_filters_as_admin(app_client, test_db, user_headers):
     response = await app_client.get("/filters", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -83,14 +83,13 @@ async def test_get_filters_as_admin(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_create_filters_no_auth(app_client, test_db, user_headers):
     response = await app_client.post("/filters", data=json.dumps({"word": "sample"}))
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to get filters without permission
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "user, status_code",
     [
@@ -102,6 +101,7 @@ async def test_create_filters_no_auth(app_client, test_db, user_headers):
         ("moderator", 403),
     ],
 )
+@pytest.mark.asyncio
 async def test_create_filters_auth_error(
     app_client, test_db, user_headers, user, status_code
 ):
@@ -110,7 +110,7 @@ async def test_create_filters_auth_error(
         headers=user_headers[user],
         data=json.dumps({"word": "sample"}),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == status_code
@@ -122,7 +122,7 @@ async def test_create_filters_as_admin(app_client, test_db, user_headers):
     response = await app_client.post(
         "/filters", headers=user_headers["admin"], data=json.dumps({"word": "sample"})
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     added_word = response_data["added"]
 
     assert response_data["success"] is True
@@ -134,11 +134,13 @@ async def test_create_filters_as_admin(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_create_duplicate_filters_as_admin(app_client, test_db, user_headers):
     filter = {"word": "sample"}
-    app_client.post("/filters", headers=user_headers["admin"], data=json.dumps(filter))
+    await app_client.post(
+        "/filters", headers=user_headers["admin"], data=json.dumps(filter)
+    )
     response = await app_client.post(
         "/filters", headers=user_headers["admin"], data=json.dumps(filter)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 409
@@ -150,14 +152,13 @@ async def test_create_duplicate_filters_as_admin(app_client, test_db, user_heade
 @pytest.mark.asyncio
 async def test_delete_filters_no_auth(app_client, test_db, user_headers):
     response = await app_client.delete("/filters/1")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to get filters without permission
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "user, status_code",
     [
@@ -169,11 +170,12 @@ async def test_delete_filters_no_auth(app_client, test_db, user_headers):
         ("moderator", 403),
     ],
 )
+@pytest.mark.asyncio
 async def test_delete_filters_auth_error(
     app_client, test_db, user_headers, user, status_code
 ):
     response = await app_client.delete("/filters/1", headers=user_headers[user])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == status_code
@@ -184,7 +186,7 @@ async def test_delete_filters_auth_error(
 async def test_delete_filters_as_admin(app_client, test_db, user_headers):
     # Delete the filter
     response = await app_client.delete("/filters/2", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     deleted = response_data["deleted"]
 
     assert response_data["success"] is True
@@ -196,7 +198,7 @@ async def test_delete_filters_as_admin(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_delete_nonexistent_filters_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete("/filters/100", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404

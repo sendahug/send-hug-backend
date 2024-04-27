@@ -36,14 +36,13 @@ import pytest
 @pytest.mark.asyncio
 async def test_get_user_list_no_auth(app_client, test_db, user_headers):
     response = await app_client.get("/users/blocked")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to get list of users with
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "user, error_code",
     [
@@ -55,11 +54,12 @@ async def test_get_user_list_no_auth(app_client, test_db, user_headers):
         ("moderator", 403),
     ],
 )
+@pytest.mark.asyncio
 async def test_get_user_list_auth_error(
     app_client, test_db, user_headers, user, error_code
 ):
     response = await app_client.get("/users/blocked", headers=user_headers[user])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == error_code
@@ -69,7 +69,7 @@ async def test_get_user_list_auth_error(
 @pytest.mark.asyncio
 async def test_get_user_list_as_admin(app_client, test_db, user_headers):
     response = await app_client.get("/users/blocked", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -80,7 +80,7 @@ async def test_get_user_list_as_admin(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_get_user_list_unsupported_type(app_client, test_db, user_headers):
     response = await app_client.get("/users/meow", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 500
@@ -92,7 +92,7 @@ async def test_get_user_list_unsupported_type(app_client, test_db, user_headers)
 @pytest.mark.asyncio
 async def test_get_user_data_no_auth(app_client, test_db, user_headers):
     response = await app_client.get("/users/all/1")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -102,7 +102,7 @@ async def test_get_user_data_no_auth(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_get_user_data_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.get("/users/all/1", headers=user_headers["malformed"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -116,7 +116,7 @@ async def test_get_user_data_as_user(
     response = await app_client.get(
         f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     user_data = response_data["user"]
 
     assert response_data["success"] is True
@@ -133,7 +133,7 @@ async def test_get_user_data_as_mod(
         f"/users/all/{dummy_users_data['moderator']['auth0']}",
         headers=user_headers["moderator"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     user_data = response_data["user"]
 
     assert response_data["success"] is True
@@ -150,7 +150,7 @@ async def test_get_user_data_as_admin(
         f"/users/all/{dummy_users_data['admin']['auth0']}",
         headers=user_headers["admin"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     user_data = response_data["user"]
 
     assert response_data["success"] is True
@@ -162,7 +162,7 @@ async def test_get_user_data_as_admin(
 @pytest.mark.asyncio
 async def test_get_nonexistent_user_as_admin(app_client, test_db, user_headers):
     response = await app_client.get("/users/all/100", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -172,7 +172,7 @@ async def test_get_nonexistent_user_as_admin(app_client, test_db, user_headers):
 @pytest.mark.asyncio
 async def test_get_user_no_id_as_admin(app_client, test_db, user_headers):
     response = await app_client.get("/users/all/", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -188,7 +188,7 @@ async def test_create_user_no_auth(
     response = await app_client.post(
         "/users", data=json.dumps(dummy_request_data["new_user"])
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -204,7 +204,7 @@ async def test_create_user_malformed_auth(
         headers=user_headers["malformed"],
         data=json.dumps(dummy_request_data["new_user"]),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -220,7 +220,7 @@ async def test_create_user_as_user(
         headers=user_headers["user"],
         data=json.dumps(dummy_request_data["new_user"]),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -236,7 +236,7 @@ async def test_create_user_as_moderator(
         headers=user_headers["moderator"],
         data=json.dumps(dummy_request_data["new_user"]),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -252,7 +252,7 @@ async def test_create_user_as_damin(
         headers=user_headers["admin"],
         data=json.dumps(dummy_request_data["new_user"]),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -272,7 +272,7 @@ async def test_create_different_user_as_new_user(
         headers=user_headers["blocked"],
         data=json.dumps(dummy_request_data["new_user"]),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 422
@@ -288,7 +288,7 @@ async def test_update_user_no_auth(
     response = await app_client.patch(
         "/users/all/1", data=json.dumps(dummy_request_data["updated_user"])
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -304,7 +304,7 @@ async def test_update_user_malformed_auth(
         headers=user_headers["malformed"],
         data=json.dumps(dummy_request_data["updated_user"]),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -323,7 +323,7 @@ async def test_update_user_as_user(
         headers=user_headers["user"],
         data=json.dumps(user),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     updated = response_data["updated"]
 
     assert response_data["success"] is True
@@ -343,7 +343,7 @@ async def test_update_other_users_display_name_as_user(
         headers=user_headers["user"],
         data=json.dumps(user),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -361,7 +361,7 @@ async def test_update_block_user_as_user(
         headers=user_headers["user"],
         data=json.dumps(user),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -380,7 +380,7 @@ async def test_update_user_as_mod(
         headers=user_headers["moderator"],
         data=json.dumps(user),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     updated = response_data["updated"]
 
     assert response_data["success"] is True
@@ -400,7 +400,7 @@ async def test_update_other_users_display_name_as_mod(
         headers=user_headers["moderator"],
         data=json.dumps(user),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -418,7 +418,7 @@ async def test_update_block_user_as_mod(
         headers=user_headers["moderator"],
         data=json.dumps(user),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -437,7 +437,7 @@ async def test_update_user_as_admin(
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     updated = response_data["updated"]
 
     assert response_data["success"] is True
@@ -458,7 +458,7 @@ async def test_update_other_user_as_admin(
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     updated = response_data["updated"]
 
     assert response_data["success"] is True
@@ -478,7 +478,7 @@ async def test_update_block_user_as_admin(
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     updated = response_data["updated"]
 
     assert response_data["success"] is True
@@ -500,7 +500,7 @@ async def test_update_user_settings_as_admin(
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -516,7 +516,7 @@ async def test_update_no_id_user_as_admin(
         headers=user_headers["admin"],
         data=json.dumps(dummy_request_data["updated_user"]),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -537,7 +537,7 @@ async def test_update_admin_settings_as_admin(
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     updated = response_data["updated"]
 
     assert response_data["success"] is True
@@ -562,13 +562,13 @@ async def test_update_admin_settings_as_admin_invalid_settings(
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     get_response = await app_client.get(
         f"/users/all/{dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
     )
-    get_response_data = json.loads(get_response.data)
+    get_response_data = await get_response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 422
@@ -581,7 +581,7 @@ async def test_update_admin_settings_as_admin_invalid_settings(
 @pytest.mark.asyncio
 async def test_get_user_posts_no_auth(app_client, test_db, user_headers):
     response = await app_client.get("/users/all/1/posts")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -593,7 +593,7 @@ async def test_get_user_posts_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.get(
         "/users/all/1/posts", headers=user_headers["malformed"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -612,13 +612,14 @@ async def test_get_user_posts_malformed_auth(app_client, test_db, user_headers):
         (5, "admin", 1, 2),
     ],
 )
+@pytest.mark.asyncio
 async def test_get_user_posts(
     app_client, test_db, user_headers, user_id, user, total_pages, posts_num
 ):
     response = await app_client.get(
         f"/users/all/{user_id}/posts", headers=user_headers[user]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -633,7 +634,7 @@ async def test_get_user_posts(
 @pytest.mark.asyncio
 async def test_delete_posts_no_auth(app_client, test_db, user_headers):
     response = await app_client.delete("/users/all/1/posts")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -645,14 +646,13 @@ async def test_delete_posts_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.delete(
         "/users/all/1/posts", headers=user_headers["malformed"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
 
 
 # Attempt to delete the user's posts
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "user_id, user, deleted_post",
     [
@@ -664,18 +664,19 @@ async def test_delete_posts_malformed_auth(app_client, test_db, user_headers):
         (4, "admin", 14),
     ],
 )
+@pytest.mark.asyncio
 async def test_delete_own_posts(
     app_client, test_db, user_headers, user_id, user, deleted_post
 ):
     response = await app_client.delete(
         f"/users/all/{user_id}/posts", headers=user_headers[user]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     get_response = await app_client.get(
         f"/users/all/{user_id}/posts", headers=user_headers[user]
     )
-    get_response_data = json.loads(get_response.data)
+    get_response_data = await get_response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -684,7 +685,6 @@ async def test_delete_own_posts(
 
 
 # Attempt to delete another user's posts without permission
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "user_id, user",
     [
@@ -694,13 +694,14 @@ async def test_delete_own_posts(
         (1, "moderator"),
     ],
 )
+@pytest.mark.asyncio
 async def test_delete_other_users_posts_no_permission(
     app_client, test_db, user_headers, user_id, user
 ):
     response = await app_client.delete(
         f"/users/all/{user_id}/posts", headers=user_headers[user]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -712,7 +713,7 @@ async def test_delete_other_users_posts_as_admin(app_client, test_db, user_heade
     response = await app_client.delete(
         "/users/all/5/posts", headers=user_headers["admin"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -727,7 +728,7 @@ async def test_delete_nonexistent_users_posts_as_admin(
     response = await app_client.delete(
         "/users/all/100/posts", headers=user_headers["admin"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -739,7 +740,7 @@ async def test_delete_nonexistent_posts_as_admin(app_client, test_db, user_heade
     response = await app_client.delete(
         "/users/all/9/posts", headers=user_headers["admin"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -753,7 +754,7 @@ async def test_user_hugs_post_no_existing(app_client, test_db, user_headers):
     response = await app_client.post(
         "/users/all/1000/hugs", headers=user_headers["admin"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -765,7 +766,7 @@ async def test_user_hugs(app_client, test_db, user_headers):
     response = await app_client.post(
         "/users/all/1/hugs", headers=user_headers["moderator"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200

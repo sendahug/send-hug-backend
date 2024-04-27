@@ -36,7 +36,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_get_user_messages_no_auth(app_client, test_db, user_headers):
     response = await app_client.get("/messages?userID=1")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -48,7 +48,7 @@ async def test_get_user_messages_malformed_auth(app_client, test_db, user_header
     response = await app_client.get(
         "/messages?userID=1", headers=user_headers["malformed"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -63,7 +63,7 @@ async def test_get_user_inbox_as_user(
         f"/messages?userID={dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -81,7 +81,7 @@ async def test_get_user_outbox_as_user(
         f"/messages?type=outbox&userID={dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -99,7 +99,7 @@ async def test_get_user_threads_as_user(
         f"/messages?type=threads&userID={dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -117,7 +117,7 @@ async def test_get_another_users_messages_as_user(
         f"/messages?userID={dummy_users_data['moderator']['internal']}",
         headers=user_headers["user"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -132,7 +132,7 @@ async def test_get_user_inbox_as_mod(
         f"/messages?userID={dummy_users_data['moderator']['internal']}",
         headers=user_headers["moderator"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -150,7 +150,7 @@ async def test_get_user_outbox_as_mod(
         f"/messages?type=outbox&userID={dummy_users_data['moderator']['internal']}",
         headers=user_headers["moderator"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -168,7 +168,7 @@ async def test_get_user_threads_as_mod(
         f"/messages?type=threads&userID={dummy_users_data['moderator']['internal']}",
         headers=user_headers["moderator"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -186,7 +186,7 @@ async def test_get_another_users_messages_as_mod(
         f"/messages?userID={dummy_users_data['admin']['internal']}",
         headers=user_headers["moderator"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -201,7 +201,7 @@ async def test_get_user_inbox_as_admin(
         f"/messages?userID={dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -219,7 +219,7 @@ async def test_get_user_outbox_as_admin(
         f"/messages?type=outbox&userID={dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -237,7 +237,7 @@ async def test_get_user_threads_as_admin(
         f"/messages?type=threads&userID={dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -255,7 +255,7 @@ async def test_get_another_users_messages_as_admin(
         f"/messages?userID={dummy_users_data['user']['internal']}",
         headers=user_headers["admin"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -265,7 +265,7 @@ async def test_get_another_users_messages_as_admin(
 @pytest.mark.asyncio
 async def test_get_no_id_user_messages_as_admin(app_client, test_db, user_headers):
     response = await app_client.get("/messages", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 400
@@ -278,7 +278,7 @@ async def get_other_users_thread_as_admin(app_client, test_db, user_headers):
         "/messages?userID=4&type=thread&threadID=2",
         headers=user_headers["admin"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -294,7 +294,7 @@ async def get_nonexistent_thread_as_admin(
         "&type=thread&threadID=200",
         headers=user_headers["admin"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -310,7 +310,7 @@ async def test_send_message_no_auth(
     response = await app_client.post(
         "/messages", data=json.dumps(dummy_request_data["new_message"])
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -326,7 +326,7 @@ async def test_send_message_malformed_auth(
         headers=user_headers["malformed"],
         data=json.dumps(dummy_request_data["new_message"]),
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -343,7 +343,7 @@ async def test_send_message_as_user(
     response = await app_client.post(
         "/messages", headers=user_headers["user"], data=json.dumps(message)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     response_message = response_data["message"]
 
     assert response_data["success"] is True
@@ -362,7 +362,7 @@ async def test_send_message_from_another_user_as_user(
     response = await app_client.post(
         "/messages", headers=user_headers["user"], data=json.dumps(message)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -379,7 +379,7 @@ async def test_send_message_as_mod(
     response = await app_client.post(
         "/messages", headers=user_headers["moderator"], data=json.dumps(message)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     response_message = response_data["message"]
 
     assert response_data["success"] is True
@@ -398,7 +398,7 @@ async def test_send_message_from_another_user_as_mod(
     response = await app_client.post(
         "/messages", headers=user_headers["moderator"], data=json.dumps(message)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -415,7 +415,7 @@ async def test_send_message_as_admin(
     response = await app_client.post(
         "/messages", headers=user_headers["admin"], data=json.dumps(message)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     response_message = response_data["message"]
 
     assert response_data["success"] is True
@@ -434,7 +434,7 @@ async def test_send_message_from_another_user_as_admin(
     response = await app_client.post(
         "/messages", headers=user_headers["admin"], data=json.dumps(message)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -451,12 +451,12 @@ async def test_send_message_existing_thread_as_user(
     response = await app_client.post(
         "/messages", headers=user_headers["blocked"], data=json.dumps(message)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     response_message = response_data["message"]
     new_thread = await app_client.get(
         "/messages?userID=20&type=thread&threadID=7", headers=user_headers["blocked"]
     )
-    new_thread_data = json.loads(new_thread.data)
+    new_thread_data = await new_thread.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -475,14 +475,14 @@ async def test_send_message_create_thread(
     response = await app_client.post(
         "/messages", headers=user_headers["admin"], data=json.dumps(message)
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     response_message = response_data["message"]
     new_thread = await app_client.get(
         f"/messages?userID={dummy_users_data['admin']['internal']}"
         "&type=thread&threadID=9",
         headers=user_headers["admin"],
     )
-    new_thread_data = json.loads(new_thread.data)
+    new_thread_data = await new_thread.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -497,7 +497,7 @@ async def test_send_message_create_thread(
 @pytest.mark.asyncio
 async def test_delete_message_no_auth(app_client, test_db, user_headers):
     response = await app_client.delete("/messages/inbox/1")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -509,7 +509,7 @@ async def test_delete_message_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.delete(
         "/messages/inbox/1", headers=user_headers["malformed"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -521,7 +521,7 @@ async def test_delete_message_as_user(app_client, test_db, user_headers):
     response = await app_client.delete(
         "/messages/inbox/3", headers=user_headers["user"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -536,7 +536,7 @@ async def test_delete_message_from_another_user_as_user(
     response = await app_client.delete(
         "/messages/inbox/7", headers=user_headers["user"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -548,12 +548,12 @@ async def test_delete_thread_as_user(app_client, test_db, user_headers):
     response = await app_client.delete(
         "/messages/threads/2", headers=user_headers["user"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
     get_thread = await app_client.get(
         "/messages?userID=1&type=thread&threadID=2",
         headers=user_headers["user"],
     )
-    thread_data = json.loads(get_thread.data)
+    thread_data = await get_thread.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -567,7 +567,7 @@ async def test_delete_message_as_mod(app_client, test_db, user_headers):
     response = await app_client.delete(
         "/messages/inbox/5", headers=user_headers["moderator"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -582,7 +582,7 @@ async def test_delete_message_from_another_user_as_mod(
     response = await app_client.delete(
         "/messages/outbox/9", headers=user_headers["moderator"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -594,7 +594,7 @@ async def test_delete_message_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete(
         "/messages/outbox/10", headers=user_headers["admin"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -609,7 +609,7 @@ async def test_delete_message_from_another_user_as_admin(
     response = await app_client.delete(
         "/messages/outbox/3", headers=user_headers["admin"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -619,7 +619,7 @@ async def test_delete_message_from_another_user_as_admin(
 @pytest.mark.asyncio
 async def test_delete_no_id_user_message_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete("/messages/", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -633,7 +633,7 @@ async def test_delete_nonexistent_user_message_as_admin(
     response = await app_client.delete(
         "/messages/inbox/100", headers=user_headers["admin"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -645,7 +645,7 @@ async def test_delete_message_without_id_admin(app_client, test_db, user_headers
     response = await app_client.delete(
         "/messages/inbox/", headers=user_headers["admin"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -657,7 +657,7 @@ async def test_delete_message_without_id_admin(app_client, test_db, user_headers
 @pytest.mark.asyncio
 async def test_empty_mailbox_no_auth(app_client, test_db, user_headers):
     response = await app_client.delete("/messages/inbox?userID=4")
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -669,7 +669,7 @@ async def test_empty_mailbox_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.delete(
         "/messages/inbox?userID=4", headers=user_headers["malformed"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 401
@@ -684,13 +684,13 @@ async def test_empty_mailbox_as_user(
         f"/messages/inbox?userID={dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     get_response = await app_client.get(
         f"/messages?type=inbox&userID={dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
     )
-    get_response_data = json.loads(get_response.data)
+    get_response_data = await get_response.get_json()
     print(get_response_data)
 
     assert response_data["success"] is True
@@ -706,7 +706,7 @@ async def test_empty_other_users_mailbox_as_user(app_client, test_db, user_heade
     response = await app_client.delete(
         "/messages/inbox?userID=4", headers=user_headers["user"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -721,7 +721,7 @@ async def test_empty_mailbox_as_mod(
         f"/messages/outbox?userID={dummy_users_data['moderator']['internal']}",
         headers=user_headers["moderator"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -735,7 +735,7 @@ async def test_empty_other_users_mailbox_as_mod(app_client, test_db, user_header
     response = await app_client.delete(
         "/messages/outbox?userID=1", headers=user_headers["moderator"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -750,7 +750,7 @@ async def test_empty_mailbox_as_admin(
         f"/messages/threads?userID={dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
@@ -764,7 +764,7 @@ async def test_empty_other_users_mailbox_as_admin(app_client, test_db, user_head
     response = await app_client.delete(
         "/messages/threads?userID=5", headers=user_headers["admin"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 403
@@ -774,7 +774,7 @@ async def test_empty_other_users_mailbox_as_admin(app_client, test_db, user_head
 @pytest.mark.asyncio
 async def test_empty_mailbox_type_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete("/messages/", headers=user_headers["admin"])
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
@@ -786,7 +786,7 @@ async def test_empty_mailbox_id_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete(
         "/messages/threads?userID=", headers=user_headers["admin"]
     )
-    response_data = json.loads(await response.data)
+    response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 400
