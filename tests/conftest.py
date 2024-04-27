@@ -82,7 +82,10 @@ async def db(test_config: SAHConfig):
     """Creates and drops the database before/after tests."""
     try:
         async with test_config.db.async_engine.begin() as conn:
+            await conn.run_sync(BaseModel.metadata.drop_all)
             await conn.run_sync(BaseModel.metadata.create_all)
+
+        await create_data(test_config.db)
 
         yield test_config.db
 
@@ -94,8 +97,6 @@ async def db(test_config: SAHConfig):
 @pytest.fixture(scope="session")
 async def setup_db_dump_file(db: SendADatabase):
     """Create a snapshot of the test database to restore between tests"""
-    await create_data(db)
-
     pg_dump(
         "test_sah",
         "-Fc",
@@ -112,11 +113,11 @@ async def setup_db_dump_file(db: SendADatabase):
         "postgres",
     )
 
-    yield db
+    yield
 
 
 @pytest.fixture(scope="function", autouse=True)
-async def test_db(test_config: SAHConfig, setup_db_dump_file):
+def test_db(db: SendADatabase, setup_db_dump_file):
     """Restore the test database from the db snapshot"""
     pg_restore(
         "-d",
@@ -135,10 +136,7 @@ async def test_db(test_config: SAHConfig, setup_db_dump_file):
     )
 
     # returns the db
-    try:
-        yield test_config.db
-    finally:
-        await test_config.db._remove_async_session(None)
+    yield db
 
 
 @pytest.fixture
