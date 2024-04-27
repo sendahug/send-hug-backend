@@ -111,6 +111,7 @@ def test_db(db, mocker: MockerFixture):
 
     db.session.begin_nested()
     mocker.patch("pywebpush.webpush")
+    mocker.patch("create_app.webpush")
 
     yield db
 
