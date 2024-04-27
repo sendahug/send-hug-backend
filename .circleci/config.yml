@@ -12,7 +12,7 @@ jobs:
       - image: cimg/python:3.11
         environment:
           FLASK_CONFIG: testing
-          TEST_DATABASE_URL: postgresql://postgres:password@localhost:5432/test_sah?sslmode=disable
+          TEST_DATABASE_URL: postgresql+asyncpg://postgres:password@localhost:5432/test_sah?sslmode=disable
     steps:
       - checkout
       - restore_cache:
@@ -30,7 +30,7 @@ jobs:
       - image: cimg/python:3.11
         environment:
           FLASK_CONFIG: testing
-          TEST_DATABASE_URL: postgresql://postgres:password@localhost:5432/test_sah?sslmode=disable
+          TEST_DATABASE_URL: postgresql+asyncpg://postgres:password@localhost:5432/test_sah?sslmode=disable
       - image: cimg/postgres:14.10
         auth:
           username: mydockerhub-user
