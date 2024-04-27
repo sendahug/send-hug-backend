@@ -28,7 +28,6 @@
 from asyncio import current_task
 from dataclasses import dataclass
 import math
-import os
 from typing import Protocol, Sequence, Type, TypeVar, cast, overload
 
 from quart import Quart, abort
@@ -75,7 +74,7 @@ class SendADatabase:
     on Flask-SQLAlchemy's `SQLAlchemy` class.
     """
 
-    database_url: str
+    async_database_url: str
     async_engine: AsyncEngine
     async_session_factory: async_sessionmaker[AsyncSession]
 
@@ -91,10 +90,8 @@ class SendADatabase:
         param db_url: The URL of the database.
         """
         # Temporary second variable
-        self.async_database_url = os.environ.get("ASYNC_DB_URL", "")
-
+        self.async_database_url = database_url
         self.default_per_page = default_per_page
-        self.database_url = database_url
         self.async_engine = create_async_engine(self.async_database_url)
         self._create_async_session_factory()
         self.async_session = self.create_async_session()
@@ -106,7 +103,7 @@ class SendADatabase:
         param db_url: The URL of the database.
         param app: The Quart app to connect to.
         """
-        app.config["SQLALCHEMY_DATABASE_URI"] = self.database_url
+        app.config["SQLALCHEMY_DATABASE_URI"] = self.async_database_url
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
         self.app = app
         self.app.teardown_appcontext(self._remove_async_session)
