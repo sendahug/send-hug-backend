@@ -101,7 +101,7 @@ def test_verify_jwt_error(mocker, error, error_message):
     assert error_message in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_get_current_user_error(test_config: SAHConfig):
     with pytest.raises(AuthError) as exc:
         await get_current_user(
@@ -118,7 +118,7 @@ async def test_get_current_user_error(test_config: SAHConfig):
     assert "Unauthorised. User not found." in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_get_current_user(dummy_users_data, test_config: SAHConfig):
     user = await get_current_user(
         {"sub": dummy_users_data["user"]["auth0"]}, test_config.db

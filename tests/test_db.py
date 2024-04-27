@@ -80,7 +80,7 @@ def update_post_stmts():
     ]
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_paginate_no_error(test_db: SendADatabase):
     query = select(Post).where(Post.given_hugs > 0)
 
@@ -91,7 +91,7 @@ async def test_paginate_no_error(test_db: SendADatabase):
     assert len(results.resource) == 10
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_paginate_with_error(mocker: MockerFixture, test_db: SendADatabase):
     mocker.patch(
         "models.models.Post.format", side_effect=Exception("There was an error!")
@@ -105,7 +105,7 @@ async def test_paginate_with_error(mocker: MockerFixture, test_db: SendADatabase
     assert "500" in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_one_or_404_success(test_db: SendADatabase):
     result = await test_db.async_one_or_404(1, Post)
 
@@ -113,7 +113,7 @@ async def test_one_or_404_success(test_db: SendADatabase):
     assert result.text == "test"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_one_or_404_not_existing(test_db: SendADatabase):
     with pytest.raises(HTTPException) as exc:
         await test_db.async_one_or_404(100, Post)
@@ -121,7 +121,7 @@ async def test_one_or_404_not_existing(test_db: SendADatabase):
     assert "404" in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_one_or_404_error(test_db: SendADatabase):
     with pytest.raises(HTTPException) as exc:
         await test_db.async_one_or_404("hi", Post)  # type: ignore
@@ -130,7 +130,7 @@ async def test_one_or_404_error(test_db: SendADatabase):
     assert "invalid input syntax for type integer" in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_add_no_errors(test_db: SendADatabase, posts_to_add: list[Post]):
     post_to_add = posts_to_add[0]
     expected_return = {
@@ -148,7 +148,7 @@ async def test_add_no_errors(test_db: SendADatabase, posts_to_add: list[Post]):
     assert expected_return == actual_return.format()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_add_integrity_error(test_db: SendADatabase, invalid_post_to_add: Post):
     with pytest.raises(HTTPException) as exc:
         await test_db.async_add_object(obj=invalid_post_to_add)
@@ -158,7 +158,7 @@ async def test_add_integrity_error(test_db: SendADatabase, invalid_post_to_add: 
     assert "violates foreign key constraint" in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_add_other_error(
     test_db: SendADatabase, mocker: MockerFixture, posts_to_add: list[Post]
 ):
@@ -178,7 +178,7 @@ async def test_add_other_error(
     assert "test error" in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_add_multiple_no_errors(test_db: SendADatabase, posts_to_add: list[Post]):
     expected_return = [
         {
@@ -206,7 +206,7 @@ async def test_add_multiple_no_errors(test_db: SendADatabase, posts_to_add: list
     assert expected_return == actual_return
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_add_multiple_integrity_error(
     test_db: SendADatabase, invalid_post_to_add: Post, posts_to_add: list[Post]
 ):
@@ -220,7 +220,7 @@ async def test_add_multiple_integrity_error(
     assert "violates foreign key constraint" in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_add_multiple_other_error(
     test_db: SendADatabase, mocker: MockerFixture, posts_to_add: list[Post]
 ):
@@ -239,7 +239,7 @@ async def test_add_multiple_other_error(
     assert "test error" in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_update_no_errors(test_db: SendADatabase, db_helpers_dummy_data):
     expected_return = db_helpers_dummy_data["updated_post"]
 
@@ -256,7 +256,7 @@ async def test_update_no_errors(test_db: SendADatabase, db_helpers_dummy_data):
     assert original_text != actual_return.format()["text"]
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_update_integrity_error(test_db: SendADatabase):
     post = await test_db.async_session.get(Post, 1)
 
@@ -272,7 +272,7 @@ async def test_update_integrity_error(test_db: SendADatabase):
     assert "violates not-null constraint" in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_update_other_error(
     test_db: SendADatabase, mocker: MockerFixture, posts_to_add: list[Post]
 ):
@@ -291,7 +291,7 @@ async def test_update_other_error(
     assert "test error" in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_update_multiple_no_errors(test_db: SendADatabase, db_helpers_dummy_data):
     expected_return = [
         db_helpers_dummy_data["updated_post"],
@@ -324,7 +324,7 @@ async def test_update_multiple_no_errors(test_db: SendADatabase, db_helpers_dumm
     assert updated_posts[1]["givenHugs"] != original_post_2_hugs
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_update_multiple_error(test_db: SendADatabase):
     posts_instances = await test_db.async_session.scalars(
         select(Post).filter(Post.id < 3).order_by(Post.id)
@@ -348,7 +348,7 @@ async def test_update_multiple_error(test_db: SendADatabase):
     assert post.text != "hello"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_update_multiple_other_error(
     test_db: SendADatabase, mocker: MockerFixture, posts_to_add: list[Post]
 ):
@@ -367,7 +367,7 @@ async def test_update_multiple_other_error(
     assert "test error" in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_update_multiple_dml_one_stmt(
     test_db: SendADatabase, update_post_stmts: list[Update]
 ):
@@ -388,7 +388,7 @@ async def test_update_multiple_dml_one_stmt(
     assert len(given_hugs_posts) != 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_update_multiple_dml_multiple_stmts(
     test_db: SendADatabase, update_post_stmts: list[Update]
 ):
@@ -407,7 +407,7 @@ async def test_update_multiple_dml_multiple_stmts(
     assert len(given_hugs_posts) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_update_multiple_dml_integrity_error(
     test_db: SendADatabase, mocker: MockerFixture, update_post_stmts: list[Update]
 ):
@@ -428,7 +428,7 @@ async def test_update_multiple_dml_integrity_error(
     assert "422" in str(exc.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_update_multiple_dml_other_error(
     test_db: SendADatabase, mocker: MockerFixture, update_post_stmts: list[Update]
 ):
@@ -457,7 +457,7 @@ async def test_update_multiple_dml_other_error(
         (OperationalError, "500 Internal Server Error", "test error"),
     ],
 )
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_delete_error(
     test_db: SendADatabase,
     mocker: MockerFixture,
@@ -489,7 +489,7 @@ async def test_delete_error(
         (OperationalError, "500 Internal Server Error", "test error"),
     ],
 )
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_delete_dml_error(
     test_db: SendADatabase,
     mocker: MockerFixture,
