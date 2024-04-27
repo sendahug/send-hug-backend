@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 
 from sqlalchemy import select, text
 
@@ -12,6 +13,7 @@ from models.models import (
     Notification,
     Filter,
     Role,
+    NotificationSub,
 )
 from models.db import SendADatabase
 
@@ -1644,7 +1646,51 @@ def create_notifications(db: SendADatabase):
         db.session.close()
 
 
-# TODO: Add subscriptions
+def create_subscriptions(db: SendADatabase):
+    """Creates the push subscriptions in the database"""
+    sub_1 = NotificationSub(
+        id=1,
+        user=1,
+        endpoint="https://fcm.googleapis.com/fcm/send/epyhl2GD",
+        subscription_data=json.dumps(
+            {
+                "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",
+                "expirationTime": None,
+                "keys": {"p256dh": "fdsfd", "auth": "dfs"},
+            }
+        ),
+    )
+    sub_2 = NotificationSub(
+        id=2,
+        user=5,
+        endpoint="https://fcm.googleapis.com/fcm/send/epyhl2GD",
+        subscription_data=json.dumps(
+            {
+                "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",
+                "expirationTime": None,
+                "keys": {"p256dh": "fdsfd", "auth": "dfs"},
+            }
+        ),
+    )
+    sub_3 = NotificationSub(
+        id=3,
+        user=4,
+        endpoint="https://fcm.googleapis.com/fcm/send/epyhl2GD",
+        subscription_data=json.dumps(
+            {
+                "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",
+                "expirationTime": None,
+                "keys": {"p256dh": "fdsfd", "auth": "dfs"},
+            }
+        ),
+    )
+
+    try:
+        db.session.add_all([sub_1, sub_2, sub_3])
+        db.session.execute(text("ALTER SEQUENCE subscriptions_id_seq RESTART WITH 4;"))
+        db.session.commit()
+    finally:
+        db.session.close()
 
 
 def create_data(db: SendADatabase):
@@ -1658,6 +1704,6 @@ def create_data(db: SendADatabase):
     create_messages(db)
     create_reports(db)
     create_notifications(db)
-    # create_subscriptions(db)
+    create_subscriptions(db)
 
     db.session.close()
