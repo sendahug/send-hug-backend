@@ -60,6 +60,9 @@ from utils.push_notifications import (
 from config import SAHConfig
 
 
+DATETIME_PATTERN = "%Y-%m-%dT%H:%M:%S.%fZ"
+
+
 def create_app(config: SAHConfig) -> Quart:
     # create and configure the app
     app = Quart(__name__)
@@ -242,7 +245,7 @@ def create_app(config: SAHConfig) -> Quart:
         new_post = Post(
             user_id=new_post_data["userId"],
             text=new_post_data["text"],
-            date=new_post_data["date"],
+            date=datetime.strptime(new_post_data["date"], DATETIME_PATTERN),
             given_hugs=new_post_data["givenHugs"],
             sent_hugs=[],
         )
@@ -982,7 +985,7 @@ def create_app(config: SAHConfig) -> Quart:
             from_id=message_data["fromId"],
             for_id=message_data["forId"],
             text=message_data["messageText"],
-            date=message_data["date"],
+            date=datetime.strptime(message_data["date"], DATETIME_PATTERN),
             thread=thread_id,
         )
 
@@ -992,7 +995,7 @@ def create_app(config: SAHConfig) -> Quart:
             from_id=message_data["fromId"],
             type="message",
             text="You have a new message",
-            date=message_data["date"],
+            date=datetime.strptime(message_data["date"], DATETIME_PATTERN),
         )
         push_notification: RawPushData = {
             "type": "message",
@@ -1431,7 +1434,7 @@ def create_app(config: SAHConfig) -> Quart:
 
             report = Report(
                 type=report_data["type"],
-                date=report_data["date"],
+                date=datetime.strptime(report_data["date"], DATETIME_PATTERN),
                 user_id=report_data["userID"],
                 post_id=report_data["postID"],
                 reporter=report_data["reporter"],
@@ -1455,7 +1458,7 @@ def create_app(config: SAHConfig) -> Quart:
 
             report = Report(
                 type=report_data["type"],
-                date=report_data["date"],
+                date=datetime.strptime(report_data["date"], DATETIME_PATTERN),
                 user_id=report_data["userID"],
                 reporter=report_data["reporter"],
                 report_reason=report_data["reportReason"],
