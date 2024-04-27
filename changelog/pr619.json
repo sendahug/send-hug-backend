@@ -1,0 +1,9 @@
+{
+  "pr_number": 619,
+  "changes": [
+    {
+      "change": "Chores",
+      "description": "Changed the way the database is reset between tests. Previously, we created a database dump file that was restored between tests. This was over-complicated and unscalable. Now, we populate the database once, before tests start; in order to ensure the database returns to its original state between tests, tests are run within a nested session, which is then rolled back between tests."
+    }
+  ]
+}
