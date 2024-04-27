@@ -1693,6 +1693,24 @@ def create_subscriptions(db: SendADatabase):
         db.session.close()
 
 
+def update_sequences(db: SendADatabase):
+    """Updates the values of all sequences."""
+    try:
+        db.session.execute(text("ALTER SEQUENCE filters_id_seq RESTART WITH 3;"))
+        db.session.execute(text("ALTER SEQUENCE permissions_id_seq RESTART WITH 16;"))
+        db.session.execute(text("ALTER SEQUENCE roles_id_seq RESTART WITH 6;"))
+        db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 21;"))
+        db.session.execute(text("ALTER SEQUENCE posts_id_seq RESTART WITH 46;"))
+        db.session.execute(text("ALTER SEQUENCE messages_id_seq RESTART WITH 27;"))
+        db.session.execute(text("ALTER SEQUENCE threads_id_seq RESTART WITH 9;"))
+        db.session.execute(text("ALTER SEQUENCE reports_id_seq RESTART WITH 45;"))
+        db.session.execute(text("ALTER SEQUENCE notifications_id_seq RESTART WITH 96;"))
+        db.session.execute(text("ALTER SEQUENCE subscriptions_id_seq RESTART WITH 4;"))
+        db.session.commit()
+    finally:
+        db.session.close()
+
+
 def create_data(db: SendADatabase):
     """Creates the data in the test database."""
     create_filters(db)
