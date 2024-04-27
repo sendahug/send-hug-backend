@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 
 import pytest
+from pytest_mock import MockerFixture
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from create_app import create_app
@@ -70,9 +71,10 @@ def test_config():
 
 
 @pytest.fixture(scope="session")
-def app_client(test_config: SAHConfig):
+def app_client(test_config: SAHConfig, session_mocker: MockerFixture):
     """Get the test client for the test app"""
     app = create_app(config=test_config)
+    session_mocker.patch("pywebpush.webpush")
     yield app.test_client()
 
 
