@@ -127,7 +127,8 @@ async def test_one_or_404_error(test_db: SendADatabase):
         await test_db.async_one_or_404("hi", Post)  # type: ignore
 
     assert "422" in str(exc.value)
-    assert "invalid input syntax for type integer" in str(exc.value)
+    assert "invalid input for query argument" in str(exc.value)
+    assert "'str' object cannot be interpreted as an integer" in str(exc.value)
 
 
 @pytest.mark.asyncio(scope="session")
