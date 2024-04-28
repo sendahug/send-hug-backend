@@ -167,19 +167,19 @@ def dummy_request_data():
         "new_post": {
             "userId": 0,
             "text": "test post",
-            "date": "Sun Jun 07 2020 15:57:45",
+            "date": "2020-06-07T15:57:45.901Z",
             "givenHugs": 0,
         },
         "updated_post": {
             "userId": 0,
             "text": "test post",
-            "date": "Sun Jun 07 2020 15:57:45",
+            "date": "2020-06-07T15:57:45.901Z",
             "givenHugs": 0,
         },
         "report_post": {
             "user_id": 0,
             "text": "test post",
-            "date": "Sun Jun 07 2020 15:57:45",
+            "date": "2020-06-07T15:57:45.901Z",
             "givenHugs": 0,
             "closeReport": 1,
         },
@@ -217,7 +217,7 @@ def dummy_request_data():
             "fromId": 0,
             "forId": 0,
             "messageText": "meow",
-            "date": "Sun Jun 07 2020 15:57:45",
+            "date": "2020-06-07T15:57:45.901Z",
         },
         "new_report": {
             "type": "Post",
@@ -225,14 +225,14 @@ def dummy_request_data():
             "postID": 0,
             "reporter": 0,
             "reportReason": "It is inappropriate",
-            "date": "Sun Jun 07 2020 15:57:45",
+            "date": "2020-06-07T15:57:45.901Z",
         },
         "new_user_report": {
             "type": "User",
             "userID": 0,
             "reporter": 0,
             "reportReason": "The user is posting Spam",
-            "date": "Sun Jun 07 2022 15:57:45",
+            "date": "2022-06-07T15:57:45.901Z",
         },
         "new_subscription": {
             "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",
