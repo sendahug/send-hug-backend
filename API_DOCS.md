@@ -251,7 +251,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Expected Errors**:
   - 500 (Internal Server Error) - In case there's an error adding the new post to the database.
 
-**CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/posts -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"user_id":4, "user":"user14", "text":"test curl", "date":"Wed Jun 10 2020 10:30:05 GMT+0300", "givenHugs":0}'`
+**CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/posts -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"user_id":4, "user":"user14", "text":"test curl", "date":"2020-06-07T15:57:45.901Z", "givenHugs":0}'`
 
 **Response Example:**
 ```
@@ -290,7 +290,7 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 404 (Not Found) - In case there's no post with that ID.
   - 500 (Internal Server Error) - In case there's an error updating the post's data in the database.
 
-**CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/posts/15 -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"user_id":4, "user":"user14", "text":"test curl", "date":"Wed Jun 10 2020 10:30:05 GMT+0300", "givenHugs":0}'`
+**CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/posts/15 -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"user_id":4, "user":"user14", "text":"test curl", "date":"2020-06-07T15:57:45.901Z", "givenHugs":0}'`
 
 **Response Example:**
 ```
@@ -750,7 +750,7 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 403 (Forbidden) - In case the user is trying to post the message from another user.
   - 500 (Internal Server Error) - In case there's an error adding the new message (or the new thread if one is needed) to the database.
 
-**CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/messages -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"from":"user14", "fromId":4, "forId":1, "messageText":"hang in there", "date":"Mon, 08 Jun 2020 14:43:15 GMT"}'`
+**CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/messages -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"from":"user14", "fromId":4, "forId":1, "messageText":"hang in there", "date":"2020-06-07T15:57:45.901Z"}'`
 
 **Response Example:**
 ```
@@ -894,7 +894,7 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 404 (Not Found) - In case the item being reported doesn't exist.
   - 500 (Internal Server Error) - In case an error occurred while adding the new report to the database.
 
-**CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/reports -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"type":"Post", "userID":"1", "postID":4, "reporter":5,"reportReason":"this post is inappropriate", "date":"Tue Jun 23 2020 14:59:31 GMT+0300"}'`
+**CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/reports -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"type":"Post", "userID":"1", "postID":4, "reporter":5,"reportReason":"this post is inappropriate", "date":"2020-06-07T15:57:45.901Z"}'`
 
 **Response Example:**
 ```
@@ -942,7 +942,7 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 404 (Not Found) - In case a report with that ID doesn't exist.
   - 500 (Internal Server Error) - In case an error occurred while updating the report in the database.
 
-**CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/reports/36 -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"type":"Post", "userID":"1", "postID":4, "reporter":5,"reportReason":"this post is inappropriate", "date":"Tue Jun 23 2020 14:59:31 GMT+0300", "dismissed": true, "closed": true}'`
+**CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/reports/36 -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"type":"Post", "userID":"1", "postID":4, "reporter":5,"reportReason":"this post is inappropriate", "date":"2020-06-07T15:57:45.901Z", "dismissed": true, "closed": true}'`
 
 **Response Example:**
 ```
