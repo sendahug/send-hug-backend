@@ -124,7 +124,7 @@ def create_app(config: SAHConfig) -> Quart:
         notification_data = generate_push_data(data)
         vapid_claims = generate_vapid_claims()
         subscriptions_scalars = await config.db.async_session.scalars(
-            select(NotificationSub).filter(NotificationSub.user == user_id)
+            select(NotificationSub).filter(NotificationSub.user == int(user_id))
         )
         subscriptions: Sequence[NotificationSub] = subscriptions_scalars.all()
 
@@ -243,7 +243,7 @@ def create_app(config: SAHConfig) -> Quart:
 
         # Create a new post object
         new_post = Post(
-            user_id=new_post_data["userId"],
+            user_id=int(new_post_data["userId"]),
             text=new_post_data["text"],
             date=datetime.strptime(new_post_data["date"], DATETIME_PATTERN),
             given_hugs=new_post_data["givenHugs"],
@@ -952,12 +952,12 @@ def create_app(config: SAHConfig) -> Quart:
             select(Thread).filter(
                 or_(
                     and_(
-                        Thread.user_1_id == message_data["fromId"],
-                        Thread.user_2_id == message_data["forId"],
+                        Thread.user_1_id == int(message_data["fromId"]),
+                        Thread.user_2_id == int(message_data["forId"]),
                     ),
                     and_(
-                        Thread.user_1_id == message_data["forId"],
-                        Thread.user_2_id == message_data["fromId"],
+                        Thread.user_1_id == int(message_data["forId"]),
+                        Thread.user_2_id == int(message_data["fromId"]),
                     ),
                 )
             )
@@ -966,7 +966,8 @@ def create_app(config: SAHConfig) -> Quart:
         # If there's no thread between the users
         if thread is None:
             new_thread = Thread(
-                user_1_id=message_data["fromId"], user_2_id=message_data["forId"]
+                user_1_id=int(message_data["fromId"]),
+                user_2_id=int(message_data["forId"]),
             )
             # Try to create the new thread
             added_thread = await config.db.async_add_object(new_thread)
@@ -984,8 +985,8 @@ def create_app(config: SAHConfig) -> Quart:
 
         # Create a new message
         new_message = Message(
-            from_id=message_data["fromId"],
-            for_id=message_data["forId"],
+            from_id=int(message_data["fromId"]),
+            for_id=int(message_data["forId"]),
             text=message_data["messageText"],
             date=datetime.strptime(message_data["date"], DATETIME_PATTERN),
             thread=thread_id,
@@ -993,8 +994,8 @@ def create_app(config: SAHConfig) -> Quart:
 
         # Create a notification for the user getting the message
         notification = Notification(
-            for_id=message_data["forId"],
-            from_id=message_data["fromId"],
+            for_id=int(message_data["forId"]),
+            from_id=int(message_data["fromId"]),
             type="message",
             text="You have a new message",
             date=datetime.strptime(message_data["date"], DATETIME_PATTERN),
@@ -1437,9 +1438,9 @@ def create_app(config: SAHConfig) -> Quart:
             report = Report(
                 type=report_data["type"],
                 date=datetime.strptime(report_data["date"], DATETIME_PATTERN),
-                user_id=report_data["userID"],
-                post_id=report_data["postID"],
-                reporter=report_data["reporter"],
+                user_id=int(report_data["userID"]),
+                post_id=int(report_data["postID"]),
+                reporter=int(report_data["reporter"]),
                 report_reason=report_data["reportReason"],
                 dismissed=False,
                 closed=False,
@@ -1461,8 +1462,8 @@ def create_app(config: SAHConfig) -> Quart:
             report = Report(
                 type=report_data["type"],
                 date=datetime.strptime(report_data["date"], DATETIME_PATTERN),
-                user_id=report_data["userID"],
-                reporter=report_data["reporter"],
+                user_id=int(report_data["userID"]),
+                reporter=int(report_data["reporter"]),
                 report_reason=report_data["reportReason"],
                 dismissed=False,
                 closed=False,
