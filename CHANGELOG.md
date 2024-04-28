@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+### 2024-04-28
+
+#### Features
+
+- Added a logger to the Database Handler class and added logging for all errors raised by the database. ([#618](https://github.com/sendahug/send-hug-backend/pull/618))
+
+#### Changes
+
+- Updated all database interactions to use SQLAlchemy's asyncio extension. The engine, session maker and session have been replaced by their async variants, and the helper methods for interacting with the database have all been updated to use async/await. This means that we can now write asynchronous code for read, write, update and delete, which should allow the server itself to handle more requests at once. ([#618](https://github.com/sendahug/send-hug-backend/pull/618))
+- The helper methods for creating and updating objects now return the formatted object instead of the raw SQLAlchemy object. ([#618](https://github.com/sendahug/send-hug-backend/pull/618))
+- Changed several relationships (user relationship in posts; role relationship in users; and permission relationship in roles) to use eager loading using 'selectin' instead of the default lazy loading. The SQLAlchemy asyncio extension doesn't support accessing attributes of lazily-loaded objects, and all three attributes are required to return the formatted versions of the models they're defined in (post, user and role respectively). ([#618](https://github.com/sendahug/send-hug-backend/pull/618))
+- Changed the name of the Quart app from the current file's name to `SendAHug` to better reflect the server's purpose. ([#618](https://github.com/sendahug/send-hug-backend/pull/618))
+
+#### Fixes
+
+- Dates are now explicitly parsed from strings passed into the API (using `strptime`) and strings that contain integers (e.g., IDs) are explicitly cast from strings to integers. This fixes an issue where inserts and queries errored due to the wrong type being used for dates/IDs. ([#618](https://github.com/sendahug/send-hug-backend/pull/618))
+- Fixed a bug where an attempt to update user details (such as login count) returned a 403 error saying 'you don't have permission to block users'. This happened due to a recent change in the front-end, which now sends the whole user object (of the logged in user) back to the back-end on update (instead of just the updated fields). As the back-end was checking whether the 'blocked' field existed, instead of whether it changed, this caused that error to be raised. Now, the back-end checks whether the value of 'blocked' changed instead. ([#618](https://github.com/sendahug/send-hug-backend/pull/618))
+
+#### Chores
+
+- Replaced psycopg2 with asyncpg as the driver used for database interactions, as psycopg2 doesn't support async/await. ([#618](https://github.com/sendahug/send-hug-backend/pull/618))
+
 ### 2024-04-27
 
 #### Changes
