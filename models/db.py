@@ -211,6 +211,7 @@ class SendADatabase:
         try:
             self.async_session.add(obj)
             await self.async_session.commit()
+            await self.async_session.refresh(obj)
 
             return obj.format()
         # If there's a database error
@@ -231,12 +232,18 @@ class SendADatabase:
 
         param objects: The list of objects to add to the database.
         """
+        formatted_objects: list[DumpedModel] = []
+
         # Try to add the objects to the database
         try:
             self.async_session.add_all(objects)
             await self.async_session.commit()
 
-            return [item.format() for item in objects]
+            for object in objects:
+                await self.async_session.refresh(object)
+                formatted_objects.append(object.format())
+
+            return formatted_objects
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.async_session.rollback()
