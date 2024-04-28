@@ -514,6 +514,8 @@ def create_app(config: SAHConfig) -> Quart:
         if user_data is None:
             abort(404)
 
+        formatted_user = user_data.format()
+
         # If the user is currently blocked, compare their release date to
         # the current date and time.
         if user_data.release_date:
@@ -525,9 +527,9 @@ def create_app(config: SAHConfig) -> Quart:
                 user_data.role_id = 3  # regular user
 
                 # Try to update the database
-                user_data = await config.db.async_update_object(user_data)
+                formatted_user = await config.db.async_update_object(user_data)
 
-        return jsonify({"success": True, "user": user_data})
+        return jsonify({"success": True, "user": formatted_user})
 
     # Endpoint: POST /users
     # Description: Adds a new user to the users table.
