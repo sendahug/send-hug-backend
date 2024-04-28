@@ -28,6 +28,10 @@
     {
       "change": "Changes",
       "description": "Changed the name of the Quart app from the current file's name to `SendAHug` to better reflect the server's purpose."
+    },
+    {
+      "change": "Fixes",
+      "description": "Fixed a bug where an attempt to update user details (such as login count) returned a 403 error saying 'you don't have permission to block users'. This happened due to a recent change in the front-end, which now sends the whole user object (of the logged in user) back to the back-end on update (instead of just the updated fields). As the back-end was checking whether the 'blocked' field existed, instead of whether it changed, this caused that error to be raised. Now, the back-end checks whether the value of 'blocked' changed instead."
     }
   ]
 }

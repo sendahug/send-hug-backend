@@ -622,8 +622,11 @@ def create_app(config: SAHConfig) -> Quart:
 
             user_to_update.display_name = updated_user["displayName"]
 
-        # If the request was in done in order to block or unlock a user
-        if "blocked" in updated_user:
+        # If the request was in done in order to block or unblock a user
+        if (
+            "blocked" in updated_user
+            and updated_user["blocked"] != user_to_update.blocked
+        ):
             # If the user doesn't have permission to block/unblock a user
             if "block:user" not in token_payload["role"]["permissions"]:
                 raise AuthError(
