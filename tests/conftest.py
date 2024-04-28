@@ -89,6 +89,8 @@ async def db(test_config: SAHConfig):
 
         await create_data(test_config.db)
 
+        await test_config.db.async_engine.dispose()
+
         yield test_config.db
 
     finally:
