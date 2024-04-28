@@ -86,7 +86,8 @@ async def db(test_config: SAHConfig):
         async with test_config.db.async_engine.begin() as conn:
             await conn.run_sync(BaseModel.metadata.drop_all)
             await conn.run_sync(BaseModel.metadata.create_all)
-            await create_data(test_config.db)
+
+        await create_data(test_config.db)
 
         yield test_config.db
 
@@ -104,33 +105,36 @@ async def test_db(db: SendADatabase, mocker: MockerFixture):
     Credit to gmassman; the code is mostly copied from
     https://github.com/gmassman/fsa-rollback-per-test-example.
     """
-    connection = db.async_engine.connect()
-    transaction = connection.begin_nested()
+    try:
+        connection = await db.async_engine.connect()
+        transaction = await connection.begin_nested()
 
-    db.async_session_factory = async_sessionmaker(
-        bind=connection,
-        expire_on_commit=False,
-        join_transaction_mode="create_savepoint",
-    )
+        db.async_session_factory = async_sessionmaker(
+            bind=connection,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        )
 
-    db.async_session = async_scoped_session(
-        session_factory=db.async_session_factory, scopefunc=current_task
-    )
+        db.async_session = async_scoped_session(
+            session_factory=db.async_session_factory, scopefunc=current_task
+        )
 
-    await update_sequences(db)
+        await update_sequences(db)
 
-    db.async_session.begin_nested()
-    mocker.patch("pywebpush.webpush")
-    mocker.patch("create_app.webpush")
+        await db.async_session.begin_nested()
+        mocker.patch("pywebpush.webpush")
+        mocker.patch("create_app.webpush")
 
-    yield db
+        yield db
 
-    # Delete the session
-    await db.async_session.remove()
+    finally:
+        # Delete the session
+        await db.async_session.remove()
 
-    # Rollback the transaction and return the connection to the pool
-    await transaction.rollback()
-    await connection.close()
+        # Rollback the transaction and return the connection to the pool
+        await transaction.rollback()
+        await connection.close()
+        await db.async_engine.dispose()
 
 
 @pytest.fixture
