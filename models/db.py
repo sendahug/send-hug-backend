@@ -29,6 +29,7 @@ from asyncio import current_task
 from dataclasses import dataclass
 import math
 from typing import Protocol, Sequence, Type, TypeVar, cast, overload
+import logging
 
 from quart import Quart, abort
 from sqlalchemy import Delete, Update, Select, func, select
@@ -47,6 +48,7 @@ from .models import BaseModel, HugModelType, DumpedModel
 
 
 T = TypeVar("T", bound=BaseModel)
+LOGGER = logging.getLogger("SendAHug")
 
 
 class CoreSAHModel(Protocol[HugModelType]):
@@ -152,6 +154,8 @@ class SendADatabase:
         param current_page: The current page to fetch the items for.
         param per_page: The amount of items to include in each page.
         """
+        LOGGER.debug(f"Fetching items for page {current_page}")
+
         if per_page is None:
             per_page = self.default_per_page
 
@@ -178,6 +182,7 @@ class SendADatabase:
             )
 
         except Exception as err:
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     async def async_one_or_404(self, item_id: int, item_type: Type[T]) -> T:
@@ -185,6 +190,7 @@ class SendADatabase:
         Fetch a single item or return 404 if it doesn't exist. Inspired by
         Flask-SQLAlchemy 3's `get_or_404` method.
         """
+        LOGGER.debug(f"Fetching item {item_id}")
         try:
             item = await self.async_session.get(item_type, item_id)
 
@@ -194,9 +200,11 @@ class SendADatabase:
             return item
 
         except HTTPException as exc:
+            LOGGER.error(str(exc))
             raise exc
 
         except Exception as err:
+            LOGGER.error(str(err))
             abort(422, str(err))
 
     # CREATE
@@ -217,10 +225,12 @@ class SendADatabase:
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     # Bulk add
@@ -247,10 +257,12 @@ class SendADatabase:
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     # UPDATE
@@ -270,10 +282,12 @@ class SendADatabase:
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     # Bulk Update
@@ -299,10 +313,12 @@ class SendADatabase:
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     @overload
@@ -330,10 +346,12 @@ class SendADatabase:
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     # DELETE
@@ -352,10 +370,12 @@ class SendADatabase:
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     # Bulk delete
@@ -373,8 +393,10 @@ class SendADatabase:
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
             await self.async_session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
