@@ -145,7 +145,7 @@ async def test_add_no_errors(test_db: SendADatabase, posts_to_add: list[Post]):
 
     actual_return = await test_db.async_add_object(obj=post_to_add)
 
-    assert expected_return == actual_return.format()
+    assert expected_return == actual_return
 
 
 @pytest.mark.asyncio(scope="session")
@@ -252,8 +252,8 @@ async def test_update_no_errors(test_db: SendADatabase, db_helpers_dummy_data):
     post.text = "new test"
     actual_return = await test_db.async_update_object(obj=post)
 
-    assert expected_return == actual_return.format()
-    assert original_text != actual_return.format()["text"]
+    assert expected_return == actual_return
+    assert original_text != actual_return["text"]
 
 
 @pytest.mark.asyncio(scope="session")
