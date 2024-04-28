@@ -123,7 +123,7 @@ def create_app(config: SAHConfig) -> Quart:
         vapid_key = os.environ.get("PRIVATE_KEY")
         notification_data = generate_push_data(data)
         vapid_claims = generate_vapid_claims()
-        subscriptions_scalars = await config.db.async_session.scalars(
+        subscriptions_scalars = await config.db.session.scalars(
             select(NotificationSub).filter(NotificationSub.user == int(user_id))
         )
         subscriptions: Sequence[NotificationSub] = subscriptions_scalars.all()
@@ -144,7 +144,7 @@ def create_app(config: SAHConfig) -> Quart:
 
     async def get_current_filters() -> list[str]:
         """Fetches the current filters from the database."""
-        filters = await config.db.async_session.scalars(select(Filter))
+        filters = await config.db.session.scalars(select(Filter))
         return [filter.filter for filter in filters.all()]
 
     # Routes
@@ -170,7 +170,7 @@ def create_app(config: SAHConfig) -> Quart:
             else:
                 posts_query = posts_query.order_by(Post.given_hugs, Post.date)
 
-            posts_scalars = await config.db.async_session.scalars(posts_query.limit(10))
+            posts_scalars = await config.db.session.scalars(posts_query.limit(10))
             post_instances: Sequence[Post] = posts_scalars.all()
 
             # formats each post in the list
@@ -199,12 +199,12 @@ def create_app(config: SAHConfig) -> Quart:
         validator.check_type(search_query, "Search query")
 
         # Get the users with the search query in their display name
-        users_scalars = await config.db.async_session.scalars(
+        users_scalars = await config.db.session.scalars(
             select(User).filter(User.display_name.ilike(f"%{search_query}%"))
         )
         users: Sequence[User] = users_scalars.all()
 
-        posts = await config.db.async_paginate(
+        posts = await config.db.paginate(
             select(Post)
             .order_by(desc(Post.date))
             .filter(Post.text.ilike(f"%{search_query}%"))
@@ -251,7 +251,7 @@ def create_app(config: SAHConfig) -> Quart:
         )
 
         # Try to add the post to the database
-        added_post = await config.db.async_add_object(new_post)
+        added_post = await config.db.add_object(new_post)
 
         return jsonify({"success": True, "posts": added_post})
 
@@ -267,7 +267,7 @@ def create_app(config: SAHConfig) -> Quart:
         validator.check_type(post_id, "Post ID")
 
         updated_post = json.loads(await request.data)
-        original_post: Post = await config.db.async_one_or_404(
+        original_post: Post = await config.db.one_or_404(
             item_id=int(post_id),
             item_type=Post,
         )
@@ -300,7 +300,7 @@ def create_app(config: SAHConfig) -> Quart:
             original_post.text = updated_post["text"]
 
         # Try to update the database
-        updated = await config.db.async_update_object(obj=original_post)
+        updated = await config.db.update_object(obj=original_post)
 
         return jsonify({"success": True, "updated": updated})
 
@@ -314,19 +314,19 @@ def create_app(config: SAHConfig) -> Quart:
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
-        original_post: Post = await config.db.async_one_or_404(
+        original_post: Post = await config.db.one_or_404(
             item_id=int(post_id),
             item_type=Post,
         )
 
         # Gets the current user so we can update their 'sent hugs' value
-        current_user: User = await config.db.async_one_or_404(
+        current_user: User = await config.db.one_or_404(
             item_id=token_payload["id"],
             item_type=User,
         )
 
         hugs = original_post.sent_hugs or []
-        post_author: User | None = await config.db.async_session.scalar(
+        post_author: User | None = await config.db.session.scalar(
             select(User).filter(User.id == original_post.user_id)
         )
         notification: Notification | None = None
@@ -367,9 +367,9 @@ def create_app(config: SAHConfig) -> Quart:
         ]
 
         if notification:
-            await config.db.async_add_object(notification)
+            await config.db.add_object(notification)
 
-        await config.db.async_update_multiple_objects(objects=to_update)
+        await config.db.update_multiple_objects(objects=to_update)
 
         if post_author and push_notification:
             await send_push_notification(user_id=post_author.id, data=push_notification)
@@ -392,7 +392,7 @@ def create_app(config: SAHConfig) -> Quart:
         validator.check_type(post_id, "Post ID")
 
         # Gets the post to delete
-        post_data: Post = await config.db.async_one_or_404(
+        post_data: Post = await config.db.one_or_404(
             item_id=int(post_id),
             item_type=Post,
         )
@@ -414,7 +414,7 @@ def create_app(config: SAHConfig) -> Quart:
         # Otherwise, it's either their post or they're allowed to delete any
         # post.
         # Try to delete the post
-        await config.db.async_delete_object(post_data)
+        await config.db.delete_object(post_data)
 
         return jsonify({"success": True, "deleted": int(post_id)})
 
@@ -433,9 +433,7 @@ def create_app(config: SAHConfig) -> Quart:
         else:
             full_posts_query = full_posts_query.order_by(Post.given_hugs, Post.date)
 
-        paginated_posts = await config.db.async_paginate(
-            full_posts_query, current_page=page
-        )
+        paginated_posts = await config.db.paginate(full_posts_query, current_page=page)
 
         return jsonify(
             {
@@ -458,7 +456,7 @@ def create_app(config: SAHConfig) -> Quart:
         if type.lower() == "blocked":
             # Check which users need to be unblocked
             current_date = datetime.now()
-            user_scalars = await config.db.async_session.scalars(
+            user_scalars = await config.db.session.scalars(
                 select(User).filter(User.release_date < current_date)
             )
             users_to_unblock: Sequence[User] = user_scalars.all()
@@ -471,10 +469,10 @@ def create_app(config: SAHConfig) -> Quart:
                 to_unblock.append(user)
 
             # Try to update the database
-            await config.db.async_update_multiple_objects(objects=to_unblock)
+            await config.db.update_multiple_objects(objects=to_unblock)
 
             # Get all blocked users
-            paginated_users = await config.db.async_paginate(
+            paginated_users = await config.db.paginate(
                 select(User).filter(User.blocked == true()).order_by(User.release_date),
                 current_page=page,
             )
@@ -501,12 +499,12 @@ def create_app(config: SAHConfig) -> Quart:
         # regular ID, so try to find the user with that ID
         try:
             int(user_id)
-            user_data = await config.db.async_session.scalar(
+            user_data = await config.db.session.scalar(
                 select(User).filter(User.id == int(user_id))
             )
         # Otherwise, it's an Auth0 ID
         except ValueError:
-            user_data = await config.db.async_session.scalar(
+            user_data = await config.db.session.scalar(
                 select(User).filter(User.auth0_id == user_id)
             )
 
@@ -527,7 +525,7 @@ def create_app(config: SAHConfig) -> Quart:
                 user_data.role_id = 3  # regular user
 
                 # Try to update the database
-                formatted_user = await config.db.async_update_object(user_data)
+                formatted_user = await config.db.update_object(user_data)
 
         return jsonify({"success": True, "user": formatted_user})
 
@@ -548,7 +546,7 @@ def create_app(config: SAHConfig) -> Quart:
 
         # Checks whether a user with that Auth0 ID already exists
         # If it is, aborts
-        database_user: User | None = await config.db.async_session.scalar(
+        database_user: User | None = await config.db.session.scalar(
             select(User).filter(User.auth0_id == user_data["id"])
         )
 
@@ -572,7 +570,7 @@ def create_app(config: SAHConfig) -> Quart:
         )
 
         # Try to add the user to the database
-        added_user = await config.db.async_add_object(new_user)
+        added_user = await config.db.add_object(new_user)
 
         return jsonify({"success": True, "user": added_user})
 
@@ -587,7 +585,7 @@ def create_app(config: SAHConfig) -> Quart:
         validator.check_type(user_id, "User ID")
 
         updated_user = json.loads(await request.data)
-        user_to_update: User = await config.db.async_one_or_404(
+        user_to_update: User = await config.db.one_or_404(
             item_id=int(user_id),
             item_type=User,
         )
@@ -683,7 +681,7 @@ def create_app(config: SAHConfig) -> Quart:
             user_to_update.icon_colours = json.dumps(updated_user["iconColours"])
 
         # Try to update it in the database
-        updated = await config.db.async_update_object(obj=user_to_update)
+        updated = await config.db.update_object(obj=user_to_update)
 
         return jsonify({"success": True, "updated": updated})
 
@@ -703,7 +701,7 @@ def create_app(config: SAHConfig) -> Quart:
         validator.check_type(user_id, "User ID")
 
         # Gets all posts written by the given user
-        user_posts = await config.db.async_paginate(
+        user_posts = await config.db.paginate(
             select(Post).filter(Post.user_id == int(user_id)).order_by(Post.date),
             current_page=page,
         )
@@ -745,7 +743,7 @@ def create_app(config: SAHConfig) -> Quart:
 
         # Otherwise, the user is either trying to delete their own posts or
         # they're allowed to delete others' posts, so let them continue
-        post_count: int | None = await config.db.async_session.scalar(
+        post_count: int | None = await config.db.session.scalar(
             select(func.count(Post.id)).filter(Post.user_id == int(user_id))
         )
 
@@ -754,7 +752,7 @@ def create_app(config: SAHConfig) -> Quart:
             abort(404)
 
         # Try to delete
-        await config.db.async_delete_multiple_objects(
+        await config.db.delete_multiple_objects(
             delete_stmt=delete(Post).where(Post.user_id == int(user_id))
         )
 
@@ -768,12 +766,12 @@ def create_app(config: SAHConfig) -> Quart:
     @requires_auth(config.db, ["read:user"])
     async def send_hug_to_user(token_payload: UserData, user_id: int):
         validator.check_type(user_id, "User ID")
-        user_to_hug: User = await config.db.async_one_or_404(
+        user_to_hug: User = await config.db.one_or_404(
             item_id=int(user_id),
             item_type=User,
         )
         # Fetch the current user to update their 'given hugs' value
-        current_user: User = await config.db.async_one_or_404(
+        current_user: User = await config.db.one_or_404(
             item_id=token_payload["id"], item_type=User
         )
 
@@ -795,8 +793,8 @@ def create_app(config: SAHConfig) -> Quart:
         # Try to update it in the database
         to_update = [user_to_hug, current_user]
 
-        await config.db.async_add_object(obj=notification)
-        await config.db.async_update_multiple_objects(objects=to_update)
+        await config.db.add_object(obj=notification)
+        await config.db.update_multiple_objects(objects=to_update)
         await send_push_notification(user_id=user_to_hug.id, data=push_notification)
 
         return jsonify(
@@ -850,7 +848,7 @@ def create_app(config: SAHConfig) -> Quart:
                 ).filter(Message.from_id == user_id)
             # Gets a specific thread's messages
             else:
-                message = await config.db.async_session.scalar(
+                message = await config.db.session.scalar(
                     select(Thread).filter(Thread.id == thread_id)
                 )
                 # Check if there's a thread with that ID at all
@@ -876,7 +874,7 @@ def create_app(config: SAHConfig) -> Quart:
                     | ((Message.from_id == user_id) & (Message.from_deleted == false()))
                 ).filter(Message.thread == thread_id)
 
-            messages = await config.db.async_paginate(
+            messages = await config.db.paginate(
                 messages_query.order_by(desc(Message.date)),
                 current_page=page,
             )
@@ -888,7 +886,7 @@ def create_app(config: SAHConfig) -> Quart:
         # For threads, gets all threads' data
         else:
             # Get the thread ID, and users' names and IDs
-            threads_messages = await config.db.async_paginate(
+            threads_messages = await config.db.paginate(
                 select(Thread)
                 .filter(
                     or_(
@@ -948,7 +946,7 @@ def create_app(config: SAHConfig) -> Quart:
 
         # Checks if there's an existing thread between the users (with user 1
         # being the sender and user 2 being the recipient)
-        thread: Thread | None = await config.db.async_session.scalar(
+        thread: Thread | None = await config.db.session.scalar(
             select(Thread).filter(
                 or_(
                     and_(
@@ -970,7 +968,7 @@ def create_app(config: SAHConfig) -> Quart:
                 user_2_id=int(message_data["forId"]),
             )
             # Try to create the new thread
-            added_thread = await config.db.async_add_object(new_thread)
+            added_thread = await config.db.add_object(new_thread)
             thread_id = added_thread["id"]
         # If there's a thread between the users
         else:
@@ -981,7 +979,7 @@ def create_app(config: SAHConfig) -> Quart:
                 thread.user_1_deleted = False
                 thread.user_2_deleted = False
                 # Update the thread in the database
-                await config.db.async_update_object(obj=thread)
+                await config.db.update_object(obj=thread)
 
         # Create a new message
         new_message = Message(
@@ -1007,7 +1005,7 @@ def create_app(config: SAHConfig) -> Quart:
         notification_for = message_data["forId"]
 
         # Try to add the message to the database
-        added = await config.db.async_add_multiple_objects(
+        added = await config.db.add_multiple_objects(
             objects=[new_message, notification]
         )
         sent_message = [item for item in added if "threadID" in item.keys()]
@@ -1037,13 +1035,13 @@ def create_app(config: SAHConfig) -> Quart:
         # If the mailbox type is inbox or outbox, search for a message
         # with that ID
         if mailbox_type in ["inbox", "outbox", "thread"]:
-            delete_item = await config.db.async_one_or_404(
+            delete_item = await config.db.one_or_404(
                 item_id=int(item_id),
                 item_type=Message,
             )
         # If the mailbox type is threads, search for a thread with that ID
         elif mailbox_type == "threads":
-            delete_item = await config.db.async_one_or_404(
+            delete_item = await config.db.one_or_404(
                 item_id=int(item_id),
                 item_type=Thread,
             )
@@ -1117,7 +1115,7 @@ def create_app(config: SAHConfig) -> Quart:
         # If both users deleted the message/thread, delete it from
         # the database entirely
         if delete_message:
-            await config.db.async_delete_object(delete_item)
+            await config.db.delete_object(delete_item)
         # Otherwise, just update the appropriate deleted property
         else:
             if type(delete_item) == Thread:
@@ -1164,14 +1162,14 @@ def create_app(config: SAHConfig) -> Quart:
                     )
                 )
 
-                await config.db.async_update_object(obj=delete_item)
-                await config.db.async_update_multiple_objects_with_dml(
+                await config.db.update_object(obj=delete_item)
+                await config.db.update_multiple_objects_with_dml(
                     update_stmts=[from_stmt, for_stmt]
                 )
-                await config.db.async_delete_multiple_objects(delete_stmt=delete_stmt)
+                await config.db.delete_multiple_objects(delete_stmt=delete_stmt)
 
             else:
-                await config.db.async_update_object(delete_item)
+                await config.db.update_object(delete_item)
 
         return jsonify({"success": True, "deleted": int(item_id)})
 
@@ -1206,7 +1204,7 @@ def create_app(config: SAHConfig) -> Quart:
 
         # If the user is trying to clear their inbox
         if mailbox_type == "inbox":
-            num_messages = await config.db.async_session.scalar(
+            num_messages = await config.db.session.scalar(
                 select(func.count(Message.id)).filter(Message.for_id == user_id)
             )
             # If there are no messages, abort
@@ -1231,13 +1229,11 @@ def create_app(config: SAHConfig) -> Quart:
             )
 
             # config.db.delete_multiple_objects(delete_stmt=delete_stmt)
-            await config.db.async_update_multiple_objects_with_dml(
-                update_stmts=update_stmt
-            )
+            await config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
 
         # If the user is trying to clear their outbox
         if mailbox_type == "outbox":
-            num_messages = await config.db.async_session.scalar(
+            num_messages = await config.db.session.scalar(
                 select(func.count(Message.id)).filter(Message.from_id == user_id)
             )
             # If there are no messages, abort
@@ -1261,14 +1257,12 @@ def create_app(config: SAHConfig) -> Quart:
                 .values(from_deleted=true())
             )
 
-            await config.db.async_delete_multiple_objects(delete_stmt=delete_stmt)
-            await config.db.async_update_multiple_objects_with_dml(
-                update_stmts=update_stmt
-            )
+            await config.db.delete_multiple_objects(delete_stmt=delete_stmt)
+            await config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
 
         # If the user is trying to clear their threads mailbox
         if mailbox_type == "threads":
-            num_messages = await config.db.async_session.scalar(
+            num_messages = await config.db.session.scalar(
                 select(func.count(Thread.id)).filter(
                     or_(
                         and_(
@@ -1355,15 +1349,9 @@ def create_app(config: SAHConfig) -> Quart:
                 )
             )
 
-            await config.db.async_delete_multiple_objects(
-                delete_stmt=delete_messages_stmt
-            )
-            await config.db.async_delete_multiple_objects(
-                delete_stmt=delete_threads_stmt
-            )
-            await config.db.async_update_multiple_objects_with_dml(
-                update_stmts=update_stmts
-            )
+            await config.db.delete_multiple_objects(delete_stmt=delete_messages_stmt)
+            await config.db.delete_multiple_objects(delete_stmt=delete_threads_stmt)
+            await config.db.update_multiple_objects_with_dml(update_stmts=update_stmts)
 
         return jsonify(
             {"success": True, "userID": int(user_id), "deleted": num_messages}
@@ -1389,7 +1377,7 @@ def create_app(config: SAHConfig) -> Quart:
         for report_type in reports.keys():
             reports_page = request.args.get(f"{report_type.lower()}Page", 1, type=int)
 
-            paginated_reports = await config.db.async_paginate(
+            paginated_reports = await config.db.paginate(
                 select(Report)
                 .filter(Report.closed == false())
                 .filter(Report.type == report_type)
@@ -1430,7 +1418,7 @@ def create_app(config: SAHConfig) -> Quart:
                 abort(422)
 
             # Get the post. If this post doesn't exist, abort
-            reported_item: Post | User = await config.db.async_one_or_404(
+            reported_item: Post | User = await config.db.one_or_404(
                 item_id=report_data["postID"],
                 item_type=Post,
             )
@@ -1454,7 +1442,7 @@ def create_app(config: SAHConfig) -> Quart:
                 abort(422)
 
             # Get the user. If this user doesn't exist, abort
-            reported_item = await config.db.async_one_or_404(
+            reported_item = await config.db.one_or_404(
                 item_id=report_data["userID"],
                 item_type=User,
             )
@@ -1472,8 +1460,8 @@ def create_app(config: SAHConfig) -> Quart:
             reported_item.open_report = True
 
         # Try to add the report to the database
-        added_report = await config.db.async_add_object(obj=report)
-        await config.db.async_update_object(obj=reported_item)
+        added_report = await config.db.add_object(obj=report)
+        await config.db.update_object(obj=reported_item)
 
         return jsonify({"success": True, "report": added_report})
 
@@ -1485,7 +1473,7 @@ def create_app(config: SAHConfig) -> Quart:
     @requires_auth(config.db, ["read:admin-board"])
     async def update_report_status(token_payload: UserData, report_id: int):
         updated_report = json.loads(await request.data)
-        report: Report | None = await config.db.async_session.scalar(
+        report: Report | None = await config.db.session.scalar(
             select(Report).filter(Report.id == int(report_id))
         )
 
@@ -1500,7 +1488,7 @@ def create_app(config: SAHConfig) -> Quart:
             if not updated_report.get("userID", None):
                 abort(422)
 
-            reported_item = await config.db.async_session.scalar(
+            reported_item = await config.db.session.scalar(
                 select(User).filter(User.id == updated_report["userID"])
             )
         # If the item reported is a post
@@ -1508,7 +1496,7 @@ def create_app(config: SAHConfig) -> Quart:
             if not updated_report.get("postID", None):
                 abort(422)
 
-            reported_item = await config.db.async_session.scalar(
+            reported_item = await config.db.session.scalar(
                 select(Post).filter(Post.id == updated_report["postID"])
             )
 
@@ -1524,7 +1512,7 @@ def create_app(config: SAHConfig) -> Quart:
             to_update.append(reported_item)
 
         # Try to update the report in the database
-        updated = await config.db.async_update_multiple_objects(objects=to_update)
+        updated = await config.db.update_multiple_objects(objects=to_update)
         return_report = [item for item in updated if "reporter" in item.keys()]
 
         return jsonify({"success": True, "updated": return_report[0]})
@@ -1538,7 +1526,7 @@ def create_app(config: SAHConfig) -> Quart:
     async def get_filters(token_payload: UserData):
         page = request.args.get("page", 1, type=int)
         words_per_page = 10
-        filtered_words = await config.db.async_paginate(
+        filtered_words = await config.db.paginate(
             select(Filter).order_by(Filter.id),
             current_page=page,
             per_page=words_per_page,
@@ -1565,7 +1553,7 @@ def create_app(config: SAHConfig) -> Quart:
         validator.check_length(new_filter, "Phrase to filter")
 
         # If the word already exists in the filters list, abort
-        existing_filter: Filter | None = await config.db.async_session.scalar(
+        existing_filter: Filter | None = await config.db.session.scalar(
             select(Filter).filter(Filter.filter == new_filter.lower())
         )
 
@@ -1574,7 +1562,7 @@ def create_app(config: SAHConfig) -> Quart:
 
         # Try to add the word to the filters list
         filter = Filter(filter=new_filter.lower())
-        added = await config.db.async_add_object(filter)
+        added = await config.db.add_object(filter)
 
         return jsonify({"success": True, "added": added})
 
@@ -1588,14 +1576,14 @@ def create_app(config: SAHConfig) -> Quart:
         validator.check_type(filter_id, "Filter ID")
 
         # If there's no word in that index
-        to_delete: Filter = await config.db.async_one_or_404(
+        to_delete: Filter = await config.db.one_or_404(
             item_id=int(filter_id),
             item_type=Filter,
         )
 
         # Otherwise, try to delete it
         removed = to_delete.format()
-        await config.db.async_delete_object(to_delete)
+        await config.db.delete_object(to_delete)
 
         return jsonify({"success": True, "deleted": removed})
 
@@ -1607,7 +1595,7 @@ def create_app(config: SAHConfig) -> Quart:
     @requires_auth(config.db, ["read:messages"])
     async def get_latest_notifications(token_payload: UserData):
         silent_refresh = request.args.get("silentRefresh", True)
-        user: User = await config.db.async_one_or_404(
+        user: User = await config.db.one_or_404(
             item_id=token_payload["id"],
             item_type=User,
         )
@@ -1621,7 +1609,7 @@ def create_app(config: SAHConfig) -> Quart:
             last_read = datetime(2020, 7, 1, 12, 00)
 
         # Gets all new notifications
-        notifications_scalars = await config.db.async_session.scalars(
+        notifications_scalars = await config.db.session.scalars(
             select(Notification)
             .filter(Notification.for_id == user_id)
             .filter(Notification.date > last_read)
@@ -1639,7 +1627,7 @@ def create_app(config: SAHConfig) -> Quart:
         if silent_refresh == "false":
             # Update the user's last-read date
             user.last_notifications_read = datetime.now()
-            await config.db.async_update_object(obj=user)
+            await config.db.update_object(obj=user)
 
         return jsonify({"success": True, "notifications": formatted_notifications})
 
@@ -1671,7 +1659,7 @@ def create_app(config: SAHConfig) -> Quart:
 
         # Try to add it to the database
         subscribed = token_payload["displayName"]
-        sub = await config.db.async_add_object(subscription)
+        sub = await config.db.add_object(subscription)
 
         return {
             "success": True,
@@ -1697,7 +1685,7 @@ def create_app(config: SAHConfig) -> Quart:
 
         subscription_json = request_data.decode("utf8").replace("'", '"')
         subscription_data = json.loads(subscription_json)
-        old_sub: NotificationSub = await config.db.async_one_or_404(
+        old_sub: NotificationSub = await config.db.one_or_404(
             item_id=int(sub_id), item_type=NotificationSub
         )
 
@@ -1707,7 +1695,7 @@ def create_app(config: SAHConfig) -> Quart:
         # Try to add it to the database
         subscribed = token_payload["displayName"]
         subId = old_sub.id
-        await config.db.async_update_object(obj=old_sub)
+        await config.db.update_object(obj=old_sub)
 
         return {"success": True, "subscribed": subscribed, "subId": subId}
 

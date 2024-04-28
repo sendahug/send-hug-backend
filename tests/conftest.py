@@ -83,18 +83,18 @@ def app_client(test_config: SAHConfig):
 async def db(test_config: SAHConfig):
     """Creates the database and inserts the test data."""
     try:
-        async with test_config.db.async_engine.begin() as conn:
+        async with test_config.db.engine.begin() as conn:
             await conn.run_sync(BaseModel.metadata.drop_all)
             await conn.run_sync(BaseModel.metadata.create_all)
 
         await create_data(test_config.db)
 
-        await test_config.db.async_engine.dispose()
+        await test_config.db.engine.dispose()
 
         yield test_config.db
 
     finally:
-        async with test_config.db.async_engine.begin() as conn:
+        async with test_config.db.engine.begin() as conn:
             await conn.run_sync(BaseModel.metadata.drop_all)
 
 
@@ -108,22 +108,22 @@ async def test_db(db: SendADatabase, mocker: MockerFixture):
     https://github.com/gmassman/fsa-rollback-per-test-example.
     """
     try:
-        connection = await db.async_engine.connect()
+        connection = await db.engine.connect()
         transaction = await connection.begin_nested()
 
-        db.async_session_factory = async_sessionmaker(
+        db.session_factory = async_sessionmaker(
             bind=connection,
             expire_on_commit=False,
             join_transaction_mode="create_savepoint",
         )
 
-        db.async_session = async_scoped_session(
-            session_factory=db.async_session_factory, scopefunc=current_task
+        db.session = async_scoped_session(
+            session_factory=db.session_factory, scopefunc=current_task
         )
 
         await update_sequences(db)
 
-        await db.async_session.begin_nested()
+        await db.session.begin_nested()
         mocker.patch("pywebpush.webpush")
         mocker.patch("create_app.webpush")
 
@@ -131,12 +131,12 @@ async def test_db(db: SendADatabase, mocker: MockerFixture):
 
     finally:
         # Delete the session
-        await db.async_session.remove()
+        await db.session.remove()
 
         # Rollback the transaction and return the connection to the pool
         await transaction.rollback()
         await connection.close()
-        await db.async_engine.dispose()
+        await db.engine.dispose()
 
 
 @pytest.fixture

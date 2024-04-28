@@ -76,9 +76,9 @@ class SendADatabase:
     on Flask-SQLAlchemy's `SQLAlchemy` class.
     """
 
-    async_database_url: str
-    async_engine: AsyncEngine
-    async_session_factory: async_sessionmaker[AsyncSession]
+    database_url: str
+    engine: AsyncEngine
+    session_factory: async_sessionmaker[AsyncSession]
 
     def __init__(
         self,
@@ -92,11 +92,11 @@ class SendADatabase:
         param db_url: The URL of the database.
         """
         # Temporary second variable
-        self.async_database_url = database_url
+        self.database_url = database_url
         self.default_per_page = default_per_page
-        self.async_engine = create_async_engine(self.async_database_url)
-        self._create_async_session_factory()
-        self.async_session = self.create_async_session()
+        self.engine = create_async_engine(self.database_url)
+        self._create_session_factory()
+        self.session = self.create_session()
 
     def init_app(self, app: Quart) -> None:
         """
@@ -105,32 +105,32 @@ class SendADatabase:
         param db_url: The URL of the database.
         param app: The Quart app to connect to.
         """
-        app.config["SQLALCHEMY_DATABASE_URI"] = self.async_database_url
+        app.config["SQLALCHEMY_DATABASE_URI"] = self.database_url
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
         self.app = app
-        self.app.teardown_appcontext(self._remove_async_session)
+        self.app.teardown_appcontext(self._remove_session)
 
-    def _create_async_session_factory(self):
+    def _create_session_factory(self):
         """
         Creates the async session factory to be used to generate scoped sessions.
         """
-        session_factory = async_sessionmaker(self.async_engine, expire_on_commit=False)
-        self.async_session_factory = session_factory
+        session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
+        self.session_factory = session_factory
 
     # TODO: Do we want to continue with this pattern? According to
     # https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#using-asyncio-scoped-session
     # it's not really recommended anymore.
-    def create_async_session(self):
+    def create_session(self):
         """
         Creates a new async scoped session.
         """
         return async_scoped_session(
-            session_factory=self.async_session_factory, scopefunc=current_task
+            session_factory=self.session_factory, scopefunc=current_task
         )
 
-    async def _remove_async_session(self, exception: BaseException | None):
+    async def _remove_session(self, exception: BaseException | None):
         """ """
-        await self.async_session.remove()
+        await self.session.remove()
 
     def set_default_per_page(self, per_page: int):
         """
@@ -140,7 +140,7 @@ class SendADatabase:
 
     # READ
     # -----------------------------------------------------------------
-    async def async_paginate(
+    async def paginate(
         self,
         query: Select,  # TODO: This select needs to be Select[tuple[CoreSAHModel]]
         current_page: int,
@@ -160,15 +160,13 @@ class SendADatabase:
             per_page = self.default_per_page
 
         try:
-            items_scalars = await self.async_session.scalars(
+            items_scalars = await self.session.scalars(
                 query.limit(per_page).offset((current_page - 1) * per_page)
             )
             items = items_scalars.all()
             total_items = (
                 await (
-                    self.async_session.scalar(
-                        select(func.count()).select_from(query.cte())
-                    )
+                    self.session.scalar(select(func.count()).select_from(query.cte()))
                 )
                 or 0
             )
@@ -185,14 +183,14 @@ class SendADatabase:
             LOGGER.error(str(err))
             abort(500, str(err))
 
-    async def async_one_or_404(self, item_id: int, item_type: Type[T]) -> T:
+    async def one_or_404(self, item_id: int, item_type: Type[T]) -> T:
         """
         Fetch a single item or return 404 if it doesn't exist. Inspired by
         Flask-SQLAlchemy 3's `get_or_404` method.
         """
         LOGGER.debug(f"Fetching item {item_id}")
         try:
-            item = await self.async_session.get(item_type, item_id)
+            item = await self.session.get(item_type, item_id)
 
             if item is None:
                 abort(404)
@@ -209,7 +207,7 @@ class SendADatabase:
 
     # CREATE
     # -----------------------------------------------------------------
-    async def async_add_object(self, obj: CoreSAHModel) -> DumpedModel:
+    async def add_object(self, obj: CoreSAHModel) -> DumpedModel:
         """
         Inserts a new record into the database.
 
@@ -217,24 +215,24 @@ class SendADatabase:
         """
         # Try to add the object to the database
         try:
-            self.async_session.add(obj)
-            await self.async_session.commit()
-            await self.async_session.refresh(obj)
+            self.session.add(obj)
+            await self.session.commit()
+            await self.session.refresh(obj)
 
             return obj.format()
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(500, str(err))
 
     # Bulk add
-    async def async_add_multiple_objects(
+    async def add_multiple_objects(
         self, objects: list[CoreSAHModel]
     ) -> list[DumpedModel]:
         """
@@ -246,28 +244,28 @@ class SendADatabase:
 
         # Try to add the objects to the database
         try:
-            self.async_session.add_all(objects)
-            await self.async_session.commit()
+            self.session.add_all(objects)
+            await self.session.commit()
 
             for object in objects:
-                await self.async_session.refresh(object)
+                await self.session.refresh(object)
                 formatted_objects.append(object.format())
 
             return formatted_objects
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(500, str(err))
 
     # UPDATE
     # -----------------------------------------------------------------
-    async def async_update_object(self, obj: CoreSAHModel) -> DumpedModel:
+    async def update_object(self, obj: CoreSAHModel) -> DumpedModel:
         """
         Updates an existing record.
 
@@ -275,23 +273,23 @@ class SendADatabase:
         """
         # Try to update the object in the database
         try:
-            await self.async_session.commit()
-            await self.async_session.refresh(obj)
+            await self.session.commit()
+            await self.session.refresh(obj)
 
             return obj.format()
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(500, str(err))
 
     # Bulk Update
-    async def async_update_multiple_objects(
+    async def update_multiple_objects(
         self, objects: Sequence[CoreSAHModel]
     ) -> list[DumpedModel]:
         """
@@ -303,33 +301,33 @@ class SendADatabase:
 
         # Try to update the objects in the database
         try:
-            await self.async_session.commit()
+            await self.session.commit()
 
             for obj in objects:
-                await self.async_session.refresh(obj)
+                await self.session.refresh(obj)
                 updated_objects.append(obj.format())
 
             return updated_objects
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(500, str(err))
 
     @overload
-    async def async_update_multiple_objects_with_dml(self, update_stmts: Update):
+    async def update_multiple_objects_with_dml(self, update_stmts: Update):
         ...
 
     @overload
-    async def async_update_multiple_objects_with_dml(self, update_stmts: list[Update]):
+    async def update_multiple_objects_with_dml(self, update_stmts: list[Update]):
         ...
 
-    async def async_update_multiple_objects_with_dml(self, update_stmts):
+    async def update_multiple_objects_with_dml(self, update_stmts):
         """
         Updates multiple objects with a single UPDATE statement.
 
@@ -338,25 +336,25 @@ class SendADatabase:
         try:
             if isinstance(update_stmts, list):
                 for stmt in cast(list[Update], update_stmts):
-                    await self.async_session.execute(stmt)
+                    await self.session.execute(stmt)
             else:
-                await self.async_session.execute(update_stmts)
+                await self.session.execute(update_stmts)
 
-            await self.async_session.commit()
+            await self.session.commit()
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(500, str(err))
 
     # DELETE
     # -----------------------------------------------------------------
-    async def async_delete_object(self, object: CoreSAHModel) -> int:
+    async def delete_object(self, object: CoreSAHModel) -> int:
         """
         Deletes an existing record.
 
@@ -364,23 +362,23 @@ class SendADatabase:
         """
         # Try to delete the record from the database
         try:
-            await self.async_session.delete(object)
-            await self.async_session.commit()
+            await self.session.delete(object)
+            await self.session.commit()
             return object.id
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(500, str(err))
 
     # Bulk delete
     # TODO: Return the number of deleted items
-    async def async_delete_multiple_objects(self, delete_stmt: Delete):
+    async def delete_multiple_objects(self, delete_stmt: Delete):
         """
         Executes a delete statement to delete multiple objects.
 
@@ -388,15 +386,15 @@ class SendADatabase:
         """
         # Try to delete the objects from the database
         try:
-            await self.async_session.execute(delete_stmt)
-            await self.async_session.commit()
+            await self.session.execute(delete_stmt)
+            await self.session.commit()
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            await self.async_session.rollback()
+            await self.session.rollback()
             LOGGER.error(str(err))
             abort(500, str(err))

@@ -28,13 +28,11 @@ async def create_filters(db: SendADatabase):
     filter_2 = Filter(id=2, filter="filtered_word_2")
 
     try:
-        db.async_session.add_all([filter_1, filter_2])
-        await db.async_session.execute(
-            text("ALTER SEQUENCE filters_id_seq RESTART WITH 3;")
-        )
-        await db.async_session.commit()
+        db.session.add_all([filter_1, filter_2])
+        await db.session.execute(text("ALTER SEQUENCE filters_id_seq RESTART WITH 3;"))
+        await db.session.commit()
     finally:
-        await db.async_session.remove()
+        await db.session.remove()
 
 
 async def create_permissions(db: SendADatabase):
@@ -85,7 +83,7 @@ async def create_permissions(db: SendADatabase):
     )
 
     try:
-        db.async_session.add_all(
+        db.session.add_all(
             [
                 permission_1,
                 permission_2,
@@ -104,12 +102,12 @@ async def create_permissions(db: SendADatabase):
                 permission_15,
             ]
         )
-        await db.async_session.execute(
+        await db.session.execute(
             text("ALTER SEQUENCE permissions_id_seq RESTART WITH 16;")
         )
-        await db.async_session.commit()
+        await db.session.commit()
     finally:
-        await db.async_session.remove()
+        await db.session.remove()
 
 
 async def create_roles(db: SendADatabase):
@@ -120,7 +118,7 @@ async def create_roles(db: SendADatabase):
     role_5 = Role(id=5, name="blocked user")
 
     try:
-        permissions_scalars = await db.async_session.scalars(
+        permissions_scalars = await db.session.scalars(
             select(Permission).order_by(Permission.id)
         )
         permissions: Sequence[Permission] = permissions_scalars.all()
@@ -136,13 +134,11 @@ async def create_roles(db: SendADatabase):
             *permissions[9:],
         ]
 
-        db.async_session.add_all([role_1, role_2, role_3, role_4, role_5])
-        await db.async_session.execute(
-            text("ALTER SEQUENCE roles_id_seq RESTART WITH 6;")
-        )
-        await db.async_session.commit()
+        db.session.add_all([role_1, role_2, role_3, role_4, role_5])
+        await db.session.execute(text("ALTER SEQUENCE roles_id_seq RESTART WITH 6;"))
+        await db.session.commit()
     finally:
-        await db.async_session.remove()
+        await db.session.remove()
 
 
 async def create_users(db: SendADatabase):
@@ -248,13 +244,11 @@ async def create_users(db: SendADatabase):
     )
 
     try:
-        db.async_session.add_all([user_1, user_2, user_3, user_4, user_5])
-        await db.async_session.execute(
-            text("ALTER SEQUENCE users_id_seq RESTART WITH 21;")
-        )
-        await db.async_session.commit()
+        db.session.add_all([user_1, user_2, user_3, user_4, user_5])
+        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 21;"))
+        await db.session.commit()
     finally:
-        await db.async_session.remove()
+        await db.session.remove()
 
 
 async def create_posts(db: SendADatabase):
@@ -477,7 +471,7 @@ async def create_posts(db: SendADatabase):
     )
 
     try:
-        db.async_session.add_all(
+        db.session.add_all(
             [
                 post_1,
                 post_2,
@@ -505,12 +499,10 @@ async def create_posts(db: SendADatabase):
                 post_24,
             ]
         )
-        await db.async_session.execute(
-            text("ALTER SEQUENCE posts_id_seq RESTART WITH 46;")
-        )
-        await db.async_session.commit()
+        await db.session.execute(text("ALTER SEQUENCE posts_id_seq RESTART WITH 46;"))
+        await db.session.commit()
     finally:
-        await db.async_session.remove()
+        await db.session.remove()
 
 
 async def create_threads(db: SendADatabase):
@@ -538,15 +530,13 @@ async def create_threads(db: SendADatabase):
     )
 
     try:
-        db.async_session.add_all(
+        db.session.add_all(
             [thread_1, thread_2, thread_3, thread_4, thread_5, thread_6, thread_7]
         )
-        await db.async_session.execute(
-            text("ALTER SEQUENCE threads_id_seq RESTART WITH 9;")
-        )
-        await db.async_session.commit()
+        await db.session.execute(text("ALTER SEQUENCE threads_id_seq RESTART WITH 9;"))
+        await db.session.commit()
     finally:
-        await db.async_session.remove()
+        await db.session.remove()
 
 
 async def create_messages(db: SendADatabase):
@@ -693,7 +683,7 @@ async def create_messages(db: SendADatabase):
     )
 
     try:
-        db.async_session.add_all(
+        db.session.add_all(
             [
                 message_1,
                 message_2,
@@ -711,12 +701,12 @@ async def create_messages(db: SendADatabase):
                 message_14,
             ]
         )
-        await db.async_session.execute(
+        await db.session.execute(
             text("ALTER SEQUENCE messages_id_seq RESTART WITH 27;")
         )
-        await db.async_session.commit()
+        await db.session.commit()
     finally:
-        await db.async_session.remove()
+        await db.session.remove()
 
 
 async def create_reports(db: SendADatabase):
@@ -1207,7 +1197,7 @@ async def create_reports(db: SendADatabase):
     )
 
     try:
-        db.async_session.add_all(
+        db.session.add_all(
             [
                 report_1,
                 report_2,
@@ -1255,12 +1245,10 @@ async def create_reports(db: SendADatabase):
                 report_44,
             ]
         )
-        await db.async_session.execute(
-            text("ALTER SEQUENCE reports_id_seq RESTART WITH 45;")
-        )
-        await db.async_session.commit()
+        await db.session.execute(text("ALTER SEQUENCE reports_id_seq RESTART WITH 45;"))
+        await db.session.commit()
     finally:
-        await db.async_session.remove()
+        await db.session.remove()
 
 
 async def create_notifications(db: SendADatabase):
@@ -1611,7 +1599,7 @@ async def create_notifications(db: SendADatabase):
     )
 
     try:
-        db.async_session.add_all(
+        db.session.add_all(
             [
                 notification_1,
                 notification_2,
@@ -1658,12 +1646,12 @@ async def create_notifications(db: SendADatabase):
                 notification_95,
             ]
         )
-        await db.async_session.execute(
+        await db.session.execute(
             text("ALTER SEQUENCE notifications_id_seq RESTART WITH 96;")
         )
-        await db.async_session.commit()
+        await db.session.commit()
     finally:
-        await db.async_session.remove()
+        await db.session.remove()
 
 
 async def create_subscriptions(db: SendADatabase):
@@ -1706,51 +1694,39 @@ async def create_subscriptions(db: SendADatabase):
     )
 
     try:
-        db.async_session.add_all([sub_1, sub_2, sub_3])
-        await db.async_session.execute(
+        db.session.add_all([sub_1, sub_2, sub_3])
+        await db.session.execute(
             text("ALTER SEQUENCE subscriptions_id_seq RESTART WITH 4;")
         )
-        await db.async_session.commit()
+        await db.session.commit()
     finally:
-        await db.async_session.close()
+        await db.session.close()
 
 
 async def update_sequences(db: SendADatabase):
     """Updates the values of all sequences."""
     try:
-        await db.async_session.execute(
+        await db.session.execute(
             text("ALTER SEQUENCE permissions_id_seq RESTART WITH 16;")
         )
-        await db.async_session.execute(
-            text("ALTER SEQUENCE filters_id_seq RESTART WITH 3;")
-        )
-        await db.async_session.execute(
-            text("ALTER SEQUENCE roles_id_seq RESTART WITH 6;")
-        )
-        await db.async_session.execute(
-            text("ALTER SEQUENCE users_id_seq RESTART WITH 21;")
-        )
-        await db.async_session.execute(
-            text("ALTER SEQUENCE posts_id_seq RESTART WITH 46;")
-        )
-        await db.async_session.execute(
+        await db.session.execute(text("ALTER SEQUENCE filters_id_seq RESTART WITH 3;"))
+        await db.session.execute(text("ALTER SEQUENCE roles_id_seq RESTART WITH 6;"))
+        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 21;"))
+        await db.session.execute(text("ALTER SEQUENCE posts_id_seq RESTART WITH 46;"))
+        await db.session.execute(
             text("ALTER SEQUENCE messages_id_seq RESTART WITH 27;")
         )
-        await db.async_session.execute(
-            text("ALTER SEQUENCE threads_id_seq RESTART WITH 9;")
-        )
-        await db.async_session.execute(
-            text("ALTER SEQUENCE reports_id_seq RESTART WITH 45;")
-        )
-        await db.async_session.execute(
+        await db.session.execute(text("ALTER SEQUENCE threads_id_seq RESTART WITH 9;"))
+        await db.session.execute(text("ALTER SEQUENCE reports_id_seq RESTART WITH 45;"))
+        await db.session.execute(
             text("ALTER SEQUENCE notifications_id_seq RESTART WITH 96;")
         )
-        await db.async_session.execute(
+        await db.session.execute(
             text("ALTER SEQUENCE subscriptions_id_seq RESTART WITH 4;")
         )
-        await db.async_session.commit()
+        await db.session.commit()
     finally:
-        await db.async_session.close()
+        await db.session.close()
 
 
 async def create_data(db: SendADatabase):
@@ -1766,4 +1742,4 @@ async def create_data(db: SendADatabase):
     await create_notifications(db)
     await create_subscriptions(db)
 
-    await db.async_session.remove()
+    await db.session.remove()
