@@ -7,12 +7,11 @@
 #### Changes
 
 - Replaced Flask with Quart as the primary framework powering the back-end. This includes:
-	- Replaced Flask-CORS with Quart-cors to handle cross-origin resource sharing.
-	- All endpoints, as well as the `requires_auth` decorator, now use the async/await pattern. ([#615](https://github.com/sendahug/send-hug-backend/pull/615))
 
 #### Chores
 
 - Added pytest-asyncio and updated all tests to use the async/await pattern as well (since the test client's HTTP-based methods and the request's data both return a coroutine). ([#615](https://github.com/sendahug/send-hug-backend/pull/615))
+- Changed the way the database is reset between tests. Previously, we created a database dump file that was restored between tests. This was over-complicated and unscalable. Now, we populate the database once, before tests start; in order to ensure the database returns to its original state between tests, tests are run within a nested session, which is then rolled back between tests. ([#619](https://github.com/sendahug/send-hug-backend/pull/619))
 
 ### 2024-04-25
 
