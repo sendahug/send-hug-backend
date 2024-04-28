@@ -65,7 +65,7 @@ DATETIME_PATTERN = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 def create_app(config: SAHConfig) -> Quart:
     # create and configure the app
-    app = Quart(__name__)
+    app = Quart("SendAHug")
     config.db.init_app(app=app)
     config.db.set_default_per_page(per_page=5)
     # Utilities
