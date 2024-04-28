@@ -36,7 +36,7 @@ from auth import (
     get_current_user,
     check_user_permissions,
 )
-from config import SAHConfig
+from models import SendADatabase
 
 
 # Auth testing
@@ -101,9 +101,10 @@ def test_verify_jwt_error(mocker, error, error_message):
     assert error_message in str(exc.value)
 
 
-def test_get_current_user_error(test_config: SAHConfig, test_db):
+@pytest.mark.asyncio(scope="session")
+async def test_get_current_user_error(test_db: SendADatabase):
     with pytest.raises(AuthError) as exc:
-        get_current_user(
+        await get_current_user(
             {
                 "sub": "auth0|12345",
                 "aud": [
@@ -111,14 +112,15 @@ def test_get_current_user_error(test_config: SAHConfig, test_db):
                 ],
                 "permissions": ["read:user"],
             },
-            test_config.db,
+            test_db,
         )
 
     assert "Unauthorised. User not found." in str(exc.value)
 
 
-def test_get_current_user(dummy_users_data, test_config: SAHConfig, test_db):
-    user = get_current_user({"sub": dummy_users_data["user"]["auth0"]}, test_config.db)
+@pytest.mark.asyncio(scope="session")
+async def test_get_current_user(dummy_users_data, test_db: SendADatabase):
+    user = await get_current_user({"sub": dummy_users_data["user"]["auth0"]}, test_db)
 
     assert user["id"] == int(dummy_users_data["user"]["internal"])
 

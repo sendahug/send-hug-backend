@@ -2,14 +2,16 @@ import os
 import urllib.request
 import json
 from datetime import datetime
+from asyncio import current_task
 
 import pytest
 from pytest_mock import MockerFixture
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker, async_scoped_session
 
 from create_app import create_app
 from config import SAHConfig
 from models.models import BaseModel
+from models import SendADatabase
 from tests.data_models import create_data, DATETIME_PATTERN, update_sequences
 
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
@@ -66,11 +68,11 @@ def user_headers():
 @pytest.fixture(scope="session")
 def test_config():
     """Set up the config"""
-    test_db_path = "postgresql://postgres:password@localhost:5432/test_sah"
-    return SAHConfig(database_url=test_db_path)
+    test_db_path = "postgresql+asyncpg://postgres:password@localhost:5432/test_sah"
+    yield SAHConfig(database_url=test_db_path)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def app_client(test_config: SAHConfig):
     """Get the test client for the test app"""
     app = create_app(config=test_config)
@@ -78,18 +80,26 @@ def app_client(test_config: SAHConfig):
 
 
 @pytest.fixture(scope="session")
-def db(test_config: SAHConfig):
+async def db(test_config: SAHConfig):
     """Creates the database and inserts the test data."""
-    BaseModel.metadata.drop_all(test_config.db.engine)
-    # create all tables
-    BaseModel.metadata.create_all(test_config.db.engine)
-    create_data(test_config.db)
+    try:
+        async with test_config.db.engine.begin() as conn:
+            await conn.run_sync(BaseModel.metadata.drop_all)
+            await conn.run_sync(BaseModel.metadata.create_all)
 
-    yield test_config.db
+        await create_data(test_config.db)
+
+        await test_config.db.engine.dispose()
+
+        yield test_config.db
+
+    finally:
+        async with test_config.db.engine.begin() as conn:
+            await conn.run_sync(BaseModel.metadata.drop_all)
 
 
 @pytest.fixture(scope="function")
-def test_db(db, mocker: MockerFixture):
+async def test_db(db: SendADatabase, mocker: MockerFixture):
     """
     Generates the session to use in tests. Once tests are done, rolls
     back the transaction and closes the session. Also updates the values
@@ -97,30 +107,36 @@ def test_db(db, mocker: MockerFixture):
     Credit to gmassman; the code is mostly copied from
     https://github.com/gmassman/fsa-rollback-per-test-example.
     """
-    connection = db.engine.connect()
-    transaction = connection.begin_nested()
+    try:
+        connection = await db.engine.connect()
+        transaction = await connection.begin_nested()
 
-    db.session_factory = sessionmaker(
-        bind=connection,
-        join_transaction_mode="create_savepoint",
-    )
+        db.session_factory = async_sessionmaker(
+            bind=connection,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        )
 
-    db.session = scoped_session(session_factory=db.session_factory)
+        db.session = async_scoped_session(
+            session_factory=db.session_factory, scopefunc=current_task
+        )
 
-    update_sequences(db)
+        await update_sequences(db)
 
-    db.session.begin_nested()
-    mocker.patch("pywebpush.webpush")
-    mocker.patch("create_app.webpush")
+        await db.session.begin_nested()
+        mocker.patch("pywebpush.webpush")
+        mocker.patch("create_app.webpush")
 
-    yield db
+        yield db
 
-    # Delete the session
-    db.session.remove()
+    finally:
+        # Delete the session
+        await db.session.remove()
 
-    # Rollback the transaction and return the connection to the pool
-    transaction.rollback()
-    connection.close()
+        # Rollback the transaction and return the connection to the pool
+        await transaction.rollback()
+        await connection.close()
+        await db.engine.dispose()
 
 
 @pytest.fixture
@@ -157,19 +173,19 @@ def dummy_request_data():
         "new_post": {
             "userId": 0,
             "text": "test post",
-            "date": "Sun Jun 07 2020 15:57:45",
+            "date": "2020-06-07T15:57:45.901Z",
             "givenHugs": 0,
         },
         "updated_post": {
             "userId": 0,
             "text": "test post",
-            "date": "Sun Jun 07 2020 15:57:45",
+            "date": "2020-06-07T15:57:45.901Z",
             "givenHugs": 0,
         },
         "report_post": {
             "user_id": 0,
             "text": "test post",
-            "date": "Sun Jun 07 2020 15:57:45",
+            "date": "2020-06-07T15:57:45.901Z",
             "givenHugs": 0,
             "closeReport": 1,
         },
@@ -207,7 +223,7 @@ def dummy_request_data():
             "fromId": 0,
             "forId": 0,
             "messageText": "meow",
-            "date": "Sun Jun 07 2020 15:57:45",
+            "date": "2020-06-07T15:57:45.901Z",
         },
         "new_report": {
             "type": "Post",
@@ -215,14 +231,14 @@ def dummy_request_data():
             "postID": 0,
             "reporter": 0,
             "reportReason": "It is inappropriate",
-            "date": "Sun Jun 07 2020 15:57:45",
+            "date": "2020-06-07T15:57:45.901Z",
         },
         "new_user_report": {
             "type": "User",
             "userID": 0,
             "reporter": 0,
             "reportReason": "The user is posting Spam",
-            "date": "Sun Jun 07 2022 15:57:45",
+            "date": "2022-06-07T15:57:45.901Z",
         },
         "new_subscription": {
             "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",

@@ -25,20 +25,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from asyncio import current_task
 from dataclasses import dataclass
 import math
 from typing import Protocol, Sequence, Type, TypeVar, cast, overload
+import logging
 
 from quart import Quart, abort
-from sqlalchemy import Delete, Engine, Update, create_engine, Select, func, select
-from sqlalchemy.orm import sessionmaker, Session, scoped_session, Mapped
+from sqlalchemy import Delete, Update, Select, func, select
+from sqlalchemy.orm import Mapped
 from sqlalchemy.exc import DataError, IntegrityError
+from sqlalchemy.ext.asyncio import (
+    async_sessionmaker,
+    create_async_engine,
+    AsyncEngine,
+    async_scoped_session,
+    AsyncSession,
+)
 from werkzeug.exceptions import HTTPException
 
 from .models import BaseModel, HugModelType, DumpedModel
 
 
 T = TypeVar("T", bound=BaseModel)
+LOGGER = logging.getLogger("SendAHug")
 
 
 class CoreSAHModel(Protocol[HugModelType]):
@@ -67,8 +77,8 @@ class SendADatabase:
     """
 
     database_url: str
-    engine: Engine
-    session_factory: sessionmaker[Session]
+    engine: AsyncEngine
+    session_factory: async_sessionmaker[AsyncSession]
 
     def __init__(
         self,
@@ -81,11 +91,12 @@ class SendADatabase:
         param default_per_page: A default per_page value for the pagination method.
         param db_url: The URL of the database.
         """
-        self.default_per_page = default_per_page
+        # Temporary second variable
         self.database_url = database_url
-        self.engine = create_engine(self.database_url)
+        self.default_per_page = default_per_page
+        self.engine = create_async_engine(self.database_url)
         self._create_session_factory()
-        self.session = self.create_scoped_session()
+        self.session = self.create_session()
 
     def init_app(self, app: Quart) -> None:
         """
@@ -97,31 +108,29 @@ class SendADatabase:
         app.config["SQLALCHEMY_DATABASE_URI"] = self.database_url
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
         self.app = app
-
         self.app.teardown_appcontext(self._remove_session)
 
     def _create_session_factory(self):
         """
-        Creates the session factory to be used to generate scoped sessions.
+        Creates the async session factory to be used to generate scoped sessions.
         """
-        session_factory = sessionmaker(
-            bind=self.engine,
-            class_=Session,
-        )
+        session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
         self.session_factory = session_factory
 
-    def create_scoped_session(self):
+    # TODO: Do we want to continue with this pattern? According to
+    # https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#using-asyncio-scoped-session
+    # it's not really recommended anymore.
+    def create_session(self):
         """
-        Creates a new scoped session.
+        Creates a new async scoped session.
         """
-        return scoped_session(session_factory=self.session_factory)
+        return async_scoped_session(
+            session_factory=self.session_factory, scopefunc=current_task
+        )
 
-    def _remove_session(self, exception: BaseException | None):
-        """
-        Removes the sesion once the app context is torn down.
-        Copied from Flask-SQLAlchemy.
-        """
-        self.session.remove()
+    async def _remove_session(self, exception: BaseException | None):
+        """ """
+        await self.session.remove()
 
     def set_default_per_page(self, per_page: int):
         """
@@ -131,7 +140,7 @@ class SendADatabase:
 
     # READ
     # -----------------------------------------------------------------
-    def paginate(
+    async def paginate(
         self,
         query: Select,  # TODO: This select needs to be Select[tuple[CoreSAHModel]]
         current_page: int,
@@ -145,38 +154,43 @@ class SendADatabase:
         param current_page: The current page to fetch the items for.
         param per_page: The amount of items to include in each page.
         """
-        session = self.create_scoped_session()
+        LOGGER.debug(f"Fetching items for page {current_page}")
 
         if per_page is None:
             per_page = self.default_per_page
 
-        with session() as sess:
-            try:
-                items = sess.scalars(
-                    query.limit(per_page).offset((current_page - 1) * per_page)
-                ).all()
-                total_items = (
-                    sess.scalar(select(func.count()).select_from(query.cte())) or 0
+        try:
+            items_scalars = await self.session.scalars(
+                query.limit(per_page).offset((current_page - 1) * per_page)
+            )
+            items = items_scalars.all()
+            total_items = (
+                await (
+                    self.session.scalar(select(func.count()).select_from(query.cte()))
                 )
+                or 0
+            )
 
-                return PaginationResult(
-                    resource=[item.format() for item in list(items)],
-                    current_page=current_page,
-                    per_page=per_page,
-                    total_items=total_items,
-                    total_pages=math.ceil(total_items / per_page),
-                )
+            return PaginationResult(
+                resource=[item.format() for item in list(items)],
+                current_page=current_page,
+                per_page=per_page,
+                total_items=total_items,
+                total_pages=math.ceil(total_items / per_page),
+            )
 
-            except Exception as err:
-                abort(500, str(err))
+        except Exception as err:
+            LOGGER.error(str(err))
+            abort(500, str(err))
 
-    def one_or_404(self, item_id: int, item_type: Type[T]) -> T:
+    async def one_or_404(self, item_id: int, item_type: Type[T]) -> T:
         """
         Fetch a single item or return 404 if it doesn't exist. Inspired by
         Flask-SQLAlchemy 3's `get_or_404` method.
         """
+        LOGGER.debug(f"Fetching item {item_id}")
         try:
-            item = self.session.get(item_type, item_id)
+            item = await self.session.get(item_type, item_id)
 
             if item is None:
                 abort(404)
@@ -184,14 +198,16 @@ class SendADatabase:
             return item
 
         except HTTPException as exc:
+            LOGGER.error(str(exc))
             raise exc
 
         except Exception as err:
+            LOGGER.error(str(err))
             abort(422, str(err))
 
     # CREATE
     # -----------------------------------------------------------------
-    def add_object(self, obj: CoreSAHModel) -> CoreSAHModel:
+    async def add_object(self, obj: CoreSAHModel) -> DumpedModel:
         """
         Inserts a new record into the database.
 
@@ -200,43 +216,56 @@ class SendADatabase:
         # Try to add the object to the database
         try:
             self.session.add(obj)
-            self.session.commit()
+            await self.session.commit()
+            await self.session.refresh(obj)
 
-            return obj
+            return obj.format()
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     # Bulk add
-    def add_multiple_objects(self, objects: list[CoreSAHModel]) -> list[DumpedModel]:
+    async def add_multiple_objects(
+        self, objects: list[CoreSAHModel]
+    ) -> list[DumpedModel]:
         """
         Inserts multiple records into the database.
 
         param objects: The list of objects to add to the database.
         """
+        formatted_objects: list[DumpedModel] = []
+
         # Try to add the objects to the database
         try:
             self.session.add_all(objects)
-            self.session.commit()
+            await self.session.commit()
 
-            return [item.format() for item in objects]
+            for object in objects:
+                await self.session.refresh(object)
+                formatted_objects.append(object.format())
+
+            return formatted_objects
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     # UPDATE
     # -----------------------------------------------------------------
-    def update_object(self, obj: CoreSAHModel) -> CoreSAHModel:
+    async def update_object(self, obj: CoreSAHModel) -> DumpedModel:
         """
         Updates an existing record.
 
@@ -244,21 +273,23 @@ class SendADatabase:
         """
         # Try to update the object in the database
         try:
-            self.session.commit()
-            self.session.refresh(obj)
+            await self.session.commit()
+            await self.session.refresh(obj)
 
-            return obj
+            return obj.format()
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     # Bulk Update
-    def update_multiple_objects(
+    async def update_multiple_objects(
         self, objects: Sequence[CoreSAHModel]
     ) -> list[DumpedModel]:
         """
@@ -270,31 +301,33 @@ class SendADatabase:
 
         # Try to update the objects in the database
         try:
-            self.session.commit()
+            await self.session.commit()
 
             for obj in objects:
-                self.session.refresh(obj)
+                await self.session.refresh(obj)
                 updated_objects.append(obj.format())
 
             return updated_objects
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     @overload
-    def update_multiple_objects_with_dml(self, update_stmts: list[Update]):
+    async def update_multiple_objects_with_dml(self, update_stmts: Update):
         ...
 
     @overload
-    def update_multiple_objects_with_dml(self, update_stmts: Update):
+    async def update_multiple_objects_with_dml(self, update_stmts: list[Update]):
         ...
 
-    def update_multiple_objects_with_dml(self, update_stmts):
+    async def update_multiple_objects_with_dml(self, update_stmts):
         """
         Updates multiple objects with a single UPDATE statement.
 
@@ -303,23 +336,25 @@ class SendADatabase:
         try:
             if isinstance(update_stmts, list):
                 for stmt in cast(list[Update], update_stmts):
-                    self.session.execute(stmt)
+                    await self.session.execute(stmt)
             else:
-                self.session.execute(update_stmts)
+                await self.session.execute(update_stmts)
 
-            self.session.commit()
+            await self.session.commit()
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     # DELETE
     # -----------------------------------------------------------------
-    def delete_object(self, object: CoreSAHModel) -> int:
+    async def delete_object(self, object: CoreSAHModel) -> int:
         """
         Deletes an existing record.
 
@@ -327,21 +362,23 @@ class SendADatabase:
         """
         # Try to delete the record from the database
         try:
-            self.session.delete(object)
-            self.session.commit()
+            await self.session.delete(object)
+            await self.session.commit()
             return object.id
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))
 
     # Bulk delete
     # TODO: Return the number of deleted items
-    def delete_multiple_objects(self, delete_stmt: Delete):
+    async def delete_multiple_objects(self, delete_stmt: Delete):
         """
         Executes a delete statement to delete multiple objects.
 
@@ -349,13 +386,15 @@ class SendADatabase:
         """
         # Try to delete the objects from the database
         try:
-            self.session.execute(delete_stmt)
-            self.session.commit()
+            await self.session.execute(delete_stmt)
+            await self.session.commit()
         # If there's a database error
         except (DataError, IntegrityError) as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(422, str(err.orig))
         # If there's an error, rollback
         except Exception as err:
-            self.session.rollback()
+            await self.session.rollback()
+            LOGGER.error(str(err))
             abort(500, str(err))

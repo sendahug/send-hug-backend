@@ -1,12 +1,11 @@
 alembic==1.13.1
 quart==0.19.5
 quart-cors==0.7.0
-gunicorn==22.0.0
-psycopg2-binary==2.9.9
+hypercorn==0.16.0
+asyncpg==0.29.0
 python-jose==3.3.0
 pywebpush==2.0.0
-SQLAlchemy==2.0.29
+SQLAlchemy[asyncio]==2.0.29
 setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
 aiohttp>= 3.9.2 # not directly required, pinned to avoid a vulnerability
-hypercorn>=0.16.0 # not directly required, pinned by Snyk to avoid a vulnerability
 werkzeug>=2.3.8 # not directly required, pinned by Snyk to avoid a vulnerability

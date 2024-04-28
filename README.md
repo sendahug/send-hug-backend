@@ -35,7 +35,7 @@ The project is open source, so feel free to use parts of the code. However, the 
 5. Run ```pre-commit install``` to install and initialise pre-commit.
 6. Create a database for the app.
 7. Update the database URI to match your system.
-    - The database URI comes from an environment variable named **DATABASE_URL**.
+    - The database URI comes from an environment variable named **DATABASE_URL**. Make sure you include the driver in the URL (e.g., `postgresql+asyncpg` instead of `postgresql`), as otherwise SQLAlchemy assumes it should use the default driver, which (at least for postgres) doesn't support async/await.
 8. Set Auth0 configuration variables:
     - AUTH0_DOMAIN - environment variable containing your Auth0 domain.
     - API_AUDIENCE - environment variable containing your Auth0 API audience.

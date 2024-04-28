@@ -250,13 +250,15 @@ def check_permissions_legacy(permission: list[str], payload: dict[str, Any]) -> 
     return True
 
 
-def get_current_user(payload: dict[str, Any], db: SendADatabase) -> dict[str, Any]:
+async def get_current_user(
+    payload: dict[str, Any], db: SendADatabase
+) -> dict[str, Any]:
     """
     Fetches the details of the currently logged in user from the database.
 
     param payload: The payload from the decoded, verified JWT.
     """
-    current_user: User | None = db.session.scalar(
+    current_user: User | None = await db.session.scalar(
         select(User).filter(User.auth0_id == payload["sub"])
     )
 
@@ -323,7 +325,7 @@ def requires_auth(db: SendADatabase, permission=[""]):
                 returned_payload = payload
                 check_permissions_legacy(permission, payload)
             else:
-                current_user = get_current_user(payload, db)
+                current_user = await get_current_user(payload, db)
                 returned_payload = {
                     "id": current_user["id"],
                     "auth0Id": current_user["auth0Id"],

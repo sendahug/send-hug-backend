@@ -30,6 +30,7 @@ import json
 from typing import Any, List, Optional, TypeAlias, TypeVar
 
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import (
     Mapped,
     column_property,
@@ -52,7 +53,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY
 
 
-class BaseModel(DeclarativeBase):
+class BaseModel(AsyncAttrs, DeclarativeBase):
     pass
 
 
@@ -81,7 +82,7 @@ class Post(BaseModel):
         ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    user: Mapped["User"] = relationship("User", back_populates="posts")
+    user: Mapped["User"] = relationship("User", back_populates="posts", lazy="selectin")
     text: Mapped[str] = mapped_column(String(480), nullable=False)
     date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     given_hugs: Mapped[int] = mapped_column(Integer, default=0)
@@ -121,7 +122,9 @@ class User(BaseModel):
         ForeignKey("roles.id", onupdate="CASCADE", ondelete="SET NULL"),
         default=4,
     )
-    role: Mapped[Optional["Role"]] = relationship("Role", foreign_keys="User.role_id")
+    role: Mapped[Optional["Role"]] = relationship(
+        "Role", foreign_keys="User.role_id", lazy="selectin"
+    )
     blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     release_date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     open_report: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -495,7 +498,7 @@ class Role(BaseModel):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(), nullable=False)
     permissions: Mapped[List[Permission]] = relationship(
-        "Permission", secondary=roles_permissions_map
+        "Permission", secondary=roles_permissions_map, lazy="selectin"
     )
 
     # Format method
