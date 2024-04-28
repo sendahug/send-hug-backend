@@ -356,6 +356,7 @@ async def test_update_block_user_as_user(
 ):
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["user"]["internal"]
+    user["blocked"] = True
     response = await app_client.patch(
         f"/users/all/{dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
@@ -413,6 +414,7 @@ async def test_update_block_user_as_mod(
 ):
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["moderator"]["internal"]
+    user["blocked"] = True
     response = await app_client.patch(
         f"/users/all/{dummy_users_data['moderator']['internal']}",
         headers=user_headers["moderator"],
