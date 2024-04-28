@@ -268,7 +268,7 @@ def create_app(config: SAHConfig) -> Quart:
 
         updated_post = json.loads(await request.data)
         original_post: Post = await config.db.async_one_or_404(
-            item_id=post_id,
+            item_id=int(post_id),
             item_type=Post,
         )
 
@@ -393,7 +393,7 @@ def create_app(config: SAHConfig) -> Quart:
 
         # Gets the post to delete
         post_data: Post = await config.db.async_one_or_404(
-            item_id=post_id,
+            item_id=int(post_id),
             item_type=Post,
         )
 
@@ -586,7 +586,7 @@ def create_app(config: SAHConfig) -> Quart:
 
         updated_user = json.loads(await request.data)
         user_to_update: User = await config.db.async_one_or_404(
-            item_id=user_id,
+            item_id=int(user_id),
             item_type=User,
         )
 
@@ -767,7 +767,7 @@ def create_app(config: SAHConfig) -> Quart:
     async def send_hug_to_user(token_payload: UserData, user_id: int):
         validator.check_type(user_id, "User ID")
         user_to_hug: User = await config.db.async_one_or_404(
-            item_id=user_id,
+            item_id=int(user_id),
             item_type=User,
         )
         # Fetch the current user to update their 'given hugs' value
@@ -1035,13 +1035,13 @@ def create_app(config: SAHConfig) -> Quart:
         # with that ID
         if mailbox_type in ["inbox", "outbox", "thread"]:
             delete_item = await config.db.async_one_or_404(
-                item_id=item_id,
+                item_id=int(item_id),
                 item_type=Message,
             )
         # If the mailbox type is threads, search for a thread with that ID
         elif mailbox_type == "threads":
             delete_item = await config.db.async_one_or_404(
-                item_id=item_id,
+                item_id=int(item_id),
                 item_type=Thread,
             )
         else:
@@ -1483,7 +1483,7 @@ def create_app(config: SAHConfig) -> Quart:
     async def update_report_status(token_payload: UserData, report_id: int):
         updated_report = json.loads(await request.data)
         report: Report | None = await config.db.async_session.scalar(
-            select(Report).filter(Report.id == report_id)
+            select(Report).filter(Report.id == int(report_id))
         )
 
         # If there's no report with that ID, abort
@@ -1586,7 +1586,7 @@ def create_app(config: SAHConfig) -> Quart:
 
         # If there's no word in that index
         to_delete: Filter = await config.db.async_one_or_404(
-            item_id=filter_id,
+            item_id=int(filter_id),
             item_type=Filter,
         )
 
@@ -1695,7 +1695,7 @@ def create_app(config: SAHConfig) -> Quart:
         subscription_json = request_data.decode("utf8").replace("'", '"')
         subscription_data = json.loads(subscription_json)
         old_sub: NotificationSub = await config.db.async_one_or_404(
-            item_id=sub_id, item_type=NotificationSub
+            item_id=int(sub_id), item_type=NotificationSub
         )
 
         old_sub.endpoint = subscription_data["endpoint"]
