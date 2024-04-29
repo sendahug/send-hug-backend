@@ -147,6 +147,7 @@ class User(BaseModel):
     received_messages: Mapped[Optional[List["Message"]]] = relationship(
         "Message", back_populates="for_user", foreign_keys="Message.for_id"
     )
+    firebase_id: Mapped[str] = mapped_column(String(50), nullable=False)
     # Column properties
     post_count = column_property(
         select(func.count(Post.id)).where(Post.user_id == id).scalar_subquery()
@@ -182,6 +183,7 @@ class User(BaseModel):
             if self.icon_colours
             else self.icon_colours,
             "posts": self.post_count,
+            "firebaseId": self.firebase_id,
         }
 
 
