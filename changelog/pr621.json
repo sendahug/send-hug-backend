@@ -1,0 +1,9 @@
+{
+  "pr_number": 621,
+  "changes": [
+    {
+      "change": "Fixes",
+      "description": "Updated the alembic env script to enable running database migrations (which has been broken since the move to the SQLAlchemy asyncio extension)."
+    }
+  ]
+}

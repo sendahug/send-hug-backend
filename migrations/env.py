@@ -1,10 +1,10 @@
-from __future__ import with_statement
-
-import logging
+import asyncio
 from logging.config import fileConfig
+from logging import getLogger
 
-from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from models.models import BaseModel
@@ -16,8 +16,10 @@ alembic_config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-fileConfig(alembic_config.config_file_name)  # type: ignore
-logger = logging.getLogger("alembic.env")
+if alembic_config.config_file_name is not None:
+    fileConfig(alembic_config.config_file_name)
+
+logger = getLogger("alembic.env")
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -35,7 +37,7 @@ target_metadata = BaseModel.metadata
 # ... etc.
 
 
-def run_migrations_offline():
+def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
     This configures the context with just a URL
@@ -48,46 +50,62 @@ def run_migrations_offline():
 
     """
     url = alembic_config.get_main_option("sqlalchemy.url")
-    context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
 
     with context.begin_transaction():
         context.run_migrations()
 
 
-def run_migrations_online():
-    """Run migrations in 'online' mode.
+def do_run_migrations(connection: Connection) -> None:
+    context.configure(connection=connection, target_metadata=target_metadata)
 
-    In this scenario we need to create an Engine
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+async def run_async_migrations() -> None:
+    """In this scenario we need to create an Engine
     and associate a connection with the context.
 
     """
-
     # this callback is used to prevent an auto-migration from being generated
     # when there are no changes to the schema
     # reference: http://alembic.zzzcomputing.com/en/latest/cookbook.html
-    def process_revision_directives(context, revision, directives):
-        if getattr(alembic_config.cmd_opts, "autogenerate", False):
-            script = directives[0]
-            if script.upgrade_ops.is_empty():
-                directives[:] = []
-                logger.info("No changes in schema detected.")
+    # TODO: Figure out why this doesn't work
+    # def process_revision_directives(
+    #     context: MigrationContext,
+    #     revision: str | Iterable[str | None] | Iterable[str],
+    #     directives: list[MigrationScript],
+    # ):
+    #     assert alembic_config.cmd_opts is not None
+    #     if getattr(alembic_config.cmd_opts, 'autogenerate', False):
+    #         script = directives[0]
+    #         assert script.upgrade_ops is not None
+    #         if script.upgrade_ops.is_empty():
+    #             directives[:] = []
 
-    connectable = engine_from_config(
-        alembic_config.get_section(alembic_config.config_ini_section),  # type: ignore
+    connectable = async_engine_from_config(
+        alembic_config.get_section(alembic_config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        # process_revision_directives=process_revision_directives
     )
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            compare_type=True,
-            process_revision_directives=process_revision_directives,
-        )
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
 
-        with context.begin_transaction():
-            context.run_migrations()
+    await connectable.dispose()
+
+
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
+
+    asyncio.run(run_async_migrations())
 
 
 if context.is_offline_mode():
