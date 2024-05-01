@@ -35,8 +35,16 @@ from urllib.request import urlopen
 from functools import wraps
 from quart import request
 from sqlalchemy import select
+from firebase_admin import App
+from firebase_admin.auth import (
+    verify_id_token,
+    InvalidIdTokenError,
+    ExpiredIdTokenError,
+    RevokedIdTokenError,
+)
 
 from models import User, SendADatabase
+from config import SAHConfig
 
 # Auth0 Configuration
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
@@ -60,6 +68,7 @@ class UserData(TypedDict):
     releaseDate: datetime | None
     pushEnabled: bool
     last_notifications_read: datetime | None
+    firebaseId: str
 
 
 # Authentication Error
@@ -250,6 +259,37 @@ def check_permissions_legacy(permission: list[str], payload: dict[str, Any]) -> 
     return True
 
 
+def validate_token(token: str, app: App):
+    """
+    Validates the token and returns the decoded payload.
+    """
+    try:
+        token_payload = verify_id_token(token, app)
+    except ExpiredIdTokenError:
+        raise AuthError(
+            {"code": 401, "description": "Unauthorised. Your token has expired."}, 401
+        )
+    except RevokedIdTokenError:
+        raise AuthError(
+            {"code": 401, "description": "Unauthorised. Your token has been revoked."},
+            401,
+        )
+    except InvalidIdTokenError:
+        raise AuthError(
+            {"code": 401, "description": "Unauthorised. Your token is invalid."}, 401
+        )
+    except Exception as err:
+        raise AuthError(
+            {
+                "code": 401,
+                "description": f"Unauthorised. Your token is invalid. Error: {err}",
+            },
+            401,
+        )
+
+    return token_payload
+
+
 async def get_current_user(
     payload: dict[str, Any], db: SendADatabase
 ) -> dict[str, Any]:
@@ -259,7 +299,7 @@ async def get_current_user(
     param payload: The payload from the decoded, verified JWT.
     """
     current_user: User | None = await db.session.scalar(
-        select(User).filter(User.auth0_id == payload["sub"])
+        select(User).filter(User.firebase_id == payload["uid"])
     )
 
     # If the user is not found, raise an AuthError
@@ -306,7 +346,7 @@ def check_user_permissions(permission: list[str], current_user: dict[str, Any]) 
 
 # TODO: Ideally we shouldn't pass the DB in, but right now because the
 # whole app initialisation happens within a function, we kind of have to...
-def requires_auth(db: SendADatabase, permission=[""]):
+def requires_auth(config: SAHConfig, permission=[""]):
     """
     @requires_auth() Decorator Definition
     Gets the Authorization header, verifies the JWT and checks
@@ -319,13 +359,13 @@ def requires_auth(db: SendADatabase, permission=[""]):
         @wraps(f)
         async def wrapper(*args, **kwargs):
             token = get_auth_header()
-            payload = verify_jwt(token)
+            payload = validate_token(token, config.firebase_app)
 
             if permission[0] == "post:user":
                 returned_payload = payload
                 check_permissions_legacy(permission, payload)
             else:
-                current_user = await get_current_user(payload, db)
+                current_user = await get_current_user(payload, config.db)
                 returned_payload = {
                     "id": current_user["id"],
                     "auth0Id": current_user["auth0Id"],
@@ -335,6 +375,7 @@ def requires_auth(db: SendADatabase, permission=[""]):
                     "releaseDate": current_user["releaseDate"],
                     "pushEnabled": current_user["pushEnabled"],
                     "last_notifications_read": current_user["last_notifications_read"],
+                    "firebaseId": current_user["firebaseId"],
                 }
                 check_user_permissions(permission, current_user)
 
