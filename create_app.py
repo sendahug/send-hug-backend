@@ -541,13 +541,13 @@ def create_app(config: SAHConfig) -> Quart:
 
         # If the user is attempting to add a user that isn't themselves to
         # the database, aborts
-        if user_data["id"] != token_payload["sub"]:
+        if user_data["firebaseId"] != token_payload["uid"]:
             abort(422)
 
         # Checks whether a user with that Auth0 ID already exists
         # If it is, aborts
         database_user: User | None = await config.db.session.scalar(
-            select(User).filter(User.firebase_id == user_data["id"])
+            select(User).filter(User.firebase_id == user_data["firebaseId"])
         )
 
         if database_user:
