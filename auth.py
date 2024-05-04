@@ -25,13 +25,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import json
 import os
 from typing import Any, cast, TypedDict
 from datetime import datetime
 
-from jose import jwt, exceptions
-from urllib.request import urlopen
 from functools import wraps
 from quart import request
 from sqlalchemy import select
@@ -109,154 +106,6 @@ def get_auth_header() -> str:
         )
 
     return split_auth_header[1]
-
-
-def get_rsa_key(token: str) -> dict[str, Any]:
-    """
-    Fetches the JWKS keys and matches the 'kid' key from the user's
-    token to the JWKS keys.
-
-    param token: The JWT.
-    returns: The RSA key for decoding the JWT (if decoding the token is possible)
-    """
-    # Gets the JWKS from Auth0
-    auth_json = urlopen(f"https://{AUTH0_DOMAIN}/.well-known/jwks.json")
-    jwks = json.loads(auth_json.read())
-
-    # Tries to get the token header
-    try:
-        token_header = jwt.get_unverified_header(token)
-    # If there's an error, raise an AuthError
-    except Exception:
-        raise AuthError(
-            {
-                "code": 401,
-                "description": "Unauthorised. Malformed Authorization header.",
-            },
-            401,
-        )
-
-    rsa_key = {}
-
-    # If the 'kid' key doesn't exist in the token header
-    for key in jwks["keys"]:
-        if key["kid"] == token_header["kid"]:
-            rsa_key = {
-                "kty": key["kty"],
-                "kid": key["kid"],
-                "use": key["use"],
-                "n": key["n"],
-                "e": key["e"],
-            }
-
-    return rsa_key
-
-
-def verify_jwt(token: str) -> dict[str, Any]:
-    """
-    Verifies the token using the Auth0 JWKS (JSON Web Key Set) JSON.
-    Ensures that the JWT is authentic, still valid and hasn't been tampered with.
-
-    param token: a JSON Web Token.
-    """
-    rsa_key = get_rsa_key(token=token)
-
-    payload = {}
-
-    # Try to decode and validate the token
-    if rsa_key:
-        try:
-            payload = jwt.decode(
-                token,
-                rsa_key,
-                algorithms=ALGORITHMS,
-                audience=API_AUDIENCE,
-                issuer=f"https://{AUTH0_DOMAIN}/",
-            )
-        # If the token expired
-        except exceptions.ExpiredSignatureError:
-            raise AuthError(
-                {"code": 401, "description": "Unauthorised. Your token has expired."},
-                401,
-            )
-        # If any claim in the token is invalid
-        except exceptions.JWTClaimsError:
-            raise AuthError(
-                {
-                    "code": 401,
-                    "description": "Unauthorised. Your token contains invalid claims.",
-                },
-                401,
-            )
-        # If the signature is invalid
-        except exceptions.JWTError:
-            raise AuthError(
-                {"code": 401, "description": "Unauthorised. Your token is invalid."},
-                401,
-            )
-        # If there's any other error
-        except Exception:
-            raise AuthError(
-                {"code": 401, "description": "Unauthorised. Invalid token."}, 401
-            )
-
-    return payload
-
-
-def check_permissions_legacy(permission: list[str], payload: dict[str, Any]) -> bool:
-    """
-    Checks the payload from of the decoded, verified JWT for
-    permissions. Then compares the user's permissions to the
-    required permission to check whether the user is allowed to
-    access the given resource.
-    Currently only used for the 'create user' endpoint.
-
-    param permission: The resource's required permissions. Can contain either one
-    or two allowed types of permissions.
-    param payload: The payload from the decoded, verified JWT.
-
-    returns True - Boolean confirming the user has the required permission.
-    """
-    # Check whether permissions are included in the token payload
-    if "permissions" not in payload:
-        raise AuthError(
-            {
-                "code": 403,
-                "description": "Unauthorised. You do not have permission "
-                "to perform this action.",
-            },
-            403,
-        )
-
-    # If there are two possibilities for permissions
-    if len(permission) == 2:
-        # Check whether the user has that permission
-        if (
-            permission[0] not in payload["permissions"]
-            and permission[1] not in payload["permissions"]
-        ):
-            raise AuthError(
-                {
-                    "code": 403,
-                    "description": "Unauthorised. You do not have permission "
-                    "to perform this action.",
-                },
-                403,
-            )
-    # If there's only one possibility
-    else:
-        # Check whether the user has that permission
-        if permission[0] not in payload["permissions"]:
-            raise AuthError(
-                {
-                    "code": 403,
-                    "description": "Unauthorised. You do not have permission "
-                    "to perform this action.",
-                },
-                403,
-            )
-
-    return True
 
 
 def validate_token(token: str, app: App):
@@ -352,7 +201,9 @@ def requires_auth(config: SAHConfig, permission=[""]):
     Gets the Authorization header, verifies the JWT and checks
     the user has the required permissions using the functions above.
 
-    param permission: - The resource's required permission(s).
+    param config: The app config to use (which provides access to the firebase
+                  app and the db instance).
+    param permission: The resource's required permission(s).
     """
 
     def requires_auth_decorator(f):
@@ -361,9 +212,10 @@ def requires_auth(config: SAHConfig, permission=[""]):
             token = get_auth_header()
             payload = validate_token(token, config.firebase_app)
 
+            # To create a new user, we just need to check for a valid
+            # firebase user.
             if permission[0] == "post:user":
                 returned_payload = payload
-                check_permissions_legacy(permission, payload)
             else:
                 current_user = await get_current_user(payload, config.db)
                 returned_payload = {
