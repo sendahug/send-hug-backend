@@ -34,7 +34,7 @@ import pytest
 # Index Route Tests ('/', GET)
 # -------------------------------------------------------
 @pytest.mark.asyncio(scope="session")
-async def test_get_home_page(app_client, test_db, user_headers):
+async def test_get_home_page(app_client, test_db):
     response = await app_client.get("/")
     response_data = await response.get_json()
 
@@ -48,7 +48,7 @@ async def test_get_home_page(app_client, test_db, user_headers):
 # -------------------------------------------------------
 # Run a search
 @pytest.mark.asyncio(scope="session")
-async def test_search(app_client, test_db, user_headers):
+async def test_search(app_client, test_db):
     response = await app_client.post("/", data=json.dumps({"search": "user"}))
     response_data = await response.get_json()
 
@@ -60,7 +60,7 @@ async def test_search(app_client, test_db, user_headers):
 
 # Run a search which returns multiple pages of results
 @pytest.mark.asyncio(scope="session")
-async def test_search_multiple_pages(app_client, test_db, user_headers):
+async def test_search_multiple_pages(app_client, test_db):
     response = await app_client.post("/", data=json.dumps({"search": "test"}))
     response_data = await response.get_json()
 
@@ -75,7 +75,7 @@ async def test_search_multiple_pages(app_client, test_db, user_headers):
 
 # Run a search which returns multiple pages of results - get page 2
 @pytest.mark.asyncio(scope="session")
-async def test_search_multiple_pages_page_2(app_client, test_db, user_headers):
+async def test_search_multiple_pages_page_2(app_client, test_db):
     response = await app_client.post("/?page=2", data=json.dumps({"search": "test"}))
     response_data = await response.get_json()
 

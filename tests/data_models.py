@@ -161,6 +161,7 @@ async def create_users(db: SendADatabase):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=3,
+        firebase_id="abcd",
     )
     user_2 = User(
         id=4,
@@ -182,6 +183,7 @@ async def create_users(db: SendADatabase):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=1,
+        firebase_id="ijkl",
     )
     user_3 = User(
         id=5,
@@ -201,6 +203,7 @@ async def create_users(db: SendADatabase):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=2,
+        firebase_id="efgh",
     )
     user_4 = User(
         id=9,
@@ -220,6 +223,7 @@ async def create_users(db: SendADatabase):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=1,
+        firebase_id="zxy",
     )
     user_5 = User(
         id=20,
@@ -241,6 +245,7 @@ async def create_users(db: SendADatabase):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=5,
+        firebase_id="twg",
     )
 
     try:
