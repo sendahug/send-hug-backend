@@ -112,3 +112,6 @@ cython_debug/
 
 # Tests db
 tests/capstone_db
+
+.secrets/*
+!.secrets/README.md
