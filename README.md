@@ -38,6 +38,7 @@ The project is open source, so feel free to use parts of the code. However, the 
     - The database URI comes from an environment variable named **DATABASE_URL**. Make sure you include the driver in the URL (e.g., `postgresql+asyncpg` instead of `postgresql`), as otherwise SQLAlchemy assumes it should use the default driver, which (at least for postgres) doesn't support async/await.
     - **PRIVATE_KEY** - environment variable containing your private VAPID key (required for push notifications).
     - The frontend URI comes from an environment variable named **FRONTEND**.
+    - The firebase credentials file's location is in an environment variable called **FIREBASE_CREDENTIALS_FILE**.
 8. Update your database using ```alembic upgrade head```
 9. Run Quart with:
     - ```export QUART_APP=app.py```
@@ -128,6 +129,7 @@ The project was hosted live on Heroku (we're currently looking at alternatives, 
     - DATABASE_URL - the URL of the database in production.
     - FRONTEND - set with your own frontend URL (necessary for setting up CORS!)
     - PRIVATE_KEY - The private VAPID key (required for sending push notifications).
+    - FIREBASE_CREDENTIALS_FILE - The location of the JSON key for the Firebase service account.
   9. Enter `alembic upgrade head` to trigger database migrations and bring your live database up to date.
   10. All done! Now you can visit your <GIT_URL> to see the live app.
 
