@@ -34,9 +34,7 @@ import pytest
 # -------------------------------------------------------
 # Attempt to create a post without auth header
 @pytest.mark.asyncio(scope="session")
-async def test_send_post_no_auth(
-    app_client, test_db, user_headers, dummy_request_data, mock_verify_id_token
-):
+async def test_send_post_no_auth(app_client, test_db, user_headers, dummy_request_data):
     response = await app_client.post(
         "/posts", data=json.dumps(dummy_request_data["new_post"])
     )
@@ -49,7 +47,7 @@ async def test_send_post_no_auth(
 # Attempt to create a post with a malformed auth header
 @pytest.mark.asyncio(scope="session")
 async def test_send_post_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data, mock_verify_id_token
+    app_client, test_db, user_headers, dummy_request_data
 ):
     response = await app_client.post(
         "/posts",
@@ -70,7 +68,6 @@ async def test_send_post_as_user(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -93,7 +90,6 @@ async def test_send_post_as_mod(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["moderator"]["internal"]
@@ -116,7 +112,6 @@ async def test_send_post_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["admin"]["internal"]
@@ -139,7 +134,6 @@ async def test_send_post_as_blocked(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["blocked"]["internal"]
@@ -157,7 +151,7 @@ async def test_send_post_as_blocked(
 # Attempt to update a post with no authorisation header
 @pytest.mark.asyncio(scope="session")
 async def test_update_post_no_auth(
-    app_client, test_db, user_headers, dummy_request_data, mock_verify_id_token
+    app_client, test_db, user_headers, dummy_request_data
 ):
     response = await app_client.patch(
         "/posts/4", data=json.dumps(dummy_request_data["updated_post"])
@@ -171,7 +165,7 @@ async def test_update_post_no_auth(
 # Attempt to update a post with a malformed auth header
 @pytest.mark.asyncio(scope="session")
 async def test_update_post_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data, mock_verify_id_token
+    app_client, test_db, user_headers, dummy_request_data
 ):
     response = await app_client.patch(
         "/posts/4",
@@ -192,7 +186,6 @@ async def test_update_own_post_as_user(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -216,7 +209,6 @@ async def test_update_other_users_post_as_user(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["moderator"]["internal"]
@@ -238,7 +230,6 @@ async def test_update_own_post_as_mod(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["moderator"]["internal"]
@@ -262,7 +253,6 @@ async def test_update_other_users_post_as_mod(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -286,7 +276,6 @@ async def test_update_own_post_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["admin"]["internal"]
@@ -310,7 +299,6 @@ async def test_update_other_users_post_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -334,7 +322,6 @@ async def test_update_other_users_post_report_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["report_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -358,7 +345,6 @@ async def test_update_nonexistent_post_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -379,7 +365,6 @@ async def test_update_post_no_id_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mock_verify_id_token,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -396,9 +381,7 @@ async def test_update_post_no_id_as_admin(
 # -------------------------------------------------------
 # Attempt to send hugs for post you already sent hugs for
 @pytest.mark.asyncio(scope="session")
-async def test_post_hugs_given_duplicate_hugs(
-    app_client, test_db, user_headers, mock_verify_id_token
-):
+async def test_post_hugs_given_duplicate_hugs(app_client, test_db, user_headers):
     response = await app_client.post("/posts/1/hugs", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -408,9 +391,7 @@ async def test_post_hugs_given_duplicate_hugs(
 
 # Attempt to send hugs for a post that doesn't exist
 @pytest.mark.asyncio(scope="session")
-async def test_post_hugs_post_no_existing(
-    app_client, test_db, user_headers, mock_verify_id_token
-):
+async def test_post_hugs_post_no_existing(app_client, test_db, user_headers):
     response = await app_client.post("/posts/1000/hugs", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -420,7 +401,7 @@ async def test_post_hugs_post_no_existing(
 
 # Attempt to send hugs
 @pytest.mark.asyncio(scope="session")
-async def test_post_hugs(app_client, test_db, user_headers, mock_verify_id_token):
+async def test_post_hugs(app_client, test_db, user_headers):
     response = await app_client.post("/posts/1/hugs", headers=user_headers["moderator"])
     response_data = await response.get_json()
 
@@ -433,9 +414,7 @@ async def test_post_hugs(app_client, test_db, user_headers, mock_verify_id_token
 # -------------------------------------------------------
 # Attempt to delete a post with no authorisation header
 @pytest.mark.asyncio(scope="session")
-async def test_delete_post_no_auth(
-    app_client, test_db, user_headers, mock_verify_id_token
-):
+async def test_delete_post_no_auth(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/3")
     response_data = await response.get_json()
 
@@ -445,9 +424,7 @@ async def test_delete_post_no_auth(
 
 # Attempt to delete a post with a malformed auth header
 @pytest.mark.asyncio(scope="session")
-async def test_delete_post_malformed_auth(
-    app_client, test_db, user_headers, mock_verify_id_token
-):
+async def test_delete_post_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/3", headers=user_headers["malformed"])
     response_data = await response.get_json()
 
@@ -468,9 +445,7 @@ async def test_delete_post_malformed_auth(
     ],
 )
 @pytest.mark.asyncio(scope="session")
-async def test_delete_own_post(
-    app_client, test_db, user_headers, post_id, user, mock_verify_id_token
-):
+async def test_delete_own_post(app_client, test_db, user_headers, post_id, user):
     response = await app_client.delete(f"/posts/{post_id}", headers=user_headers[user])
     response_data = await response.get_json()
 
@@ -481,9 +456,7 @@ async def test_delete_own_post(
 
 # Attempt to delete another user's post (with user's JWT)
 @pytest.mark.asyncio(scope="session")
-async def test_delete_other_users_post_as_user(
-    app_client, test_db, user_headers, mock_verify_id_token
-):
+async def test_delete_other_users_post_as_user(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/12", headers=user_headers["user"])
     response_data = await response.get_json()
 
@@ -493,9 +466,7 @@ async def test_delete_other_users_post_as_user(
 
 # Attempt to delete another user's post (with moderator's JWT)
 @pytest.mark.asyncio(scope="session")
-async def test_delete_other_users_post_as_mod(
-    app_client, test_db, user_headers, mock_verify_id_token
-):
+async def test_delete_other_users_post_as_mod(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/25", headers=user_headers["moderator"])
     response_data = await response.get_json()
 
@@ -505,9 +476,7 @@ async def test_delete_other_users_post_as_mod(
 
 # Attempt to delete another user's post (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
-async def test_delete_other_users_post_as_admin(
-    app_client, test_db, user_headers, mock_verify_id_token
-):
+async def test_delete_other_users_post_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/1", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -518,9 +487,7 @@ async def test_delete_other_users_post_as_admin(
 
 # Attempt to delete a post that doesn't exist (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
-async def test_delete_nonexistent_post_as_admin(
-    app_client, test_db, user_headers, mock_verify_id_token
-):
+async def test_delete_nonexistent_post_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/100", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -530,9 +497,7 @@ async def test_delete_nonexistent_post_as_admin(
 
 # Attempt to delete a post without post ID (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
-async def test_delete_post_no_id_as_admin(
-    app_client, test_db, user_headers, mock_verify_id_token
-):
+async def test_delete_post_no_id_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/", headers=user_headers["admin"])
     response_data = await response.get_json()
 

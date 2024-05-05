@@ -13,10 +13,10 @@ from tests.data_models import create_data, DATETIME_PATTERN, update_sequences
 
 
 @pytest.fixture(scope="session")
-def user_headers():
+def user_headers(session_mocker: MockerFixture):
     """
-    Get Auth0 access tokens for each of the users to be able to run
-    the tests.
+    Sets the headers for each of the users and mocks
+    the verify_id_token function from Firebase.
     """
     roles = ["user", "moderator", "admin", "blocked"]
     user_headers: dict[str, dict[str, str]] = {}
@@ -32,6 +32,18 @@ def user_headers():
         "Content-Type": "application/json",
         "Authorization": "Bearer",
     }
+
+    def verify_token(token, app):
+        if "user" in token:
+            return {"uid": "abcd"}
+        elif "moderator" in token:
+            return {"uid": "efgh"}
+        elif "blocked" in token:
+            return {"uid": "twg"}
+        else:
+            return {"uid": "ijkl"}
+
+    session_mocker.patch("auth.verify_id_token", new=verify_token)
 
     return user_headers
 
@@ -134,23 +146,6 @@ def dummy_users_data():
     }
 
     return user_data
-
-
-@pytest.fixture
-def mock_verify_id_token(mocker: MockerFixture):
-    """Mocker for the verify_id_token function from Firebase."""
-
-    def verify_token(token, app):
-        if "user" in token:
-            return {"uid": "abcd"}
-        elif "moderator" in token:
-            return {"uid": "efgh"}
-        elif "blocked" in token:
-            return {"uid": "twg"}
-        else:
-            return {"uid": "ijkl"}
-
-    mocker.patch("auth.verify_id_token", new=verify_token)
 
 
 @pytest.fixture
