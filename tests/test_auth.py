@@ -26,7 +26,7 @@
 # SOFTWARE.
 
 import pytest
-from firebase_admin.auth import (
+from firebase_admin.auth import (  # type: ignore
     InvalidIdTokenError,
     ExpiredIdTokenError,
     RevokedIdTokenError,

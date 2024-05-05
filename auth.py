@@ -31,8 +31,8 @@ from datetime import datetime
 from functools import wraps
 from quart import request
 from sqlalchemy import select
-from firebase_admin import App
-from firebase_admin.auth import (
+from firebase_admin import App  # type: ignore
+from firebase_admin.auth import (  # type: ignore
     verify_id_token,
     InvalidIdTokenError,
     ExpiredIdTokenError,
