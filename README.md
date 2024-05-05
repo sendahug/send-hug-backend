@@ -34,17 +34,12 @@ The project is open source, so feel free to use parts of the code. However, the 
 4. Run ```pip install -r requirements.txt -r dev_requirements.txt``` to install dependencies.
 5. Run ```pre-commit install``` to install and initialise pre-commit.
 6. Create a database for the app.
-7. Update the database URI to match your system.
+7. Set the required environment variables:
     - The database URI comes from an environment variable named **DATABASE_URL**. Make sure you include the driver in the URL (e.g., `postgresql+asyncpg` instead of `postgresql`), as otherwise SQLAlchemy assumes it should use the default driver, which (at least for postgres) doesn't support async/await.
-8. Set Auth0 configuration variables:
-    - AUTH0_DOMAIN - environment variable containing your Auth0 domain.
-    - API_AUDIENCE - environment variable containing your Auth0 API audience.
-    - CLIENT_ID - environment variable containing your Auth0 application's client ID.
-    - PRIVATE_KEY - environment variable containing your private VAPID key (required for push notifications).
-9. Set up your frontend URI.
+    - **PRIVATE_KEY** - environment variable containing your private VAPID key (required for push notifications).
     - The frontend URI comes from an environment variable named **FRONTEND**.
-10. Update your database using ```alembic upgrade head```
-11. Run Quart with:
+8. Update your database using ```alembic upgrade head```
+9. Run Quart with:
     - ```export QUART_APP=app.py```
     - ```quart --debug run```
 
@@ -76,7 +71,7 @@ The site uses several tools to maximise compatibility:
 
 4. **Quart-CORS** - This application uses Quart-CORS in order to enable communication from the frontend. You can read more about it in the [Quart-CORS repository](https://github.com/pgjones/quart-cors).
 
-5. **Python-Jose** - This application uses Python-Jose in order to decode and verify the authenticity of a given JWT (see Contents -> auth.py). You can read more on the [Python-Jose](https://python-jose.readthedocs.io/en/latest/) website.
+5. **Firebase-Admin** - This application uses firebase-admin in order to decode and verify the authenticity of a given JWT (see Contents -> auth.py). You can read more on the [Firebase SDK API docs](https://firebase.google.com/docs/reference/admin).
 
 6. **PyWebPush** - This application uses pywebpush in order to handle push notifications. For more information, check their [GitHub repo](https://github.com/web-push-libs/pywebpush).
 
@@ -84,16 +79,16 @@ The site uses several tools to maximise compatibility:
 
 ## Authentication
 
-The project uses Auth0 as a third-party authentication provider. Authentication is done by Auth0, which in turn returns a JSON Web Token containing the user's data and permissions.
+The project uses Firebase as a third-party authentication provider. Authentication is done by Firebase, which in turn returns a JSON Web Token containing the user's data and permissions.
 
 Decoding and verifying the token is done by [`auth.py`](./auth.py), in three stages:
 
-1. The server gets the Authorization header from the request and ensures that it exists and is in the right form. (Done by the `get_auth_header()` function.)
+1. The server gets the Authorization header from the request and ensures that it exists and is in the right form. (Done by the `get_auth_header` function.)
 
-2. The server uses Jose to decode and verify the token. (Done by the `verify_jwt()` function.)
+2. The server uses the Firebase SDK to decode and verify the token. (Done by the `validate_token` function.)
 
-3. Once the JWT is decoded and verified, the user's data (including permissions) is fetched from the back-end (done by the `get_current_user` function). Each endpoint that requires authorisation contains a string, which is then compared to the user's permissions. (Done by the `check_user_permissions()` function.)
-  - There's one exception to this, which is the `POST /users` endpoint. Since at that point the user doesn't exist in the internal database yet, fetching the permissions would fail. This endpoint is the only endpoint that still uses the Auth0 roles. A new user is automatically assigned the `NewUser` role, which includes the `post:user` permission, in Auth0. This allows them to create a user, which is then used for all subsequent visits.
+3. Once the JWT is decoded and verified, the user's data (including permissions) is fetched from the back-end (done by the `get_current_user` function). Each endpoint that requires authorisation contains a string, which is then compared to the user's permissions. (Done by the `check_user_permissions` function.)
+  - There's one exception to this, which is the `POST /users` endpoint. Since at that point the user doesn't exist in the internal database yet, fetching the permissions would fail. This endpoint is the only endpoint that requires authentication but no authorisation. This allows them to create a user, which is then used for all subsequent visits.
 
 Endpoints that require authorisation are marked with the `@requires_auth` decorator. The function creating the decorator is written in full in [`auth.py`](./auth.py).
 
@@ -101,36 +96,7 @@ In case the user's authorisation header is malformed, their JWT is invalid in an
 
 ## Testing
 
-This project utilises Pytest for testing. There are two options in terms of setting up authentication for testing: generating JWTs for each of the four required users manually, or using Auth0's Resource Owner Password flow. This project is set up using the latter, but if you want to use the former, skip to the second part of testing.
-
-### Automated Testing Using the Resource Owner Password Flow
-
-As said, automated testing takes advantage of Auth0's [Resource Owner Password flow](https://auth0.com/docs/flows/call-your-api-using-resource-owner-password-flow?_ga=2.97409119.1158006766.1599115125-2036507523.1598430579). This means that the users' credentials are sent to Auth0 in exchange for a JWT.
-
-The required setup is:
-
-1. The password flow needs to be added to the application's grant types. This is done via the Auth0 Management API. See full instructions [here](https://community.auth0.com/t/error-grant-type-password-not-allowed-for-the-client-for-resource-owner-password-flow/6951/2).
-  * **Make sure to change only the Test Application's grant types!** This is important as this grant type should only be given to highly trusted apps, and doing it in the main application could lower your application's security. This is the purpose of the test application Auth0 automatically creates; use it.
-2. If you haven't set it before, add the default connection to your account. This tells Auth0's systems where to look for a match for the sent username and password. This is done through your user's settings, in the field `Default Directory`.
-3. Once the password flow was added as a grant type, add the following environment variables:
-  - TEST_CLIENT_ID - The ID of your Test Application.
-  - TEST_CLIENT_SECRET - The secret of your Test Application.
-  - Username and password for each user:
-    - For the User - USER_USERNAME + USER_PASSWORD
-    - For the Moderator - MODERATOR_USERNAME + MODERATOR_PASSWORD
-    - For the Admin - ADMIN_USERNAME + ADMIN_PASSWORD
-    - For the Blocked New User - BLOCKED_USERNAME + BLOCKED_PASSWORD
-
-### Generating User Tokens
-
-Should you choose to manually generate user tokens, the `get_user_tokens()` request flow (lines 67-91) can be replaced with the relevant access tokens. These should be saved as environment variables.
-
-The recommended structure is:
-
-1. USER_JWT - JWT of a user with the role of a user.
-2. MOD_JWT - JWT of a user with the role of a moderator.
-3. ADMIN_JWT - JWT of a user with the role of an admin.
-4. BLOCKED_JWT - JWT of a user who's currently blocked and is a new user. (This is required for one of the tests, so make sure to manually change the user's role.)
+This project utilises Pytest for testing.
 
 ### Running Tests
 
@@ -159,9 +125,7 @@ The project was hosted live on Heroku (we're currently looking at alternatives, 
   6. Make sure you're in the top directory (FSND-capstone). In your terminal, enter `git remote add heroku-server <GIT_URL>`.
   7. Enter `git heroku-server master`. This triggers the app build. If successful, you'll get a 'Verifying deploy... done.' message.
   8. Add the following environment variables (via CLI or via the Heroku website):
-    - API_AUDIENCE - set with your own API audience from Auth0
-    - AUTH0_DOMAIN - set with your own Auth0 domain
-    - CLIENT_ID - set with your own client ID from Auth0
+    - DATABASE_URL - the URL of the database in production.
     - FRONTEND - set with your own frontend URL (necessary for setting up CORS!)
     - PRIVATE_KEY - The private VAPID key (required for sending push notifications).
   9. Enter `alembic upgrade head` to trigger database migrations and bring your live database up to date.
