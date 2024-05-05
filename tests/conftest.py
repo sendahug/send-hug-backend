@@ -4,6 +4,7 @@ from asyncio import current_task
 import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker, async_scoped_session
+from firebase_admin import initialize_app  # type: ignore
 
 from create_app import create_app
 from config import SAHConfig
@@ -49,9 +50,13 @@ def user_headers(session_mocker: MockerFixture):
 
 
 @pytest.fixture(scope="session")
-def test_config():
+def test_config(session_mocker: MockerFixture):
     """Set up the config"""
     test_db_path = "postgresql+asyncpg://postgres:password@localhost:5432/test_sah"
+    # TODO: We should at least make sure that this works with
+    # an actual key.
+    session_mocker.patch("config.initialize_app", return_value=initialize_app())
+    session_mocker.patch("config.Certificate")
     yield SAHConfig(database_url=test_db_path)
 
 
