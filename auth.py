@@ -25,7 +25,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
 from typing import Any, cast, TypedDict
 from datetime import datetime
 
@@ -42,12 +41,6 @@ from firebase_admin.auth import (
 
 from models import User, SendADatabase
 from config import SAHConfig
-
-# Auth0 Configuration
-AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
-API_AUDIENCE = os.environ.get("API_AUDIENCE", "")
-CLIENT_ID = os.environ.get("CLIENT_ID", "")
-ALGORITHMS = ["RS256"]
 
 
 class RoleData(TypedDict):
