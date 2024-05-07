@@ -1,0 +1,29 @@
+steps:
+  - id: 'Lint and Test Setup'
+    name: python:3.11
+    entrypoint: pip
+    args: ["install", "-r", "dev_requirements.txt", "-r", "requirements.txt", "--user"]
+
+  - id: 'Send-a-hug Backend: Lint Staging'
+    name: python:3.11
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        set -e
+        SKIP=check_for_changelog /builder/home/.local/bin/pre-commit run --all-files
+    env:
+      - 'PRE_COMMIT_HOME=/workspace/.cache/pre-commit'
+
+  - id: 'Send-a-hug Backend: Build and Test Staging'
+    name: python:3.11
+    entrypoint: bash
+    args:
+      - '-c'
+      - python -m pytest --mypy -vv
+
+logsBucket: 'gs://send-a-hug_cloudbuilds'
+timeout: 900s
+
+tags:
+  - 'Send-a-hug Backend'

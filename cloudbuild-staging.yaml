@@ -1,0 +1,46 @@
+# cloudbuild-staging.yaml
+steps:
+    # build & push the container image
+  - id: "Send-a-hug: Build Staging"
+    name: "gcr.io/kaniko-project/executor:v1.21.1"
+    args:
+      - "--cache=true"
+      - "--cache-ttl=48h"
+      - "--destination=europe-west1-docker.pkg.dev/$PROJECT_ID/imgs/${_IMAGE_NAME}:latest"
+
+    # Deploy container image to Cloud Run
+  - id: "Send-a-hug: Deploy Staging"
+    name: "gcr.io/cloud-builders/gcloud"
+    args:
+      - 'beta'
+      - 'run'
+      - 'deploy'
+      - '${_IMAGE_NAME}'
+      - '--image'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/imgs/${_IMAGE_NAME}:latest'
+      - '--region'
+      - 'europe-west1'
+      - '--allow-unauthenticated'
+      - '--timeout=15m'
+      - '--min-instances'
+      - '0'
+      - '--memory'
+      - '512Mi'
+      - '--platform'
+      - 'managed'
+      - '--update-env-vars'
+      - 'SAH_MODE=${_SAH_MODE}'
+      - '--update-secrets'
+      - '/app/.secrets/firebase_web_api_key/latest.json=firebase_web_api_key:latest'
+    # Just want to note here how f^&&ing annoying it is that you can't deploy multiple secrets to the
+    # same folder when using the above method. Come on Google, do better
+
+substitutions:
+  _IMAGE_NAME: 'send-a-hug-staging'
+  _SAH_MODE: 'STAGING'
+
+logsBucket: 'gs://send-a-hug_cloudbuilds'
+timeout: 900s
+
+tags:
+  - 'Send-a-hug'
