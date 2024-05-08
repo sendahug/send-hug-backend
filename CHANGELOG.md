@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2024-04-30
+
+#### Fixes
+
+- Updated the alembic env script to enable running database migrations (which has been broken since the move to the SQLAlchemy asyncio extension). ([#621](https://github.com/sendahug/send-hug-backend/pull/621))
+
 ### 2024-04-28
 
 #### Features
