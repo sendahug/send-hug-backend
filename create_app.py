@@ -554,7 +554,6 @@ def create_app(config: SAHConfig) -> Quart:
             abort(409)
 
         new_user = User(
-            auth0_id="",
             display_name=user_data["displayName"],
             last_notifications_read=datetime.now(),
             login_count=0,

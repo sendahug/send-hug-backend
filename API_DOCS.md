@@ -517,7 +517,6 @@ For full instructions check the [`backend README`](./backend/README.md)
 {
   "success": true,
   "user": {
-    "auth0Id": "",
     "firebaseId": "bc7e50",
     "displayName": "user14",
     "givenH": 0,
@@ -586,7 +585,6 @@ For full instructions check the [`backend README`](./backend/README.md)
 {
   "success": true,
   "updated": {
-    "auth0Id": "c7e50",
     "displayName": "user_14",
     "givenH": 0,
     "id": 4,

@@ -51,7 +51,6 @@ class RoleData(TypedDict):
 
 class UserData(TypedDict):
     id: int
-    auth0Id: str
     displayName: str
     role: RoleData
     blocked: bool
@@ -213,7 +212,6 @@ def requires_auth(config: SAHConfig, permission=[""]):
                 current_user = await get_current_user(payload, config.db)
                 returned_payload = {
                     "id": current_user["id"],
-                    "auth0Id": current_user["auth0Id"],
                     "displayName": current_user["displayName"],
                     "role": current_user["role"],
                     "blocked": current_user["blocked"],

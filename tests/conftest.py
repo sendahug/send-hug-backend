@@ -134,20 +134,17 @@ def dummy_users_data():
     user_data = {
         "user": {
             "internal": "1",
-            "auth0": "auth0|5ed34765f0b8e60c8e87ca62",
             "firebase_id": "abcd",
         },
         "moderator": {
             "internal": "5",
-            "auth0": "auth0|5ede3e7a0793080013259050",
             "firebase_id": "efgh",
         },
         "admin": {
             "internal": "4",
-            "auth0": "auth0|5ed8e3d0def75d0befbc7e50",
             "firebase_id": "ijkl",
         },
-        "blocked": {"internal": "20", "auth0": "", "firebase_id": "twg"},
+        "blocked": {"internal": "20", "firebase_id": "twg"},
     }
 
     return user_data
@@ -178,7 +175,6 @@ def dummy_request_data():
             "closeReport": 1,
         },
         "new_user": {
-            "id": "auth0|5edf778e56d062001335196e",
             "displayName": "user",
             "receivedH": 0,
             "givenH": 0,

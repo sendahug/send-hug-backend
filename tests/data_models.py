@@ -145,7 +145,6 @@ async def create_users(db: SendADatabase):
     """Creates the users in the test database."""
     user_1 = User(
         id=1,
-        auth0_id="auth0|5ed34765f0b8e60c8e87ca62",
         received_hugs=12,
         given_hugs=2,
         display_name="shirb",
@@ -165,7 +164,6 @@ async def create_users(db: SendADatabase):
     )
     user_2 = User(
         id=4,
-        auth0_id="auth0|5ed8e3d0def75d0befbc7e50",
         received_hugs=106,
         given_hugs=117,
         display_name="user14",
@@ -187,7 +185,6 @@ async def create_users(db: SendADatabase):
     )
     user_3 = User(
         id=5,
-        auth0_id="auth0|5ede3e7a0793080013259050",
         received_hugs=2,
         given_hugs=0,
         display_name="user52",
@@ -207,7 +204,6 @@ async def create_users(db: SendADatabase):
     )
     user_4 = User(
         id=9,
-        auth0_id="auth0|5edf7b060793080013276746",
         received_hugs=0,
         given_hugs=1,
         display_name="user93",
@@ -227,7 +223,6 @@ async def create_users(db: SendADatabase):
     )
     user_5 = User(
         id=20,
-        auth0_id="auth0|5f4b9fd9915cd400670f4633",
         received_hugs=0,
         given_hugs=0,
         display_name="user24",
