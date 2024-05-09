@@ -232,7 +232,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: None.
     # Authorization: post:post.
     @app.route("/posts", methods=["POST"])
-    @requires_auth(config.db, ["post:post"])
+    @requires_auth(config, ["post:post"])
     async def add_post(token_payload: UserData):
         new_post_data = json.loads(await request.data)
         validator.validate_post_or_message(
@@ -261,7 +261,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: post_id - ID of the post to update.
     # Authorization: patch:my-post or patch:any-post.
     @app.route("/posts/<post_id>", methods=["PATCH"])
-    @requires_auth(config.db, ["patch:my-post", "patch:any-post"])
+    @requires_auth(config, ["patch:my-post", "patch:any-post"])
     async def edit_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
@@ -309,7 +309,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: user_id - the user to send a hug to.
     # Authorization: read:user
     @app.route("/posts/<post_id>/hugs", methods=["POST"])
-    @requires_auth(config.db, ["patch:my-post", "patch:any-post"])
+    @requires_auth(config, ["patch:my-post", "patch:any-post"])
     async def send_hug_for_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
@@ -386,7 +386,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: post_id - ID of the post to delete.
     # Authorization: delete:my-post or delete:any-post.
     @app.route("/posts/<post_id>", methods=["DELETE"])
-    @requires_auth(config.db, ["delete:my-post", "delete:any-post"])
+    @requires_auth(config, ["delete:my-post", "delete:any-post"])
     async def delete_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
@@ -448,7 +448,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: type - A type by which to filter the users.
     # Authorization: read:admin-board.
     @app.route("/users/<type>")
-    @requires_auth(config.db, ["read:admin-board"])
+    @requires_auth(config, ["read:admin-board"])
     async def get_users_by_type(token_payload: UserData, type: str):
         page = request.args.get("page", 1, type=int)
 
@@ -490,10 +490,10 @@ def create_app(config: SAHConfig) -> Quart:
 
     # Endpoint: GET /users/all/<user_id>
     # Description: Gets the user's data.
-    # Parameters: user_id - The user's Auth0 ID.
+    # Parameters: user_id - The user's Firebase ID / internal ID.
     # Authorization: read:user.
     @app.route("/users/all/<user_id>")
-    @requires_auth(config.db, ["read:user"])
+    @requires_auth(config, ["read:user"])
     async def get_user_data(token_payload: UserData, user_id: int | str):
         # Try to convert it to a number; if it's a number, it's a
         # regular ID, so try to find the user with that ID
@@ -502,13 +502,13 @@ def create_app(config: SAHConfig) -> Quart:
             user_data = await config.db.session.scalar(
                 select(User).filter(User.id == int(user_id))
             )
-        # Otherwise, it's an Auth0 ID
+        # Otherwise, it's a Firebase ID
         except ValueError:
             user_data = await config.db.session.scalar(
-                select(User).filter(User.auth0_id == user_id)
+                select(User).filter(User.firebase_id == user_id)
             )
 
-        # If there's no user with that Auth0 ID, abort
+        # If there's no user with that Firebase ID, abort
         if user_data is None:
             abort(404)
 
@@ -534,27 +534,26 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: None.
     # Authorization: post:user.
     @app.route("/users", methods=["POST"])
-    @requires_auth(config.db, ["post:user"])
+    @requires_auth(config, ["post:user"])
     async def add_user(token_payload):
         # Gets the user's data
         user_data = json.loads(await request.data)
 
         # If the user is attempting to add a user that isn't themselves to
         # the database, aborts
-        if user_data["id"] != token_payload["sub"]:
+        if user_data["firebaseId"] != token_payload["uid"]:
             abort(422)
 
-        # Checks whether a user with that Auth0 ID already exists
+        # Checks whether a user with that Firebase ID already exists
         # If it is, aborts
         database_user: User | None = await config.db.session.scalar(
-            select(User).filter(User.auth0_id == user_data["id"])
+            select(User).filter(User.firebase_id == user_data["firebaseId"])
         )
 
         if database_user:
             abort(409)
 
         new_user = User(
-            auth0_id=user_data["id"],
             display_name=user_data["displayName"],
             last_notifications_read=datetime.now(),
             login_count=0,
@@ -566,7 +565,8 @@ def create_app(config: SAHConfig) -> Quart:
             selected_character="kitty",
             icon_colours='{"character":"#BA9F93","lbg":"#e2a275",'
             '"rbg":"#f8eee4","item":"#f4b56a"}',
-            role_id=3,  # Set the user role
+            role_id=4,  # Set the new user role
+            firebase_id=user_data["firebaseId"],
         )
 
         # Try to add the user to the database
@@ -579,7 +579,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: user_id - ID of the user to update.
     # Authorization: patch:user or patch:any-user.
     @app.route("/users/all/<user_id>", methods=["PATCH"])
-    @requires_auth(config.db, ["patch:user", "patch:any-user"])
+    @requires_auth(config, ["patch:user", "patch:any-user"])
     async def edit_user(token_payload: UserData, user_id: int):
         # Check if the user ID isn't an integer; if it isn't, abort
         validator.check_type(user_id, "User ID")
@@ -693,7 +693,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: user_id - whose posts to fetch.
     # Authorization: read:user.
     @app.route("/users/all/<user_id>/posts")
-    @requires_auth(config.db, ["read:user"])
+    @requires_auth(config, ["read:user"])
     async def get_user_posts(token_payload: UserData, user_id: int):
         page = request.args.get("page", 1, type=int)
 
@@ -723,7 +723,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: user_id - whose posts to delete.
     # Authorization: delete:my-post or delete:any-post
     @app.route("/users/all/<user_id>/posts", methods=["DELETE"])
-    @requires_auth(config.db, ["delete:my-post", "delete:any-post"])
+    @requires_auth(config, ["delete:my-post", "delete:any-post"])
     async def delete_user_posts(token_payload: UserData, user_id: int):
         validator.check_type(user_id, "User ID")
 
@@ -766,7 +766,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: user_id - the user to send a hug to.
     # Authorization: read:user
     @app.route("/users/all/<user_id>/hugs", methods=["POST"])
-    @requires_auth(config.db, ["read:user"])
+    @requires_auth(config, ["read:user"])
     async def send_hug_to_user(token_payload: UserData, user_id: int):
         validator.check_type(user_id, "User ID")
         user_to_hug: User = await config.db.one_or_404(
@@ -812,7 +812,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: None.
     # Authorization: read:messages.
     @app.route("/messages")
-    @requires_auth(config.db, ["read:messages"])
+    @requires_auth(config, ["read:messages"])
     async def get_user_messages(token_payload: UserData):
         page = request.args.get("page", 1, type=int)
         type = request.args.get("type", "inbox", type=str)
@@ -925,7 +925,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: None.
     # Authorization: post:message.
     @app.route("/messages", methods=["POST"])
-    @requires_auth(config.db, ["post:message"])
+    @requires_auth(config, ["post:message"])
     async def add_message(token_payload: UserData):
         # Gets the new message's data
         message_data = json.loads(await request.data)
@@ -1022,7 +1022,7 @@ def create_app(config: SAHConfig) -> Quart:
     #             item_id - ID of the message/thread to delete.
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>/<item_id>", methods=["DELETE"])
-    @requires_auth(config.db, ["delete:messages"])
+    @requires_auth(config, ["delete:messages"])
     async def delete_thread(  # TODO: This should be renamed to delete_message
         token_payload: UserData,
         mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
@@ -1181,7 +1181,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: mailbox_type - Type of mailbox to clear.
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>", methods=["DELETE"])
-    @requires_auth(config.db, ["delete:messages"])
+    @requires_auth(config, ["delete:messages"])
     async def clear_mailbox(
         token_payload: UserData,
         mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
@@ -1365,7 +1365,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: None.
     # Authorization: read:admin-board.
     @app.route("/reports")
-    @requires_auth(config.db, ["read:admin-board"])
+    @requires_auth(config, ["read:admin-board"])
     async def get_open_reports(token_payload: UserData):
         reports: dict[str, list[dict[str, Any]]] = {
             "User": [],
@@ -1406,7 +1406,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: None.
     # Authorization: post:report.
     @app.route("/reports", methods=["POST"])
-    @requires_auth(config.db, ["post:report"])
+    @requires_auth(config, ["post:report"])
     async def create_new_report(token_payload: UserData):
         report_data = json.loads(await request.data)
 
@@ -1473,7 +1473,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: report_id - The ID of the report to update.
     # Authorization: read:admin-board.
     @app.route("/reports/<report_id>", methods=["PATCH"])
-    @requires_auth(config.db, ["read:admin-board"])
+    @requires_auth(config, ["read:admin-board"])
     async def update_report_status(token_payload: UserData, report_id: int):
         updated_report = json.loads(await request.data)
         report: Report | None = await config.db.session.scalar(
@@ -1525,7 +1525,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: None.
     # Authorization: read:admin-board.
     @app.route("/filters")
-    @requires_auth(config.db, ["read:admin-board"])
+    @requires_auth(config, ["read:admin-board"])
     async def get_filters(token_payload: UserData):
         page = request.args.get("page", 1, type=int)
         words_per_page = 10
@@ -1548,7 +1548,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: None.
     # Authorization: read:admin-board.
     @app.route("/filters", methods=["POST"])
-    @requires_auth(config.db, ["read:admin-board"])
+    @requires_auth(config, ["read:admin-board"])
     async def add_filter(token_payload: UserData):
         new_filter = json.loads(await request.data)["word"]
 
@@ -1574,7 +1574,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: filter_id - the index of the word to delete.
     # Authorization: read:admin-board.
     @app.route("/filters/<filter_id>", methods=["DELETE"])
-    @requires_auth(config.db, ["read:admin-board"])
+    @requires_auth(config, ["read:admin-board"])
     async def delete_filter(token_payload: UserData, filter_id: int):
         validator.check_type(filter_id, "Filter ID")
 
@@ -1595,7 +1595,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: None.
     # Authorization: read:messages.
     @app.route("/notifications")
-    @requires_auth(config.db, ["read:messages"])
+    @requires_auth(config, ["read:messages"])
     async def get_latest_notifications(token_payload: UserData):
         silent_refresh = request.args.get("silentRefresh", True)
         user: User = await config.db.one_or_404(
@@ -1640,7 +1640,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: None.
     # Authorization: read:messages.
     @app.route("/notifications", methods=["POST"])
-    @requires_auth(config.db, ["read:messages"])
+    @requires_auth(config, ["read:messages"])
     async def add_notification_subscription(token_payload: UserData):
         request_data = await request.data
 
@@ -1676,7 +1676,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Parameters: None.
     # Authorization: read:messages.
     @app.route("/notifications/<sub_id>", methods=["PATCH"])
-    @requires_auth(config.db, ["read:messages"])
+    @requires_auth(config, ["read:messages"])
     async def update_notification_subscription(token_payload: UserData, sub_id: int):
         request_data = await request.data
 

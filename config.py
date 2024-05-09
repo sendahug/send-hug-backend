@@ -25,7 +25,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
+
+from firebase_admin import initialize_app  # type: ignore
+from firebase_admin.credentials import Certificate  # type: ignore
+
 from models.db import SendADatabase
+
+FIREBASE_CREDENTIALS_FILE = os.environ.get("FIREBASE_CREDENTIALS_FILE", "")
 
 
 class SAHConfig:
@@ -36,3 +43,6 @@ class SAHConfig:
     def __init__(self, database_url: str):
         self.database_url = database_url
         self.db = SendADatabase(database_url=database_url)
+        self.firebase_app = initialize_app(
+            credential=Certificate(FIREBASE_CREDENTIALS_FILE)
+        )

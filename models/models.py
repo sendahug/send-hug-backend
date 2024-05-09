@@ -46,6 +46,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
     select,
     Table,
@@ -113,7 +114,6 @@ class User(BaseModel):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     display_name: Mapped[str] = mapped_column(String(60), nullable=False)
-    auth0_id: Mapped[str] = mapped_column(String(), nullable=False)
     received_hugs: Mapped[int] = mapped_column(Integer, default=0)
     given_hugs: Mapped[int] = mapped_column(Integer, default=0)
     login_count: Mapped[Optional[int]] = mapped_column(Integer, default=1)
@@ -147,6 +147,8 @@ class User(BaseModel):
     received_messages: Mapped[Optional[List["Message"]]] = relationship(
         "Message", back_populates="for_user", foreign_keys="Message.for_id"
     )
+    firebase_id: Mapped[str] = mapped_column(String(50), nullable=False)
+    firebase_id_uq = UniqueConstraint("firebase_id", name="firebase_id_uq")
     # Column properties
     post_count = column_property(
         select(func.count(Post.id)).where(Post.user_id == id).scalar_subquery()
@@ -157,7 +159,6 @@ class User(BaseModel):
     def format(self) -> DumpedModel:
         return {
             "id": self.id,
-            "auth0Id": self.auth0_id,
             "displayName": self.display_name,
             "receivedH": self.received_hugs,
             "givenH": self.given_hugs,
@@ -182,6 +183,7 @@ class User(BaseModel):
             if self.icon_colours
             else self.icon_colours,
             "posts": self.post_count,
+            "firebaseId": self.firebase_id,
         }
 
 
