@@ -45,6 +45,7 @@ from models import (
     NotificationSub,
     Filter,
     CoreSAHModel,
+    BLOCKED_USER_ROLE_ID,
 )
 from auth import (
     AuthError,
@@ -463,7 +464,6 @@ def create_app(config: SAHConfig) -> Quart:
             to_unblock = []
 
             for user in users_to_unblock:
-                user.blocked = False
                 user.release_date = None
                 user.role_id = 3  # regular user
                 to_unblock.append(user)
@@ -520,7 +520,6 @@ def create_app(config: SAHConfig) -> Quart:
             current_date = datetime.now()
             # If it's past the user's release date, unblock them
             if user_data.release_date < current_date:
-                user_data.blocked = False
                 user_data.release_date = None
                 user_data.role_id = 3  # regular user
 
@@ -557,7 +556,6 @@ def create_app(config: SAHConfig) -> Quart:
             display_name=user_data["displayName"],
             last_notifications_read=datetime.now(),
             login_count=0,
-            blocked=False,
             auto_refresh=True,
             refresh_rate=20,
             push_enabled=False,
@@ -638,9 +636,8 @@ def create_app(config: SAHConfig) -> Quart:
 
             # Otherwise, the user is a manager, so they can block a user.
             # In that case, block / unblock the user as requested.
-            user_to_update.blocked = updated_user["blocked"]
             user_to_update.release_date = updated_user["releaseDate"]
-            user_to_update.role_id = 5  # blocked user
+            user_to_update.role_id = BLOCKED_USER_ROLE_ID  # blocked user
 
         # If the user is attempting to change a user's settings, check
         # whether it's the current user

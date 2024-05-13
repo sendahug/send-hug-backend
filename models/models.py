@@ -66,6 +66,7 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
 
 HugModelType = TypeVar("HugModelType", bound=BaseModel, covariant=True)
 DumpedModel: TypeAlias = dict[str, Any]
+BLOCKED_USER_ROLE_ID = 5
 
 
 # SQLAlchemy Tables
@@ -165,7 +166,6 @@ class User(BaseModel):
     role: Mapped[Optional["Role"]] = relationship(
         "Role", foreign_keys="User.role_id", lazy="selectin"
     )
-    blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     release_date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     last_notifications_read: Mapped[Optional[datetime]] = mapped_column(DateTime)
     auto_refresh: Mapped[Optional[bool]] = mapped_column(Boolean, default=True)
@@ -205,6 +205,7 @@ class User(BaseModel):
         )
         .scalar_subquery()
     )
+    blocked = column_property(role_id == 5)
 
     @hybrid_property
     def open_report(self):

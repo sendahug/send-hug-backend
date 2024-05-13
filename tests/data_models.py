@@ -149,7 +149,6 @@ async def create_users(db: SendADatabase):
         given_hugs=2,
         display_name="shirb",
         login_count=60,
-        blocked=False,
         release_date=None,
         last_notifications_read=None,
         auto_refresh=False,
@@ -167,7 +166,6 @@ async def create_users(db: SendADatabase):
         given_hugs=117,
         display_name="user14",
         login_count=55,
-        blocked=False,
         release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
         last_notifications_read=datetime.strptime(
             "2020-10-30 18:13:21.282054", DATETIME_PATTERN
@@ -187,7 +185,6 @@ async def create_users(db: SendADatabase):
         given_hugs=0,
         display_name="user52",
         login_count=7,
-        blocked=False,
         release_date=None,
         last_notifications_read=None,
         auto_refresh=False,
@@ -205,7 +202,6 @@ async def create_users(db: SendADatabase):
         given_hugs=1,
         display_name="user93",
         login_count=2,
-        blocked=False,
         release_date=None,
         last_notifications_read=None,
         auto_refresh=False,
@@ -223,7 +219,6 @@ async def create_users(db: SendADatabase):
         given_hugs=0,
         display_name="user24",
         login_count=4,
-        blocked=True,
         release_date=datetime.strptime("2120-08-11 08:33:22.473", DATETIME_PATTERN),
         last_notifications_read=datetime.strptime(
             "2020-11-03 20:21:13.399365", DATETIME_PATTERN
