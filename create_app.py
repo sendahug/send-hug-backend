@@ -558,7 +558,6 @@ def create_app(config: SAHConfig) -> Quart:
             last_notifications_read=datetime.now(),
             login_count=0,
             blocked=False,
-            open_report=False,
             auto_refresh=True,
             refresh_rate=20,
             push_enabled=False,
@@ -1421,7 +1420,7 @@ def create_app(config: SAHConfig) -> Quart:
                 abort(422)
 
             # Get the post. If this post doesn't exist, abort
-            reported_item: Post | User = await config.db.one_or_404(
+            await config.db.one_or_404(
                 item_id=report_data["postID"],
                 item_type=Post,
             )
@@ -1436,8 +1435,6 @@ def create_app(config: SAHConfig) -> Quart:
                 dismissed=False,
                 closed=False,
             )
-
-            reported_item.open_report = True
         # Otherwise the reported item is a user
         else:
             # If there's no user ID, abort
@@ -1445,7 +1442,7 @@ def create_app(config: SAHConfig) -> Quart:
                 abort(422)
 
             # Get the user. If this user doesn't exist, abort
-            reported_item = await config.db.one_or_404(
+            await config.db.one_or_404(
                 item_id=report_data["userID"],
                 item_type=User,
             )
@@ -1460,11 +1457,8 @@ def create_app(config: SAHConfig) -> Quart:
                 closed=False,
             )
 
-            reported_item.open_report = True
-
         # Try to add the report to the database
         added_report = await config.db.add_object(obj=report)
-        await config.db.update_object(obj=reported_item)
 
         return jsonify({"success": True, "report": added_report})
 
@@ -1490,35 +1484,19 @@ def create_app(config: SAHConfig) -> Quart:
         if report.type.lower() == "user":
             if not updated_report.get("userID", None):
                 abort(422)
-
-            reported_item = await config.db.session.scalar(
-                select(User).filter(User.id == updated_report["userID"])
-            )
         # If the item reported is a post
         else:
             if not updated_report.get("postID", None):
                 abort(422)
 
-            reported_item = await config.db.session.scalar(
-                select(Post).filter(Post.id == updated_report["postID"])
-            )
-
         # Set the dismissed and closed values to those of the updated report
         report.dismissed = updated_report["dismissed"]
         report.closed = updated_report["closed"]
-        to_update: list[CoreSAHModel] = [report]
-
-        # If the item wasn't deleted, set the post/user's open_report
-        # value to false
-        if reported_item:
-            reported_item.open_report = False
-            to_update.append(reported_item)
 
         # Try to update the report in the database
-        updated = await config.db.update_multiple_objects(objects=to_update)
-        return_report = [item for item in updated if "reporter" in item.keys()]
+        return_report = await config.db.update_object(obj=report)
 
-        return jsonify({"success": True, "updated": return_report[0]})
+        return jsonify({"success": True, "updated": return_report})
 
     # Endpoint: GET /filters
     # Description: Get a paginated list of filtered words.

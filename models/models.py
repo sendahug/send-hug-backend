@@ -47,9 +47,15 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    and_,
+    column,
+    false,
     func,
     select,
     Table,
+    case,
+    table,
+    true,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 
@@ -70,6 +76,15 @@ roles_permissions_map = Table(
     Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True),
 )
 
+# Table objects for column_property
+# -----------------------------------------------------------------
+reports_post_table = table(
+    "reports", column("id"), column("post_id"), column("closed")
+).alias("reports_post")
+reports_user_table = table(
+    "reports", column("id"), column("user_id"), column("closed")
+).alias("reports_user")
+
 
 # Models
 # -----------------------------------------------------------------
@@ -87,13 +102,38 @@ class Post(BaseModel):
     text: Mapped[str] = mapped_column(String(480), nullable=False)
     date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     given_hugs: Mapped[int] = mapped_column(Integer, default=0)
-    open_report: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     sent_hugs: Mapped[Optional[List[int]]] = mapped_column(ARRAY(Integer))
-    report: Mapped[Optional["Report"]] = relationship("Report", back_populates="post")
+    reports: Mapped[Optional[List["Report"]]] = relationship(
+        "Report",
+        back_populates="post",
+    )
+    # Column properties
+    open_reports_count = column_property(
+        select(func.count(reports_post_table.table_valued()))
+        .where(
+            and_(
+                reports_post_table.c.post_id == id,
+                reports_post_table.c.closed == false(),
+            )
+        )
+        .scalar_subquery()
+    )
 
     @hybrid_property
     def user_name(self):
         return self.user.display_name
+
+    @hybrid_property
+    def open_report(self):
+        if self.open_reports_count == 0:
+            return False
+
+        return True
+
+    @open_report.inplace.expression
+    @classmethod
+    def _open_report(cls):
+        return case((cls.open_reports_count == 0, false()), else_=true())
 
     # Format method
     # Responsible for returning a JSON object
@@ -127,7 +167,6 @@ class User(BaseModel):
     )
     blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     release_date: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    open_report: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     last_notifications_read: Mapped[Optional[datetime]] = mapped_column(DateTime)
     auto_refresh: Mapped[Optional[bool]] = mapped_column(Boolean, default=True)
     refresh_rate: Mapped[Optional[int]] = mapped_column(Integer, default=20)
@@ -149,10 +188,35 @@ class User(BaseModel):
     )
     firebase_id: Mapped[str] = mapped_column(String(50), nullable=False)
     firebase_id_uq = UniqueConstraint("firebase_id", name="firebase_id_uq")
+    reports = relationship(
+        "Report", back_populates="user", foreign_keys="Report.user_id"
+    )
     # Column properties
     post_count = column_property(
         select(func.count(Post.id)).where(Post.user_id == id).scalar_subquery()
     )
+    open_reports_count = column_property(
+        select(func.count(reports_user_table.table_valued()))
+        .where(
+            and_(
+                reports_user_table.c.user_id == id,
+                reports_user_table.c.closed == false(),
+            )
+        )
+        .scalar_subquery()
+    )
+
+    @hybrid_property
+    def open_report(self):
+        if self.open_reports_count == 0:
+            return False
+
+        return True
+
+    @open_report.inplace.expression
+    @classmethod
+    def _open_report(cls):
+        return case((cls.open_reports_count == 0, false()), else_=true())
 
     # Format method
     # Responsible for returning a JSON object
@@ -359,11 +423,13 @@ class Report(BaseModel):
         ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    user: Mapped["User"] = relationship("User", foreign_keys="Report.user_id")
+    user: Mapped["User"] = relationship(
+        "User", foreign_keys="Report.user_id", back_populates="reports"
+    )
     post_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("posts.id", onupdate="CASCADE", ondelete="SET NULL")
     )
-    post: Mapped[Optional["Post"]] = relationship("Post", back_populates="report")
+    post: Mapped[Optional["Post"]] = relationship("Post", back_populates="reports")
     reporter: Mapped[int] = mapped_column(
         Integer,
         # TODO: This will fail if the user is deleted
