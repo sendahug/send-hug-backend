@@ -384,7 +384,6 @@ class Thread(BaseModel):
         .group_by(Message.thread)
         .scalar_subquery()
     )
-    user1_deleted = column_property(user1_message_count == 0)
     user2_name = column_property(
         select(User.display_name).where(User.id == user_2_id).scalar_subquery()
     )
@@ -408,7 +407,24 @@ class Thread(BaseModel):
         .group_by(Message.thread)
         .scalar_subquery()
     )
-    user2_deleted = column_property(user2_message_count == 0)
+
+    @hybrid_property
+    def user1_deleted(self):
+        return self.user1_message_count == 0
+
+    @user1_deleted.inplace.expression
+    @classmethod
+    def _user1_deleted(cls):
+        return case((cls.user1_message_count > 0, false()), else_=true())
+
+    @hybrid_property
+    def user2_deleted(self):
+        return self.user2_message_count == 0
+
+    @user2_deleted.inplace.expression
+    @classmethod
+    def _user2_deleted(cls):
+        return case((cls.user2_message_count > 0, false()), else_=true())
 
     # Format method
     # Responsible for returning a JSON object
