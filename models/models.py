@@ -187,7 +187,7 @@ class User(BaseModel):
     received_messages: Mapped[Optional[List["Message"]]] = relationship(
         "Message", back_populates="for_user", foreign_keys="Message.for_id"
     )
-    firebase_id: Mapped[str] = mapped_column(String(50), nullable=False)
+    firebase_id: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
     firebase_id_uq = UniqueConstraint("firebase_id", name="firebase_id_uq")
     reports = relationship(
         "Report", back_populates="user", foreign_keys="Report.user_id"
