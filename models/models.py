@@ -138,7 +138,7 @@ class Post(BaseModel):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "userId": self.user_id,
@@ -221,7 +221,7 @@ class User(BaseModel):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "displayName": self.display_name,
@@ -307,7 +307,7 @@ class Message(BaseModel):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "fromId": self.from_id,
@@ -389,7 +389,7 @@ class Thread(BaseModel):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "user1": {
@@ -451,7 +451,7 @@ class Report(BaseModel):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return_report = {
             "id": self.id,
             "type": self.type,
@@ -501,7 +501,7 @@ class Notification(BaseModel):
     )
 
     # Format method
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "fromId": self.from_id,
@@ -527,7 +527,7 @@ class NotificationSub(BaseModel):
     subscription_data: Mapped[Text] = mapped_column(Text, nullable=False)
 
     # Format method
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "user_id": self.user,
@@ -543,7 +543,7 @@ class Filter(BaseModel):
     filter: Mapped[str] = mapped_column(String(), nullable=False)
 
     # Format method
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {"id": self.id, "filter": self.filter}
 
 
@@ -554,7 +554,7 @@ class Permission(BaseModel):
     description: Mapped[Optional[str]] = mapped_column(String())
 
     # Format method
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "permission": self.permission,
@@ -571,7 +571,7 @@ class Role(BaseModel):
     )
 
     # Format method
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "name": self.name,
