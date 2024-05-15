@@ -901,6 +901,7 @@ def create_app(config: SAHConfig) -> Quart:
                 )
                 .order_by(Thread.id),
                 current_page=page,
+                current_user_id=token_payload["id"],
             )
 
             total_pages = threads_messages.total_pages
@@ -967,7 +968,9 @@ def create_app(config: SAHConfig) -> Quart:
                 user_2_id=int(message_data["forId"]),
             )
             # Try to create the new thread
-            added_thread = await config.db.add_object(new_thread)
+            added_thread = await config.db.add_object(
+                new_thread, current_user_id=token_payload["id"]
+            )
             thread_id = added_thread["id"]
         # If there's a thread between the users
         else:
@@ -978,7 +981,9 @@ def create_app(config: SAHConfig) -> Quart:
                 thread.user_1_deleted = False
                 thread.user_2_deleted = False
                 # Update the thread in the database
-                await config.db.update_object(obj=thread)
+                await config.db.update_object(
+                    obj=thread, current_user_id=token_payload["id"]
+                )
 
         # Create a new message
         new_message = Message(
@@ -1161,14 +1166,18 @@ def create_app(config: SAHConfig) -> Quart:
                     )
                 )
 
-                await config.db.update_object(obj=delete_item)
+                await config.db.update_object(
+                    obj=delete_item, current_user_id=token_payload["id"]
+                )
                 await config.db.update_multiple_objects_with_dml(
                     update_stmts=[from_stmt, for_stmt]
                 )
                 await config.db.delete_multiple_objects(delete_stmt=delete_stmt)
 
             else:
-                await config.db.update_object(delete_item)
+                await config.db.update_object(
+                    delete_item, current_user_id=token_payload["id"]
+                )
 
         return jsonify({"success": True, "deleted": int(item_id)})
 

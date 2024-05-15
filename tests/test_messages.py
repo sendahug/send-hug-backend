@@ -300,6 +300,32 @@ async def get_nonexistent_thread_as_admin(
     assert response.status_code == 404
 
 
+@pytest.mark.asyncio(scope="session")
+async def test_threadas_message_count_shows_user_count(
+    app_client, test_db, user_headers, dummy_users_data
+):
+    admin_response = await app_client.get(
+        f"/messages?type=threads&userID={dummy_users_data['admin']['internal']}",
+        headers=user_headers["admin"],
+    )
+    admin_response_data = await admin_response.get_json()
+
+    user_response = await app_client.get(
+        f"/messages?type=threads&userID={dummy_users_data['user']['internal']}",
+        headers=user_headers["user"],
+    )
+    user_response_data = await user_response.get_json()
+
+    thread_3_admin = [
+        thread for thread in admin_response_data["messages"] if thread["id"] == 3
+    ]
+    thread_3_user = [
+        thread for thread in user_response_data["messages"] if thread["id"] == 3
+    ]
+
+    assert thread_3_admin[0]["numMessages"] != thread_3_user[0]["numMessages"]
+
+
 # Create Message Route Tests ('/message', POST)
 # -------------------------------------------------------
 # Attempt to create a message with no authorisation header

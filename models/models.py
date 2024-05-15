@@ -51,6 +51,7 @@ from sqlalchemy import (
     column,
     false,
     func,
+    or_,
     select,
     Table,
     case,
@@ -356,59 +357,85 @@ class Thread(BaseModel):
         "Message", back_populates="thread_details"
     )
     # Column properties
-    message_count = column_property(
-        select(func.count(Message.id))
-        .where(Message.thread == id)
-        .group_by(Message.thread)
-        .scalar_subquery()
-    )
     latest_message_date = column_property(
         select(func.max(Message.date))
         .where(Message.thread == id)
         .group_by(Message.thread)
         .scalar_subquery()
     )
-    user_1_name = column_property(
+    user1_name = column_property(
         select(User.display_name).where(User.id == user_1_id).scalar_subquery()
     )
-    user_1_icon = column_property(
+    user1_icon = column_property(
         select(User.selected_character).where(User.id == user_1_id).scalar_subquery()
     )
-    user_1_colours = column_property(
+    user1_colours = column_property(
         select(User.icon_colours).where(User.id == user_1_id).scalar_subquery()
     )
-    user_2_name = column_property(
+    user1_message_count = column_property(
+        select(func.count(Message.id))
+        .where(
+            and_(
+                Message.thread == id,
+                or_(
+                    and_(Message.for_id == user_1_id, Message.for_deleted == false()),
+                    and_(Message.from_id == user_1_id, Message.from_deleted == false()),
+                ),
+            )
+        )
+        .group_by(Message.thread)
+        .scalar_subquery()
+    )
+    user2_name = column_property(
         select(User.display_name).where(User.id == user_2_id).scalar_subquery()
     )
-    user_2_icon = column_property(
+    user2_icon = column_property(
         select(User.selected_character).where(User.id == user_2_id).scalar_subquery()
     )
-    user_2_colours = column_property(
+    user2_colours = column_property(
         select(User.icon_colours).where(User.id == user_2_id).scalar_subquery()
+    )
+    user2_message_count = column_property(
+        select(func.count(Message.id))
+        .where(
+            and_(
+                Message.thread == id,
+                or_(
+                    and_(Message.for_id == user_2_id, Message.for_deleted == false()),
+                    and_(Message.from_id == user_2_id, Message.from_deleted == false()),
+                ),
+            )
+        )
+        .group_by(Message.thread)
+        .scalar_subquery()
     )
 
     # Format method
     # Responsible for returning a JSON object
     def format(self, **kwargs) -> DumpedModel:
+        current_user_id = kwargs["current_user_id"]
+
         return {
             "id": self.id,
             "user1": {
-                "displayName": self.user_1_name,
-                "selectedIcon": self.user_1_icon,
-                "iconColours": json.loads(self.user_1_colours)
-                if self.user_1_colours
-                else self.user_1_colours,
+                "displayName": self.user1_name,
+                "selectedIcon": self.user1_icon,
+                "iconColours": json.loads(self.user1_colours)
+                if self.user1_colours
+                else self.user1_colours,
             },
             "user1Id": self.user_1_id,
             "user2": {
-                "displayName": self.user_2_name,
-                "selectedIcon": self.user_2_icon,
-                "iconColours": json.loads(self.user_2_colours)
-                if self.user_2_colours
-                else self.user_2_colours,
+                "displayName": self.user2_name,
+                "selectedIcon": self.user2_icon,
+                "iconColours": json.loads(self.user2_colours)
+                if self.user2_colours
+                else self.user2_colours,
             },
             "user2Id": self.user_2_id,
-            "numMessages": self.message_count,
+            "numMessages": self.user1_message_count
+            if current_user_id == self.user_1_id
+            else self.user2_message_count,
             "latestMessage": self.latest_message_date,
         }
 
