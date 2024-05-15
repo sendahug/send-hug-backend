@@ -410,7 +410,7 @@ class Thread(BaseModel):
 
     @hybrid_property
     def user1_deleted(self):
-        return self.user1_message_count == 0
+        return self.user1_message_count == 0 or self.user1_message_count is None
 
     @user1_deleted.inplace.expression
     @classmethod
@@ -419,7 +419,7 @@ class Thread(BaseModel):
 
     @hybrid_property
     def user2_deleted(self):
-        return self.user2_message_count == 0
+        return self.user2_message_count == 0 or self.user2_message_count is None
 
     @user2_deleted.inplace.expression
     @classmethod
