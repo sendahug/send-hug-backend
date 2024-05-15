@@ -351,8 +351,6 @@ class Thread(BaseModel):
         nullable=False,
     )
     user_2: Mapped["User"] = relationship("User", foreign_keys="Thread.user_2_id")
-    user_1_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    user_2_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     messages: Mapped[List[Message]] = relationship(
         "Message", back_populates="thread_details"
     )
@@ -386,6 +384,7 @@ class Thread(BaseModel):
         .group_by(Message.thread)
         .scalar_subquery()
     )
+    user1_deleted = column_property(user1_message_count == 0)
     user2_name = column_property(
         select(User.display_name).where(User.id == user_2_id).scalar_subquery()
     )
@@ -409,6 +408,7 @@ class Thread(BaseModel):
         .group_by(Message.thread)
         .scalar_subquery()
     )
+    user2_deleted = column_property(user2_message_count == 0)
 
     # Format method
     # Responsible for returning a JSON object

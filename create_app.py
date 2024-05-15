@@ -891,11 +891,11 @@ def create_app(config: SAHConfig) -> Quart:
                     or_(
                         and_(
                             Thread.user_1_id == user_id,
-                            Thread.user_1_deleted == false(),
+                            Thread.user1_deleted == false(),
                         ),
                         and_(
                             Thread.user_2_id == user_id,
-                            Thread.user_2_deleted == false(),
+                            Thread.user2_deleted == false(),
                         ),
                     )
                 )
@@ -975,15 +975,6 @@ def create_app(config: SAHConfig) -> Quart:
         # If there's a thread between the users
         else:
             thread_id = thread.id
-            # If one of the users deleted the thread, change it so that the
-            # thread once again shows up
-            if thread.user_1_deleted is True or thread.user_2_deleted is True:
-                thread.user_1_deleted = False
-                thread.user_2_deleted = False
-                # Update the thread in the database
-                await config.db.update_object(
-                    obj=thread, current_user_id=token_payload["id"]
-                )
 
         # Create a new message
         new_message = Message(
@@ -1088,16 +1079,6 @@ def create_app(config: SAHConfig) -> Quart:
                 delete_item.for_deleted = True
             else:
                 delete_item.from_deleted = True
-        # If the mailbox type is threads
-        elif isinstance(delete_item, Thread) and mailbox_type == "threads":
-            # Otherwise, if the current user is the thread's user_1, set
-            # the appropriate deleted property
-            if token_payload["id"] == delete_item.user_1_id:
-                delete_item.user_1_deleted = True
-            # Or, if the current user is the thread's user_2, set
-            # the appropriate deleted property
-            else:
-                delete_item.user_2_deleted = True
 
         # Check the type of item and which user deleted the message/thread
         if (
@@ -1108,8 +1089,8 @@ def create_app(config: SAHConfig) -> Quart:
             delete_message = True
         elif (
             type(delete_item) is Thread
-            and delete_item.user_1_deleted
-            and delete_item.user_2_deleted
+            and delete_item.user1_deleted
+            and delete_item.user2_deleted
         ):
             delete_message = True
         else:
@@ -1275,11 +1256,11 @@ def create_app(config: SAHConfig) -> Quart:
                     or_(
                         and_(
                             Thread.user_1_id == user_id,
-                            Thread.user_1_deleted == false(),
+                            Thread.user1_deleted == false(),
                         ),
                         and_(
                             Thread.user_2_id == user_id,
-                            Thread.user_2_deleted == false(),
+                            Thread.user2_deleted == false(),
                         ),
                     )
                 )
@@ -1312,33 +1293,9 @@ def create_app(config: SAHConfig) -> Quart:
                 .values(for_deleted=true())
             )
 
-            user_one_stmt = (
-                update(Thread)
-                .where(
-                    and_(
-                        Thread.user_1_id == user_id,
-                        Thread.user_2_deleted == false(),
-                    )
-                )
-                .values(user_1_deleted=true())
-            )
-
-            user_two_stmt = (
-                update(Thread)
-                .where(
-                    and_(
-                        Thread.user_2_id == user_id,
-                        Thread.user_1_deleted == false(),
-                    )
-                )
-                .values(user_2_deleted=true())
-            )
-
             update_stmts = [
                 from_messages_stmt,
                 for_messages_stmt,
-                user_one_stmt,
-                user_two_stmt,
             ]
 
             # The compile the delete statements for everything that needs to be
@@ -1352,8 +1309,8 @@ def create_app(config: SAHConfig) -> Quart:
 
             delete_threads_stmt = delete(Thread).where(
                 or_(
-                    and_(Thread.user_1_id == user_id, Thread.user_2_deleted == true()),
-                    and_(Thread.user_2_id == user_id, Thread.user_1_deleted == true()),
+                    and_(Thread.user_1_id == user_id, Thread.user2_deleted == true()),
+                    and_(Thread.user_2_id == user_id, Thread.user1_deleted == true()),
                 )
             )
 

@@ -473,27 +473,13 @@ async def create_posts(db: SendADatabase):
 
 async def create_threads(db: SendADatabase):
     """Creates the threads in the test database."""
-    thread_1 = Thread(
-        id=1, user_1_id=1, user_2_id=1, user_1_deleted=False, user_2_deleted=False
-    )
-    thread_2 = Thread(
-        id=2, user_1_id=1, user_2_id=5, user_1_deleted=False, user_2_deleted=False
-    )
-    thread_3 = Thread(
-        id=3, user_1_id=1, user_2_id=4, user_1_deleted=False, user_2_deleted=False
-    )
-    thread_4 = Thread(
-        id=6, user_1_id=9, user_2_id=5, user_1_deleted=False, user_2_deleted=False
-    )
-    thread_5 = Thread(
-        id=7, user_1_id=20, user_2_id=4, user_1_deleted=False, user_2_deleted=False
-    )
-    thread_6 = Thread(
-        id=8, user_1_id=20, user_2_id=1, user_1_deleted=True, user_2_deleted=False
-    )
-    thread_7 = Thread(
-        id=4, user_1_id=4, user_2_id=5, user_1_deleted=True, user_2_deleted=False
-    )
+    thread_1 = Thread(id=1, user_1_id=1, user_2_id=1)
+    thread_2 = Thread(id=2, user_1_id=1, user_2_id=5)
+    thread_3 = Thread(id=3, user_1_id=1, user_2_id=4)
+    thread_4 = Thread(id=6, user_1_id=9, user_2_id=5)
+    thread_5 = Thread(id=7, user_1_id=20, user_2_id=4)
+    thread_6 = Thread(id=8, user_1_id=20, user_2_id=1)
+    thread_7 = Thread(id=4, user_1_id=4, user_2_id=5)
 
     try:
         db.session.add_all(

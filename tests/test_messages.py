@@ -105,7 +105,7 @@ async def test_get_user_threads_as_user(
     assert response.status_code == 200
     assert response_data["current_page"] == 1
     assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 4
+    assert len(response_data["messages"]) == 3
 
 
 # Attempt to get another user's messages with a user's JWT
@@ -207,7 +207,7 @@ async def test_get_user_inbox_as_admin(
     assert response.status_code == 200
     assert response_data["current_page"] == 1
     assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 2
+    assert len(response_data["messages"]) == 1
 
 
 # Attempt to get a user's outbox with an admin's JWT
@@ -301,7 +301,7 @@ async def get_nonexistent_thread_as_admin(
 
 
 @pytest.mark.asyncio(scope="session")
-async def test_threadas_message_count_shows_user_count(
+async def test_threads_message_count_shows_user_count(
     app_client, test_db, user_headers, dummy_users_data
 ):
     admin_response = await app_client.get(
