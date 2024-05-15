@@ -514,8 +514,8 @@ async def create_messages(db: SendADatabase):
         text="hellllllllo :)",
         date=datetime.strptime("2020-06-08 14:43:30.593", DATETIME_PATTERN),
         thread=4,
-        for_deleted=False,
         from_deleted=True,
+        for_deleted=False,
     )
     message_2 = Message(
         id=8,
@@ -524,8 +524,8 @@ async def create_messages(db: SendADatabase):
         text="hi there :)",
         date=datetime.strptime("2020-06-08 14:50:19.006", DATETIME_PATTERN),
         thread=4,
-        for_deleted=False,
         from_deleted=True,
+        for_deleted=True,
     )
     message_3 = Message(
         id=1,
@@ -534,8 +534,8 @@ async def create_messages(db: SendADatabase):
         text="hang in there :)",
         date=datetime.strptime("2020-06-02 10:39:56.337", DATETIME_PATTERN),
         thread=1,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_4 = Message(
         id=3,
@@ -544,8 +544,8 @@ async def create_messages(db: SendADatabase):
         text="you'll be okay <3",
         date=datetime.strptime("2020-06-08 14:42:02.759", DATETIME_PATTERN),
         thread=2,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_5 = Message(
         id=7,
@@ -554,8 +554,8 @@ async def create_messages(db: SendADatabase):
         text="more testing",
         date=datetime.strptime("2020-06-08 14:45:05.713", DATETIME_PATTERN),
         thread=2,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_6 = Message(
         id=9,
@@ -564,8 +564,8 @@ async def create_messages(db: SendADatabase):
         text="hang in there",
         date=datetime.strptime("2020-06-08 14:43:15.000", DATETIME_PATTERN),
         thread=3,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_7 = Message(
         id=16,
@@ -574,8 +574,8 @@ async def create_messages(db: SendADatabase):
         text="hiiiii",
         date=datetime.strptime("2020-06-14 14:25:37.569", DATETIME_PATTERN),
         thread=6,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_8 = Message(
         id=10,
@@ -584,8 +584,8 @@ async def create_messages(db: SendADatabase):
         text="hi :)",
         date=datetime.strptime("2020-06-14 14:07:37.49", DATETIME_PATTERN),
         thread=3,
-        for_deleted=True,
         from_deleted=False,
+        for_deleted=True,
     )
     message_9 = Message(
         id=21,
@@ -594,8 +594,8 @@ async def create_messages(db: SendADatabase):
         text="hi",
         date=datetime.strptime("2020-07-06 17:33:55.712", DATETIME_PATTERN),
         thread=3,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_10 = Message(
         id=25,
@@ -604,8 +604,8 @@ async def create_messages(db: SendADatabase):
         text="hang in there <3",
         date=datetime.strptime("2020-11-03 20:16:58.027", DATETIME_PATTERN),
         thread=7,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_11 = Message(
         id=22,
@@ -614,8 +614,8 @@ async def create_messages(db: SendADatabase):
         text="test",
         date=datetime.strptime("2020-07-06 17:40:51.288", DATETIME_PATTERN),
         thread=3,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_12 = Message(
         id=26,
@@ -624,8 +624,8 @@ async def create_messages(db: SendADatabase):
         text="hiiii :)",
         date=datetime.strptime("2020-11-03 20:21:30.972", DATETIME_PATTERN),
         thread=8,
+        from_deleted=True,
         for_deleted=True,
-        from_deleted=False,
     )
     message_13 = Message(
         id=23,
@@ -634,8 +634,8 @@ async def create_messages(db: SendADatabase):
         text="testing thread delete",
         date=datetime.strptime("2020-11-03 16:38:06.351", DATETIME_PATTERN),
         thread=4,
-        for_deleted=False,
         from_deleted=True,
+        for_deleted=False,
     )
     message_14 = Message(
         id=24,
@@ -644,8 +644,8 @@ async def create_messages(db: SendADatabase):
         text="test",
         date=datetime.strptime("2020-11-03 16:48:33.213", DATETIME_PATTERN),
         thread=4,
-        for_deleted=False,
         from_deleted=True,
+        for_deleted=False,
     )
 
     try:
