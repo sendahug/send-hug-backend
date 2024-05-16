@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### 2024-05-16
+
+#### Features
+
+- All `format` methods now take a dictionary of keyword arguments (`kwargs`). This allows us to pass formatting methods extra parameters to be used in formatting. ([#628](https://github.com/sendahug/send-hug-backend/pull/628))
+
+#### Changes
+
+- Replaced a few columns that provided tables with data reflected from other tables with SQL expressions to calculate the data they had. Previously, columns like posts' `open_report` or threads' `user_1_deleted` had to be updated manually whenever a new report was added or updated or a new message was added or deleted (respectively). This forced us to update multiple objects in multiple tables at the same time to make a single change, which was unnecessarily complicated. Now, columns such as those were removed, and in order to fetch that data, we use subqueries within the main query (i.e., posts'/messages'/users' queries). ([#628](https://github.com/sendahug/send-hug-backend/pull/628))
+- The messages count in the threads' endpoints responses is now calculated based on the user making a request. This ensures that messages deleted by the current user (but weren't deleted by the other side) aren't included in the 'num messages' count. ([#628](https://github.com/sendahug/send-hug-backend/pull/628))
+
 ### 2024-05-09
 
 #### Changes
