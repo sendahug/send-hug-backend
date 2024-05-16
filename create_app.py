@@ -45,6 +45,7 @@ from models import (
     NotificationSub,
     Filter,
     CoreSAHModel,
+    BLOCKED_USER_ROLE_ID,
 )
 from auth import (
     AuthError,
@@ -463,7 +464,6 @@ def create_app(config: SAHConfig) -> Quart:
             to_unblock = []
 
             for user in users_to_unblock:
-                user.blocked = False
                 user.release_date = None
                 user.role_id = 3  # regular user
                 to_unblock.append(user)
@@ -520,7 +520,6 @@ def create_app(config: SAHConfig) -> Quart:
             current_date = datetime.now()
             # If it's past the user's release date, unblock them
             if user_data.release_date < current_date:
-                user_data.blocked = False
                 user_data.release_date = None
                 user_data.role_id = 3  # regular user
 
@@ -557,8 +556,6 @@ def create_app(config: SAHConfig) -> Quart:
             display_name=user_data["displayName"],
             last_notifications_read=datetime.now(),
             login_count=0,
-            blocked=False,
-            open_report=False,
             auto_refresh=True,
             refresh_rate=20,
             push_enabled=False,
@@ -639,9 +636,8 @@ def create_app(config: SAHConfig) -> Quart:
 
             # Otherwise, the user is a manager, so they can block a user.
             # In that case, block / unblock the user as requested.
-            user_to_update.blocked = updated_user["blocked"]
             user_to_update.release_date = updated_user["releaseDate"]
-            user_to_update.role_id = 5  # blocked user
+            user_to_update.role_id = BLOCKED_USER_ROLE_ID  # blocked user
 
         # If the user is attempting to change a user's settings, check
         # whether it's the current user
@@ -895,16 +891,17 @@ def create_app(config: SAHConfig) -> Quart:
                     or_(
                         and_(
                             Thread.user_1_id == user_id,
-                            Thread.user_1_deleted == false(),
+                            Thread.user1_deleted == false(),
                         ),
                         and_(
                             Thread.user_2_id == user_id,
-                            Thread.user_2_deleted == false(),
+                            Thread.user2_deleted == false(),
                         ),
                     )
                 )
                 .order_by(Thread.id),
                 current_page=page,
+                current_user_id=token_payload["id"],
             )
 
             total_pages = threads_messages.total_pages
@@ -971,18 +968,13 @@ def create_app(config: SAHConfig) -> Quart:
                 user_2_id=int(message_data["forId"]),
             )
             # Try to create the new thread
-            added_thread = await config.db.add_object(new_thread)
+            added_thread = await config.db.add_object(
+                new_thread, current_user_id=token_payload["id"]
+            )
             thread_id = added_thread["id"]
         # If there's a thread between the users
         else:
             thread_id = thread.id
-            # If one of the users deleted the thread, change it so that the
-            # thread once again shows up
-            if thread.user_1_deleted is True or thread.user_2_deleted is True:
-                thread.user_1_deleted = False
-                thread.user_2_deleted = False
-                # Update the thread in the database
-                await config.db.update_object(obj=thread)
 
         # Create a new message
         new_message = Message(
@@ -1087,16 +1079,6 @@ def create_app(config: SAHConfig) -> Quart:
                 delete_item.for_deleted = True
             else:
                 delete_item.from_deleted = True
-        # If the mailbox type is threads
-        elif isinstance(delete_item, Thread) and mailbox_type == "threads":
-            # Otherwise, if the current user is the thread's user_1, set
-            # the appropriate deleted property
-            if token_payload["id"] == delete_item.user_1_id:
-                delete_item.user_1_deleted = True
-            # Or, if the current user is the thread's user_2, set
-            # the appropriate deleted property
-            else:
-                delete_item.user_2_deleted = True
 
         # Check the type of item and which user deleted the message/thread
         if (
@@ -1107,8 +1089,8 @@ def create_app(config: SAHConfig) -> Quart:
             delete_message = True
         elif (
             type(delete_item) is Thread
-            and delete_item.user_1_deleted
-            and delete_item.user_2_deleted
+            and delete_item.user1_deleted
+            and delete_item.user2_deleted
         ):
             delete_message = True
         else:
@@ -1165,14 +1147,18 @@ def create_app(config: SAHConfig) -> Quart:
                     )
                 )
 
-                await config.db.update_object(obj=delete_item)
+                await config.db.update_object(
+                    obj=delete_item, current_user_id=token_payload["id"]
+                )
                 await config.db.update_multiple_objects_with_dml(
                     update_stmts=[from_stmt, for_stmt]
                 )
                 await config.db.delete_multiple_objects(delete_stmt=delete_stmt)
 
             else:
-                await config.db.update_object(delete_item)
+                await config.db.update_object(
+                    delete_item, current_user_id=token_payload["id"]
+                )
 
         return jsonify({"success": True, "deleted": int(item_id)})
 
@@ -1270,11 +1256,11 @@ def create_app(config: SAHConfig) -> Quart:
                     or_(
                         and_(
                             Thread.user_1_id == user_id,
-                            Thread.user_1_deleted == false(),
+                            Thread.user1_deleted == false(),
                         ),
                         and_(
                             Thread.user_2_id == user_id,
-                            Thread.user_2_deleted == false(),
+                            Thread.user2_deleted == false(),
                         ),
                     )
                 )
@@ -1307,33 +1293,9 @@ def create_app(config: SAHConfig) -> Quart:
                 .values(for_deleted=true())
             )
 
-            user_one_stmt = (
-                update(Thread)
-                .where(
-                    and_(
-                        Thread.user_1_id == user_id,
-                        Thread.user_2_deleted == false(),
-                    )
-                )
-                .values(user_1_deleted=true())
-            )
-
-            user_two_stmt = (
-                update(Thread)
-                .where(
-                    and_(
-                        Thread.user_2_id == user_id,
-                        Thread.user_1_deleted == false(),
-                    )
-                )
-                .values(user_2_deleted=true())
-            )
-
             update_stmts = [
                 from_messages_stmt,
                 for_messages_stmt,
-                user_one_stmt,
-                user_two_stmt,
             ]
 
             # The compile the delete statements for everything that needs to be
@@ -1347,8 +1309,8 @@ def create_app(config: SAHConfig) -> Quart:
 
             delete_threads_stmt = delete(Thread).where(
                 or_(
-                    and_(Thread.user_1_id == user_id, Thread.user_2_deleted == true()),
-                    and_(Thread.user_2_id == user_id, Thread.user_1_deleted == true()),
+                    and_(Thread.user_1_id == user_id, Thread.user2_deleted == true()),
+                    and_(Thread.user_2_id == user_id, Thread.user1_deleted == true()),
                 )
             )
 
@@ -1421,7 +1383,7 @@ def create_app(config: SAHConfig) -> Quart:
                 abort(422)
 
             # Get the post. If this post doesn't exist, abort
-            reported_item: Post | User = await config.db.one_or_404(
+            await config.db.one_or_404(
                 item_id=report_data["postID"],
                 item_type=Post,
             )
@@ -1436,8 +1398,6 @@ def create_app(config: SAHConfig) -> Quart:
                 dismissed=False,
                 closed=False,
             )
-
-            reported_item.open_report = True
         # Otherwise the reported item is a user
         else:
             # If there's no user ID, abort
@@ -1445,7 +1405,7 @@ def create_app(config: SAHConfig) -> Quart:
                 abort(422)
 
             # Get the user. If this user doesn't exist, abort
-            reported_item = await config.db.one_or_404(
+            await config.db.one_or_404(
                 item_id=report_data["userID"],
                 item_type=User,
             )
@@ -1460,11 +1420,8 @@ def create_app(config: SAHConfig) -> Quart:
                 closed=False,
             )
 
-            reported_item.open_report = True
-
         # Try to add the report to the database
         added_report = await config.db.add_object(obj=report)
-        await config.db.update_object(obj=reported_item)
 
         return jsonify({"success": True, "report": added_report})
 
@@ -1490,35 +1447,19 @@ def create_app(config: SAHConfig) -> Quart:
         if report.type.lower() == "user":
             if not updated_report.get("userID", None):
                 abort(422)
-
-            reported_item = await config.db.session.scalar(
-                select(User).filter(User.id == updated_report["userID"])
-            )
         # If the item reported is a post
         else:
             if not updated_report.get("postID", None):
                 abort(422)
 
-            reported_item = await config.db.session.scalar(
-                select(Post).filter(Post.id == updated_report["postID"])
-            )
-
         # Set the dismissed and closed values to those of the updated report
         report.dismissed = updated_report["dismissed"]
         report.closed = updated_report["closed"]
-        to_update: list[CoreSAHModel] = [report]
-
-        # If the item wasn't deleted, set the post/user's open_report
-        # value to false
-        if reported_item:
-            reported_item.open_report = False
-            to_update.append(reported_item)
 
         # Try to update the report in the database
-        updated = await config.db.update_multiple_objects(objects=to_update)
-        return_report = [item for item in updated if "reporter" in item.keys()]
+        return_report = await config.db.update_object(obj=report)
 
-        return jsonify({"success": True, "updated": return_report[0]})
+        return jsonify({"success": True, "updated": return_report})
 
     # Endpoint: GET /filters
     # Description: Get a paginated list of filtered words.
