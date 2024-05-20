@@ -1,5 +1,5 @@
 alembic==1.13.1
-quart==0.19.5
+quart==0.19.6
 quart-cors==0.7.0
 hypercorn==0.16.0
 asyncpg==0.29.0
