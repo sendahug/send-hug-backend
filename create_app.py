@@ -235,7 +235,7 @@ def create_app(config: SAHConfig) -> Quart:
     @app.route("/posts", methods=["POST"])
     @requires_auth(config, ["post:post"])
     async def add_post(token_payload: UserData):
-        new_post_data = json.loads(await request.data)
+        new_post_data = await request.get_json()
         validator.validate_post_or_message(
             text=new_post_data["text"],
             type="post",
@@ -267,7 +267,7 @@ def create_app(config: SAHConfig) -> Quart:
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
-        updated_post = json.loads(await request.data)
+        updated_post = await request.get_json()
         original_post: Post = await config.db.one_or_404(
             item_id=int(post_id),
             item_type=Post,
@@ -536,7 +536,7 @@ def create_app(config: SAHConfig) -> Quart:
     @requires_auth(config, ["post:user"])
     async def add_user(token_payload):
         # Gets the user's data
-        user_data = json.loads(await request.data)
+        user_data = await request.get_json()
 
         # If the user is attempting to add a user that isn't themselves to
         # the database, aborts
@@ -581,7 +581,7 @@ def create_app(config: SAHConfig) -> Quart:
         # Check if the user ID isn't an integer; if it isn't, abort
         validator.check_type(user_id, "User ID")
 
-        updated_user = json.loads(await request.data)
+        updated_user = await request.get_json()
         user_to_update: User = await config.db.one_or_404(
             item_id=int(user_id),
             item_type=User,
@@ -925,7 +925,7 @@ def create_app(config: SAHConfig) -> Quart:
     @requires_auth(config, ["post:message"])
     async def add_message(token_payload: UserData):
         # Gets the new message's data
-        message_data = json.loads(await request.data)
+        message_data = await request.get_json()
 
         # Checks that the user isn't trying to send a message from someone else
         if token_payload["id"] != message_data["fromId"]:
@@ -1370,7 +1370,7 @@ def create_app(config: SAHConfig) -> Quart:
     @app.route("/reports", methods=["POST"])
     @requires_auth(config, ["post:report"])
     async def create_new_report(token_payload: UserData):
-        report_data = json.loads(await request.data)
+        report_data = await request.get_json()
 
         # Check the length adn  type of the report reason
         validator.check_length(report_data["reportReason"], "report")
@@ -1432,7 +1432,7 @@ def create_app(config: SAHConfig) -> Quart:
     @app.route("/reports/<report_id>", methods=["PATCH"])
     @requires_auth(config, ["read:admin-board"])
     async def update_report_status(token_payload: UserData, report_id: int):
-        updated_report = json.loads(await request.data)
+        updated_report = await request.get_json()
         report: Report | None = await config.db.session.scalar(
             select(Report).filter(Report.id == int(report_id))
         )
