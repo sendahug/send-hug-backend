@@ -148,6 +148,45 @@ def create_app(config: SAHConfig) -> Quart:
         filters = await config.db.session.scalars(select(Filter))
         return [filter.filter for filter in filters.all()]
 
+    async def get_thread_id_for_users(
+        user1_id: int, user2_id: int, current_user_id: int
+    ) -> int:
+        """
+        Gets a thread ID for messaging between two users.
+        If there's no existing thread, it creates a new thread.
+        """
+        # Checks if there's an existing thread between the users (with user 1
+        # being the sender and user 2 being the recipient)
+        thread: Thread | None = await config.db.session.scalar(
+            select(Thread).filter(
+                or_(
+                    and_(
+                        Thread.user_1_id == int(user1_id),
+                        Thread.user_2_id == int(user2_id),
+                    ),
+                    and_(
+                        Thread.user_1_id == int(user2_id),
+                        Thread.user_2_id == int(user1_id),
+                    ),
+                )
+            )
+        )
+
+        # If there's no thread between the users
+        if thread is None:
+            new_thread = Thread(
+                user_1_id=int(user1_id),
+                user_2_id=int(user2_id),
+            )
+            # Try to create the new thread
+            added_thread = await config.db.add_object(
+                new_thread, current_user_id=current_user_id
+            )
+            return added_thread["id"]
+        # If there's a thread between the users
+        else:
+            return thread.id
+
     # Routes
     # -----------------------------------------------------------------
     # Endpoint: GET /
@@ -944,37 +983,11 @@ def create_app(config: SAHConfig) -> Quart:
             filtered_words=await get_current_filters(),
         )
 
-        # Checks if there's an existing thread between the users (with user 1
-        # being the sender and user 2 being the recipient)
-        thread: Thread | None = await config.db.session.scalar(
-            select(Thread).filter(
-                or_(
-                    and_(
-                        Thread.user_1_id == int(message_data["fromId"]),
-                        Thread.user_2_id == int(message_data["forId"]),
-                    ),
-                    and_(
-                        Thread.user_1_id == int(message_data["forId"]),
-                        Thread.user_2_id == int(message_data["fromId"]),
-                    ),
-                )
-            )
+        thread_id = await get_thread_id_for_users(
+            user1_id=message_data["fromId"],
+            user2_id=message_data["forId"],
+            current_user_id=token_payload["id"],
         )
-
-        # If there's no thread between the users
-        if thread is None:
-            new_thread = Thread(
-                user_1_id=int(message_data["fromId"]),
-                user_2_id=int(message_data["forId"]),
-            )
-            # Try to create the new thread
-            added_thread = await config.db.add_object(
-                new_thread, current_user_id=token_payload["id"]
-            )
-            thread_id = added_thread["id"]
-        # If there's a thread between the users
-        else:
-            thread_id = thread.id
 
         # Create a new message
         new_message = Message(
