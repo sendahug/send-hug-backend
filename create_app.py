@@ -353,6 +353,7 @@ def create_app(config: SAHConfig) -> Quart:
     async def send_hug_for_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
+        message_details = await request.get_json()
 
         original_post: Post = await config.db.one_or_404(
             item_id=int(post_id),
@@ -382,21 +383,58 @@ def create_app(config: SAHConfig) -> Quart:
         hugs.append(current_user.id)
         original_post.sent_hugs = [*hugs]
 
+        to_add = []
+        sent_message = False
+
         # Create a notification for the user getting the hug
         if post_author:
             post_author.received_hugs += 1
             today = datetime.now()
+
+            if message_details.get("messageText"):
+                validator.validate_post_or_message(
+                    text=message_details["messageText"],
+                    type="message",
+                    filtered_words=await get_current_filters(),
+                )
+
+                thread_id = await get_thread_id_for_users(
+                    user1_id=current_user.id,
+                    user2_id=original_post.user_id,
+                    current_user_id=current_user.id,
+                )
+
+                message = Message(
+                    from_id=current_user.id,
+                    for_id=original_post.user_id,
+                    text=message_details["messageText"],
+                    date=today,
+                    thread=thread_id,
+                )
+                to_add.append(message)
+                sent_message = True
+
+            base_notification_message = "You got a hug"
+            base_push_notification_message = (
+                f"{current_user.display_name} sent you a hug"
+            )
+
             notification = Notification(
                 for_id=post_author.id,
                 from_id=current_user.id,
                 type="hug",
-                text="You got a hug",
+                text=f"{base_notification_message} and a message"
+                if sent_message
+                else base_notification_message,
                 date=today,
             )
             push_notification = {
                 "type": "hug",
-                "text": f"{current_user.display_name} sent you a hug",
+                "text": f"{base_push_notification_message} and a message"
+                if sent_message
+                else base_push_notification_message,
             }
+            to_add.append(notification)
 
         # Try to update the database
         # Objects to update
@@ -406,8 +444,8 @@ def create_app(config: SAHConfig) -> Quart:
             cast(User, post_author),
         ]
 
-        if notification:
-            await config.db.add_object(notification)
+        if len(to_add):
+            await config.db.add_multiple_objects(objects=to_add)
 
         await config.db.update_multiple_objects(objects=to_update)
 
@@ -417,7 +455,10 @@ def create_app(config: SAHConfig) -> Quart:
         return jsonify(
             {
                 "success": True,
-                "updated": f"Successfully sent hug for post {int(post_id)}",
+                "updated": f"Successfully sent hug for post {int(post_id)} "
+                f"and a message to user {int(original_post.user_id)}"
+                if sent_message
+                else f"Successfully sent hug for post {int(post_id)}",
             }
         )
 
