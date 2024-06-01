@@ -1,0 +1,17 @@
+{
+  "pr_number": 638,
+  "changes": [
+    {
+      "change": "Features",
+      "description": "The 'send hugs for post' endpoint now sends a message as well as a hug to the user who wrote the post in order to allow users to do both without having to perform the actions separately."
+    },
+    {
+      "change": "Changes",
+      "description": "The 'send hugs for post' endpoint now expects a JSON payload with a message to send the user who wrote the post."
+    },
+    {
+      "change": "Features",
+      "description": "Added a helper function for fetching a thread ID for a thread between two users. If the thread doesn't yet exist, the method creates the thread and then returns the new thread's ID."
+    }
+  ]
+}
