@@ -383,7 +383,7 @@ def create_app(config: SAHConfig) -> Quart:
         hugs.append(current_user.id)
         original_post.sent_hugs = [*hugs]
 
-        to_add = []
+        to_add: list[CoreSAHModel] = []
         sent_message = False
 
         # Create a notification for the user getting the hug
