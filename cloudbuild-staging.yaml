@@ -1,5 +1,16 @@
 # cloudbuild-staging.yaml
 steps:
+  - id: "Install Proxy"
+    name: gcr.io/cloud-builders/wget
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        wget -O /workspace/cloud_sql_proxy \
+        https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 && \
+        chmod +x /workspace/cloud_sql_proxy
+    waitFor: ['-']
+
     # build & push the container image
   - id: "Send-a-hug: Build Staging"
     name: "gcr.io/kaniko-project/executor:v1.21.1"
@@ -7,6 +18,24 @@ steps:
       - "--cache=true"
       - "--cache-ttl=48h"
       - "--destination=europe-west1-docker.pkg.dev/$PROJECT_ID/imgs/${_IMAGE_NAME}:latest"
+    waitFor: ['-']
+
+  - id: "Run Migrations"
+    name: python:3.11
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        set -e
+        pip install -r requirements.txt
+        /workspace/cloud_sql_proxy -dir=/cloudsql -instances=${_INSTANCE_CONNECTION_BASE}-primary & \
+        sleep 2 && \
+        alembic upgrade head
+    env:
+        - 'PORT=8080'
+        - 'SAH_MODE=${_SAH_MODE}'
+        - 'SAH_HOME=/workspace'
+    waitFor: ['Send-a-hug: Build Staging', 'Install Proxy']
 
     # Deploy container image to Cloud Run
   - id: "Send-a-hug: Deploy Staging"
@@ -32,10 +61,12 @@ steps:
       - 'SAH_MODE=${_SAH_MODE}'
       - '--update-secrets'
       - 'DATABASE_URL=DATABASE_URL:latest'
+    waitFor: ['Run Migrations']
 
 substitutions:
   _IMAGE_NAME: 'send-a-hug-staging'
   _SAH_MODE: 'STAGING'
+  _INSTANCE_CONNECTION_BASE: 'send-a-hug-platform:europe-west1:pdb'
 
 logsBucket: 'gs://send-a-hug_cloudbuilds'
 timeout: 900s
