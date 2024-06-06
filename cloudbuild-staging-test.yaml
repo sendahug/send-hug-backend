@@ -1,3 +1,4 @@
+# Not currently used as tests are run in CircleCI as they have a more generous free tier than GCP
 steps:
   - id: 'Lint and Test Setup'
     name: python:3.11

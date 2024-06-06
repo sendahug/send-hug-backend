@@ -31,9 +31,7 @@ steps:
       - '--update-env-vars'
       - 'SAH_MODE=${_SAH_MODE}'
       - '--update-secrets'
-      - '/app/.secrets/firebase_web_api_key/latest.json=firebase_web_api_key:latest'
-    # Just want to note here how f^&&ing annoying it is that you can't deploy multiple secrets to the
-    # same folder when using the above method. Come on Google, do better
+      - 'DATABASE_URL=DATABASE_URL:latest'
 
 substitutions:
   _IMAGE_NAME: 'send-a-hug'
