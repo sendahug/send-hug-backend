@@ -114,7 +114,8 @@ async def test_get_user_data_as_user(
     app_client, test_db, user_headers, dummy_users_data
 ):
     response = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
+        f"/users/all/{dummy_users_data['user']['firebase_id']}",
+        headers=user_headers["user"],
     )
     response_data = await response.get_json()
     user_data = response_data["user"]
@@ -130,7 +131,7 @@ async def test_get_user_data_as_mod(
     app_client, test_db, user_headers, dummy_users_data
 ):
     response = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['auth0']}",
+        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
         headers=user_headers["moderator"],
     )
     response_data = await response.get_json()
@@ -147,7 +148,7 @@ async def test_get_user_data_as_admin(
     app_client, test_db, user_headers, dummy_users_data
 ):
     response = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['auth0']}",
+        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
         headers=user_headers["admin"],
     )
     response_data = await response.get_json()
@@ -223,7 +224,7 @@ async def test_create_user_as_user(
     response_data = await response.get_json()
 
     assert response_data["success"] is False
-    assert response.status_code == 403
+    assert response.status_code == 422
 
 
 # Attempt to create a user with moderator's JWT
@@ -239,7 +240,7 @@ async def test_create_user_as_moderator(
     response_data = await response.get_json()
 
     assert response_data["success"] is False
-    assert response.status_code == 403
+    assert response.status_code == 422
 
 
 # Attempt to create a user with admin's JWT
@@ -255,7 +256,7 @@ async def test_create_user_as_damin(
     response_data = await response.get_json()
 
     assert response_data["success"] is False
-    assert response.status_code == 403
+    assert response.status_code == 422
 
 
 # Attempt to create a user with new user's JWT
@@ -267,15 +268,17 @@ async def test_create_user_as_damin(
 async def test_create_different_user_as_new_user(
     app_client, test_db, user_headers, dummy_request_data
 ):
+    user_to_create = {**dummy_request_data["new_user"]}
+    user_to_create["firebaseId"] = "twg"
     response = await app_client.post(
         "/users",
         headers=user_headers["blocked"],
-        data=json.dumps(dummy_request_data["new_user"]),
+        data=json.dumps(user_to_create),
     )
     response_data = await response.get_json()
 
     assert response_data["success"] is False
-    assert response.status_code == 422
+    assert response.status_code == 409
 
 
 # Edit User Data Tests ('/users/all/<user_id>', PATCH)
@@ -313,7 +316,11 @@ async def test_update_user_malformed_auth(
 # Attempt to update a user's data with a user's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_user_as_user(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     user = dummy_request_data["updated_user"]
     user["id"] = dummy_users_data["user"]["internal"]
@@ -334,7 +341,11 @@ async def test_update_user_as_user(
 # Attempt to update another user's display name with a user's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_other_users_display_name_as_user(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     user = dummy_request_data["updated_display"]
     user["id"] = dummy_users_data["moderator"]["internal"]
@@ -352,7 +363,11 @@ async def test_update_other_users_display_name_as_user(
 # Attempt to update a user's blocked state with a user's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_block_user_as_user(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["user"]["internal"]
@@ -371,7 +386,11 @@ async def test_update_block_user_as_user(
 # Attempt to update a user's data with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_user_as_mod(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     user = dummy_request_data["updated_user"]
     user["id"] = dummy_users_data["moderator"]["internal"]
@@ -392,7 +411,11 @@ async def test_update_user_as_mod(
 # Attempt to update another user's display name with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_other_users_display_name_as_mod(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     user = dummy_request_data["updated_display"]
     user["id"] = dummy_users_data["admin"]["internal"]
@@ -410,7 +433,11 @@ async def test_update_other_users_display_name_as_mod(
 # Attempt to update a user's blocked state with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_block_user_as_mod(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["moderator"]["internal"]
@@ -429,7 +456,11 @@ async def test_update_block_user_as_mod(
 # Attempt to update a user's data with an admin's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_user_as_admin(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     user = dummy_request_data["updated_user"]
     user["id"] = dummy_users_data["admin"]["internal"]
@@ -450,7 +481,11 @@ async def test_update_user_as_admin(
 # Attempt to update another user's display name with an admin's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_other_user_as_admin(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     user = dummy_request_data["updated_display"]
     user["id"] = dummy_users_data["user"]["internal"]
@@ -471,7 +506,11 @@ async def test_update_other_user_as_admin(
 # Attempt to update a user's blocked state with an admin's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_block_user_as_admin(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["user"]["internal"]
@@ -491,7 +530,11 @@ async def test_update_block_user_as_admin(
 # Attempt to update another user's settings (admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_user_settings_as_admin(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["user"]["internal"]
@@ -527,7 +570,11 @@ async def test_update_no_id_user_as_admin(
 # Attempt to update another user's settings (admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_admin_settings_as_admin(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     user = {**dummy_request_data["updated_unblock_user"]}
     user["id"] = dummy_users_data["admin"]["internal"]
@@ -552,7 +599,11 @@ async def test_update_admin_settings_as_admin(
 # Attempt to update another user's settings (admin's JWT) - 0 refresh rate
 @pytest.mark.asyncio(scope="session")
 async def test_update_admin_settings_as_admin_invalid_settings(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     user = {**dummy_request_data["updated_unblock_user"]}
     user["id"] = dummy_users_data["admin"]["internal"]
@@ -616,7 +667,13 @@ async def test_get_user_posts_malformed_auth(app_client, test_db, user_headers):
 )
 @pytest.mark.asyncio(scope="session")
 async def test_get_user_posts(
-    app_client, test_db, user_headers, user_id, user, total_pages, posts_num
+    app_client,
+    test_db,
+    user_headers,
+    user_id,
+    user,
+    total_pages,
+    posts_num,
 ):
     response = await app_client.get(
         f"/users/all/{user_id}/posts", headers=user_headers[user]

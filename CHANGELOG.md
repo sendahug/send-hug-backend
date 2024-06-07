@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+### 2024-05-16
+
+#### Features
+
+- All `format` methods now take a dictionary of keyword arguments (`kwargs`). This allows us to pass formatting methods extra parameters to be used in formatting. ([#628](https://github.com/sendahug/send-hug-backend/pull/628))
+
+#### Changes
+
+- Replaced a few columns that provided tables with data reflected from other tables with SQL expressions to calculate the data they had. Previously, columns like posts' `open_report` or threads' `user_1_deleted` had to be updated manually whenever a new report was added or updated or a new message was added or deleted (respectively). This forced us to update multiple objects in multiple tables at the same time to make a single change, which was unnecessarily complicated. Now, columns such as those were removed, and in order to fetch that data, we use subqueries within the main query (i.e., posts'/messages'/users' queries). ([#628](https://github.com/sendahug/send-hug-backend/pull/628))
+- The messages count in the threads' endpoints responses is now calculated based on the user making a request. This ensures that messages deleted by the current user (but weren't deleted by the other side) aren't included in the 'num messages' count. ([#628](https://github.com/sendahug/send-hug-backend/pull/628))
+
+### 2024-05-09
+
+#### Changes
+
+- Deleted the old permissions-checking method. Instead, authorisation is skipped entirely in the 'create users' endpoint, and only the valid JWT (authentication) is checked. Having the roles in the JWT is an Auth0 feature, which is no longer relevant in the app. ([#622](https://github.com/sendahug/send-hug-backend/pull/622))
+
+#### Breaking Changes
+
+- Replaced Auth0 with Firebase as the primary Auth Provider. The Send a Hug team determined that Firebase is a better fit for our long-term purposes, so we decided to make the switch. This change includes:
+	- Replaced the Auth0_id column in the users' table with a Firebase_id column.
+	- Added a firebase app attribute to the app's config. The initialised app is then used to verify the JWTs in the incoming requests.
+	- Updated the token verification process to use Firebase's `verify_id_token` method instead of fetching the required keys from Auth0 and manually verifying the token is valid using Python-Jose. ([#622](https://github.com/sendahug/send-hug-backend/pull/622))
+
+#### Chores
+
+- Changed the way the different roles are tested. Previously, we made requests to Auth0 to generate tokens for each of the roles so we could make requests with them. This made tests slower and relied on having an internet connection. Now, we mock the JWT verification process to return the relevant user's details (depending on the user being tested) without a real token, which allows running tests more quickly and without the need to generate JWTs. ([#622](https://github.com/sendahug/send-hug-backend/pull/622))
+
 ### 2024-04-30
 
 #### Fixes

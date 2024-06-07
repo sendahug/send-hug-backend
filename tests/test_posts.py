@@ -63,7 +63,11 @@ async def test_send_post_malformed_auth(
 # Attempt to create a post with a user's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_post_as_user(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -81,7 +85,11 @@ async def test_send_post_as_user(
 # Attempt to create a post with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_post_as_mod(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["moderator"]["internal"]
@@ -99,7 +107,11 @@ async def test_send_post_as_mod(
 # Attempt to create a post with an admin's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_post_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["admin"]["internal"]
@@ -117,7 +129,11 @@ async def test_send_post_as_admin(
 # Attempt to create a post with a blocked user's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_post_as_blocked(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["blocked"]["internal"]
@@ -165,7 +181,11 @@ async def test_update_post_malformed_auth(
 # Attempt to update the user's post (with same user's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_own_post_as_user(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -184,7 +204,11 @@ async def test_update_own_post_as_user(
 # Attempt to update another user's post (with user's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_other_users_post_as_user(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["moderator"]["internal"]
@@ -201,7 +225,11 @@ async def test_update_other_users_post_as_user(
 # Attempt to update the moderator's post (with same moderator's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_own_post_as_mod(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["moderator"]["internal"]
@@ -220,7 +248,11 @@ async def test_update_own_post_as_mod(
 # Attempt to update another user's post (with moderator's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_other_users_post_as_mod(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -239,7 +271,11 @@ async def test_update_other_users_post_as_mod(
 # Attempt to update the admin's post (with same admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_own_post_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["admin"]["internal"]
@@ -258,7 +294,11 @@ async def test_update_own_post_as_admin(
 # Attempt to update another user's post (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_other_users_post_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -277,7 +317,11 @@ async def test_update_other_users_post_as_admin(
 # Attempt to close the report on another user's post (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_other_users_post_report_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["report_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -296,7 +340,11 @@ async def test_update_other_users_post_report_as_admin(
 # Attempt to update a post that doesn't exist (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_nonexistent_post_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
@@ -312,7 +360,11 @@ async def test_update_nonexistent_post_as_admin(
 # Attempt to update a post without post ID (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_post_no_id_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]

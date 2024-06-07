@@ -497,7 +497,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Handler Function**: get_user_data.
 
 **Request Arguments**:
-  - user_id - A parameter indicating the User's Auth0 ID (This parameter comes directly from the user's JWT) or the user's ID (from the database).
+  - user_id - A parameter indicating the User's Firebase ID (This parameter comes directly from the user's JWT) or the user's ID (from the database).
 
 **Required Data**: None.
 
@@ -510,21 +510,21 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Expected Errors**:
   - 404 (Not Found) - In case no ID was supplied or there's no user with that ID.
 
-**CURL Request Sample**: `curl http://127.0.0.1:5000/users/all/auth0%7C5ed8e3d0def75d0befbc7e50 -H 'Authorization: Bearer <YOUR_TOKEN>'`
+**CURL Request Sample**: `curl http://127.0.0.1:5000/users/all/bc7e50 -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
 {
   "success": true,
   "user": {
-    "auth0Id": "auth0|5ed8e3d0def75d0befbc7e50",
+    "firebaseId": "bc7e50",
     "displayName": "user14",
     "givenH": 0,
     "id": 4,
     "loginCount": 5,
     "posts": 1,
     "receivedH": 0,
-    "role": "admin"
+    "role": "admin",
   }
 }
 ```
@@ -537,7 +537,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Request Arguments**: None.
 
 **Required Data**: A JSON containing the new user's data, in the following format:
-  - id (string) - The user's Auth0 ID (JWT sub).
+  - id (string) - The user's Firebase ID (JWT `uid` field).
   - displayName (string) - The user's auto-generated display name.
 
 **Required Permission:** 'post:user'.
@@ -585,13 +585,13 @@ For full instructions check the [`backend README`](./backend/README.md)
 {
   "success": true,
   "updated": {
-    "auth0Id": "auth0|5ed8e3d0def75d0befbc7e50",
     "displayName": "user_14",
     "givenH": 0,
     "id": 4,
     "loginCount": 2,
     "receivedH": 0,
-    "role": "admin"
+    "role": "admin",
+    "firebaseId": "fkfl"
   }
 }
 ```
@@ -1068,7 +1068,7 @@ For full instructions check the [`backend README`](./backend/README.md)
   - notifications (List) - a list containing all user notifications
 
 **Expected Errors**:
-  - 404 (Not Found) - In case there's no user with the given Auth0 ID.
+  - 404 (Not Found) - In case there's no user with the given Firebase ID.
   - 500 (Internal Server Error) - In case an error occurred while trying to update the user's 'last read' date.
 
 **CURL Request Sample**: `curl http://127.0.0.1:5000/notifications -H 'Authorization: Bearer <YOUR_TOKEN>'`
@@ -1095,7 +1095,7 @@ For full instructions check the [`backend README`](./backend/README.md)
   - subId (Number) - the ID of the newly added push subscription.
 
 **Expected Errors**:
-  - 404 (Not Found) - In case there's no user with the given Auth0 ID.
+  - 404 (Not Found) - In case there's no user with the given Firebase ID.
   - 500 (Internal Server Error) - In case an error occurred while trying to add the new subscription to the database.
 
 **CURL Request Sample**: `curl -X POST http://127.0.0.1:5000/filters -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '<PUSH_SUBSCRIPTION_OBJECT>'`
@@ -1122,7 +1122,7 @@ For full instructions check the [`backend README`](./backend/README.md)
   - subId (Number) - the ID of the updated push subscription.
 
 **Expected Errors**:
-  - 404 (Not Found) - In case there's no user with the given Auth0 ID.
+  - 404 (Not Found) - In case there's no user with the given Firebase ID.
   - 500 (Internal Server Error) - In case an error occurred while trying to add the new subscription to the database.
 
 **CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/notifications/sub_id -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '<PUSH_SUBSCRIPTION_OBJECT>'`

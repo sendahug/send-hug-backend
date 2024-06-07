@@ -46,9 +46,17 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
+    and_,
+    column,
+    false,
     func,
+    or_,
     select,
     Table,
+    case,
+    table,
+    true,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 
@@ -59,6 +67,7 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
 
 HugModelType = TypeVar("HugModelType", bound=BaseModel, covariant=True)
 DumpedModel: TypeAlias = dict[str, Any]
+BLOCKED_USER_ROLE_ID = 5
 
 
 # SQLAlchemy Tables
@@ -68,6 +77,15 @@ roles_permissions_map = Table(
     Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True),
     Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True),
 )
+
+# Table objects for column_property
+# -----------------------------------------------------------------
+reports_post_table = table(
+    "reports", column("id"), column("post_id"), column("closed")
+).alias("reports_post")
+reports_user_table = table(
+    "reports", column("id"), column("user_id"), column("closed")
+).alias("reports_user")
 
 
 # Models
@@ -86,17 +104,42 @@ class Post(BaseModel):
     text: Mapped[str] = mapped_column(String(480), nullable=False)
     date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     given_hugs: Mapped[int] = mapped_column(Integer, default=0)
-    open_report: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     sent_hugs: Mapped[Optional[List[int]]] = mapped_column(ARRAY(Integer))
-    report: Mapped[Optional["Report"]] = relationship("Report", back_populates="post")
+    reports: Mapped[Optional[List["Report"]]] = relationship(
+        "Report",
+        back_populates="post",
+    )
+    # Column properties
+    open_reports_count = column_property(
+        select(func.count(reports_post_table.table_valued()))
+        .where(
+            and_(
+                reports_post_table.c.post_id == id,
+                reports_post_table.c.closed == false(),
+            )
+        )
+        .scalar_subquery()
+    )
 
     @hybrid_property
     def user_name(self):
         return self.user.display_name
 
+    @hybrid_property
+    def open_report(self):
+        if self.open_reports_count == 0:
+            return False
+
+        return True
+
+    @open_report.inplace.expression
+    @classmethod
+    def _open_report(cls):
+        return case((cls.open_reports_count == 0, false()), else_=true())
+
     # Format method
     # Responsible for returning a JSON object
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "userId": self.user_id,
@@ -113,7 +156,6 @@ class User(BaseModel):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     display_name: Mapped[str] = mapped_column(String(60), nullable=False)
-    auth0_id: Mapped[str] = mapped_column(String(), nullable=False)
     received_hugs: Mapped[int] = mapped_column(Integer, default=0)
     given_hugs: Mapped[int] = mapped_column(Integer, default=0)
     login_count: Mapped[Optional[int]] = mapped_column(Integer, default=1)
@@ -125,9 +167,7 @@ class User(BaseModel):
     role: Mapped[Optional["Role"]] = relationship(
         "Role", foreign_keys="User.role_id", lazy="selectin"
     )
-    blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     release_date: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    open_report: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     last_notifications_read: Mapped[Optional[datetime]] = mapped_column(DateTime)
     auto_refresh: Mapped[Optional[bool]] = mapped_column(Boolean, default=True)
     refresh_rate: Mapped[Optional[int]] = mapped_column(Integer, default=20)
@@ -147,17 +187,44 @@ class User(BaseModel):
     received_messages: Mapped[Optional[List["Message"]]] = relationship(
         "Message", back_populates="for_user", foreign_keys="Message.for_id"
     )
+    firebase_id: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    firebase_id_uq = UniqueConstraint("firebase_id", name="firebase_id_uq")
+    reports = relationship(
+        "Report", back_populates="user", foreign_keys="Report.user_id"
+    )
     # Column properties
     post_count = column_property(
         select(func.count(Post.id)).where(Post.user_id == id).scalar_subquery()
     )
+    open_reports_count = column_property(
+        select(func.count(reports_user_table.table_valued()))
+        .where(
+            and_(
+                reports_user_table.c.user_id == id,
+                reports_user_table.c.closed == false(),
+            )
+        )
+        .scalar_subquery()
+    )
+    blocked = column_property(role_id == 5)
+
+    @hybrid_property
+    def open_report(self):
+        if self.open_reports_count == 0:
+            return False
+
+        return True
+
+    @open_report.inplace.expression
+    @classmethod
+    def _open_report(cls):
+        return case((cls.open_reports_count == 0, false()), else_=true())
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
-            "auth0Id": self.auth0_id,
             "displayName": self.display_name,
             "receivedH": self.received_hugs,
             "givenH": self.given_hugs,
@@ -182,6 +249,7 @@ class User(BaseModel):
             if self.icon_colours
             else self.icon_colours,
             "posts": self.post_count,
+            "firebaseId": self.firebase_id,
         }
 
 
@@ -240,7 +308,7 @@ class Message(BaseModel):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "fromId": self.from_id,
@@ -283,65 +351,107 @@ class Thread(BaseModel):
         nullable=False,
     )
     user_2: Mapped["User"] = relationship("User", foreign_keys="Thread.user_2_id")
-    user_1_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    user_2_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     messages: Mapped[List[Message]] = relationship(
         "Message", back_populates="thread_details"
     )
     # Column properties
-    message_count = column_property(
-        select(func.count(Message.id))
-        .where(Message.thread == id)
-        .group_by(Message.thread)
-        .scalar_subquery()
-    )
     latest_message_date = column_property(
         select(func.max(Message.date))
         .where(Message.thread == id)
         .group_by(Message.thread)
         .scalar_subquery()
     )
-    user_1_name = column_property(
+    user1_name = column_property(
         select(User.display_name).where(User.id == user_1_id).scalar_subquery()
     )
-    user_1_icon = column_property(
+    user1_icon = column_property(
         select(User.selected_character).where(User.id == user_1_id).scalar_subquery()
     )
-    user_1_colours = column_property(
+    user1_colours = column_property(
         select(User.icon_colours).where(User.id == user_1_id).scalar_subquery()
     )
-    user_2_name = column_property(
+    user1_message_count = column_property(
+        select(func.count(Message.id))
+        .where(
+            and_(
+                Message.thread == id,
+                or_(
+                    and_(Message.for_id == user_1_id, Message.for_deleted == false()),
+                    and_(Message.from_id == user_1_id, Message.from_deleted == false()),
+                ),
+            )
+        )
+        .group_by(Message.thread)
+        .scalar_subquery()
+    )
+    user2_name = column_property(
         select(User.display_name).where(User.id == user_2_id).scalar_subquery()
     )
-    user_2_icon = column_property(
+    user2_icon = column_property(
         select(User.selected_character).where(User.id == user_2_id).scalar_subquery()
     )
-    user_2_colours = column_property(
+    user2_colours = column_property(
         select(User.icon_colours).where(User.id == user_2_id).scalar_subquery()
     )
+    user2_message_count = column_property(
+        select(func.count(Message.id))
+        .where(
+            and_(
+                Message.thread == id,
+                or_(
+                    and_(Message.for_id == user_2_id, Message.for_deleted == false()),
+                    and_(Message.from_id == user_2_id, Message.from_deleted == false()),
+                ),
+            )
+        )
+        .group_by(Message.thread)
+        .scalar_subquery()
+    )
+
+    @hybrid_property
+    def user1_deleted(self):
+        return self.user1_message_count == 0 or self.user1_message_count is None
+
+    @user1_deleted.inplace.expression
+    @classmethod
+    def _user1_deleted(cls):
+        return case((cls.user1_message_count > 0, false()), else_=true())
+
+    @hybrid_property
+    def user2_deleted(self):
+        return self.user2_message_count == 0 or self.user2_message_count is None
+
+    @user2_deleted.inplace.expression
+    @classmethod
+    def _user2_deleted(cls):
+        return case((cls.user2_message_count > 0, false()), else_=true())
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
+        current_user_id = kwargs["current_user_id"]
+
         return {
             "id": self.id,
             "user1": {
-                "displayName": self.user_1_name,
-                "selectedIcon": self.user_1_icon,
-                "iconColours": json.loads(self.user_1_colours)
-                if self.user_1_colours
-                else self.user_1_colours,
+                "displayName": self.user1_name,
+                "selectedIcon": self.user1_icon,
+                "iconColours": json.loads(self.user1_colours)
+                if self.user1_colours
+                else self.user1_colours,
             },
             "user1Id": self.user_1_id,
             "user2": {
-                "displayName": self.user_2_name,
-                "selectedIcon": self.user_2_icon,
-                "iconColours": json.loads(self.user_2_colours)
-                if self.user_2_colours
-                else self.user_2_colours,
+                "displayName": self.user2_name,
+                "selectedIcon": self.user2_icon,
+                "iconColours": json.loads(self.user2_colours)
+                if self.user2_colours
+                else self.user2_colours,
             },
             "user2Id": self.user_2_id,
-            "numMessages": self.message_count,
+            "numMessages": self.user1_message_count
+            if current_user_id == self.user_1_id
+            else self.user2_message_count,
             "latestMessage": self.latest_message_date,
         }
 
@@ -357,11 +467,13 @@ class Report(BaseModel):
         ForeignKey("users.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,
     )
-    user: Mapped["User"] = relationship("User", foreign_keys="Report.user_id")
+    user: Mapped["User"] = relationship(
+        "User", foreign_keys="Report.user_id", back_populates="reports"
+    )
     post_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("posts.id", onupdate="CASCADE", ondelete="SET NULL")
     )
-    post: Mapped[Optional["Post"]] = relationship("Post", back_populates="report")
+    post: Mapped[Optional["Post"]] = relationship("Post", back_populates="reports")
     reporter: Mapped[int] = mapped_column(
         Integer,
         # TODO: This will fail if the user is deleted
@@ -382,7 +494,7 @@ class Report(BaseModel):
 
     # Format method
     # Responsible for returning a JSON object
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return_report = {
             "id": self.id,
             "type": self.type,
@@ -432,7 +544,7 @@ class Notification(BaseModel):
     )
 
     # Format method
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "fromId": self.from_id,
@@ -458,7 +570,7 @@ class NotificationSub(BaseModel):
     subscription_data: Mapped[Text] = mapped_column(Text, nullable=False)
 
     # Format method
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "user_id": self.user,
@@ -474,7 +586,7 @@ class Filter(BaseModel):
     filter: Mapped[str] = mapped_column(String(), nullable=False)
 
     # Format method
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {"id": self.id, "filter": self.filter}
 
 
@@ -485,7 +597,7 @@ class Permission(BaseModel):
     description: Mapped[Optional[str]] = mapped_column(String())
 
     # Format method
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "permission": self.permission,
@@ -502,7 +614,7 @@ class Role(BaseModel):
     )
 
     # Format method
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         return {
             "id": self.id,
             "name": self.name,

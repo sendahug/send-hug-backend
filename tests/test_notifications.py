@@ -59,7 +59,8 @@ async def test_get_silent_notifications_as_user(
     app_client, test_db, user_headers, dummy_users_data
 ):
     pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
+        f"/users/all/{dummy_users_data['user']['firebase_id']}",
+        headers=user_headers["user"],
     )
     pre_user_data = json.loads(await pre_user_query.data)["user"]
     response = await app_client.get(
@@ -67,7 +68,8 @@ async def test_get_silent_notifications_as_user(
     )
     response_data = await response.get_json()
     post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
+        f"/users/all/{dummy_users_data['user']['firebase_id']}",
+        headers=user_headers["user"],
     )
     post_user_data = json.loads(await post_user_query.data)["user"]
 
@@ -86,7 +88,8 @@ async def test_get_non_silent_notifications_as_user(
     app_client, test_db, user_headers, dummy_users_data
 ):
     pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
+        f"/users/all/{dummy_users_data['user']['firebase_id']}",
+        headers=user_headers["user"],
     )
     pre_user_data = json.loads(await pre_user_query.data)["user"]
     response = await app_client.get(
@@ -94,7 +97,8 @@ async def test_get_non_silent_notifications_as_user(
     )
     response_data = await response.get_json()
     post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['auth0']}", headers=user_headers["user"]
+        f"/users/all/{dummy_users_data['user']['firebase_id']}",
+        headers=user_headers["user"],
     )
     post_user_data = json.loads(await post_user_query.data)["user"]
 
@@ -113,7 +117,7 @@ async def test_get_silent_notifications_as_mod(
     app_client, test_db, user_headers, dummy_users_data
 ):
     pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['auth0']}",
+        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
         headers=user_headers["moderator"],
     )
     pre_user_data = json.loads(await pre_user_query.data)["user"]
@@ -122,7 +126,7 @@ async def test_get_silent_notifications_as_mod(
     )
     response_data = await response.get_json()
     post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['auth0']}",
+        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
         headers=user_headers["moderator"],
     )
     post_user_data = json.loads(await post_user_query.data)["user"]
@@ -142,7 +146,7 @@ async def test_get_non_silent_notifications_as_mod(
     app_client, test_db, user_headers, dummy_users_data
 ):
     pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['auth0']}",
+        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
         headers=user_headers["moderator"],
     )
     pre_user_data = json.loads(await pre_user_query.data)["user"]
@@ -151,7 +155,7 @@ async def test_get_non_silent_notifications_as_mod(
     )
     response_data = await response.get_json()
     post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['auth0']}",
+        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
         headers=user_headers["moderator"],
     )
     post_user_data = json.loads(await post_user_query.data)["user"]
@@ -171,7 +175,7 @@ async def test_get_silent_notifications_as_admin(
     app_client, test_db, user_headers, dummy_users_data
 ):
     pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['auth0']}",
+        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
         headers=user_headers["admin"],
     )
     pre_user_data = json.loads(await pre_user_query.data)["user"]
@@ -180,7 +184,7 @@ async def test_get_silent_notifications_as_admin(
     )
     response_data = await response.get_json()
     post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['auth0']}",
+        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
         headers=user_headers["admin"],
     )
     post_user_data = json.loads(await post_user_query.data)["user"]
@@ -200,7 +204,7 @@ async def test_get_non_silent_notifications_as_admin(
     app_client, test_db, user_headers, dummy_users_data
 ):
     pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['auth0']}",
+        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
         headers=user_headers["admin"],
     )
     pre_user_data = json.loads(await pre_user_query.data)["user"]
@@ -209,7 +213,7 @@ async def test_get_non_silent_notifications_as_admin(
     )
     response_data = await response.get_json()
     post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['auth0']}",
+        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
         headers=user_headers["admin"],
     )
     post_user_data = json.loads(await post_user_query.data)["user"]

@@ -54,7 +54,7 @@ LOGGER = logging.getLogger("SendAHug")
 class CoreSAHModel(Protocol[HugModelType]):
     id: Mapped[int]
 
-    def format(self) -> DumpedModel:
+    def format(self, **kwargs) -> DumpedModel:
         ...
 
 
@@ -145,6 +145,7 @@ class SendADatabase:
         query: Select,  # TODO: This select needs to be Select[tuple[CoreSAHModel]]
         current_page: int,
         per_page: int | None = None,
+        **kwargs,
     ) -> PaginationResult:
         """
         Return a paginated result from a query. This includes the items in the given
@@ -172,7 +173,7 @@ class SendADatabase:
             )
 
             return PaginationResult(
-                resource=[item.format() for item in list(items)],
+                resource=[item.format(**kwargs) for item in list(items)],
                 current_page=current_page,
                 per_page=per_page,
                 total_items=total_items,
@@ -207,7 +208,7 @@ class SendADatabase:
 
     # CREATE
     # -----------------------------------------------------------------
-    async def add_object(self, obj: CoreSAHModel) -> DumpedModel:
+    async def add_object(self, obj: CoreSAHModel, **kwargs) -> DumpedModel:
         """
         Inserts a new record into the database.
 
@@ -219,7 +220,7 @@ class SendADatabase:
             await self.session.commit()
             await self.session.refresh(obj)
 
-            return obj.format()
+            return obj.format(**kwargs)
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.session.rollback()
@@ -233,7 +234,9 @@ class SendADatabase:
 
     # Bulk add
     async def add_multiple_objects(
-        self, objects: list[CoreSAHModel]
+        self,
+        objects: list[CoreSAHModel],
+        **kwargs,
     ) -> list[DumpedModel]:
         """
         Inserts multiple records into the database.
@@ -249,7 +252,7 @@ class SendADatabase:
 
             for object in objects:
                 await self.session.refresh(object)
-                formatted_objects.append(object.format())
+                formatted_objects.append(object.format(**kwargs))
 
             return formatted_objects
         # If there's a database error
@@ -265,7 +268,7 @@ class SendADatabase:
 
     # UPDATE
     # -----------------------------------------------------------------
-    async def update_object(self, obj: CoreSAHModel) -> DumpedModel:
+    async def update_object(self, obj: CoreSAHModel, **kwargs) -> DumpedModel:
         """
         Updates an existing record.
 
@@ -276,7 +279,7 @@ class SendADatabase:
             await self.session.commit()
             await self.session.refresh(obj)
 
-            return obj.format()
+            return obj.format(**kwargs)
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.session.rollback()
@@ -290,7 +293,9 @@ class SendADatabase:
 
     # Bulk Update
     async def update_multiple_objects(
-        self, objects: Sequence[CoreSAHModel]
+        self,
+        objects: Sequence[CoreSAHModel],
+        **kwargs,
     ) -> list[DumpedModel]:
         """
         Updates multiple records.
@@ -305,7 +310,7 @@ class SendADatabase:
 
             for obj in objects:
                 await self.session.refresh(obj)
-                updated_objects.append(obj.format())
+                updated_objects.append(obj.format(**kwargs))
 
             return updated_objects
         # If there's a database error

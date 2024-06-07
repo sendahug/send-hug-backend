@@ -34,5 +34,6 @@ from .models import (
     Notification,
     NotificationSub,
     Filter,
+    BLOCKED_USER_ROLE_ID,
 )
 from .db import SendADatabase, CoreSAHModel

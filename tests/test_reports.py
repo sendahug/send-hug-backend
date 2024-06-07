@@ -121,7 +121,11 @@ async def test_send_report_malformed_auth(
 # Attempt to create a report with a user's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_report_as_user(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -142,7 +146,11 @@ async def test_send_report_as_user(
 # Attempt to create a report with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_report_as_mod(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -163,7 +171,11 @@ async def test_send_report_as_mod(
 # Attempt to create a report with an admin's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_report_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -184,7 +196,11 @@ async def test_send_report_as_admin(
 # Attempt to create a post report without post ID with an admin's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_malformed_report_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -202,7 +218,11 @@ async def test_send_malformed_report_as_admin(
 # Attempt to create a post report for post that doesn't exist
 @pytest.mark.asyncio(scope="session")
 async def test_send_report_nonexistent_post_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -220,7 +240,11 @@ async def test_send_report_nonexistent_post_as_admin(
 # Attempt to create a report with an admin's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_user_report_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_user_report"]
     report["userID"] = 1
@@ -240,7 +264,11 @@ async def test_send_user_report_as_admin(
 # Attempt to create a report for user that doesn't exist
 @pytest.mark.asyncio(scope="session")
 async def test_send_user_report_nonexistent_user_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_user_report"]
     report["userID"] = 100
@@ -289,7 +317,11 @@ async def test_update_report_malformed_auth(
 # Attempt to update a report (with user's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_report_as_user(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -307,7 +339,11 @@ async def test_update_report_as_user(
 # Attempt to update a report (with moderator's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_report_as_mod(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -325,7 +361,11 @@ async def test_update_report_as_mod(
 # Attempt to update a report (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_report_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_report"]
     report["id"] = 36
@@ -348,7 +388,11 @@ async def test_update_report_as_admin(
 # Attempt to update a report (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_user_report_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_user_report"]
     report["id"] = 35
@@ -371,7 +415,11 @@ async def test_update_user_report_as_admin(
 # Attempt to update a report with no ID (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_no_id_report_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_report"]
     report["id"] = 36
@@ -392,7 +440,11 @@ async def test_update_no_id_report_as_admin(
 # Attempt to update a report that doesn't exist (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_update_nonexistent_report_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, dummy_users_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
 ):
     report = dummy_request_data["new_report"]
     report["id"] = 36

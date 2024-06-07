@@ -25,24 +25,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import json
-import os
 from typing import Any, cast, TypedDict
 from datetime import datetime
 
-from jose import jwt, exceptions
-from urllib.request import urlopen
 from functools import wraps
 from quart import request
 from sqlalchemy import select
+from firebase_admin import App  # type: ignore
+from firebase_admin.auth import (  # type: ignore
+    verify_id_token,
+    InvalidIdTokenError,
+    ExpiredIdTokenError,
+    RevokedIdTokenError,
+)
 
 from models import User, SendADatabase
-
-# Auth0 Configuration
-AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
-API_AUDIENCE = os.environ.get("API_AUDIENCE", "")
-CLIENT_ID = os.environ.get("CLIENT_ID", "")
-ALGORITHMS = ["RS256"]
+from config import SAHConfig
 
 
 class RoleData(TypedDict):
@@ -53,13 +51,13 @@ class RoleData(TypedDict):
 
 class UserData(TypedDict):
     id: int
-    auth0Id: str
     displayName: str
     role: RoleData
     blocked: bool
     releaseDate: datetime | None
     pushEnabled: bool
     last_notifications_read: datetime | None
+    firebaseId: str
 
 
 # Authentication Error
@@ -102,152 +100,35 @@ def get_auth_header() -> str:
     return split_auth_header[1]
 
 
-def get_rsa_key(token: str) -> dict[str, Any]:
+def validate_token(token: str, app: App):
     """
-    Fetches the JWKS keys and matches the 'kid' key from the user's
-    token to the JWKS keys.
-
-    param token: The JWT.
-    returns: The RSA key for decoding the JWT (if decoding the token is possible)
+    Validates the token and returns the decoded payload.
     """
-    # Gets the JWKS from Auth0
-    auth_json = urlopen(f"https://{AUTH0_DOMAIN}/.well-known/jwks.json")
-    jwks = json.loads(auth_json.read())
-
-    # Tries to get the token header
     try:
-        token_header = jwt.get_unverified_header(token)
-    # If there's an error, raise an AuthError
-    except Exception:
+        token_payload = verify_id_token(token, app)
+    except ExpiredIdTokenError:
+        raise AuthError(
+            {"code": 401, "description": "Unauthorised. Your token has expired."}, 401
+        )
+    except RevokedIdTokenError:
+        raise AuthError(
+            {"code": 401, "description": "Unauthorised. Your token has been revoked."},
+            401,
+        )
+    except InvalidIdTokenError:
+        raise AuthError(
+            {"code": 401, "description": "Unauthorised. Your token is invalid."}, 401
+        )
+    except Exception as err:
         raise AuthError(
             {
                 "code": 401,
-                "description": "Unauthorised. Malformed Authorization header.",
+                "description": f"Unauthorised. Your token is invalid. Error: {err}",
             },
             401,
         )
 
-    rsa_key = {}
-
-    # If the 'kid' key doesn't exist in the token header
-    for key in jwks["keys"]:
-        if key["kid"] == token_header["kid"]:
-            rsa_key = {
-                "kty": key["kty"],
-                "kid": key["kid"],
-                "use": key["use"],
-                "n": key["n"],
-                "e": key["e"],
-            }
-
-    return rsa_key
-
-
-def verify_jwt(token: str) -> dict[str, Any]:
-    """
-    Verifies the token using the Auth0 JWKS (JSON Web Key Set) JSON.
-    Ensures that the JWT is authentic, still valid and hasn't been tampered with.
-
-    param token: a JSON Web Token.
-    """
-    rsa_key = get_rsa_key(token=token)
-
-    payload = {}
-
-    # Try to decode and validate the token
-    if rsa_key:
-        try:
-            payload = jwt.decode(
-                token,
-                rsa_key,
-                algorithms=ALGORITHMS,
-                audience=API_AUDIENCE,
-                issuer=f"https://{AUTH0_DOMAIN}/",
-            )
-        # If the token expired
-        except exceptions.ExpiredSignatureError:
-            raise AuthError(
-                {"code": 401, "description": "Unauthorised. Your token has expired."},
-                401,
-            )
-        # If any claim in the token is invalid
-        except exceptions.JWTClaimsError:
-            raise AuthError(
-                {
-                    "code": 401,
-                    "description": "Unauthorised. Your token contains invalid claims.",
-                },
-                401,
-            )
-        # If the signature is invalid
-        except exceptions.JWTError:
-            raise AuthError(
-                {"code": 401, "description": "Unauthorised. Your token is invalid."},
-                401,
-            )
-        # If there's any other error
-        except Exception:
-            raise AuthError(
-                {"code": 401, "description": "Unauthorised. Invalid token."}, 401
-            )
-
-    return payload
-
-
-def check_permissions_legacy(permission: list[str], payload: dict[str, Any]) -> bool:
-    """
-    Checks the payload from of the decoded, verified JWT for
-    permissions. Then compares the user's permissions to the
-    required permission to check whether the user is allowed to
-    access the given resource.
-    Currently only used for the 'create user' endpoint.
-
-    param permission: The resource's required permissions. Can contain either one
-    or two allowed types of permissions.
-    param payload: The payload from the decoded, verified JWT.
-
-    returns True - Boolean confirming the user has the required permission.
-    """
-    # Check whether permissions are included in the token payload
-    if "permissions" not in payload:
-        raise AuthError(
-            {
-                "code": 403,
-                "description": "Unauthorised. You do not have permission "
-                "to perform this action.",
-            },
-            403,
-        )
-
-    # If there are two possibilities for permissions
-    if len(permission) == 2:
-        # Check whether the user has that permission
-        if (
-            permission[0] not in payload["permissions"]
-            and permission[1] not in payload["permissions"]
-        ):
-            raise AuthError(
-                {
-                    "code": 403,
-                    "description": "Unauthorised. You do not have permission "
-                    "to perform this action.",
-                },
-                403,
-            )
-    # If there's only one possibility
-    else:
-        # Check whether the user has that permission
-        if permission[0] not in payload["permissions"]:
-            raise AuthError(
-                {
-                    "code": 403,
-                    "description": "Unauthorised. You do not have permission "
-                    "to perform this action.",
-                },
-                403,
-            )
-
-    return True
+    return token_payload
 
 
 async def get_current_user(
@@ -259,7 +140,7 @@ async def get_current_user(
     param payload: The payload from the decoded, verified JWT.
     """
     current_user: User | None = await db.session.scalar(
-        select(User).filter(User.auth0_id == payload["sub"])
+        select(User).filter(User.firebase_id == payload["uid"])
     )
 
     # If the user is not found, raise an AuthError
@@ -306,35 +187,38 @@ def check_user_permissions(permission: list[str], current_user: dict[str, Any]) 
 
 # TODO: Ideally we shouldn't pass the DB in, but right now because the
 # whole app initialisation happens within a function, we kind of have to...
-def requires_auth(db: SendADatabase, permission=[""]):
+def requires_auth(config: SAHConfig, permission=[""]):
     """
     @requires_auth() Decorator Definition
     Gets the Authorization header, verifies the JWT and checks
     the user has the required permissions using the functions above.
 
-    param permission: - The resource's required permission(s).
+    param config: The app config to use (which provides access to the firebase
+                  app and the db instance).
+    param permission: The resource's required permission(s).
     """
 
     def requires_auth_decorator(f):
         @wraps(f)
         async def wrapper(*args, **kwargs):
             token = get_auth_header()
-            payload = verify_jwt(token)
+            payload = validate_token(token, config.firebase_app)
 
+            # To create a new user, we just need to check for a valid
+            # firebase user.
             if permission[0] == "post:user":
                 returned_payload = payload
-                check_permissions_legacy(permission, payload)
             else:
-                current_user = await get_current_user(payload, db)
+                current_user = await get_current_user(payload, config.db)
                 returned_payload = {
                     "id": current_user["id"],
-                    "auth0Id": current_user["auth0Id"],
                     "displayName": current_user["displayName"],
                     "role": current_user["role"],
                     "blocked": current_user["blocked"],
                     "releaseDate": current_user["releaseDate"],
                     "pushEnabled": current_user["pushEnabled"],
                     "last_notifications_read": current_user["last_notifications_read"],
+                    "firebaseId": current_user["firebaseId"],
                 }
                 check_user_permissions(permission, current_user)
 

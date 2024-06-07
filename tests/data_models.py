@@ -145,13 +145,10 @@ async def create_users(db: SendADatabase):
     """Creates the users in the test database."""
     user_1 = User(
         id=1,
-        auth0_id="auth0|5ed34765f0b8e60c8e87ca62",
         received_hugs=12,
         given_hugs=2,
         display_name="shirb",
         login_count=60,
-        blocked=False,
-        open_report=False,
         release_date=None,
         last_notifications_read=None,
         auto_refresh=False,
@@ -161,16 +158,14 @@ async def create_users(db: SendADatabase):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=3,
+        firebase_id="abcd",
     )
     user_2 = User(
         id=4,
-        auth0_id="auth0|5ed8e3d0def75d0befbc7e50",
         received_hugs=106,
         given_hugs=117,
         display_name="user14",
         login_count=55,
-        blocked=False,
-        open_report=False,
         release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
         last_notifications_read=datetime.strptime(
             "2020-10-30 18:13:21.282054", DATETIME_PATTERN
@@ -182,16 +177,14 @@ async def create_users(db: SendADatabase):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=1,
+        firebase_id="ijkl",
     )
     user_3 = User(
         id=5,
-        auth0_id="auth0|5ede3e7a0793080013259050",
         received_hugs=2,
         given_hugs=0,
         display_name="user52",
         login_count=7,
-        blocked=False,
-        open_report=False,
         release_date=None,
         last_notifications_read=None,
         auto_refresh=False,
@@ -201,16 +194,14 @@ async def create_users(db: SendADatabase):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=2,
+        firebase_id="efgh",
     )
     user_4 = User(
         id=9,
-        auth0_id="auth0|5edf7b060793080013276746",
         received_hugs=0,
         given_hugs=1,
         display_name="user93",
         login_count=2,
-        blocked=False,
-        open_report=False,
         release_date=None,
         last_notifications_read=None,
         auto_refresh=False,
@@ -220,16 +211,14 @@ async def create_users(db: SendADatabase):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=1,
+        firebase_id="zxy",
     )
     user_5 = User(
         id=20,
-        auth0_id="auth0|5f4b9fd9915cd400670f4633",
         received_hugs=0,
         given_hugs=0,
         display_name="user24",
         login_count=4,
-        blocked=True,
-        open_report=False,
         release_date=datetime.strptime("2120-08-11 08:33:22.473", DATETIME_PATTERN),
         last_notifications_read=datetime.strptime(
             "2020-11-03 20:21:13.399365", DATETIME_PATTERN
@@ -241,6 +230,7 @@ async def create_users(db: SendADatabase):
         '"rbg": "#f8eee4", "item": "#f4b56a"}',
         selected_character="kitty",
         role_id=5,
+        firebase_id="twg",
     )
 
     try:
@@ -259,7 +249,6 @@ async def create_posts(db: SendADatabase):
         text="test",
         date=datetime.strptime("2020-06-01 15:05:01.966", DATETIME_PATTERN),
         given_hugs=2,
-        open_report=False,
         sent_hugs=[4],
     )
     post_2 = Post(
@@ -268,7 +257,6 @@ async def create_posts(db: SendADatabase):
         text="test",
         date=datetime.strptime("2020-06-01 15:10:59.898", DATETIME_PATTERN),
         given_hugs=2,
-        open_report=False,
         sent_hugs=[4],
     )
     post_3 = Post(
@@ -277,7 +265,6 @@ async def create_posts(db: SendADatabase):
         text="test",
         date=datetime.strptime("2020-06-01 15:17:56.294", DATETIME_PATTERN),
         given_hugs=2,
-        open_report=False,
         sent_hugs=[4],
     )
     post_4 = Post(
@@ -286,7 +273,6 @@ async def create_posts(db: SendADatabase):
         text="testing",
         date=datetime.strptime("2020-06-01 15:19:41.25", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_5 = Post(
@@ -295,7 +281,6 @@ async def create_posts(db: SendADatabase):
         text="testing #2",
         date=datetime.strptime("2020-06-01 15:20:11.927", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_6 = Post(
@@ -304,7 +289,6 @@ async def create_posts(db: SendADatabase):
         text="leeeeeee b :))",
         date=datetime.strptime("2020-06-03 07:11:40.421", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_7 = Post(
@@ -313,7 +297,6 @@ async def create_posts(db: SendADatabase):
         text="cutie baby lee",
         date=datetime.strptime("2020-06-04 07:56:09.791", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_8 = Post(
@@ -322,7 +305,6 @@ async def create_posts(db: SendADatabase):
         text="baby lee :))",
         date=datetime.strptime("2020-06-04 08:15:50.811", DATETIME_PATTERN),
         given_hugs=2,
-        open_report=False,
         sent_hugs=[4],
     )
     post_9 = Post(
@@ -331,7 +313,6 @@ async def create_posts(db: SendADatabase):
         text="new user",
         date=datetime.strptime("2020-06-08 14:07:25.297", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_10 = Post(
@@ -340,7 +321,6 @@ async def create_posts(db: SendADatabase):
         text="2nd post",
         date=datetime.strptime("2020-06-08 14:30:58.88", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_11 = Post(
@@ -349,7 +329,6 @@ async def create_posts(db: SendADatabase):
         text="testing service worker",
         date=datetime.strptime("2020-06-27 10:31:24.915", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_12 = Post(
@@ -358,7 +337,6 @@ async def create_posts(db: SendADatabase):
         text="post",
         date=datetime.strptime("2020-06-27 19:17:31.072", DATETIME_PATTERN),
         given_hugs=2,
-        open_report=False,
         sent_hugs=[4],
     )
     post_13 = Post(
@@ -367,7 +345,6 @@ async def create_posts(db: SendADatabase):
         text="for report",
         date=datetime.strptime("2020-07-06 08:02:02.184", DATETIME_PATTERN),
         given_hugs=67,
-        open_report=False,
         sent_hugs=[4],
     )
     post_14 = Post(
@@ -376,7 +353,6 @@ async def create_posts(db: SendADatabase):
         text="testing new design",
         date=datetime.strptime("2020-07-13 18:40:34.806", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_15 = Post(
@@ -385,7 +361,6 @@ async def create_posts(db: SendADatabase):
         text="testing2",
         date=datetime.strptime("2020-07-13 18:43:51.255", DATETIME_PATTERN),
         given_hugs=9,
-        open_report=False,
         sent_hugs=[4],
     )
     post_16 = Post(
@@ -394,7 +369,6 @@ async def create_posts(db: SendADatabase):
         text="hello :)",
         date=datetime.strptime("2020-07-18 12:11:39.65", DATETIME_PATTERN),
         given_hugs=24,
-        open_report=False,
         sent_hugs=[4],
     )
     post_17 = Post(
@@ -403,7 +377,6 @@ async def create_posts(db: SendADatabase):
         text="testing new rule",
         date=datetime.strptime("2020-10-24 12:19:24.199", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_18 = Post(
@@ -412,7 +385,6 @@ async def create_posts(db: SendADatabase):
         text="post",
         date=datetime.strptime("2020-10-31 14:00:58.851", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_19 = Post(
@@ -421,7 +393,6 @@ async def create_posts(db: SendADatabase):
         text="test",
         date=datetime.strptime("2020-10-31 14:46:11.378", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_20 = Post(
@@ -430,7 +401,6 @@ async def create_posts(db: SendADatabase):
         text="testing",
         date=datetime.strptime("2020-10-31 14:59:05.703", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_21 = Post(
@@ -439,7 +409,6 @@ async def create_posts(db: SendADatabase):
         text="test 2",
         date=datetime.strptime("2020-10-31 15:09:50.26", DATETIME_PATTERN),
         given_hugs=1,
-        open_report=False,
         sent_hugs=[4],
     )
     post_22 = Post(
@@ -448,7 +417,6 @@ async def create_posts(db: SendADatabase):
         text="test button",
         date=datetime.strptime("2020-10-31 15:20:45.636", DATETIME_PATTERN),
         given_hugs=0,
-        open_report=False,
         sent_hugs=[],
     )
     post_23 = Post(
@@ -457,7 +425,6 @@ async def create_posts(db: SendADatabase):
         text="button",
         date=datetime.strptime("2020-10-31 15:25:18.172", DATETIME_PATTERN),
         given_hugs=0,
-        open_report=False,
         sent_hugs=[],
     )
     post_24 = Post(
@@ -466,7 +433,6 @@ async def create_posts(db: SendADatabase):
         text="button 2",
         date=datetime.strptime("2020-10-31 15:26:48.043", DATETIME_PATTERN),
         given_hugs=0,
-        open_report=False,
         sent_hugs=[],
     )
 
@@ -507,27 +473,13 @@ async def create_posts(db: SendADatabase):
 
 async def create_threads(db: SendADatabase):
     """Creates the threads in the test database."""
-    thread_1 = Thread(
-        id=1, user_1_id=1, user_2_id=1, user_1_deleted=False, user_2_deleted=False
-    )
-    thread_2 = Thread(
-        id=2, user_1_id=1, user_2_id=5, user_1_deleted=False, user_2_deleted=False
-    )
-    thread_3 = Thread(
-        id=3, user_1_id=1, user_2_id=4, user_1_deleted=False, user_2_deleted=False
-    )
-    thread_4 = Thread(
-        id=6, user_1_id=9, user_2_id=5, user_1_deleted=False, user_2_deleted=False
-    )
-    thread_5 = Thread(
-        id=7, user_1_id=20, user_2_id=4, user_1_deleted=False, user_2_deleted=False
-    )
-    thread_6 = Thread(
-        id=8, user_1_id=20, user_2_id=1, user_1_deleted=True, user_2_deleted=False
-    )
-    thread_7 = Thread(
-        id=4, user_1_id=4, user_2_id=5, user_1_deleted=True, user_2_deleted=False
-    )
+    thread_1 = Thread(id=1, user_1_id=1, user_2_id=1)
+    thread_2 = Thread(id=2, user_1_id=1, user_2_id=5)
+    thread_3 = Thread(id=3, user_1_id=1, user_2_id=4)
+    thread_4 = Thread(id=6, user_1_id=9, user_2_id=5)
+    thread_5 = Thread(id=7, user_1_id=20, user_2_id=4)
+    thread_6 = Thread(id=8, user_1_id=20, user_2_id=1)
+    thread_7 = Thread(id=4, user_1_id=4, user_2_id=5)
 
     try:
         db.session.add_all(
@@ -548,8 +500,8 @@ async def create_messages(db: SendADatabase):
         text="hellllllllo :)",
         date=datetime.strptime("2020-06-08 14:43:30.593", DATETIME_PATTERN),
         thread=4,
-        for_deleted=False,
         from_deleted=True,
+        for_deleted=False,
     )
     message_2 = Message(
         id=8,
@@ -558,8 +510,8 @@ async def create_messages(db: SendADatabase):
         text="hi there :)",
         date=datetime.strptime("2020-06-08 14:50:19.006", DATETIME_PATTERN),
         thread=4,
-        for_deleted=False,
         from_deleted=True,
+        for_deleted=True,
     )
     message_3 = Message(
         id=1,
@@ -568,8 +520,8 @@ async def create_messages(db: SendADatabase):
         text="hang in there :)",
         date=datetime.strptime("2020-06-02 10:39:56.337", DATETIME_PATTERN),
         thread=1,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_4 = Message(
         id=3,
@@ -578,8 +530,8 @@ async def create_messages(db: SendADatabase):
         text="you'll be okay <3",
         date=datetime.strptime("2020-06-08 14:42:02.759", DATETIME_PATTERN),
         thread=2,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_5 = Message(
         id=7,
@@ -588,8 +540,8 @@ async def create_messages(db: SendADatabase):
         text="more testing",
         date=datetime.strptime("2020-06-08 14:45:05.713", DATETIME_PATTERN),
         thread=2,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_6 = Message(
         id=9,
@@ -598,8 +550,8 @@ async def create_messages(db: SendADatabase):
         text="hang in there",
         date=datetime.strptime("2020-06-08 14:43:15.000", DATETIME_PATTERN),
         thread=3,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_7 = Message(
         id=16,
@@ -608,8 +560,8 @@ async def create_messages(db: SendADatabase):
         text="hiiiii",
         date=datetime.strptime("2020-06-14 14:25:37.569", DATETIME_PATTERN),
         thread=6,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_8 = Message(
         id=10,
@@ -618,8 +570,8 @@ async def create_messages(db: SendADatabase):
         text="hi :)",
         date=datetime.strptime("2020-06-14 14:07:37.49", DATETIME_PATTERN),
         thread=3,
-        for_deleted=True,
         from_deleted=False,
+        for_deleted=True,
     )
     message_9 = Message(
         id=21,
@@ -628,8 +580,8 @@ async def create_messages(db: SendADatabase):
         text="hi",
         date=datetime.strptime("2020-07-06 17:33:55.712", DATETIME_PATTERN),
         thread=3,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_10 = Message(
         id=25,
@@ -638,8 +590,8 @@ async def create_messages(db: SendADatabase):
         text="hang in there <3",
         date=datetime.strptime("2020-11-03 20:16:58.027", DATETIME_PATTERN),
         thread=7,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_11 = Message(
         id=22,
@@ -648,8 +600,8 @@ async def create_messages(db: SendADatabase):
         text="test",
         date=datetime.strptime("2020-07-06 17:40:51.288", DATETIME_PATTERN),
         thread=3,
-        for_deleted=False,
         from_deleted=False,
+        for_deleted=False,
     )
     message_12 = Message(
         id=26,
@@ -658,8 +610,8 @@ async def create_messages(db: SendADatabase):
         text="hiiii :)",
         date=datetime.strptime("2020-11-03 20:21:30.972", DATETIME_PATTERN),
         thread=8,
+        from_deleted=True,
         for_deleted=True,
-        from_deleted=False,
     )
     message_13 = Message(
         id=23,
@@ -668,8 +620,8 @@ async def create_messages(db: SendADatabase):
         text="testing thread delete",
         date=datetime.strptime("2020-11-03 16:38:06.351", DATETIME_PATTERN),
         thread=4,
-        for_deleted=False,
         from_deleted=True,
+        for_deleted=False,
     )
     message_14 = Message(
         id=24,
@@ -678,8 +630,8 @@ async def create_messages(db: SendADatabase):
         text="test",
         date=datetime.strptime("2020-11-03 16:48:33.213", DATETIME_PATTERN),
         thread=4,
-        for_deleted=False,
         from_deleted=True,
+        for_deleted=False,
     )
 
     try:

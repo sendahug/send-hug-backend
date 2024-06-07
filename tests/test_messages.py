@@ -105,7 +105,7 @@ async def test_get_user_threads_as_user(
     assert response.status_code == 200
     assert response_data["current_page"] == 1
     assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 4
+    assert len(response_data["messages"]) == 3
 
 
 # Attempt to get another user's messages with a user's JWT
@@ -207,7 +207,7 @@ async def test_get_user_inbox_as_admin(
     assert response.status_code == 200
     assert response_data["current_page"] == 1
     assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 2
+    assert len(response_data["messages"]) == 1
 
 
 # Attempt to get a user's outbox with an admin's JWT
@@ -300,6 +300,32 @@ async def get_nonexistent_thread_as_admin(
     assert response.status_code == 404
 
 
+@pytest.mark.asyncio(scope="session")
+async def test_threads_message_count_shows_user_count(
+    app_client, test_db, user_headers, dummy_users_data
+):
+    admin_response = await app_client.get(
+        f"/messages?type=threads&userID={dummy_users_data['admin']['internal']}",
+        headers=user_headers["admin"],
+    )
+    admin_response_data = await admin_response.get_json()
+
+    user_response = await app_client.get(
+        f"/messages?type=threads&userID={dummy_users_data['user']['internal']}",
+        headers=user_headers["user"],
+    )
+    user_response_data = await user_response.get_json()
+
+    thread_3_admin = [
+        thread for thread in admin_response_data["messages"] if thread["id"] == 3
+    ]
+    thread_3_user = [
+        thread for thread in user_response_data["messages"] if thread["id"] == 3
+    ]
+
+    assert thread_3_admin[0]["numMessages"] != thread_3_user[0]["numMessages"]
+
+
 # Create Message Route Tests ('/message', POST)
 # -------------------------------------------------------
 # Attempt to create a message with no authorisation header
@@ -335,7 +361,11 @@ async def test_send_message_malformed_auth(
 # Attempt to create a message with a user's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_message_as_user(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     message = dummy_request_data["new_message"]
     message["fromId"] = int(dummy_users_data["user"]["internal"])
@@ -354,7 +384,11 @@ async def test_send_message_as_user(
 # Attempt to create a message from another user (with a user's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_send_message_from_another_user_as_user(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     message = dummy_request_data["new_message"]
     message["fromId"] = int(dummy_users_data["admin"]["internal"])
@@ -371,7 +405,11 @@ async def test_send_message_from_another_user_as_user(
 # Attempt to create a message with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_message_as_mod(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     message = dummy_request_data["new_message"]
     message["fromId"] = int(dummy_users_data["moderator"]["internal"])
@@ -390,7 +428,11 @@ async def test_send_message_as_mod(
 # Attempt to create a message from another user (with a moderator's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_send_message_from_another_user_as_mod(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     message = dummy_request_data["new_message"]
     message["fromId"] = int(dummy_users_data["admin"]["internal"])
@@ -407,7 +449,11 @@ async def test_send_message_from_another_user_as_mod(
 # Attempt to create a message with an admin's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_message_as_admin(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     message = dummy_request_data["new_message"]
     message["fromId"] = int(dummy_users_data["admin"]["internal"])
@@ -426,7 +472,11 @@ async def test_send_message_as_admin(
 # Attempt to create a message from another user (with an admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_send_message_from_another_user_as_admin(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     message = dummy_request_data["new_message"]
     message["fromId"] = int(dummy_users_data["user"]["internal"])
@@ -443,7 +493,11 @@ async def test_send_message_from_another_user_as_admin(
 # Attempt to send a message from a user (when there's no thread)
 @pytest.mark.asyncio(scope="session")
 async def test_send_message_existing_thread_as_user(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     message = dummy_request_data["new_message"]
     message["fromId"] = int(dummy_users_data["blocked"]["internal"])
@@ -467,7 +521,11 @@ async def test_send_message_existing_thread_as_user(
 
 @pytest.mark.asyncio(scope="session")
 async def test_send_message_create_thread(
-    app_client, test_db, user_headers, dummy_users_data, dummy_request_data
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+    dummy_request_data,
 ):
     message = {**dummy_request_data["new_message"]}
     message["fromId"] = int(dummy_users_data["admin"]["internal"])

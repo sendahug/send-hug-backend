@@ -25,78 +25,42 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError, JOSEError
 import pytest
+from firebase_admin.auth import (  # type: ignore
+    InvalidIdTokenError,
+    ExpiredIdTokenError,
+    RevokedIdTokenError,
+    TokenSignError,
+)
 
 from auth import (
-    verify_jwt,
-    check_permissions_legacy,
     AuthError,
-    get_rsa_key,
     get_current_user,
     check_user_permissions,
+    validate_token,
 )
 from models import SendADatabase
+from config import SAHConfig
 
 
 # Auth testing
-def test_unverified_header_error():
-    with pytest.raises(AuthError) as exc:
-        get_rsa_key(token="ehjflsahegjls.34839pqhfk.0kfjhsdlugh")
-
-    assert "Unauthorised. Malformed Authorization header." in str(exc.value)
-
-
-def test_no_permissions():
-    with pytest.raises(AuthError) as exc:
-        check_permissions_legacy(
-            permission=["read:user"],
-            payload={
-                "sub": "auth0|12345",
-                "aud": [
-                    "sendhug",
-                ],
-            },
-        )
-
-    assert "Unauthorised. You do not have permission to perform this action." in str(
-        exc.value
-    )
-
-
-def test_multiple_permissions_error():
-    with pytest.raises(AuthError) as exc:
-        check_permissions_legacy(
-            permission=["read:user", "write:user"],
-            payload={
-                "sub": "auth0|12345",
-                "aud": [
-                    "sendhug",
-                ],
-                "permissions": ["do:stuff", "read:stuff"],
-            },
-        )
-
-    assert "Unauthorised. You do not have permission to perform this action." in str(
-        exc.value
-    )
-
-
 @pytest.mark.parametrize(
     "error, error_message",
     [
-        (ExpiredSignatureError, "Unauthorised. Your token has expired."),
-        (JWTClaimsError, "Unauthorised. Your token contains invalid claims."),
-        (JWTError, "Unauthorised. Your token is invalid."),
-        (JOSEError, "Unauthorised. Invalid token."),
+        (
+            ExpiredIdTokenError("error", "error"),
+            "Unauthorised. Your token has expired.",
+        ),
+        (RevokedIdTokenError("error"), "Unauthorised. Your token has been revoked."),
+        (InvalidIdTokenError("error", "error"), "Unauthorised. Your token is invalid."),
+        (TokenSignError, "Unauthorised. Your token is invalid. Error: "),
     ],
 )
-def test_verify_jwt_error(mocker, error, error_message):
-    mocker.patch("auth.get_rsa_key", return_value={"kid": ""})
-    mocker.patch("jose.jwt.decode", side_effect=error)
+def test_verify_jwt_error(mocker, error, error_message, test_config: SAHConfig):
+    mocker.patch("auth.verify_id_token", side_effect=error)
 
     with pytest.raises(AuthError) as exc:
-        verify_jwt(token="hi")
+        validate_token(token="hi", app=test_config.firebase_app)
 
     assert error_message in str(exc.value)
 
@@ -106,11 +70,7 @@ async def test_get_current_user_error(test_db: SendADatabase):
     with pytest.raises(AuthError) as exc:
         await get_current_user(
             {
-                "sub": "auth0|12345",
-                "aud": [
-                    "sendhug",
-                ],
-                "permissions": ["read:user"],
+                "uid": "auth0|12345",
             },
             test_db,
         )
@@ -120,7 +80,9 @@ async def test_get_current_user_error(test_db: SendADatabase):
 
 @pytest.mark.asyncio(scope="session")
 async def test_get_current_user(dummy_users_data, test_db: SendADatabase):
-    user = await get_current_user({"sub": dummy_users_data["user"]["auth0"]}, test_db)
+    user = await get_current_user(
+        {"uid": dummy_users_data["user"]["firebase_id"]}, test_db
+    )
 
     assert user["id"] == int(dummy_users_data["user"]["internal"])
 

@@ -1,12 +1,10 @@
-import os
-import urllib.request
-import json
 from datetime import datetime
 from asyncio import current_task
 
 import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker, async_scoped_session
+from firebase_admin import initialize_app  # type: ignore
 
 from create_app import create_app
 from config import SAHConfig
@@ -14,61 +12,51 @@ from models.models import BaseModel
 from models import SendADatabase
 from tests.data_models import create_data, DATETIME_PATTERN, update_sequences
 
-AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
-API_AUDIENCE = os.environ.get("API_AUDIENCE", "")
-TEST_CLIENT_ID = os.environ.get("TEST_CLIENT_ID", "")
-TEST_CLIENT_SECRET = os.environ.get("TEST_CLIENT_SECRET", "")
-
 
 @pytest.fixture(scope="session")
-def user_headers():
+def user_headers(session_mocker: MockerFixture):
     """
-    Get Auth0 access tokens for each of the users to be able to run
-    the tests.
+    Sets the headers for each of the users and mocks
+    the verify_id_token function from Firebase.
     """
-    headers = {"content-type": "application/x-www-form-urlencoded"}
-
     roles = ["user", "moderator", "admin", "blocked"]
     user_headers: dict[str, dict[str, str]] = {}
 
     for role in roles:
-        url = f"https://{AUTH0_DOMAIN}/oauth/token"
-
-        # Get the user's username and password
-        role_username = os.environ.get(f"{role.upper()}_USERNAME", "")
-        role_password = os.environ.get(f"{role.upper()}_PASSWORD", "")
-
-        data = (
-            f"grant_type=password&username={role_username}"
-            f"&password={role_password}&audience={API_AUDIENCE}"
-            f"&client_id={TEST_CLIENT_ID}&client_secret={TEST_CLIENT_SECRET}"
-        )
-
-        # make the request and get the token
-        req = urllib.request.Request(url, data.encode("utf-8"), headers, method="POST")
-        f = urllib.request.urlopen(req)
-        response_data = f.read()
-        token_data = response_data.decode("utf8").replace("'", '"')
-        token = json.loads(token_data)["access_token"]
-        # Set the authorisation headers with the newly fetched JWTs
+        # Set the authorisation headers
         user_headers[role] = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {token}",
+            "Authorization": f"Bearer {role}.{role}.{role}",
         }
-        f.close()
 
     user_headers["malformed"] = {
         "Content-Type": "application/json",
         "Authorization": "Bearer",
     }
 
+    def verify_token(token, app):
+        if "user" in token:
+            return {"uid": "abcd"}
+        elif "moderator" in token:
+            return {"uid": "efgh"}
+        elif "blocked" in token:
+            return {"uid": "twg"}
+        else:
+            return {"uid": "ijkl"}
+
+    session_mocker.patch("auth.verify_id_token", new=verify_token)
+
     return user_headers
 
 
 @pytest.fixture(scope="session")
-def test_config():
+def test_config(session_mocker: MockerFixture):
     """Set up the config"""
     test_db_path = "postgresql+asyncpg://postgres:password@localhost:5432/test_sah"
+    # TODO: We should at least make sure that this works with
+    # an actual key.
+    session_mocker.patch("config.initialize_app", return_value=initialize_app())
+    session_mocker.patch("config.Certificate")
     yield SAHConfig(database_url=test_db_path)
 
 
@@ -146,20 +134,17 @@ def dummy_users_data():
     user_data = {
         "user": {
             "internal": "1",
-            "auth0": "auth0|5ed34765f0b8e60c8e87ca62",
+            "firebase_id": "abcd",
         },
         "moderator": {
             "internal": "5",
-            "auth0": "auth0|5ede3e7a0793080013259050",
+            "firebase_id": "efgh",
         },
         "admin": {
             "internal": "4",
-            "auth0": "auth0|5ed8e3d0def75d0befbc7e50",
+            "firebase_id": "ijkl",
         },
-        "blocked": {
-            "internal": "20",
-            "auth0": "",
-        },
+        "blocked": {"internal": "20", "firebase_id": "twg"},
     }
 
     return user_data
@@ -190,11 +175,11 @@ def dummy_request_data():
             "closeReport": 1,
         },
         "new_user": {
-            "id": "auth0|5edf778e56d062001335196e",
             "displayName": "user",
             "receivedH": 0,
             "givenH": 0,
             "loginCount": 0,
+            "firebaseId": "uohljl",
         },
         "updated_user": {
             "id": 0,

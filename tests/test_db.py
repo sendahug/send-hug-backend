@@ -29,7 +29,7 @@ from datetime import datetime
 
 import pytest
 from pytest_mock import MockerFixture
-from sqlalchemy import Update, and_, delete, false, select, update
+from sqlalchemy import Update, and_, delete, select, update
 from werkzeug.exceptions import HTTPException
 from sqlalchemy.exc import OperationalError, DataError, IntegrityError
 
@@ -45,7 +45,6 @@ def posts_to_add():
             text="hello",
             date=current_date,
             given_hugs=0,
-            open_report=False,
             sent_hugs=[],
         ),
         Post(
@@ -53,7 +52,6 @@ def posts_to_add():
             text="hello",
             date=current_date,
             given_hugs=0,
-            open_report=False,
             sent_hugs="",
         ),
     ]
@@ -67,7 +65,6 @@ def invalid_post_to_add():
         text="hello",
         date=current_date,
         given_hugs=0,
-        open_report=False,
         sent_hugs=[],
     )
 
@@ -75,7 +72,7 @@ def invalid_post_to_add():
 @pytest.fixture
 def update_post_stmts():
     return [
-        update(Post).where(Post.user_id == 1).values(open_report=True),
+        update(Post).where(Post.user_id == 1).values(given_hugs=100),
         update(Post).where(Post.user_id == 4).values(given_hugs=10),
     ]
 
@@ -373,7 +370,7 @@ async def test_update_multiple_dml_one_stmt(
     await test_db.update_multiple_objects_with_dml(update_stmts=update_post_stmts[0])
 
     closed_report_posts_scalars = await test_db.session.scalars(
-        select(Post).where(and_(Post.user_id == 1, Post.open_report == false()))
+        select(Post).where(and_(Post.user_id == 1, Post.given_hugs != 100))
     )
     closed_report_posts = closed_report_posts_scalars.all()
     given_hugs_posts_scalars = await test_db.session.scalars(
@@ -392,7 +389,7 @@ async def test_update_multiple_dml_multiple_stmts(
     await test_db.update_multiple_objects_with_dml(update_stmts=update_post_stmts)
 
     closed_report_posts_scalars = await test_db.session.scalars(
-        select(Post).where(and_(Post.user_id == 1, Post.open_report == false()))
+        select(Post).where(and_(Post.user_id == 1, Post.given_hugs != 100))
     )
     closed_report_posts = closed_report_posts_scalars.all()
     given_hugs_posts_scalars = await test_db.session.scalars(
