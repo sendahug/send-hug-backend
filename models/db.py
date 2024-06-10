@@ -32,7 +32,7 @@ from typing import Protocol, Sequence, Type, TypeVar, cast, overload
 import logging
 
 from quart import Quart, abort
-from sqlalchemy import Delete, Update, Select, func, select
+from sqlalchemy import Delete, Update, Select, func, select, URL
 from sqlalchemy.orm import Mapped
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.asyncio import (
@@ -76,13 +76,13 @@ class SendADatabase:
     on Flask-SQLAlchemy's `SQLAlchemy` class.
     """
 
-    database_url: str
+    database_url: URL
     engine: AsyncEngine
     session_factory: async_sessionmaker[AsyncSession]
 
     def __init__(
         self,
-        database_url: str,
+        database_url: URL,
         default_per_page: int = 5,
     ):
         """
