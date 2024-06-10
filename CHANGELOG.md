@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### 2024-06-10
+
+#### Features
+
+- The 'send hugs for post' endpoint now sends a message as well as a hug to the user who wrote the post in order to allow users to do both without having to perform the actions separately. ([#638](https://github.com/sendahug/send-hug-backend/pull/638))
+- Added a helper function for fetching a thread ID for a thread between two users. If the thread doesn't yet exist, the method creates the thread and then returns the new thread's ID. ([#638](https://github.com/sendahug/send-hug-backend/pull/638))
+
+#### Changes
+
+- The 'send hugs for post' endpoint now expects a JSON payload with a message to send the user who wrote the post. ([#638](https://github.com/sendahug/send-hug-backend/pull/638))
+
 ### 2024-05-16
 
 #### Features
