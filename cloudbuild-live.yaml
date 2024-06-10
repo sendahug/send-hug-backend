@@ -28,7 +28,7 @@ steps:
       - |
         set -e
         pip install -r requirements.txt
-        /workspace/cloud_sql_proxy -dir=/cloudsql -instances=${_INSTANCE_CONNECTION_BASE}-primary & \
+        /workspace/cloud_sql_proxy -dir=/cloudsql -instances=${_INSTANCE_CONNECTION_BASE} & \
         sleep 2 && \
         alembic upgrade head
     env:
