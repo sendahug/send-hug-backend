@@ -1,0 +1,9 @@
+{
+  "pr_number": 640,
+  "changes": [
+    {
+      "change": "Changes",
+      "description": "The database URI is now constructed manually using a JSON file with the details of the database. Previously, the databse URI was passed into the app as a string using an environment variable, which required manual escaping and didn't allow much flexibility. Now, the username, password, host, port and database name are passed in using a credentials file. The various parts are passed into SQLAlchemy's `URL` objects to generate a URL, which allows the SQLAlchemy engine to connect to the database."
+    }
+  ]
+}

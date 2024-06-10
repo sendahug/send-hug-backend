@@ -30,9 +30,9 @@ import os
 from create_app import create_app
 from config import SAHConfig
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "")
+DB_CREDENTIALS_PATH = os.environ.get("DB_CREDENTIALS_PATH", "")
 
-config = SAHConfig(database_url=DATABASE_URL)
+config = SAHConfig(credentials_path=DB_CREDENTIALS_PATH)
 
 app = create_app(config=config)
 
