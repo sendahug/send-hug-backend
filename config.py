@@ -26,13 +26,26 @@
 # SOFTWARE.
 
 import os
+import json
+from typing import TypedDict
 
 from firebase_admin import initialize_app  # type: ignore
 from firebase_admin.credentials import Certificate  # type: ignore
+from sqlalchemy import URL
 
 from models.db import SendADatabase
 
 FIREBASE_CREDENTIALS_FILE = os.environ.get("FIREBASE_CREDENTIALS_FILE", "")
+DATABASE_USERNAME = os.environ.get("DATABASE_USERNAME", "")
+DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD", "")
+
+
+class DatabaseCredentialsFile(TypedDict):
+    username: str
+    password: str
+    host: str
+    port: int | None
+    db_name: str
 
 
 class SAHConfig:
@@ -40,9 +53,58 @@ class SAHConfig:
     Configuration class for the Send A Hug backend.
     """
 
-    def __init__(self, database_url: str):
-        self.database_url = database_url
-        self.db = SendADatabase(database_url=database_url)
+    def __init__(self, credentials_path: str, override_db_name: str | None = None):
+        credentials = self._get_credentials_json(credentials_path=credentials_path)
+        self.database_url = self.get_db_url(
+            credentials=credentials, override_db_name=override_db_name
+        )
+        self.db = SendADatabase(database_url=self.database_url)
         self.firebase_app = initialize_app(
             credential=Certificate(FIREBASE_CREDENTIALS_FILE)
         )
+
+    def get_db_url(
+        self, credentials: DatabaseCredentialsFile, override_db_name: str | None = None
+    ):
+        """
+        Creates the db URL so that SQLAlchemy can establish the connection.
+
+        param credentials: The credentials to use to login to the database
+        param override_db_name: The name of the database to use instead of the name
+                                in the database credentials.
+        """
+        return URL.create(
+            drivername="postgresql+asyncpg",
+            username=credentials["username"],
+            password=credentials["password"],
+            host=credentials["host"],
+            port=credentials["port"],
+            database=override_db_name or credentials["db_name"],
+        )
+
+    def _get_credentials_json(self, credentials_path: str) -> DatabaseCredentialsFile:
+        """
+        Fetches the database credentials to construct the db URL.
+
+        param credentials_path: The path to file with the database credentials.
+        """
+        try:
+            with open(credentials_path) as creds_file:
+                creds: DatabaseCredentialsFile = json.load(creds_file)
+
+            # For non-local development, we use CloudSQL
+            if not creds.get("port"):
+                creds["host"] = f"/cloudsql/{creds['host']}"
+
+            return creds
+
+        # If the default file doesn't exist, it means we're in local mode
+        # so set the details to localhost
+        except FileNotFoundError:
+            return {
+                "username": DATABASE_USERNAME,
+                "password": DATABASE_PASSWORD,
+                "host": "localhost",
+                "port": 5432,
+                "db_name": "sendahug",
+            }

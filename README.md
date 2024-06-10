@@ -35,7 +35,10 @@ The project is open source, so feel free to use parts of the code. However, the 
 5. Run ```pre-commit install``` to install and initialise pre-commit.
 6. Create a database for the app.
 7. Set the required environment variables:
-    - The database URI comes from an environment variable named **DATABASE_URL**. Make sure you include the driver in the URL (e.g., `postgresql+asyncpg` instead of `postgresql`), as otherwise SQLAlchemy assumes it should use the default driver, which (at least for postgres) doesn't support async/await.
+    - The database URI is built in the config using the following environment variables:
+      - **DB_CREDENTIALS_PATH** - The path to the credentials file.
+      - **DATABASE_USERNAME** - The username to log into the database if no credentials file is set.
+      - **DATABASE_PASSWORD** - The password to log into the database if no credentials file is set.
     - **PRIVATE_KEY** - environment variable containing your private VAPID key (required for push notifications).
     - The frontend URI comes from an environment variable named **FRONTEND**.
     - The firebase credentials file's location is in an environment variable called **FIREBASE_CREDENTIALS_FILE**.

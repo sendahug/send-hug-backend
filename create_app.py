@@ -148,6 +148,45 @@ def create_app(config: SAHConfig) -> Quart:
         filters = await config.db.session.scalars(select(Filter))
         return [filter.filter for filter in filters.all()]
 
+    async def get_thread_id_for_users(
+        user1_id: int, user2_id: int, current_user_id: int
+    ) -> int:
+        """
+        Gets a thread ID for messaging between two users.
+        If there's no existing thread, it creates a new thread.
+        """
+        # Checks if there's an existing thread between the users (with user 1
+        # being the sender and user 2 being the recipient)
+        thread: Thread | None = await config.db.session.scalar(
+            select(Thread).filter(
+                or_(
+                    and_(
+                        Thread.user_1_id == int(user1_id),
+                        Thread.user_2_id == int(user2_id),
+                    ),
+                    and_(
+                        Thread.user_1_id == int(user2_id),
+                        Thread.user_2_id == int(user1_id),
+                    ),
+                )
+            )
+        )
+
+        # If there's no thread between the users
+        if thread is None:
+            new_thread = Thread(
+                user_1_id=int(user1_id),
+                user_2_id=int(user2_id),
+            )
+            # Try to create the new thread
+            added_thread = await config.db.add_object(
+                new_thread, current_user_id=current_user_id
+            )
+            return added_thread["id"]
+        # If there's a thread between the users
+        else:
+            return thread.id
+
     # Routes
     # -----------------------------------------------------------------
     # Endpoint: GET /
@@ -235,7 +274,7 @@ def create_app(config: SAHConfig) -> Quart:
     @app.route("/posts", methods=["POST"])
     @requires_auth(config, ["post:post"])
     async def add_post(token_payload: UserData):
-        new_post_data = json.loads(await request.data)
+        new_post_data = await request.get_json()
         validator.validate_post_or_message(
             text=new_post_data["text"],
             type="post",
@@ -267,7 +306,7 @@ def create_app(config: SAHConfig) -> Quart:
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
 
-        updated_post = json.loads(await request.data)
+        updated_post = await request.get_json()
         original_post: Post = await config.db.one_or_404(
             item_id=int(post_id),
             item_type=Post,
@@ -314,6 +353,7 @@ def create_app(config: SAHConfig) -> Quart:
     async def send_hug_for_post(token_payload: UserData, post_id: int):
         # Check if the post ID isn't an integer; if it isn't, abort
         validator.check_type(post_id, "Post ID")
+        message_details = await request.get_json()
 
         original_post: Post = await config.db.one_or_404(
             item_id=int(post_id),
@@ -343,21 +383,58 @@ def create_app(config: SAHConfig) -> Quart:
         hugs.append(current_user.id)
         original_post.sent_hugs = [*hugs]
 
+        to_add: list[CoreSAHModel] = []
+        sent_message = False
+
         # Create a notification for the user getting the hug
         if post_author:
             post_author.received_hugs += 1
             today = datetime.now()
+
+            if message_details.get("messageText"):
+                validator.validate_post_or_message(
+                    text=message_details["messageText"],
+                    type="message",
+                    filtered_words=await get_current_filters(),
+                )
+
+                thread_id = await get_thread_id_for_users(
+                    user1_id=current_user.id,
+                    user2_id=original_post.user_id,
+                    current_user_id=current_user.id,
+                )
+
+                message = Message(
+                    from_id=current_user.id,
+                    for_id=original_post.user_id,
+                    text=message_details["messageText"],
+                    date=today,
+                    thread=thread_id,
+                )
+                to_add.append(message)
+                sent_message = True
+
+            base_notification_message = "You got a hug"
+            base_push_notification_message = (
+                f"{current_user.display_name} sent you a hug"
+            )
+
             notification = Notification(
                 for_id=post_author.id,
                 from_id=current_user.id,
                 type="hug",
-                text="You got a hug",
+                text=f"{base_notification_message} and a message"
+                if sent_message
+                else base_notification_message,
                 date=today,
             )
             push_notification = {
                 "type": "hug",
-                "text": f"{current_user.display_name} sent you a hug",
+                "text": f"{base_push_notification_message} and a message"
+                if sent_message
+                else base_push_notification_message,
             }
+            to_add.append(notification)
 
         # Try to update the database
         # Objects to update
@@ -367,8 +444,8 @@ def create_app(config: SAHConfig) -> Quart:
             cast(User, post_author),
         ]
 
-        if notification:
-            await config.db.add_object(notification)
+        if len(to_add):
+            await config.db.add_multiple_objects(objects=to_add)
 
         await config.db.update_multiple_objects(objects=to_update)
 
@@ -378,7 +455,10 @@ def create_app(config: SAHConfig) -> Quart:
         return jsonify(
             {
                 "success": True,
-                "updated": f"Successfully sent hug for post {int(post_id)}",
+                "updated": f"Successfully sent hug for post {int(post_id)} "
+                f"and a message to user {int(original_post.user_id)}"
+                if sent_message
+                else f"Successfully sent hug for post {int(post_id)}",
             }
         )
 
@@ -536,7 +616,7 @@ def create_app(config: SAHConfig) -> Quart:
     @requires_auth(config, ["post:user"])
     async def add_user(token_payload):
         # Gets the user's data
-        user_data = json.loads(await request.data)
+        user_data = await request.get_json()
 
         # If the user is attempting to add a user that isn't themselves to
         # the database, aborts
@@ -581,7 +661,7 @@ def create_app(config: SAHConfig) -> Quart:
         # Check if the user ID isn't an integer; if it isn't, abort
         validator.check_type(user_id, "User ID")
 
-        updated_user = json.loads(await request.data)
+        updated_user = await request.get_json()
         user_to_update: User = await config.db.one_or_404(
             item_id=int(user_id),
             item_type=User,
@@ -925,7 +1005,7 @@ def create_app(config: SAHConfig) -> Quart:
     @requires_auth(config, ["post:message"])
     async def add_message(token_payload: UserData):
         # Gets the new message's data
-        message_data = json.loads(await request.data)
+        message_data = await request.get_json()
 
         # Checks that the user isn't trying to send a message from someone else
         if token_payload["id"] != message_data["fromId"]:
@@ -944,37 +1024,11 @@ def create_app(config: SAHConfig) -> Quart:
             filtered_words=await get_current_filters(),
         )
 
-        # Checks if there's an existing thread between the users (with user 1
-        # being the sender and user 2 being the recipient)
-        thread: Thread | None = await config.db.session.scalar(
-            select(Thread).filter(
-                or_(
-                    and_(
-                        Thread.user_1_id == int(message_data["fromId"]),
-                        Thread.user_2_id == int(message_data["forId"]),
-                    ),
-                    and_(
-                        Thread.user_1_id == int(message_data["forId"]),
-                        Thread.user_2_id == int(message_data["fromId"]),
-                    ),
-                )
-            )
+        thread_id = await get_thread_id_for_users(
+            user1_id=message_data["fromId"],
+            user2_id=message_data["forId"],
+            current_user_id=token_payload["id"],
         )
-
-        # If there's no thread between the users
-        if thread is None:
-            new_thread = Thread(
-                user_1_id=int(message_data["fromId"]),
-                user_2_id=int(message_data["forId"]),
-            )
-            # Try to create the new thread
-            added_thread = await config.db.add_object(
-                new_thread, current_user_id=token_payload["id"]
-            )
-            thread_id = added_thread["id"]
-        # If there's a thread between the users
-        else:
-            thread_id = thread.id
 
         # Create a new message
         new_message = Message(
@@ -1370,7 +1424,7 @@ def create_app(config: SAHConfig) -> Quart:
     @app.route("/reports", methods=["POST"])
     @requires_auth(config, ["post:report"])
     async def create_new_report(token_payload: UserData):
-        report_data = json.loads(await request.data)
+        report_data = await request.get_json()
 
         # Check the length adn  type of the report reason
         validator.check_length(report_data["reportReason"], "report")
@@ -1432,7 +1486,7 @@ def create_app(config: SAHConfig) -> Quart:
     @app.route("/reports/<report_id>", methods=["PATCH"])
     @requires_auth(config, ["read:admin-board"])
     async def update_report_status(token_payload: UserData, report_id: int):
-        updated_report = json.loads(await request.data)
+        updated_report = await request.get_json()
         report: Report | None = await config.db.session.scalar(
             select(Report).filter(Report.id == int(report_id))
         )

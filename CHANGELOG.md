@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### 2024-06-10
+
+#### Features
+
+- Added a helper function for fetching a thread ID for a thread between two users. If the thread doesn't yet exist, the method creates the thread and then returns the new thread's ID. ([#638](https://github.com/sendahug/send-hug-backend/pull/638))
+- The 'send hugs for post' endpoint now sends a message as well as a hug to the user who wrote the post in order to allow users to do both without having to perform the actions separately. ([#638](https://github.com/sendahug/send-hug-backend/pull/638))
+
+#### Changes
+
+- The 'send hugs for post' endpoint now expects a JSON payload with a message to send the user who wrote the post. ([#638](https://github.com/sendahug/send-hug-backend/pull/638))
+- The database URI is now constructed manually using a JSON file with the details of the database. Previously, the databse URI was passed into the app as a string using an environment variable, which required manual escaping and didn't allow much flexibility. Now, the username, password, host, port and database name are passed in using a credentials file. The various parts are passed into SQLAlchemy's `URL` objects to generate a URL, which allows the SQLAlchemy engine to connect to the database. ([#640](https://github.com/sendahug/send-hug-backend/pull/640))
+
 ### 2024-05-16
 
 #### Features

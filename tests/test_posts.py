@@ -382,7 +382,9 @@ async def test_update_post_no_id_as_admin(
 # Attempt to send hugs for post you already sent hugs for
 @pytest.mark.asyncio(scope="session")
 async def test_post_hugs_given_duplicate_hugs(app_client, test_db, user_headers):
-    response = await app_client.post("/posts/1/hugs", headers=user_headers["admin"])
+    response = await app_client.post(
+        "/posts/1/hugs", headers=user_headers["admin"], data=json.dumps({})
+    )
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -392,7 +394,9 @@ async def test_post_hugs_given_duplicate_hugs(app_client, test_db, user_headers)
 # Attempt to send hugs for a post that doesn't exist
 @pytest.mark.asyncio(scope="session")
 async def test_post_hugs_post_no_existing(app_client, test_db, user_headers):
-    response = await app_client.post("/posts/1000/hugs", headers=user_headers["admin"])
+    response = await app_client.post(
+        "/posts/1000/hugs", headers=user_headers["admin"], data=json.dumps({})
+    )
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -402,12 +406,39 @@ async def test_post_hugs_post_no_existing(app_client, test_db, user_headers):
 # Attempt to send hugs
 @pytest.mark.asyncio(scope="session")
 async def test_post_hugs(app_client, test_db, user_headers):
-    response = await app_client.post("/posts/1/hugs", headers=user_headers["moderator"])
+    response = await app_client.post(
+        "/posts/1/hugs", headers=user_headers["moderator"], data=json.dumps({})
+    )
     response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["updated"] == "Successfully sent hug for post 1"
+
+
+# Attempt to send a hug and a message
+@pytest.mark.asyncio(scope="session")
+async def test_post_hugs_with_message(app_client, test_db, user_headers):
+    response = await app_client.post(
+        "/posts/1/hugs",
+        headers=user_headers["moderator"],
+        data=json.dumps({"messageText": "Hang in there!"}),
+    )
+    response_data = await response.get_json()
+
+    threads_response = await app_client.get(
+        "/messages?userID=5&type=thread&threadID=2",
+        headers=user_headers["moderator"],
+    )
+    threads_response_data = await threads_response.get_json()
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert (
+        response_data["updated"]
+        == "Successfully sent hug for post 1 and a message to user 1"
+    )
+    assert len(threads_response_data["messages"]) == 3
 
 
 # Delete Post Route Tests ('/posts/<post_id>', DELETE)
