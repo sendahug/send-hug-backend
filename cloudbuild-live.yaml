@@ -6,9 +6,9 @@ steps:
     args:
       - -c
       - |
-        wget -O /workspace/cloud_sql_proxy \
-        https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 && \
-        chmod +x /workspace/cloud_sql_proxy
+        wget -O /workspace/cloud-sql-proxy \
+        https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.11.3/cloud-sql-proxy.linux.amd64 && \
+        chmod +x /workspace/cloud-sql-proxy
     waitFor: ['-']
 
     # build & push the container image
@@ -24,7 +24,7 @@ steps:
   - id: "Get Secrets"
     name: gcr.io/cloud-builders/gcloud
     entrypoint: 'bash'
-    args: [ '-c', 'utils/get_secrets.sh' ]
+    args: [ '-c', './get_secrets.sh' ]
     env:
       - 'SAH_HOME=/workspace'
     waitFor: ['Send-a-hug: Build Live', 'Install Proxy']
@@ -37,14 +37,15 @@ steps:
       - |
         set -e
         pip install -r requirements.txt
-        /workspace/cloud_sql_proxy --unix-socket /cloudsql ${_INSTANCE_CONNECTION_BASE} & \
+        mkdir -p /cloudsql
+        /workspace/cloud-sql-proxy --unix-socket /cloudsql ${_INSTANCE_CONNECTION_BASE} & \
         sleep 2 && \
         alembic upgrade head
     env:
         # - 'PORT=8080'
         - 'SAH_MODE=${_SAH_MODE}'
         - 'SAH_HOME=/workspace'
-        - 'DB_CREDENTIALS_PATH=/workspace/.secrets/db_${_SAH_MODE}_creds/latest.json'
+        - 'DB_CREDENTIALS_PATH=/workspace/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json'
         - 'FIREBASE_CREDENTIALS_FILE=/workspace/.secrets/platform_firebase_credentials/latest.json'
     waitFor: ['Get Secrets']
 
@@ -71,25 +72,24 @@ steps:
       - '--update-env-vars'
       - 'SAH_MODE=${_SAH_MODE}'
       - '--update-env-vars'
-      - 'DB_CREDENTIALS_PATH=/app/.secrets/db_${_SAH_MODE,,}_creds/latest.json'
+      - 'DB_CREDENTIALS_PATH=/app/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json'
       - '--update-env-vars'
       - 'FIREBASE_CREDENTIALS_FILE=/app/.secrets/platform_firebase_credentials/latest.json'
-      - '--update-env-vars'
-      - 'PRIVATE_VAPID_KEY=/app/.secrets/private_vapid_key/latest.json'
       - '--update-secrets'
-      - '/app/.secrets/db_${_SAH_MODE,,}_creds/latest.json=db_${_SAH_MODE,,}_creds:latest'
+      - '/app/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json=db_${_SAH_MODE_LOWER}_creds:latest'
       - '--update-secrets'
       - '/app/.secrets/platform_firebase_credentials/latest.json=platform_firebase_credentials:latest'
       - '--update-secrets'
-      - '/app/.secrets/private_vapid_key/latest.json=private_vapid_key:latest'
+      - 'PRIVATE_VAPID_KEY=private_vapid_key:latest'
     waitFor: ['Run Migrations']
 
 substitutions:
   _IMAGE_NAME: 'send-a-hug'
   _SAH_MODE: 'LIVE'
+  _SAH_MODE_LOWER: 'live'  # very dumb but we should handle in the config object in python
   _INSTANCE_CONNECTION_BASE: 'send-a-hug-platform:europe-west1:pdb'
 
-logsBucket: 'gs://send-a-hug_cloudbuilds'
+logsBucket: 'gs://send-a-hug-platform_cloudbuilds'
 timeout: 900s
 
 tags:
