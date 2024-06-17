@@ -20,6 +20,15 @@ steps:
       - "--destination=europe-west1-docker.pkg.dev/$PROJECT_ID/imgs/${_IMAGE_NAME}:latest"
     waitFor: ['-']
 
+  # local secrets only needed to run migrations
+  - id: "Get Secrets"
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: 'bash'
+    args: [ '-c', 'utils/get_secrets.sh' ]
+    env:
+      - 'SAH_HOME=/workspace'
+    waitFor: ['Send-a-hug: Build Live', 'Install Proxy']
+
   - id: "Run Migrations"
     name: python:3.11
     entrypoint: bash
@@ -28,14 +37,16 @@ steps:
       - |
         set -e
         pip install -r requirements.txt
-        /workspace/cloud_sql_proxy -dir=/cloudsql -instances=${_INSTANCE_CONNECTION_BASE} & \
+        /workspace/cloud_sql_proxy --unix-socket /cloudsql ${_INSTANCE_CONNECTION_BASE} & \
         sleep 2 && \
         alembic upgrade head
     env:
-        - 'PORT=8080'
+        # - 'PORT=8080'
         - 'SAH_MODE=${_SAH_MODE}'
         - 'SAH_HOME=/workspace'
-    waitFor: ['Send-a-hug: Build Live', 'Install Proxy']
+        - 'DB_CREDENTIALS_PATH=/workspace/.secrets/db_${_SAH_MODE}_creds/latest.json'
+        - 'FIREBASE_CREDENTIALS_FILE=/workspace/.secrets/platform_firebase_credentials/latest.json'
+    waitFor: ['Get Secrets']
 
     # Deploy container image to Cloud Run
   - id: "Send-a-hug: Deploy Live"
@@ -59,8 +70,18 @@ steps:
       - 'managed'
       - '--update-env-vars'
       - 'SAH_MODE=${_SAH_MODE}'
+      - '--update-env-vars'
+      - 'DB_CREDENTIALS_PATH=/app/.secrets/db_${_SAH_MODE,,}_creds/latest.json'
+      - '--update-env-vars'
+      - 'FIREBASE_CREDENTIALS_FILE=/app/.secrets/platform_firebase_credentials/latest.json'
+      - '--update-env-vars'
+      - 'PRIVATE_VAPID_KEY=/app/.secrets/private_vapid_key/latest.json'
       - '--update-secrets'
-      - 'DATABASE_URL=DATABASE_URL:latest'
+      - '/app/.secrets/db_${_SAH_MODE,,}_creds/latest.json=db_${_SAH_MODE,,}_creds:latest'
+      - '--update-secrets'
+      - '/app/.secrets/platform_firebase_credentials/latest.json=platform_firebase_credentials:latest'
+      - '--update-secrets'
+      - '/app/.secrets/private_vapid_key/latest.json=private_vapid_key:latest'
     waitFor: ['Run Migrations']
 
 substitutions:

@@ -78,7 +78,7 @@ class SAHConfig:
             username=credentials["username"],
             password=credentials["password"],
             host=credentials["host"],
-            port=credentials["port"],
+            port=credentials.get("port"),
             database=override_db_name or credentials["db_name"],
         )
 

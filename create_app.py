@@ -121,7 +121,7 @@ def create_app(config: SAHConfig) -> Quart:
 
     # Send push notification
     async def send_push_notification(user_id: int, data: RawPushData):
-        vapid_key = os.environ.get("PRIVATE_KEY")
+        vapid_key = os.environ.get("PRIVATE_VAPID_KEY")
         notification_data = generate_push_data(data)
         vapid_claims = generate_vapid_claims()
         subscriptions_scalars = await config.db.session.scalars(
@@ -423,16 +423,20 @@ def create_app(config: SAHConfig) -> Quart:
                 for_id=post_author.id,
                 from_id=current_user.id,
                 type="hug",
-                text=f"{base_notification_message} and a message"
-                if sent_message
-                else base_notification_message,
+                text=(
+                    f"{base_notification_message} and a message"
+                    if sent_message
+                    else base_notification_message
+                ),
                 date=today,
             )
             push_notification = {
                 "type": "hug",
-                "text": f"{base_push_notification_message} and a message"
-                if sent_message
-                else base_push_notification_message,
+                "text": (
+                    f"{base_push_notification_message} and a message"
+                    if sent_message
+                    else base_push_notification_message
+                ),
             }
             to_add.append(notification)
 
@@ -455,10 +459,12 @@ def create_app(config: SAHConfig) -> Quart:
         return jsonify(
             {
                 "success": True,
-                "updated": f"Successfully sent hug for post {int(post_id)} "
-                f"and a message to user {int(original_post.user_id)}"
-                if sent_message
-                else f"Successfully sent hug for post {int(post_id)}",
+                "updated": (
+                    f"Successfully sent hug for post {int(post_id)} "
+                    f"and a message to user {int(original_post.user_id)}"
+                    if sent_message
+                    else f"Successfully sent hug for post {int(post_id)}"
+                ),
             }
         )
 

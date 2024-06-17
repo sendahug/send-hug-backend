@@ -39,7 +39,7 @@ The project is open source, so feel free to use parts of the code. However, the 
       - **DB_CREDENTIALS_PATH** - The path to the credentials file.
       - **DATABASE_USERNAME** - The username to log into the database if no credentials file is set.
       - **DATABASE_PASSWORD** - The password to log into the database if no credentials file is set.
-    - **PRIVATE_KEY** - environment variable containing your private VAPID key (required for push notifications).
+    - **PRIVATE_VAPID_KEY** - environment variable containing your private VAPID key (required for push notifications).
     - The frontend URI comes from an environment variable named **FRONTEND**.
     - The firebase credentials file's location is in an environment variable called **FIREBASE_CREDENTIALS_FILE**.
 8. Update your database using ```alembic upgrade head```
