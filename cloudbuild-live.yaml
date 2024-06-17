@@ -53,7 +53,6 @@ steps:
   - id: "Send-a-hug: Deploy Live"
     name: "gcr.io/cloud-builders/gcloud"
     args:
-      - 'beta'
       - 'run'
       - 'deploy'
       - '${_IMAGE_NAME}'
@@ -69,8 +68,12 @@ steps:
       - '512Mi'
       - '--platform'
       - 'managed'
+      - '--set-cloudsql-instances'
+      - '${_INSTANCE_CONNECTION_BASE}'
       - '--update-env-vars'
       - 'SAH_MODE=${_SAH_MODE}'
+      - '--update-env-vars'
+      - 'FRONTEND=${_FRONTEND_URL}'
       - '--update-env-vars'
       - 'DB_CREDENTIALS_PATH=/app/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json'
       - '--update-env-vars'
@@ -84,9 +87,10 @@ steps:
     waitFor: ['Run Migrations']
 
 substitutions:
-  _IMAGE_NAME: 'send-a-hug'
+  _IMAGE_NAME: 'api'
   _SAH_MODE: 'LIVE'
   _SAH_MODE_LOWER: 'live'  # very dumb but we should handle in the config object in python
+  _FRONTEND_URL: 'https://app.send-hug.com/'
   _INSTANCE_CONNECTION_BASE: 'send-a-hug-platform:europe-west1:pdb'
 
 logsBucket: 'gs://send-a-hug-platform_cloudbuilds'

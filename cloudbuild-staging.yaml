@@ -1,4 +1,4 @@
-# cloudbuild-staging.yaml
+# cloudbuild-live.yaml
 steps:
   - id: "Install Proxy"
     name: gcr.io/cloud-builders/wget
@@ -6,9 +6,9 @@ steps:
     args:
       - -c
       - |
-        wget -O /workspace/cloud_sql_proxy \
-        https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 && \
-        chmod +x /workspace/cloud_sql_proxy
+        wget -O /workspace/cloud-sql-proxy \
+        https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.11.3/cloud-sql-proxy.linux.amd64 && \
+        chmod +x /workspace/cloud-sql-proxy
     waitFor: ['-']
 
     # build & push the container image
@@ -20,6 +20,15 @@ steps:
       - "--destination=europe-west1-docker.pkg.dev/$PROJECT_ID/imgs/${_IMAGE_NAME}:latest"
     waitFor: ['-']
 
+  # local secrets only needed to run migrations
+  - id: "Get Secrets"
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: 'bash'
+    args: [ '-c', './get_secrets.sh' ]
+    env:
+      - 'SAH_HOME=/workspace'
+    waitFor: ['Send-a-hug: Build Staging', 'Install Proxy']
+
   - id: "Run Migrations"
     name: python:3.11
     entrypoint: bash
@@ -28,20 +37,22 @@ steps:
       - |
         set -e
         pip install -r requirements.txt
-        /workspace/cloud_sql_proxy -dir=/cloudsql -instances=${_INSTANCE_CONNECTION_BASE} & \
+        mkdir -p /cloudsql
+        /workspace/cloud-sql-proxy --unix-socket /cloudsql ${_INSTANCE_CONNECTION_BASE} & \
         sleep 2 && \
         alembic upgrade head
     env:
-        - 'PORT=8080'
+        # - 'PORT=8080'
         - 'SAH_MODE=${_SAH_MODE}'
         - 'SAH_HOME=/workspace'
-    waitFor: ['Send-a-hug: Build Staging', 'Install Proxy']
+        - 'DB_CREDENTIALS_PATH=/workspace/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json'
+        - 'FIREBASE_CREDENTIALS_FILE=/workspace/.secrets/platform_firebase_credentials/latest.json'
+    waitFor: ['Get Secrets']
 
     # Deploy container image to Cloud Run
   - id: "Send-a-hug: Deploy Staging"
     name: "gcr.io/cloud-builders/gcloud"
     args:
-      - 'beta'
       - 'run'
       - 'deploy'
       - '${_IMAGE_NAME}'
@@ -57,18 +68,32 @@ steps:
       - '512Mi'
       - '--platform'
       - 'managed'
+      - '--set-cloudsql-instances'
+      - '${_INSTANCE_CONNECTION_BASE}'
       - '--update-env-vars'
       - 'SAH_MODE=${_SAH_MODE}'
+      - '--update-env-vars'
+      - 'FRONTEND=${_FRONTEND_URL}'
+      - '--update-env-vars'
+      - 'DB_CREDENTIALS_PATH=/app/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json'
+      - '--update-env-vars'
+      - 'FIREBASE_CREDENTIALS_FILE=/app/.secrets/platform_firebase_credentials/latest.json'
       - '--update-secrets'
-      - 'DATABASE_URL=DATABASE_URL:latest'
+      - '/app/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json=db_${_SAH_MODE_LOWER}_creds:latest'
+      - '--update-secrets'
+      - '/app/.secrets/platform_firebase_credentials/latest.json=platform_firebase_credentials:latest'
+      - '--update-secrets'
+      - 'PRIVATE_VAPID_KEY=private_vapid_key:latest'
     waitFor: ['Run Migrations']
 
 substitutions:
-  _IMAGE_NAME: 'send-a-hug-staging'
+  _IMAGE_NAME: 'api-staging'
   _SAH_MODE: 'STAGING'
+  _SAH_MODE_LOWER: 'staging'  # very dumb but we should handle in the config object in python
+  _FRONTEND_URL: 'https://app-staging.send-hug.com/'
   _INSTANCE_CONNECTION_BASE: 'send-a-hug-platform:europe-west1:pdb'
 
-logsBucket: 'gs://send-a-hug_cloudbuilds'
+logsBucket: 'gs://send-a-hug-staging_cloudbuilds'
 timeout: 900s
 
 tags:
