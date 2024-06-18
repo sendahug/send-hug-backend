@@ -7,7 +7,7 @@
         },
         {
             "change": "Chores",
-            "description": "Added Dockerfile for containserszation of the app for deployment"
+            "description": "Added Dockerfile for containerisation of the app for deployment"
         },
         {
             "change": "Chores",
