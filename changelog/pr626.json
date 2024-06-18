@@ -1,0 +1,9 @@
+{
+    "pr_number": 626,
+    "changes": [
+        {
+            "change": "Chores",
+            "description": "Added deployment to cloud run scripts for staging and live environments"
+        }
+    ]
+}
