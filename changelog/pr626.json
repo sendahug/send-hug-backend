@@ -4,6 +4,14 @@
         {
             "change": "Chores",
             "description": "Added deployment to cloud run scripts for staging and live environments"
+        },
+        {
+            "change": "Chores",
+            "description": "Added Dockerfile for containserszation of the app for deployment"
+        },
+        {
+            "change": "Chores",
+            "description": "Added get secrets script to easily get secrets from secret manager"
         }
     ]
 }
