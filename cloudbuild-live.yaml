@@ -27,6 +27,7 @@ steps:
     args: [ '-c', './get_secrets.sh' ]
     env:
       - 'SAH_HOME=/workspace'
+      - 'PROJECT_ID=$PROJECT_ID'
     waitFor: ['Send-a-hug: Build Live', 'Install Proxy']
 
   - id: "Run Migrations"
@@ -38,52 +39,34 @@ steps:
         set -e
         pip install -r requirements.txt
         mkdir -p /cloudsql
-        /workspace/cloud-sql-proxy --unix-socket /cloudsql ${_INSTANCE_CONNECTION_BASE} & \
+        /workspace/cloud-sql-proxy --unix-socket /cloudsql $$_DB_HOST & \
         sleep 2 && \
         alembic upgrade head
     env:
-        # - 'PORT=8080'
         - 'SAH_MODE=${_SAH_MODE}'
         - 'SAH_HOME=/workspace'
         - 'DB_CREDENTIALS_PATH=/workspace/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json'
         - 'FIREBASE_CREDENTIALS_FILE=/workspace/.secrets/platform_firebase_credentials/latest.json'
+    secretEnv: ['_DB_HOST']
     waitFor: ['Get Secrets']
 
     # Deploy container image to Cloud Run
   - id: "Send-a-hug: Deploy Live"
     name: "gcr.io/cloud-builders/gcloud"
+    entrypoint: bash
     args:
-      - 'run'
-      - 'deploy'
-      - '${_IMAGE_NAME}'
-      - '--image'
-      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/imgs/${_IMAGE_NAME}:latest'
-      - '--region'
-      - 'europe-west1'
-      - '--allow-unauthenticated'
-      - '--timeout=15m'
-      - '--min-instances'
-      - '0'
-      - '--memory'
-      - '512Mi'
-      - '--platform'
-      - 'managed'
-      - '--set-cloudsql-instances'
-      - '${_INSTANCE_CONNECTION_BASE}'
-      - '--update-env-vars'
-      - 'SAH_MODE=${_SAH_MODE}'
-      - '--update-env-vars'
-      - 'FRONTEND=${_FRONTEND_URL}'
-      - '--update-env-vars'
-      - 'DB_CREDENTIALS_PATH=/app/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json'
-      - '--update-env-vars'
-      - 'FIREBASE_CREDENTIALS_FILE=/app/.secrets/platform_firebase_credentials/latest.json'
-      - '--update-secrets'
-      - '/app/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json=db_${_SAH_MODE_LOWER}_creds:latest'
-      - '--update-secrets'
-      - '/app/.secrets/platform_firebase_credentials/latest.json=platform_firebase_credentials:latest'
-      - '--update-secrets'
-      - 'PRIVATE_VAPID_KEY=private_vapid_key:latest'
+      - '-c'
+      - |
+        gcloud run deploy ${_IMAGE_NAME} --image 'europe-west1-docker.pkg.dev/$PROJECT_ID/imgs/${_IMAGE_NAME}:latest' \
+        --region europe-west1 --allow-unauthenticated --timeout=15m --min-instances 0 --memory 512Mi \
+        --platform managed --set-cloudsql-instances $$_DB_HOST --update-env-vars SAH_MODE=${_SAH_MODE} \
+        --update-env-vars FRONTEND=${_FRONTEND_URL} \
+        --update-env-vars DB_CREDENTIALS_PATH=/app/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json \
+        --update-env-vars FIREBASE_CREDENTIALS_FILE=/app/.secrets/platform_firebase_credentials/latest.json \
+        --update-secrets /app/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json=db_${_SAH_MODE_LOWER}_creds:latest \
+        --update-secrets /app/.secrets/platform_firebase_credentials/latest.json=platform_firebase_credentials:latest \
+        --update-secrets PRIVATE_VAPID_KEY=private_vapid_key:latest
+    secretEnv: ['_DB_HOST']
     waitFor: ['Run Migrations']
 
 substitutions:
@@ -91,7 +74,11 @@ substitutions:
   _SAH_MODE: 'LIVE'
   _SAH_MODE_LOWER: 'live'  # very dumb but we should handle in the config object in python
   _FRONTEND_URL: 'https://app.send-hug.com/'
-  _INSTANCE_CONNECTION_BASE: 'send-a-hug-platform:europe-west1:pdb'
+
+availableSecrets:
+  secretManager:
+  - versionName: projects/$PROJECT_ID/secrets/db_host/versions/latest
+    env: '_DB_HOST'
 
 logsBucket: 'gs://send-a-hug-platform_cloudbuilds'
 timeout: 900s
