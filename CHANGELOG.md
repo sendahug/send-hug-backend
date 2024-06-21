@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### 2024-06-21
+
+#### Chores
+
+- Added deployment to cloud run scripts for staging and live environments ([#626](https://github.com/sendahug/send-hug-backend/pull/626))
+- Added Dockerfile for containerisation of the app for deployment ([#626](https://github.com/sendahug/send-hug-backend/pull/626))
+- Added get secrets script to easily get secrets from secret manager ([#626](https://github.com/sendahug/send-hug-backend/pull/626))
+
 ### 2024-06-10
 
 #### Features
