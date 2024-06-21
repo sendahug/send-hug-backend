@@ -900,24 +900,6 @@ def create_app(config: SAHConfig) -> Quart:
         type = request.args.get("type", "inbox", type=str)
         thread_id = request.args.get("threadID", None, type=int)
 
-        # Gets the user's ID from the URL arguments
-        user_id = request.args.get("userID", None, type=int)
-
-        # If there's no user ID, abort
-        if user_id is None:
-            abort(400)
-
-        # If the user is attempting to read another user's messages
-        if token_payload["id"] != int(user_id):
-            raise AuthError(
-                {
-                    "code": 403,
-                    "description": "You do not have permission to view "
-                    "another user's messages.",
-                },
-                403,
-            )
-
         if type in ["inbox", "outbox", "thread"]:
             messages_query = select(Message)
 
@@ -925,12 +907,12 @@ def create_app(config: SAHConfig) -> Quart:
             if type == "inbox":
                 messages_query = messages_query.filter(
                     Message.for_deleted == false()
-                ).filter(Message.for_id == user_id)
+                ).filter(Message.for_id == token_payload["id"])
             # For outbox, gets all outgoing messages
             elif type == "outbox":
                 messages_query = messages_query.filter(
                     Message.from_deleted == false()
-                ).filter(Message.from_id == user_id)
+                ).filter(Message.from_id == token_payload["id"])
             # Gets a specific thread's messages
             else:
                 message = await config.db.session.scalar(
@@ -955,8 +937,14 @@ def create_app(config: SAHConfig) -> Quart:
                     abort(404)
 
                 messages_query = messages_query.filter(
-                    ((Message.for_id == user_id) & (Message.for_deleted == false()))
-                    | ((Message.from_id == user_id) & (Message.from_deleted == false()))
+                    (
+                        (Message.for_id == token_payload["id"])
+                        & (Message.for_deleted == false())
+                    )
+                    | (
+                        (Message.from_id == token_payload["id"])
+                        & (Message.from_deleted == false())
+                    )
                 ).filter(Message.thread == thread_id)
 
             messages = await config.db.paginate(
@@ -976,11 +964,11 @@ def create_app(config: SAHConfig) -> Quart:
                 .filter(
                     or_(
                         and_(
-                            Thread.user_1_id == user_id,
+                            Thread.user_1_id == token_payload["id"],
                             Thread.user1_deleted == false(),
                         ),
                         and_(
-                            Thread.user_2_id == user_id,
+                            Thread.user_2_id == token_payload["id"],
                             Thread.user2_deleted == false(),
                         ),
                     )
@@ -1232,29 +1220,14 @@ def create_app(config: SAHConfig) -> Quart:
         token_payload: UserData,
         mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
     ):
-        user_id = request.args.get("userID", type=int)
-
-        # If there's no user ID, abort
-        if user_id is None:
-            abort(400)
-
-        # If the user is attempting to delete another user's messages
-        if token_payload["id"] != int(user_id):
-            raise AuthError(
-                {
-                    "code": 403,
-                    "description": "You do not have permission "
-                    "to delete another user's messages.",
-                },
-                403,
-            )
-
         num_messages = 0
 
         # If the user is trying to clear their inbox
         if mailbox_type == "inbox":
             num_messages = await config.db.session.scalar(
-                select(func.count(Message.id)).filter(Message.for_id == user_id)
+                select(func.count(Message.id)).filter(
+                    Message.for_id == token_payload["id"]
+                )
             )
             # If there are no messages, abort
             if num_messages == 0:
@@ -1273,7 +1246,12 @@ def create_app(config: SAHConfig) -> Quart:
             # is for deleted it) is updated to True
             update_stmt = (
                 update(Message)
-                .where(and_(Message.for_id == user_id, Message.from_deleted == false()))
+                .where(
+                    and_(
+                        Message.for_id == token_payload["id"],
+                        Message.from_deleted == false(),
+                    )
+                )
                 .values(for_deleted=true())
             )
 
@@ -1283,7 +1261,9 @@ def create_app(config: SAHConfig) -> Quart:
         # If the user is trying to clear their outbox
         if mailbox_type == "outbox":
             num_messages = await config.db.session.scalar(
-                select(func.count(Message.id)).filter(Message.from_id == user_id)
+                select(func.count(Message.id)).filter(
+                    Message.from_id == token_payload["id"]
+                )
             )
             # If there are no messages, abort
             if num_messages == 0:
@@ -1294,7 +1274,10 @@ def create_app(config: SAHConfig) -> Quart:
             # (so that these will only be deleted for one user rather than
             # for both)
             delete_stmt = delete(Message).where(
-                and_(Message.from_id == user_id, Message.for_deleted == true())
+                and_(
+                    Message.from_id == token_payload["id"],
+                    Message.for_deleted == true(),
+                )
             )
 
             # For each message that wasn't deleted by the other user, the
@@ -1302,7 +1285,12 @@ def create_app(config: SAHConfig) -> Quart:
             # the message deleted it) is updated to True
             update_stmt = (
                 update(Message)
-                .where(and_(Message.from_id == user_id, Message.for_deleted == false()))
+                .where(
+                    and_(
+                        Message.from_id == token_payload["id"],
+                        Message.for_deleted == false(),
+                    )
+                )
                 .values(from_deleted=true())
             )
 
@@ -1315,11 +1303,11 @@ def create_app(config: SAHConfig) -> Quart:
                 select(func.count(Thread.id)).filter(
                     or_(
                         and_(
-                            Thread.user_1_id == user_id,
+                            Thread.user_1_id == token_payload["id"],
                             Thread.user1_deleted == false(),
                         ),
                         and_(
-                            Thread.user_2_id == user_id,
+                            Thread.user_2_id == token_payload["id"],
                             Thread.user2_deleted == false(),
                         ),
                     )
@@ -1335,7 +1323,7 @@ def create_app(config: SAHConfig) -> Quart:
                 update(Message)
                 .where(
                     and_(
-                        Message.from_id == user_id,
+                        Message.from_id == token_payload["id"],
                         Message.for_deleted == false(),
                     )
                 )
@@ -1346,7 +1334,7 @@ def create_app(config: SAHConfig) -> Quart:
                 update(Message)
                 .where(
                     and_(
-                        Message.for_id == user_id,
+                        Message.for_id == token_payload["id"],
                         Message.from_deleted == false(),
                     )
                 )
@@ -1362,15 +1350,27 @@ def create_app(config: SAHConfig) -> Quart:
             # deleted.
             delete_messages_stmt = delete(Message).where(
                 or_(
-                    and_(Message.for_id == user_id, Message.from_deleted == true()),
-                    and_(Message.from_id == user_id, Message.for_deleted == true()),
+                    and_(
+                        Message.for_id == token_payload["id"],
+                        Message.from_deleted == true(),
+                    ),
+                    and_(
+                        Message.from_id == token_payload["id"],
+                        Message.for_deleted == true(),
+                    ),
                 )
             )
 
             delete_threads_stmt = delete(Thread).where(
                 or_(
-                    and_(Thread.user_1_id == user_id, Thread.user2_deleted == true()),
-                    and_(Thread.user_2_id == user_id, Thread.user1_deleted == true()),
+                    and_(
+                        Thread.user_1_id == token_payload["id"],
+                        Thread.user2_deleted == true(),
+                    ),
+                    and_(
+                        Thread.user_2_id == token_payload["id"],
+                        Thread.user1_deleted == true(),
+                    ),
                 )
             )
 
@@ -1379,7 +1379,7 @@ def create_app(config: SAHConfig) -> Quart:
             await config.db.update_multiple_objects_with_dml(update_stmts=update_stmts)
 
         return jsonify(
-            {"success": True, "userID": int(user_id), "deleted": num_messages}
+            {"success": True, "userID": token_payload["id"], "deleted": num_messages}
         )
 
     # Endpoint: GET /reports
