@@ -1,9 +1,0 @@
-{
-  "pr_number": 642,
-  "changes": [
-    {
-      "change": "Changes",
-      "description": "Deleted the old `userID` query parameter from the messages' endpoints. Now, instead of relying on a userID to be provided, the endpoints use the user ID of the user whose token was sent to the server."
-    }
-  ]
-}

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2024-06-22
+
+#### Changes
+
+- Deleted the old `userID` query parameter from the messages' endpoints. Now, instead of relying on a userID to be provided, the endpoints use the user ID of the user whose token was sent to the server. ([#642](https://github.com/sendahug/send-hug-backend/pull/642))
+
 ### 2024-06-21
 
 #### Chores
