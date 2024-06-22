@@ -35,7 +35,7 @@ import pytest
 # Attempt to get a user's messages without auth header
 @pytest.mark.asyncio(scope="session")
 async def test_get_user_messages_no_auth(app_client, test_db, user_headers):
-    response = await app_client.get("/messages?userID=1")
+    response = await app_client.get("/messages")
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -45,9 +45,7 @@ async def test_get_user_messages_no_auth(app_client, test_db, user_headers):
 # Attempt to get a user's messages with malformed auth header
 @pytest.mark.asyncio(scope="session")
 async def test_get_user_messages_malformed_auth(app_client, test_db, user_headers):
-    response = await app_client.get(
-        "/messages?userID=1", headers=user_headers["malformed"]
-    )
+    response = await app_client.get("/messages", headers=user_headers["malformed"])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -56,11 +54,9 @@ async def test_get_user_messages_malformed_auth(app_client, test_db, user_header
 
 # Attempt to get a user's inbox with a user's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_inbox_as_user(
-    app_client, test_db, user_headers, dummy_users_data
-):
+async def test_get_user_inbox_as_user(app_client, test_db, user_headers):
     response = await app_client.get(
-        f"/messages?userID={dummy_users_data['user']['internal']}",
+        "/messages",
         headers=user_headers["user"],
     )
     response_data = await response.get_json()
@@ -74,11 +70,9 @@ async def test_get_user_inbox_as_user(
 
 # Attempt to get a user's outbox with a user's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_outbox_as_user(
-    app_client, test_db, user_headers, dummy_users_data
-):
+async def test_get_user_outbox_as_user(app_client, test_db, user_headers):
     response = await app_client.get(
-        f"/messages?type=outbox&userID={dummy_users_data['user']['internal']}",
+        "/messages?type=outbox",
         headers=user_headers["user"],
     )
     response_data = await response.get_json()
@@ -92,11 +86,9 @@ async def test_get_user_outbox_as_user(
 
 # Attempt to get a user's threads mailbox with a user's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_threads_as_user(
-    app_client, test_db, user_headers, dummy_users_data
-):
+async def test_get_user_threads_as_user(app_client, test_db, user_headers):
     response = await app_client.get(
-        f"/messages?type=threads&userID={dummy_users_data['user']['internal']}",
+        "/messages?type=threads",
         headers=user_headers["user"],
     )
     response_data = await response.get_json()
@@ -108,28 +100,11 @@ async def test_get_user_threads_as_user(
     assert len(response_data["messages"]) == 3
 
 
-# Attempt to get another user's messages with a user's JWT
-@pytest.mark.asyncio(scope="session")
-async def test_get_another_users_messages_as_user(
-    app_client, test_db, user_headers, dummy_users_data
-):
-    response = await app_client.get(
-        f"/messages?userID={dummy_users_data['moderator']['internal']}",
-        headers=user_headers["user"],
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
 # Attempt to get a user's inbox with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_inbox_as_mod(
-    app_client, test_db, user_headers, dummy_users_data
-):
+async def test_get_user_inbox_as_mod(app_client, test_db, user_headers):
     response = await app_client.get(
-        f"/messages?userID={dummy_users_data['moderator']['internal']}",
+        "/messages",
         headers=user_headers["moderator"],
     )
     response_data = await response.get_json()
@@ -143,11 +118,9 @@ async def test_get_user_inbox_as_mod(
 
 # Attempt to get a user's outbox with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_outbox_as_mod(
-    app_client, test_db, user_headers, dummy_users_data
-):
+async def test_get_user_outbox_as_mod(app_client, test_db, user_headers):
     response = await app_client.get(
-        f"/messages?type=outbox&userID={dummy_users_data['moderator']['internal']}",
+        "/messages?type=outbox",
         headers=user_headers["moderator"],
     )
     response_data = await response.get_json()
@@ -161,11 +134,9 @@ async def test_get_user_outbox_as_mod(
 
 # Attempt to get a user's threads mailbox with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_threads_as_mod(
-    app_client, test_db, user_headers, dummy_users_data
-):
+async def test_get_user_threads_as_mod(app_client, test_db, user_headers):
     response = await app_client.get(
-        f"/messages?type=threads&userID={dummy_users_data['moderator']['internal']}",
+        "/messages?type=threads",
         headers=user_headers["moderator"],
     )
     response_data = await response.get_json()
@@ -177,28 +148,11 @@ async def test_get_user_threads_as_mod(
     assert len(response_data["messages"]) == 3
 
 
-#  Attempt to get another user's messages with a moderator's JWT
-@pytest.mark.asyncio(scope="session")
-async def test_get_another_users_messages_as_mod(
-    app_client, test_db, user_headers, dummy_users_data
-):
-    response = await app_client.get(
-        f"/messages?userID={dummy_users_data['admin']['internal']}",
-        headers=user_headers["moderator"],
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
 # Attempt to get a user's inbox with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_inbox_as_admin(
-    app_client, test_db, user_headers, dummy_users_data
-):
+async def test_get_user_inbox_as_admin(app_client, test_db, user_headers):
     response = await app_client.get(
-        f"/messages?userID={dummy_users_data['admin']['internal']}",
+        "/messages",
         headers=user_headers["admin"],
     )
     response_data = await response.get_json()
@@ -212,11 +166,9 @@ async def test_get_user_inbox_as_admin(
 
 # Attempt to get a user's outbox with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_outbox_as_admin(
-    app_client, test_db, user_headers, dummy_users_data
-):
+async def test_get_user_outbox_as_admin(app_client, test_db, user_headers):
     response = await app_client.get(
-        f"/messages?type=outbox&userID={dummy_users_data['admin']['internal']}",
+        "/messages?type=outbox",
         headers=user_headers["admin"],
     )
     response_data = await response.get_json()
@@ -230,11 +182,9 @@ async def test_get_user_outbox_as_admin(
 
 # Attempt to get a user's threads mailbox with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_threads_as_admin(
-    app_client, test_db, user_headers, dummy_users_data
-):
+async def test_get_user_threads_as_admin(app_client, test_db, user_headers):
     response = await app_client.get(
-        f"/messages?type=threads&userID={dummy_users_data['admin']['internal']}",
+        "/messages?type=threads",
         headers=user_headers["admin"],
     )
     response_data = await response.get_json()
@@ -246,36 +196,11 @@ async def test_get_user_threads_as_admin(
     assert len(response_data["messages"]) == 2
 
 
-# Attempt to get another user's messages with an admin's JWT
-@pytest.mark.asyncio(scope="session")
-async def test_get_another_users_messages_as_admin(
-    app_client, test_db, user_headers, dummy_users_data
-):
-    response = await app_client.get(
-        f"/messages?userID={dummy_users_data['user']['internal']}",
-        headers=user_headers["admin"],
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
-# Attempt to get a user's messages with no ID (with admin's JWT)
-@pytest.mark.asyncio(scope="session")
-async def test_get_no_id_user_messages_as_admin(app_client, test_db, user_headers):
-    response = await app_client.get("/messages", headers=user_headers["admin"])
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 400
-
-
 # Attempt to get other users' messaging thread (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def get_other_users_thread_as_admin(app_client, test_db, user_headers):
     response = await app_client.get(
-        "/messages?userID=4&type=thread&threadID=2",
+        "/messages?type=thread&threadID=2",
         headers=user_headers["admin"],
     )
     response_data = await response.get_json()
@@ -290,8 +215,7 @@ async def get_nonexistent_thread_as_admin(
     app_client, test_db, user_headers, dummy_users_data
 ):
     response = await app_client.get(
-        f"/messages?userID={dummy_users_data['admin']['internal']}"
-        "&type=thread&threadID=200",
+        "/messages?type=thread&threadID=200",
         headers=user_headers["admin"],
     )
     response_data = await response.get_json()
@@ -305,13 +229,13 @@ async def test_threads_message_count_shows_user_count(
     app_client, test_db, user_headers, dummy_users_data
 ):
     admin_response = await app_client.get(
-        f"/messages?type=threads&userID={dummy_users_data['admin']['internal']}",
+        "/messages?type=threads",
         headers=user_headers["admin"],
     )
     admin_response_data = await admin_response.get_json()
 
     user_response = await app_client.get(
-        f"/messages?type=threads&userID={dummy_users_data['user']['internal']}",
+        "/messages?type=threads",
         headers=user_headers["user"],
     )
     user_response_data = await user_response.get_json()
@@ -508,7 +432,7 @@ async def test_send_message_existing_thread_as_user(
     response_data = await response.get_json()
     response_message = response_data["message"]
     new_thread = await app_client.get(
-        "/messages?userID=20&type=thread&threadID=7", headers=user_headers["blocked"]
+        "/messages?type=thread&threadID=7", headers=user_headers["blocked"]
     )
     new_thread_data = await new_thread.get_json()
 
@@ -536,8 +460,7 @@ async def test_send_message_create_thread(
     response_data = await response.get_json()
     response_message = response_data["message"]
     new_thread = await app_client.get(
-        f"/messages?userID={dummy_users_data['admin']['internal']}"
-        "&type=thread&threadID=9",
+        "/messages?type=thread&threadID=9",
         headers=user_headers["admin"],
     )
     new_thread_data = await new_thread.get_json()
@@ -608,7 +531,7 @@ async def test_delete_thread_as_user(app_client, test_db, user_headers):
     )
     response_data = await response.get_json()
     get_thread = await app_client.get(
-        "/messages?userID=1&type=thread&threadID=2",
+        "/messages?type=thread&threadID=2",
         headers=user_headers["user"],
     )
     thread_data = await get_thread.get_json()
@@ -714,7 +637,7 @@ async def test_delete_message_without_id_admin(app_client, test_db, user_headers
 # Attempt to empty mailbox without auth header
 @pytest.mark.asyncio(scope="session")
 async def test_empty_mailbox_no_auth(app_client, test_db, user_headers):
-    response = await app_client.delete("/messages/inbox?userID=4")
+    response = await app_client.delete("/messages/inbox")
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -725,7 +648,7 @@ async def test_empty_mailbox_no_auth(app_client, test_db, user_headers):
 @pytest.mark.asyncio(scope="session")
 async def test_empty_mailbox_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.delete(
-        "/messages/inbox?userID=4", headers=user_headers["malformed"]
+        "/messages/inbox", headers=user_headers["malformed"]
     )
     response_data = await response.get_json()
 
@@ -739,13 +662,13 @@ async def test_empty_mailbox_as_user(
     app_client, test_db, user_headers, dummy_users_data
 ):
     response = await app_client.delete(
-        f"/messages/inbox?userID={dummy_users_data['user']['internal']}",
+        "/messages/inbox",
         headers=user_headers["user"],
     )
     response_data = await response.get_json()
 
     get_response = await app_client.get(
-        f"/messages?type=inbox&userID={dummy_users_data['user']['internal']}",
+        "/messages?type=inbox",
         headers=user_headers["user"],
     )
     get_response_data = await get_response.get_json()
@@ -758,25 +681,13 @@ async def test_empty_mailbox_as_user(
     assert len(get_response_data["messages"]) == 0
 
 
-# Attempt to empty another user's inbox (user JWT)
-@pytest.mark.asyncio(scope="session")
-async def test_empty_other_users_mailbox_as_user(app_client, test_db, user_headers):
-    response = await app_client.delete(
-        "/messages/inbox?userID=4", headers=user_headers["user"]
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
 # Attempt to empty user's outbox (moderator's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_empty_mailbox_as_mod(
     app_client, test_db, user_headers, dummy_users_data
 ):
     response = await app_client.delete(
-        f"/messages/outbox?userID={dummy_users_data['moderator']['internal']}",
+        "/messages/outbox",
         headers=user_headers["moderator"],
     )
     response_data = await response.get_json()
@@ -787,25 +698,13 @@ async def test_empty_mailbox_as_mod(
     assert response_data["userID"] == 5
 
 
-# Attempt to empty another user's outbox (moderator's JWT)
-@pytest.mark.asyncio(scope="session")
-async def test_empty_other_users_mailbox_as_mod(app_client, test_db, user_headers):
-    response = await app_client.delete(
-        "/messages/outbox?userID=1", headers=user_headers["moderator"]
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
 # Attempt to empty user's threads mailbox (admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_empty_mailbox_as_admin(
     app_client, test_db, user_headers, dummy_users_data
 ):
     response = await app_client.delete(
-        f"/messages/threads?userID={dummy_users_data['admin']['internal']}",
+        "/messages/threads",
         headers=user_headers["admin"],
     )
     response_data = await response.get_json()
@@ -816,18 +715,6 @@ async def test_empty_mailbox_as_admin(
     assert response_data["userID"] == 4
 
 
-# Attempt to empty another user's threads mailbox (admin's JWT)
-@pytest.mark.asyncio(scope="session")
-async def test_empty_other_users_mailbox_as_admin(app_client, test_db, user_headers):
-    response = await app_client.delete(
-        "/messages/threads?userID=5", headers=user_headers["admin"]
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
 # Attempt to empty user mailbox without user type
 @pytest.mark.asyncio(scope="session")
 async def test_empty_mailbox_type_as_admin(app_client, test_db, user_headers):
@@ -836,15 +723,3 @@ async def test_empty_mailbox_type_as_admin(app_client, test_db, user_headers):
 
     assert response_data["success"] is False
     assert response.status_code == 404
-
-
-# Attempt to empty user mailbox without user ID
-@pytest.mark.asyncio(scope="session")
-async def test_empty_mailbox_id_as_admin(app_client, test_db, user_headers):
-    response = await app_client.delete(
-        "/messages/threads?userID=", headers=user_headers["admin"]
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 400
