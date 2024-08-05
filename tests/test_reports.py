@@ -215,6 +215,30 @@ async def test_send_malformed_report_as_admin(
     assert response.status_code == 422
 
 
+# Attempt to create a message from another user - validate
+# that it sets the user ID based on the JWT
+@pytest.mark.asyncio(scope="session")
+async def test_send_report_as_another_user(
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
+):
+    report = dummy_request_data["new_report"]
+    report["userID"] = 4
+    report["postID"] = 25
+    report["reporter"] = dummy_users_data["user"]["internal"]
+    response = await app_client.post(
+        "/reports", headers=user_headers["admin"], data=json.dumps(report)
+    )
+    response_data = await response.get_json()
+    response_report = response_data["report"]
+
+    assert response_report["reporter"] != int(report["reporter"])
+    assert response_report["reporter"] == int(dummy_users_data["admin"]["internal"])
+
+
 # Attempt to create a post report for post that doesn't exist
 @pytest.mark.asyncio(scope="session")
 async def test_send_report_nonexistent_post_as_admin(
