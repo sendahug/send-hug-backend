@@ -146,6 +146,28 @@ async def test_send_post_as_blocked(
     assert response.status_code == 403
 
 
+# Attempt to create a message from another user - validate
+# that it sets the user ID based on the JWT
+@pytest.mark.asyncio(scope="session")
+async def test_send_post_as_another_user(
+    app_client,
+    test_db,
+    user_headers,
+    dummy_request_data,
+    dummy_users_data,
+):
+    post = dummy_request_data["new_post"]
+    post["userId"] = dummy_users_data["user"]["internal"]
+    response = await app_client.post(
+        "/posts", headers=user_headers["admin"], data=json.dumps(post)
+    )
+    response_data = await response.get_json()
+    response_post = response_data["posts"]
+
+    assert response_post["userId"] != int(post["userId"])
+    assert response_post["userId"] == int(dummy_users_data["admin"]["internal"])
+
+
 # Update Post Route Tests ('/posts/<post_id>', PATCH)
 # -------------------------------------------------------
 # Attempt to update a post with no authorisation header

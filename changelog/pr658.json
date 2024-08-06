@@ -1,0 +1,17 @@
+{
+  "pr_number": 658,
+  "changes": [
+    {
+      "change": "Changes",
+      "description": "The user ID, from ID and reporter ID in the POST endpoints for posts, messages and reports (respectively) are now set based on the user's JWT, rather than based on the value sent by the front-end."
+    },
+    {
+      "change": "Fixes",
+      "description": "Fixed a bug where posts could be made to look like they were written by other users. This happened due to the posts' `user_id` being set based on a value coming from the front-end, rather than based on the logged-in user."
+    },
+    {
+      "change": "Changes",
+      "description": "The 'auto refresh' value is now set to false by default for new users."
+    }
+  ]
+}

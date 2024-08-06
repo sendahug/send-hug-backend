@@ -283,10 +283,10 @@ def create_app(config: SAHConfig) -> Quart:
 
         # Create a new post object
         new_post = Post(
-            user_id=int(new_post_data["userId"]),
+            user_id=token_payload["id"],
             text=new_post_data["text"],
             date=datetime.strptime(new_post_data["date"], DATETIME_PATTERN),
-            given_hugs=new_post_data["givenHugs"],
+            given_hugs=0,
             sent_hugs=[],
         )
 
@@ -642,7 +642,7 @@ def create_app(config: SAHConfig) -> Quart:
             display_name=user_data["displayName"],
             last_notifications_read=datetime.now(),
             login_count=0,
-            auto_refresh=True,
+            auto_refresh=False,
             refresh_rate=20,
             push_enabled=False,
             selected_character="kitty",
@@ -1001,17 +1001,6 @@ def create_app(config: SAHConfig) -> Quart:
         # Gets the new message's data
         message_data = await request.get_json()
 
-        # Checks that the user isn't trying to send a message from someone else
-        if token_payload["id"] != message_data["fromId"]:
-            raise AuthError(
-                {
-                    "code": 403,
-                    "description": "You do not have permission to "
-                    "send a message on behalf of another user.",
-                },
-                403,
-            )
-
         validator.validate_post_or_message(
             text=message_data["messageText"],
             type="message",
@@ -1019,14 +1008,14 @@ def create_app(config: SAHConfig) -> Quart:
         )
 
         thread_id = await get_thread_id_for_users(
-            user1_id=message_data["fromId"],
+            user1_id=token_payload["id"],
             user2_id=message_data["forId"],
             current_user_id=token_payload["id"],
         )
 
         # Create a new message
         new_message = Message(
-            from_id=int(message_data["fromId"]),
+            from_id=token_payload["id"],
             for_id=int(message_data["forId"]),
             text=message_data["messageText"],
             date=datetime.strptime(message_data["date"], DATETIME_PATTERN),
@@ -1036,7 +1025,7 @@ def create_app(config: SAHConfig) -> Quart:
         # Create a notification for the user getting the message
         notification = Notification(
             for_id=int(message_data["forId"]),
-            from_id=int(message_data["fromId"]),
+            from_id=token_payload["id"],
             type="message",
             text="You have a new message",
             date=datetime.strptime(message_data["date"], DATETIME_PATTERN),
@@ -1453,7 +1442,7 @@ def create_app(config: SAHConfig) -> Quart:
                 date=datetime.strptime(report_data["date"], DATETIME_PATTERN),
                 user_id=int(report_data["userID"]),
                 post_id=int(report_data["postID"]),
-                reporter=int(report_data["reporter"]),
+                reporter=token_payload["id"],
                 report_reason=report_data["reportReason"],
                 dismissed=False,
                 closed=False,
@@ -1474,7 +1463,7 @@ def create_app(config: SAHConfig) -> Quart:
                 type=report_data["type"],
                 date=datetime.strptime(report_data["date"], DATETIME_PATTERN),
                 user_id=int(report_data["userID"]),
-                reporter=int(report_data["reporter"]),
+                reporter=token_payload["id"],
                 report_reason=report_data["reportReason"],
                 dismissed=False,
                 closed=False,

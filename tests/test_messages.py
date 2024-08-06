@@ -305,9 +305,10 @@ async def test_send_message_as_user(
     assert response_message["messageText"] == message["messageText"]
 
 
-# Attempt to create a message from another user (with a user's JWT)
+# Attempt to create a message from another user - validate
+# that it sets the user ID based on the JWT
 @pytest.mark.asyncio(scope="session")
-async def test_send_message_from_another_user_as_user(
+async def test_send_message_from_another_user(
     app_client,
     test_db,
     user_headers,
@@ -322,8 +323,10 @@ async def test_send_message_from_another_user_as_user(
     )
     response_data = await response.get_json()
 
-    assert response_data["success"] is False
-    assert response.status_code == 403
+    assert response_data["message"]["fromId"] != message["fromId"]
+    assert response_data["message"]["fromId"] == int(
+        dummy_users_data["user"]["internal"]
+    )
 
 
 # Attempt to create a message with a moderator's JWT
@@ -349,27 +352,6 @@ async def test_send_message_as_mod(
     assert response_message["messageText"] == message["messageText"]
 
 
-# Attempt to create a message from another user (with a moderator's JWT)
-@pytest.mark.asyncio(scope="session")
-async def test_send_message_from_another_user_as_mod(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
-    message = dummy_request_data["new_message"]
-    message["fromId"] = int(dummy_users_data["admin"]["internal"])
-    message["forId"] = dummy_users_data["user"]["internal"]
-    response = await app_client.post(
-        "/messages", headers=user_headers["moderator"], data=json.dumps(message)
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
 # Attempt to create a message with an admin's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_send_message_as_admin(
@@ -391,27 +373,6 @@ async def test_send_message_as_admin(
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_message["messageText"] == message["messageText"]
-
-
-# Attempt to create a message from another user (with an admin's JWT)
-@pytest.mark.asyncio(scope="session")
-async def test_send_message_from_another_user_as_admin(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
-    message = dummy_request_data["new_message"]
-    message["fromId"] = int(dummy_users_data["user"]["internal"])
-    message["forId"] = dummy_users_data["moderator"]["internal"]
-    response = await app_client.post(
-        "/messages", headers=user_headers["admin"], data=json.dumps(message)
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
 
 
 # Attempt to send a message from a user (when there's no thread)
