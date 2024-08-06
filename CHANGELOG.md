@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### 2024-08-06
+
+#### Changes
+
+- The user ID, from ID and reporter ID in the POST endpoints for posts, messages and reports (respectively) are now set based on the user's JWT, rather than based on the value sent by the front-end. ([#658](https://github.com/sendahug/send-hug-backend/pull/658))
+- The 'auto refresh' value is now set to false by default for new users. ([#658](https://github.com/sendahug/send-hug-backend/pull/658))
+
+#### Fixes
+
+- Fixed a bug where posts could be made to look like they were written by other users. This happened due to the posts' `user_id` being set based on a value coming from the front-end, rather than based on the logged-in user. ([#658](https://github.com/sendahug/send-hug-backend/pull/658))
+
 ### 2024-06-22
 
 #### Changes
