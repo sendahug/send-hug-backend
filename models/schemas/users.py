@@ -33,7 +33,6 @@ if TYPE_CHECKING:
 else:
     Message = "Message"
 
-# from models.schemas.messages import Message
 from models.base_models import BaseModel, DumpedModel
 from models.schemas.posts import Post
 
