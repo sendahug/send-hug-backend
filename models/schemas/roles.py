@@ -25,12 +25,37 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .schemas.filters import Filter
-from .schemas.notifications import Notification, NotificationSub
-from .schemas.reports import Report
-from .schemas.threads import Thread
-from .schemas.messages import Message
-from .schemas.users import User
-from .schemas.posts import Post
-from .base_models import BLOCKED_USER_ROLE_ID
-from .db import SendADatabase, CoreSAHModel
+from models.base_models import BaseModel, DumpedModel
+from models.schemas.permissions import Permission
+
+
+from sqlalchemy import Column, ForeignKey, Integer, String, Table
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+
+from typing import List
+
+# SQLAlchemy Tables
+roles_permissions_map = Table(
+    "roles_permissions_map",
+    BaseModel.metadata,
+    Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True),
+    Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True),
+)
+
+
+class Role(BaseModel):
+    __tablename__ = "roles"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(), nullable=False)
+    permissions: Mapped[List[Permission]] = relationship(
+        "Permission", secondary=roles_permissions_map, lazy="selectin"
+    )
+
+    # Format method
+    def format(self, **kwargs) -> DumpedModel:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "permissions": [perm.format() for perm in self.permissions],
+        }

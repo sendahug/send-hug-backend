@@ -25,12 +25,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .schemas.filters import Filter
-from .schemas.notifications import Notification, NotificationSub
-from .schemas.reports import Report
-from .schemas.threads import Thread
-from .schemas.messages import Message
-from .schemas.users import User
-from .schemas.posts import Post
-from .base_models import BLOCKED_USER_ROLE_ID
-from .db import SendADatabase, CoreSAHModel
+from typing import Any, TypeAlias, TypeVar
+
+from sqlalchemy.ext.asyncio import AsyncAttrs
+from sqlalchemy.orm import (
+    DeclarativeBase,
+)
+
+
+class BaseModel(AsyncAttrs, DeclarativeBase):
+    pass
+
+
+HugModelType = TypeVar("HugModelType", bound=BaseModel, covariant=True)
+DumpedModel: TypeAlias = dict[str, Any]
+BLOCKED_USER_ROLE_ID = 5

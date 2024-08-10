@@ -39,8 +39,9 @@ from firebase_admin.auth import (  # type: ignore
     RevokedIdTokenError,
 )
 
-from models import User, SendADatabase
+from models import SendADatabase
 from config import SAHConfig
+from models.schemas.users import User
 
 
 class RoleData(TypedDict):

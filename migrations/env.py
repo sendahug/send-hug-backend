@@ -8,7 +8,7 @@ from sqlalchemy.engine import Connection
 # from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
-from models.models import BaseModel
+from models.base_models import BaseModel
 from app import config as app_config
 
 # this is the Alembic Config object, which provides

@@ -44,7 +44,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from werkzeug.exceptions import HTTPException
 
-from .models import BaseModel, HugModelType, DumpedModel
+from .base_models import BaseModel, HugModelType, DumpedModel
 
 
 T = TypeVar("T", bound=BaseModel)
@@ -166,9 +166,7 @@ class SendADatabase:
             )
             items = items_scalars.all()
             total_items = (
-                await (
-                    self.session.scalar(select(func.count()).select_from(query.cte()))
-                )
+                await self.session.scalar(select(func.count()).select_from(query.cte()))
                 or 0
             )
 

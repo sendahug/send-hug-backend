@@ -8,7 +8,7 @@ from firebase_admin import initialize_app  # type: ignore
 
 from create_app import create_app
 from config import SAHConfig
-from models.models import BaseModel
+from models.base_models import BaseModel
 from models import SendADatabase
 from tests.data_models import create_data, DATETIME_PATTERN, update_sequences
 

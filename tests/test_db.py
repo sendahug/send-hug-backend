@@ -33,7 +33,8 @@ from sqlalchemy import Update, and_, delete, select, update
 from werkzeug.exceptions import HTTPException
 from sqlalchemy.exc import OperationalError, DataError, IntegrityError
 
-from models import Post, SendADatabase
+from models import SendADatabase
+from models.schemas.posts import Post
 
 
 @pytest.fixture
