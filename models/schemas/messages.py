@@ -24,11 +24,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from typing import TYPE_CHECKING
 
-from models.schemas.threads import Thread
 from models.base_models import BaseModel, DumpedModel
 from models.schemas.users import User
 
+if TYPE_CHECKING:
+    from .threads import Thread
+else:
+    Thread = "Thread"
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, select
 from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship

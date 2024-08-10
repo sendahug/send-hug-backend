@@ -32,5 +32,8 @@ from .schemas.threads import Thread
 from .schemas.messages import Message
 from .schemas.users import User
 from .schemas.posts import Post
+from .schemas.roles import Role
+from .schemas.permissions import Permission
+
 from .base_models import BLOCKED_USER_ROLE_ID
 from .db import SendADatabase, CoreSAHModel

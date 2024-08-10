@@ -24,11 +24,16 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from typing import TYPE_CHECKING, List
 
-from models.schemas.reports import Report
-from models.schemas.users import User
 from models.base_models import BaseModel, DumpedModel
 
+if TYPE_CHECKING:
+    from .reports import Report
+    from .users import User
+else:
+    Report = "Report"
+    User = "User"
 
 from sqlalchemy import (
     DateTime,
@@ -50,7 +55,6 @@ from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 
 from datetime import datetime
-from typing import List
 
 # Table objects for column_property
 # -----------------------------------------------------------------

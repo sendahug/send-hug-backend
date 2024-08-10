@@ -37,13 +37,16 @@ from sqlalchemy import Text, and_, delete, desc, false, func, or_, select, true,
 
 from models import CoreSAHModel, BLOCKED_USER_ROLE_ID
 from auth import AuthError, UserData, requires_auth
-from models.schemas.filters import Filter
-from models.schemas.notifications import Notification, NotificationSub
-from models.schemas.reports import Report
-from models.schemas.threads import Thread
-from models.schemas.messages import Message
-from models.schemas.users import User
-from models.schemas.posts import Post
+from models import (
+    Filter,
+    Notification,
+    NotificationSub,
+    Report,
+    Thread,
+    Message,
+    User,
+    Post,
+)
 from utils.validator import Validator, ValidationError
 from utils.push_notifications import (
     generate_push_data,

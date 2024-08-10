@@ -56,7 +56,7 @@ class Thread(BaseModel):
         nullable=False,
     )
     user_2: Mapped["User"] = relationship("User", foreign_keys="Thread.user_2_id")
-    messages: Mapped[List[Message]] = relationship(
+    messages: Mapped[List["Message"]] = relationship(
         "Message", back_populates="thread_details"
     )
     # Column properties

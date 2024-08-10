@@ -4,15 +4,16 @@ import json
 
 from sqlalchemy import select, text
 
-from models.schemas.permissions import Permission
-from models.schemas.filters import Filter
-from models.schemas.notifications import Notification, NotificationSub
-from models.schemas.reports import Report
-from models.schemas.threads import Thread
-from models.schemas.messages import Message
-from models.schemas.users import User
-from models.schemas.posts import Post
-from models.schemas.roles import (
+from models import (
+    Permission,
+    Filter,
+    Notification,
+    NotificationSub,
+    Report,
+    Thread,
+    Message,
+    User,
+    Post,
     Role,
 )
 from models.db import SendADatabase
