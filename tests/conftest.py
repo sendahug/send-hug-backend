@@ -1,16 +1,17 @@
-from datetime import datetime
 from asyncio import current_task
+from datetime import datetime
 
+from firebase_admin import initialize_app  # type: ignore
 import pytest
 from pytest_mock import MockerFixture
-from sqlalchemy.ext.asyncio import async_sessionmaker, async_scoped_session
-from firebase_admin import initialize_app  # type: ignore
+from sqlalchemy.ext.asyncio import async_scoped_session, async_sessionmaker
 
-from create_app import create_app
 from config import SAHConfig
-from models.base_models import BaseModel
+from create_app import create_app
+from tests.data_models import DATETIME_PATTERN, create_data, update_sequences
+
 from models import SendADatabase
-from tests.data_models import create_data, DATETIME_PATTERN, update_sequences
+from models.common import BaseModel
 
 
 @pytest.fixture(scope="session")

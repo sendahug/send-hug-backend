@@ -25,36 +25,37 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
-import json
-from typing import Any, Literal, cast, Sequence
 from datetime import datetime
+import json
+import os
+from typing import Any, Literal, Sequence, cast
 
-from quart import Quart, Response, request, abort, jsonify
+from pywebpush import WebPushException, webpush  # type: ignore
+from quart import Quart, Response, abort, jsonify, request
 from quart_cors import cors
-from pywebpush import webpush, WebPushException  # type: ignore
 from sqlalchemy import Text, and_, delete, desc, false, func, or_, select, true, update
 
-from models import CoreSAHModel, BLOCKED_USER_ROLE_ID
 from auth import AuthError, UserData, requires_auth
-from models import (
-    Filter,
-    Notification,
-    NotificationSub,
-    Report,
-    Thread,
-    Message,
-    User,
-    Post,
-)
-from utils.validator import Validator, ValidationError
-from utils.push_notifications import (
-    generate_push_data,
-    generate_vapid_claims,
-    RawPushData,
-)
 from config import SAHConfig
 
+from models import (
+    BLOCKED_USER_ROLE_ID,
+    CoreSAHModel,
+    Filter,
+    Message,
+    Notification,
+    NotificationSub,
+    Post,
+    Report,
+    User,
+)
+from models.schemas.messages import Thread
+from utils.push_notifications import (
+    RawPushData,
+    generate_push_data,
+    generate_vapid_claims,
+)
+from utils.validator import ValidationError, Validator
 
 DATETIME_PATTERN = "%Y-%m-%dT%H:%M:%S.%fZ"
 

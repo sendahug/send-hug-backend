@@ -10,31 +10,35 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 ### Application Endpoints
 
-1. [GET /](#get-)
-2. [POST /](#post-)
-3. [POST /posts](#post-posts)
-4. [PATCH /posts/<post_id>](#patch-postspost_id)
-5. [DELETE /posts/<post_id>](#delete-postspost_id)
-6. [GET /posts/<post_type>](#get-postspost_type)
-7. [GET /users/<user_type>](#get-usersuser_type)
-8. [GET /users/all/<user_id>](#get-usersalluser_id)
-9. [POST /users](#post-users)
-10. [PATCH /users/all/<user_id>](#patch-usersalluser_id)
-11. [GET /users/all/<user_id>/posts](#get-usersalluser_idposts)
-12. [DELETE /users/all/<user_id>/posts](#delete-usersalluser_idposts)
-13. [GET /messages](#get-messages)
-14. [POST /messages](#post-messages)
-15. [DELETE /messages/<mailbox_type>/<item_id>](#delete-messagesmailbox_typeitem_id)
-16. [DELETE /messages/<mailbox_type>](#delete-messagesmailbox_type)
-17. [GET /reports](#get-reports)
-18. [POST /reports](#post-reports)
-19. [PATCH /reports/<report_id>](#patch-reportsreport_id)
-20. [GET /filters](#get-filters)
-21. [POST /filters](#post-filters)
-22. [DELETE /filters/<filter_id>](#delete-filtersfilter_id)
-23. [GET /notifications](#get-notifications)
-24. [POST /notifications](#post-notifications)
-25. [PATCH /notifications](#patch-notificationssub_id)
+- [Version](#version)
+- [API Documentation](#api-documentation)
+  - [Application Endpoints](#application-endpoints)
+  - [GET /](#get-)
+  - [POST /](#post-)
+  - [POST /posts](#post-posts)
+  - [PATCH /posts/\<post\_id\>](#patch-postspost_id)
+  - [DELETE /posts/\<post\_id\>](#delete-postspost_id)
+  - [GET /posts/\<post\_type\>](#get-postspost_type)
+  - [GET /users/\<user\_type\>](#get-usersuser_type)
+  - [GET /users/all/\<user\_id\>](#get-usersalluser_id)
+  - [POST /users](#post-users)
+  - [PATCH /users/all/\<user\_id\>](#patch-usersalluser_id)
+  - [GET /users/all/\<user\_id\>/posts](#get-usersalluser_idposts)
+  - [DELETE /users/all/\<user\_id\>/posts](#delete-usersalluser_idposts)
+  - [GET /messages](#get-messages)
+  - [POST /messages](#post-messages)
+  - [DELETE /messages/\<mailbox\_type\>/\<item\_id\>](#delete-messagesmailbox_typeitem_id)
+  - [DELETE /messages/\<mailbox\_type\>](#delete-messagesmailbox_type)
+  - [GET /reports](#get-reports)
+  - [POST /reports](#post-reports)
+  - [PATCH /reports/\<report\_id\>](#patch-reportsreport_id)
+  - [GET /filters](#get-filters)
+  - [POST /filters](#post-filters)
+  - [DELETE /filters/\<filter\_id\>](#delete-filtersfilter_id)
+  - [GET /notifications](#get-notifications)
+  - [POST /notifications](#post-notifications)
+  - [PATCH /notifications/\<sub\_id\>](#patch-notificationssub_id)
+  - [Error Handlers](#error-handlers)
 
 **NOTE**: All sample curl requests are done via user 4; for your own tests, change the user ID and the user's display name.
 
@@ -164,8 +168,8 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - users (list) - list of users matching the query.
-  - posts (list) - Paginated list of posts matching the query.
+  - users (List) - list of users matching the query.
+  - posts (List) - Paginated list of posts matching the query.
   - user_results (Number) - Total number of user results.
   - post_results (Number) - Total number of post results.
   - current_page (Number) - Current page of post results.
@@ -611,7 +615,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - posts (list) - A paginated list of the user's posts (5 per request).
+  - posts (List) - A paginated list of the user's posts (5 per request).
   - page (number) - The user's current page.
   - total_pages (number) - Total number of pages.
 
@@ -687,7 +691,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - messages (list) - A paginated list containing the user's messages.
+  - messages (List) - A paginated list containing the user's messages.
   - current_page (number) - The user's current page.
   - total_pages (number) - The total number of pages.
 
@@ -849,9 +853,9 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - userReports (list) - A list of paginated user reports.
+  - userReports (List) - A list of paginated user reports.
   - totalUserPages (Number) - the total number of pages of user reports.
-  - postReports (list) - A list of paginated post reports.
+  - postReports (List) - A list of paginated post reports.
   - totalPostPages (Number) - the total number of pages of post reports.
 
 **Expected Errors**: None.
@@ -976,7 +980,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - words (list) - A list of paginated filtered words.
+  - words (List) - A list of paginated filtered words.
   - total_pages (Number) - the total number of pages of filtered words.
 
 **Expected Errors**: None.
@@ -1065,7 +1069,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - notifications (list) - a list containing all user notifications
+  - notifications (List) - a list containing all user notifications
 
 **Expected Errors**:
   - 404 (Not Found) - In case there's no user with the given Firebase ID.

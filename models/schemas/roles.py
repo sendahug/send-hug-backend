@@ -25,13 +25,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from models.base_models import BaseModel, DumpedModel
-from models.schemas.permissions import Permission
-
-
 from sqlalchemy import Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from models.common import BaseModel, DumpedModel
 
 # SQLAlchemy Tables
 roles_permissions_map = Table(
@@ -40,6 +37,21 @@ roles_permissions_map = Table(
     Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True),
     Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True),
 )
+
+
+class Permission(BaseModel):
+    __tablename__ = "permissions"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    permission: Mapped[str] = mapped_column(String(), nullable=False)
+    description: Mapped[str | None] = mapped_column(String())
+
+    # Format method
+    def format(self, **kwargs) -> DumpedModel:
+        return {
+            "id": self.id,
+            "permission": self.permission,
+            "description": self.description,
+        }
 
 
 class Role(BaseModel):

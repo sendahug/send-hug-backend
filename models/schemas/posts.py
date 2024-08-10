@@ -26,7 +26,7 @@
 # SOFTWARE.
 from typing import TYPE_CHECKING
 
-from models.base_models import BaseModel, DumpedModel
+from models.common import BaseModel, DumpedModel
 
 if TYPE_CHECKING:
     from .reports import Report
@@ -34,6 +34,8 @@ if TYPE_CHECKING:
 else:
     Report = "Report"
     User = "User"
+
+from datetime import datetime
 
 from sqlalchemy import (
     DateTime,
@@ -52,9 +54,6 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
-
-
-from datetime import datetime
 
 # Table objects for column_property
 # -----------------------------------------------------------------

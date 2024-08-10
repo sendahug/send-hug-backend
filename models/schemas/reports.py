@@ -25,16 +25,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from models.base_models import BaseModel, DumpedModel
-from models.schemas.posts import Post
-from models.schemas.users import User
-
+from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, select
 from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
-
-from datetime import datetime
+from models.common import BaseModel, DumpedModel
+from models.schemas.posts import Post
+from models.schemas.users import User
 
 
 class Report(BaseModel):

@@ -1,23 +1,22 @@
 from datetime import datetime
-from typing import Sequence
 import json
+from typing import Sequence
 
 from sqlalchemy import select, text
 
 from models import (
-    Permission,
     Filter,
+    Message,
     Notification,
     NotificationSub,
-    Report,
-    Thread,
-    Message,
-    User,
     Post,
+    Report,
     Role,
+    User,
 )
 from models.db import SendADatabase
-
+from models.schemas.messages import Thread
+from models.schemas.roles import Permission
 
 DATETIME_PATTERN = "%Y-%m-%d %H:%M:%S.%f"
 

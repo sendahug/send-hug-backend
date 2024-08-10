@@ -28,7 +28,7 @@
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from models.base_models import BaseModel, DumpedModel
+from models.common import BaseModel, DumpedModel
 
 
 class Filter(BaseModel):

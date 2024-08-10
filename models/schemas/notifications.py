@@ -25,15 +25,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from models.base_models import BaseModel, DumpedModel
-from models.schemas.users import User
-
+from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, select
 from sqlalchemy.orm import Mapped, column_property, mapped_column
 
-
-from datetime import datetime
+from models.common import BaseModel, DumpedModel
+from models.schemas.users import User
 
 
 class Notification(BaseModel):

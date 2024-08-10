@@ -33,9 +33,8 @@ if TYPE_CHECKING:
 else:
     Message = "Message"
 
-from models.base_models import BaseModel, DumpedModel
-from models.schemas.posts import Post
-
+from datetime import datetime
+import json
 
 from sqlalchemy import (
     Boolean,
@@ -56,9 +55,8 @@ from sqlalchemy import (
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
-
-import json
-from datetime import datetime
+from models.common import BaseModel, DumpedModel
+from models.schemas.posts import Post
 
 # Table objects for column_property
 # -----------------------------------------------------------------
