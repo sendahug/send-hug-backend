@@ -24,7 +24,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from models.base_models import BaseModel, DumpedModel
 
@@ -76,8 +76,8 @@ class Post(BaseModel):
     text: Mapped[str] = mapped_column(String(480), nullable=False)
     date: Mapped[datetime | None] = mapped_column(DateTime)
     given_hugs: Mapped[int] = mapped_column(Integer, default=0)
-    sent_hugs: Mapped[List[int] | None] = mapped_column(ARRAY(Integer))
-    reports: Mapped[List["Report"] | None] = relationship(
+    sent_hugs: Mapped[list[int] | None] = mapped_column(ARRAY(Integer))
+    reports: Mapped[list["Report"] | None] = relationship(
         "Report",
         back_populates="post",
     )

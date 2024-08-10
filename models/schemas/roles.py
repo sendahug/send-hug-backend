@@ -33,8 +33,6 @@ from sqlalchemy import Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
-from typing import List
-
 # SQLAlchemy Tables
 roles_permissions_map = Table(
     "roles_permissions_map",
@@ -48,7 +46,7 @@ class Role(BaseModel):
     __tablename__ = "roles"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(), nullable=False)
-    permissions: Mapped[List[Permission]] = relationship(
+    permissions: Mapped[list[Permission]] = relationship(
         "Permission", secondary=roles_permissions_map, lazy="selectin"
     )
 

@@ -24,7 +24,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from models.schemas.roles import Role
 
@@ -93,11 +93,11 @@ class User(BaseModel):
         default='{"character":"#BA9F93", "lbg":"#e2a275",'
         '"rbg":"#f8eee4", "item":"#f4b56a"}',
     )
-    posts: Mapped[List["Post"] | None] = relationship("Post", back_populates="user")
-    sent_messages: Mapped[List["Message"] | None] = relationship(
+    posts: Mapped[list["Post"] | None] = relationship("Post", back_populates="user")
+    sent_messages: Mapped[list["Message"] | None] = relationship(
         "Message", back_populates="from_user", foreign_keys="Message.from_id"
     )
-    received_messages: Mapped[List["Message"] | None] = relationship(
+    received_messages: Mapped[list["Message"] | None] = relationship(
         "Message", back_populates="for_user", foreign_keys="Message.for_id"
     )
     firebase_id: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)

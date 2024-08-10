@@ -164,8 +164,8 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - users (List) - List of users matching the query.
-  - posts (List) - Paginated list of posts matching the query.
+  - users (list) - list of users matching the query.
+  - posts (list) - Paginated list of posts matching the query.
   - user_results (Number) - Total number of user results.
   - post_results (Number) - Total number of post results.
   - current_page (Number) - Current page of post results.
@@ -611,7 +611,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - posts (List) - A paginated list of the user's posts (5 per request).
+  - posts (list) - A paginated list of the user's posts (5 per request).
   - page (number) - The user's current page.
   - total_pages (number) - Total number of pages.
 
@@ -687,7 +687,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - messages (List) - A paginated list containing the user's messages.
+  - messages (list) - A paginated list containing the user's messages.
   - current_page (number) - The user's current page.
   - total_pages (number) - The total number of pages.
 
@@ -849,9 +849,9 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - userReports (List) - A list of paginated user reports.
+  - userReports (list) - A list of paginated user reports.
   - totalUserPages (Number) - the total number of pages of user reports.
-  - postReports (List) - A list of paginated post reports.
+  - postReports (list) - A list of paginated post reports.
   - totalPostPages (Number) - the total number of pages of post reports.
 
 **Expected Errors**: None.
@@ -976,7 +976,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - words (List) - A list of paginated filtered words.
+  - words (list) - A list of paginated filtered words.
   - total_pages (Number) - the total number of pages of filtered words.
 
 **Expected Errors**: None.
@@ -1065,7 +1065,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
-  - notifications (List) - a list containing all user notifications
+  - notifications (list) - a list containing all user notifications
 
 **Expected Errors**:
   - 404 (Not Found) - In case there's no user with the given Firebase ID.

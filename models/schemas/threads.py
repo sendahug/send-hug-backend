@@ -36,7 +36,6 @@ from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 
 import json
-from typing import List
 
 
 class Thread(BaseModel):
@@ -56,7 +55,7 @@ class Thread(BaseModel):
         nullable=False,
     )
     user_2: Mapped["User"] = relationship("User", foreign_keys="Thread.user_2_id")
-    messages: Mapped[List["Message"]] = relationship(
+    messages: Mapped[list["Message"]] = relationship(
         "Message", back_populates="thread_details"
     )
     # Column properties
