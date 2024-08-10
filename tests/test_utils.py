@@ -27,13 +27,13 @@
 
 import pytest
 
+from utils.filter import WordFilter
 from utils.push_notifications import (
+    RawPushData,
     generate_push_data,
     generate_vapid_claims,
-    RawPushData,
 )
-from utils.validator import Validator, ValidationError
-from utils.filter import WordFilter
+from utils.validator import ValidationError, Validator
 
 
 @pytest.fixture(scope="class")

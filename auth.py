@@ -25,22 +25,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Any, cast, TypedDict
 from datetime import datetime
-
 from functools import wraps
-from quart import request
-from sqlalchemy import select
+from typing import Any, TypedDict, cast
+
 from firebase_admin import App  # type: ignore
 from firebase_admin.auth import (  # type: ignore
-    verify_id_token,
-    InvalidIdTokenError,
     ExpiredIdTokenError,
+    InvalidIdTokenError,
     RevokedIdTokenError,
+    verify_id_token,
 )
+from quart import request
+from sqlalchemy import select
+
+from config import SAHConfig
 
 from models import SendADatabase
-from config import SAHConfig
 from models.schemas.users import User
 
 

@@ -30,8 +30,8 @@ from datetime import datetime
 import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy import Update, and_, delete, select, update
+from sqlalchemy.exc import DataError, IntegrityError, OperationalError
 from werkzeug.exceptions import HTTPException
-from sqlalchemy.exc import OperationalError, DataError, IntegrityError
 
 from models import SendADatabase
 from models.schemas.posts import Post

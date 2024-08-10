@@ -27,8 +27,8 @@
 
 import os
 
-from create_app import create_app
 from config import SAHConfig
+from create_app import create_app
 
 DB_CREDENTIALS_PATH = os.environ.get("DB_CREDENTIALS_PATH", "")
 
