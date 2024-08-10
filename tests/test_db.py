@@ -92,7 +92,7 @@ async def test_paginate_no_error(test_db: SendADatabase):
 @pytest.mark.asyncio(scope="session")
 async def test_paginate_with_error(mocker: MockerFixture, test_db: SendADatabase):
     mocker.patch(
-        "models.models.Post.format", side_effect=Exception("There was an error!")
+        "models.schemas.posts.Post.format", side_effect=Exception("There was an error!")
     )
     query = select(Post).where(Post.given_hugs > 0)
 
