@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### 2024-08-11
+
+#### Chores
+
+- Split out models.py to separate model files for easier maintenance. ([#660](https://github.com/sendahug/send-hug-backend/pull/660))
+- Added isort to keep imports in a consistent order. ([#660](https://github.com/sendahug/send-hug-backend/pull/660))
+
 ### 2024-08-06
 
 #### Changes
