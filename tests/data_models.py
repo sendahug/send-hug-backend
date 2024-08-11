@@ -13,7 +13,7 @@ from models import (
     Post,
     Report,
     Role,
-    Theead,
+    Thread,
     User,
 )
 from models.db import SendADatabase
