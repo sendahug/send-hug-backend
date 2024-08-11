@@ -38,6 +38,7 @@ from models.db import SendADatabase
 FIREBASE_CREDENTIALS_FILE = os.environ.get("FIREBASE_CREDENTIALS_FILE", "")
 DATABASE_USERNAME = os.environ.get("DATABASE_USERNAME", "")
 DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD", "")
+DB_CREDENTIALS_PATH = os.environ.get("DB_CREDENTIALS_PATH", "")
 
 
 class DatabaseCredentialsFile(TypedDict):
@@ -108,3 +109,6 @@ class SAHConfig:
                 "port": 5432,
                 "db_name": "sendahug",
             }
+
+
+sah_config = SAHConfig(credentials_path=DB_CREDENTIALS_PATH)
