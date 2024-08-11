@@ -53,178 +53,49 @@ async def test_get_notifications_malformed_auth(app_client, test_db, user_header
     assert response.status_code == 401
 
 
-# Attempt to get user notifications with a user's JWT (silent refresh)
+# Attempt to get user notifications with a user's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_silent_notifications_as_user(
+async def test_get_notifications_as_user(
     app_client, test_db, user_headers, dummy_users_data
 ):
-    pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['firebase_id']}",
-        headers=user_headers["user"],
-    )
-    pre_user_data = json.loads(await pre_user_query.data)["user"]
-    response = await app_client.get(
-        "/notifications?silentRefresh=true", headers=user_headers["user"]
-    )
+    response = await app_client.get("/notifications", headers=user_headers["user"])
     response_data = await response.get_json()
-    post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['firebase_id']}",
-        headers=user_headers["user"],
-    )
-    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
     assert len(response_data["notifications"]) == 11
-    assert (
-        pre_user_data["last_notifications_read"]
-        == post_user_data["last_notifications_read"]
-    )
+    assert response_data["current_page"] == 1
+    assert response_data["total_pages"] == 1
 
 
-# Attempt to get user notifications with a user's JWT (non-silent refresh)
+# Attempt to get user notifications with a mod's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_non_silent_notifications_as_user(
+async def test_get_notifications_as_mod(
     app_client, test_db, user_headers, dummy_users_data
 ):
-    pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['firebase_id']}",
-        headers=user_headers["user"],
-    )
-    pre_user_data = json.loads(await pre_user_query.data)["user"]
-    response = await app_client.get(
-        "/notifications?silentRefresh=false", headers=user_headers["user"]
-    )
+    response = await app_client.get("/notifications", headers=user_headers["moderator"])
     response_data = await response.get_json()
-    post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['firebase_id']}",
-        headers=user_headers["user"],
-    )
-    post_user_data = json.loads(await post_user_query.data)["user"]
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert len(response_data["notifications"]) == 11
-    assert (
-        pre_user_data["last_notifications_read"]
-        != post_user_data["last_notifications_read"]
-    )
-
-
-# Attempt to get user notifications with a mod's JWT (silent refresh)
-@pytest.mark.asyncio(scope="session")
-async def test_get_silent_notifications_as_mod(
-    app_client, test_db, user_headers, dummy_users_data
-):
-    pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
-        headers=user_headers["moderator"],
-    )
-    pre_user_data = json.loads(await pre_user_query.data)["user"]
-    response = await app_client.get(
-        "/notifications?silentRefresh=true", headers=user_headers["moderator"]
-    )
-    response_data = await response.get_json()
-    post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
-        headers=user_headers["moderator"],
-    )
-    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
     assert len(response_data["notifications"]) == 4
-    assert (
-        pre_user_data["last_notifications_read"]
-        == post_user_data["last_notifications_read"]
-    )
+    assert response_data["current_page"] == 1
+    assert response_data["total_pages"] == 1
 
 
-# Attempt to get user notifications with a mod's JWT (non-silent refresh)
+# Attempt to get user notifications with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_non_silent_notifications_as_mod(
+async def test_get_notifications_as_admin(
     app_client, test_db, user_headers, dummy_users_data
 ):
-    pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
-        headers=user_headers["moderator"],
-    )
-    pre_user_data = json.loads(await pre_user_query.data)["user"]
-    response = await app_client.get(
-        "/notifications?silentRefresh=false", headers=user_headers["moderator"]
-    )
+    response = await app_client.get("/notifications", headers=user_headers["admin"])
     response_data = await response.get_json()
-    post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
-        headers=user_headers["moderator"],
-    )
-    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert len(response_data["notifications"]) == 4
-    assert (
-        pre_user_data["last_notifications_read"]
-        != post_user_data["last_notifications_read"]
-    )
-
-
-# Attempt to get user notifications with an admin's JWT (silently)
-@pytest.mark.asyncio(scope="session")
-async def test_get_silent_notifications_as_admin(
-    app_client, test_db, user_headers, dummy_users_data
-):
-    pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
-        headers=user_headers["admin"],
-    )
-    pre_user_data = json.loads(await pre_user_query.data)["user"]
-    response = await app_client.get(
-        "/notifications?silentRefresh=true", headers=user_headers["admin"]
-    )
-    response_data = await response.get_json()
-    post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
-        headers=user_headers["admin"],
-    )
-    post_user_data = json.loads(await post_user_query.data)["user"]
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert len(response_data["notifications"]) == 9
-    assert (
-        pre_user_data["last_notifications_read"]
-        == post_user_data["last_notifications_read"]
-    )
-
-
-# Attempt to get user notifications with an admin's JWT (non-silently)
-@pytest.mark.asyncio(scope="session")
-async def test_get_non_silent_notifications_as_admin(
-    app_client, test_db, user_headers, dummy_users_data
-):
-    pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
-        headers=user_headers["admin"],
-    )
-    pre_user_data = json.loads(await pre_user_query.data)["user"]
-    response = await app_client.get(
-        "/notifications?silentRefresh=false", headers=user_headers["admin"]
-    )
-    response_data = await response.get_json()
-    post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
-        headers=user_headers["admin"],
-    )
-    post_user_data = json.loads(await post_user_query.data)["user"]
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert len(response_data["notifications"]) == 9
-    assert (
-        pre_user_data["last_notifications_read"]
-        != post_user_data["last_notifications_read"]
-    )
+    assert len(response_data["notifications"]) == 20
+    assert response_data["current_page"] == 1
+    assert response_data["total_pages"] == 2
 
 
 # Add New Push Subscription Route Tests ('/notifications', POST)

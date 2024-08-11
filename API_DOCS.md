@@ -344,7 +344,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Request Arguments**:
   - type (string) - The type of posts to fetch.
-  - page (number) - An option query parameter indicating the current page.
+  - page (number) - An optional query parameter indicating the current page.
 
 **Required Data**: None.
 
@@ -1057,7 +1057,8 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Handler Function**: get_latest_notifications.
 
-**Request Arguments**: None.
+**Request Arguments**:
+  - page (number) - An optional query parameter indicating the current page.
 
 **Required Data**: None.
 
@@ -1066,10 +1067,11 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
   - notifications (List) - a list containing all user notifications
+  - current_page (Int) - the current page number
+  - total_pages (Int) - the total number of pages
 
 **Expected Errors**:
-  - 404 (Not Found) - In case there's no user with the given Firebase ID.
-  - 500 (Internal Server Error) - In case an error occurred while trying to update the user's 'last read' date.
+  - 500 (Internal Server Error) - In case an error occurred.
 
 **CURL Request Sample**: `curl http://127.0.0.1:5000/notifications -H 'Authorization: Bearer <YOUR_TOKEN>'`
 

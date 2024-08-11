@@ -1583,42 +1583,26 @@ def create_app(config: SAHConfig) -> Quart:
     @app.route("/notifications")
     @requires_auth(config, ["read:messages"])
     async def get_latest_notifications(token_payload: UserData):
-        silent_refresh = request.args.get("silentRefresh", True)
-        user: User = await config.db.one_or_404(
-            item_id=token_payload["id"],
-            item_type=User,
-        )
+        current_page = request.args.get("page", 1, type=int)
 
-        user_id = user.id
-        last_read = user.last_notifications_read
-
-        # If there's no last_read date, it means the user never checked
-        # their notifications, so set it to the time this feature was added
-        if last_read is None:
-            last_read = datetime(2020, 7, 1, 12, 00)
-
-        # Gets all new notifications
-        notifications_scalars = await config.db.session.scalars(
-            select(Notification)
-            .filter(Notification.for_id == user_id)
-            .filter(Notification.date > last_read)
+        # Gets all notifications
+        notifications = await config.db.paginate(
+            query=select(Notification)
+            .order_by(Notification.read)
             .order_by(Notification.date)
+            .filter(Notification.for_id == token_payload["id"]),
+            current_page=current_page,
+            per_page=20,
         )
-        notifications: Sequence[Notification] = notifications_scalars.all()
 
-        formatted_notifications = [
-            notification.format() for notification in notifications
-        ]
-
-        # Updates the user's 'last read' time only if this fetch was
-        # triggered by the user (meaning, they're looking at the
-        # notifications tab right now).
-        if silent_refresh == "false":
-            # Update the user's last-read date
-            user.last_notifications_read = datetime.now()
-            await config.db.update_object(obj=user)
-
-        return jsonify({"success": True, "notifications": formatted_notifications})
+        return jsonify(
+            {
+                "success": True,
+                "notifications": notifications.resource,
+                "current_page": int(current_page),
+                "total_pages": notifications.total_pages,
+            }
+        )
 
     # Endpoint: POST /notifications
     # Description: Add a new PushSubscription to the database (for push
