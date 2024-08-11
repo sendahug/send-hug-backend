@@ -25,22 +25,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
 from firebase_admin.auth import (  # type: ignore
-    InvalidIdTokenError,
     ExpiredIdTokenError,
+    InvalidIdTokenError,
     RevokedIdTokenError,
     TokenSignError,
 )
+import pytest
 
-from auth import (
-    AuthError,
-    get_current_user,
-    check_user_permissions,
-    validate_token,
-)
-from models import SendADatabase
+from auth import AuthError, check_user_permissions, get_current_user, validate_token
 from config import SAHConfig
+
+from models import SendADatabase
 
 
 # Auth testing

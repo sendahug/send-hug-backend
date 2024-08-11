@@ -23,14 +23,19 @@
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# SOFTWARE.from models.models import BaseModel, DumpedModel
 
-from .common import BLOCKED_USER_ROLE_ID, CoreSAHModel
-from .db import SendADatabase
-from .schemas.filters import Filter
-from .schemas.messages import Message, Thread
-from .schemas.notifications import Notification, NotificationSub
-from .schemas.posts import Post
-from .schemas.reports import Report
-from .schemas.roles import Permission, Role
-from .schemas.users import User
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
+
+from models.common import BaseModel, DumpedModel
+
+
+class Filter(BaseModel):
+    __tablename__ = "filters"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    filter: Mapped[str] = mapped_column(String(), nullable=False)
+
+    # Format method
+    def format(self, **kwargs) -> DumpedModel:
+        return {"id": self.id, "filter": self.filter}

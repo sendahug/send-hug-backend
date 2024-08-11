@@ -26,45 +26,26 @@
 # SOFTWARE.
 
 from asyncio import current_task
-from dataclasses import dataclass
-import math
-from typing import Protocol, Sequence, Type, TypeVar, cast, overload
 import logging
+import math
+from typing import Sequence, Type, TypeVar, cast, overload
 
 from quart import Quart, abort
-from sqlalchemy import Delete, Update, Select, func, select, URL
-from sqlalchemy.orm import Mapped
+from sqlalchemy import URL, Delete, Select, Update, func, select
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_scoped_session,
     async_sessionmaker,
     create_async_engine,
-    AsyncEngine,
-    async_scoped_session,
-    AsyncSession,
 )
 from werkzeug.exceptions import HTTPException
 
-from .models import BaseModel, HugModelType, DumpedModel
-
+from .common import BaseModel, CoreSAHModel, DumpedModel, PaginationResult
 
 T = TypeVar("T", bound=BaseModel)
 LOGGER = logging.getLogger("SendAHug")
-
-
-class CoreSAHModel(Protocol[HugModelType]):
-    id: Mapped[int]
-
-    def format(self, **kwargs) -> DumpedModel:
-        ...
-
-
-@dataclass
-class PaginationResult:
-    resource: list[DumpedModel]
-    current_page: int
-    per_page: int
-    total_items: int
-    total_pages: int
 
 
 class SendADatabase:
@@ -166,9 +147,7 @@ class SendADatabase:
             )
             items = items_scalars.all()
             total_items = (
-                await (
-                    self.session.scalar(select(func.count()).select_from(query.cte()))
-                )
+                await self.session.scalar(select(func.count()).select_from(query.cte()))
                 or 0
             )
 

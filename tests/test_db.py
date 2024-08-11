@@ -30,10 +30,11 @@ from datetime import datetime
 import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy import Update, and_, delete, select, update
+from sqlalchemy.exc import DataError, IntegrityError, OperationalError
 from werkzeug.exceptions import HTTPException
-from sqlalchemy.exc import OperationalError, DataError, IntegrityError
 
-from models import Post, SendADatabase
+from models import SendADatabase
+from models.schemas.posts import Post
 
 
 @pytest.fixture
@@ -91,7 +92,7 @@ async def test_paginate_no_error(test_db: SendADatabase):
 @pytest.mark.asyncio(scope="session")
 async def test_paginate_with_error(mocker: MockerFixture, test_db: SendADatabase):
     mocker.patch(
-        "models.models.Post.format", side_effect=Exception("There was an error!")
+        "models.schemas.posts.Post.format", side_effect=Exception("There was an error!")
     )
     query = select(Post).where(Post.given_hugs > 0)
 

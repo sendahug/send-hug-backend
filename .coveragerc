@@ -1,2 +1,7 @@
 [run]
 omit = tests/*,migrations/*,update_changelog.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if TYPE_CHECKING:

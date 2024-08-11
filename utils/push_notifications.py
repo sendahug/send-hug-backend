@@ -1,6 +1,8 @@
 """
 Push notifications related methods.
 """
+from datetime import datetime, timedelta
+
 # MIT License
 #
 # Copyright (c) 2020-2024 Send A Hug
@@ -27,9 +29,7 @@ Push notifications related methods.
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from typing import TypedDict, Literal
-from datetime import datetime, timedelta
-
+from typing import Literal, TypedDict
 
 RawPushData = TypedDict("RawPushData", {"type": Literal["hug", "message"], "text": str})
 PushData = TypedDict("PushData", {"title": str, "body": str})

@@ -25,12 +25,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .common import BLOCKED_USER_ROLE_ID, CoreSAHModel
-from .db import SendADatabase
-from .schemas.filters import Filter
-from .schemas.messages import Message, Thread
-from .schemas.notifications import Notification, NotificationSub
-from .schemas.posts import Post
-from .schemas.reports import Report
-from .schemas.roles import Permission, Role
-from .schemas.users import User
+from dataclasses import dataclass
+from typing import Any, Protocol, TypeAlias, TypeVar
+
+from sqlalchemy.ext.asyncio import AsyncAttrs
+from sqlalchemy.orm import DeclarativeBase, Mapped
+
+
+class BaseModel(AsyncAttrs, DeclarativeBase):
+    pass
+
+
+HugModelType = TypeVar("HugModelType", bound=BaseModel, covariant=True)
+DumpedModel: TypeAlias = dict[str, Any]
+BLOCKED_USER_ROLE_ID = 5
+
+
+@dataclass
+class PaginationResult:
+    resource: list[DumpedModel]
+    current_page: int
+    per_page: int
+    total_items: int
+    total_pages: int
+
+
+class CoreSAHModel(Protocol[HugModelType]):
+    id: Mapped[int]
+
+    def format(self, **kwargs) -> DumpedModel:
+        ...
