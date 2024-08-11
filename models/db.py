@@ -26,10 +26,9 @@
 # SOFTWARE.
 
 from asyncio import current_task
-from dataclasses import dataclass
 import logging
 import math
-from typing import Protocol, Sequence, Type, TypeVar, cast, overload
+from typing import Sequence, Type, TypeVar, cast, overload
 
 from quart import Quart, abort
 from sqlalchemy import URL, Delete, Select, Update, func, select
@@ -41,29 +40,12 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import Mapped
 from werkzeug.exceptions import HTTPException
 
-from .common import BaseModel, DumpedModel, HugModelType
+from .common import BaseModel, CoreSAHModel, DumpedModel, PaginationResult
 
 T = TypeVar("T", bound=BaseModel)
 LOGGER = logging.getLogger("SendAHug")
-
-
-class CoreSAHModel(Protocol[HugModelType]):
-    id: Mapped[int]
-
-    def format(self, **kwargs) -> DumpedModel:
-        ...
-
-
-@dataclass
-class PaginationResult:
-    resource: list[DumpedModel]
-    current_page: int
-    per_page: int
-    total_items: int
-    total_pages: int
 
 
 class SendADatabase:

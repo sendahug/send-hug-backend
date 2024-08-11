@@ -40,7 +40,6 @@ from config import SAHConfig
 
 from models import (
     BLOCKED_USER_ROLE_ID,
-    CoreSAHModel,
     Filter,
     Message,
     Notification,
@@ -49,6 +48,7 @@ from models import (
     Report,
     User,
 )
+from models.common import CoreSAHModel
 from models.schemas.messages import Thread
 from utils.push_notifications import (
     RawPushData,

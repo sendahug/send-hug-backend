@@ -25,10 +25,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Any, TypeAlias, TypeVar
+from dataclasses import dataclass
+from typing import Any, Protocol, TypeAlias, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Mapped
 
 
 class BaseModel(AsyncAttrs, DeclarativeBase):
@@ -38,3 +39,19 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
 HugModelType = TypeVar("HugModelType", bound=BaseModel, covariant=True)
 DumpedModel: TypeAlias = dict[str, Any]
 BLOCKED_USER_ROLE_ID = 5
+
+
+@dataclass
+class PaginationResult:
+    resource: list[DumpedModel]
+    current_page: int
+    per_page: int
+    total_items: int
+    total_pages: int
+
+
+class CoreSAHModel(Protocol[HugModelType]):
+    id: Mapped[int]
+
+    def format(self, **kwargs) -> DumpedModel:
+        ...

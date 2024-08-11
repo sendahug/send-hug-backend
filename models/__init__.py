@@ -25,8 +25,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .common import BLOCKED_USER_ROLE_ID
-from .db import CoreSAHModel, SendADatabase
+from .common import BLOCKED_USER_ROLE_ID, CoreSAHModel
+from .db import SendADatabase
 from .schemas.filters import Filter
 from .schemas.messages import Message, Thread
 from .schemas.notifications import Notification, NotificationSub
