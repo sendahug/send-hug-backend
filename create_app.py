@@ -39,17 +39,6 @@ from config import sah_config
 from controllers import routers
 from controllers.common import DATETIME_PATTERN, validator
 
-from models import (
-    BLOCKED_USER_ROLE_ID,
-    Filter,
-    Message,
-    Notification,
-    NotificationSub,
-    Post,
-    Report,
-    User,
-)
-from models.schemas.messages import Thread
 from utils.push_notifications import RawPushData
 from utils.validator import ValidationError
 

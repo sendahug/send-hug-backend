@@ -9,14 +9,14 @@ from models import (
     Message,
     Notification,
     NotificationSub,
+    Permission,
     Post,
     Report,
     Role,
+    Thread,
     User,
 )
 from models.db import SendADatabase
-from models.schemas.messages import Thread
-from models.schemas.roles import Permission
 
 DATETIME_PATTERN = "%Y-%m-%d %H:%M:%S.%f"
 

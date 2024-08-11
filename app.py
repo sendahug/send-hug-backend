@@ -25,16 +25,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
-
-from config import SAHConfig
 from create_app import create_app
 
-DB_CREDENTIALS_PATH = os.environ.get("DB_CREDENTIALS_PATH", "")
-
-config = SAHConfig(credentials_path=DB_CREDENTIALS_PATH)
-
-app = create_app(config=config)
+app = create_app()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
