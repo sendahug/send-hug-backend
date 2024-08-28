@@ -1604,7 +1604,9 @@ def create_app(config: SAHConfig) -> Quart:
             {
                 "success": True,
                 "notifications": notifications.resource,
-                "new_count": new_notifications_count,
+                "newCount": new_notifications_count,
+                # TODO: Left these in snake case for consistency with the other
+                # endpoints, but it really should be camel case
                 "current_page": int(current_page),
                 "total_pages": notifications.total_pages,
             }
