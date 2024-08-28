@@ -1588,17 +1588,23 @@ def create_app(config: SAHConfig) -> Quart:
         # Gets all notifications
         notifications = await config.db.paginate(
             query=select(Notification)
-            .order_by(Notification.read)
             .order_by(Notification.date)
             .filter(Notification.for_id == token_payload["id"]),
             current_page=current_page,
             per_page=20,
         )
 
+        new_notifications_count = await config.db.session.scalar(
+            select(func.count())
+            .select_from(Notification)
+            .where(Notification.read.is_(false()))
+        )
+
         return jsonify(
             {
                 "success": True,
                 "notifications": notifications.resource,
+                "new_count": new_notifications_count,
                 "current_page": int(current_page),
                 "total_pages": notifications.total_pages,
             }
