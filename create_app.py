@@ -1588,7 +1588,7 @@ def create_app(config: SAHConfig) -> Quart:
         # Gets all notifications
         notifications = await config.db.paginate(
             query=select(Notification)
-            .order_by(Notification.date)
+            .order_by(Notification.date.desc())
             .filter(Notification.for_id == token_payload["id"]),
             current_page=current_page,
             per_page=20,
