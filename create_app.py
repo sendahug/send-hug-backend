@@ -1612,12 +1612,71 @@ def create_app(config: SAHConfig) -> Quart:
             }
         )
 
-    # Endpoint: POST /notifications
+    # Endpoint: PATCH /notifications
+    # Description: Updates one or more notifications' read status.
+    # Parameters: None.
+    # Authorization: read:messages.
+    @app.route("/notifications", methods=["PATCH"])
+    @requires_auth(config, ["read:messages"])
+    async def update_notifications(token_payload: UserData):
+        request_data = json.loads(await request.data)
+
+        if not request_data.get("notification_ids") or not request_data.get("read"):
+            abort(400)
+
+        if request_data["notification_ids"] == "all":
+            update_query = (
+                update(Notification)
+                .where(Notification.for_id == token_payload["id"])
+                .values(read=request_data["read"])
+            )
+        else:
+            notification_ids: list[int] = request_data["notification_ids"]
+
+            existing_notifications = await config.db.session.scalars(
+                select(Notification.id).where(
+                    and_(Notification.id.in_(notification_ids)),
+                    Notification.for_id == token_payload["id"],
+                )
+            )
+
+            # Make sure the user has permission to see all the notifications
+            if len(list(existing_notifications)) != len(notification_ids):
+                raise AuthError(
+                    {
+                        "code": 403,
+                        "description": "You do not have permission to update some "
+                        "of the provided notifications. Ensure all notifications "
+                        "are meant for you and try again.",
+                    },
+                    403,
+                )
+
+            update_query = (
+                update(Notification)
+                .where(
+                    and_(
+                        Notification.id.in_(notification_ids),
+                        Notification.for_id == token_payload["id"],
+                    )
+                )
+                .values(read=request_data["read"])
+            )
+
+        await config.db.update_multiple_objects_with_dml(update_stmts=update_query)
+
+        return {
+            "success": True,
+            "updated": request_data["notification_ids"],
+            "read": request_data["read"],
+        }
+
+    # Endpoint: POST /push_subscriptions
     # Description: Add a new PushSubscription to the database (for push
     #              notifications).
     # Parameters: None.
     # Authorization: read:messages.
-    @app.route("/notifications", methods=["POST"])
+    @app.route("/push_subscriptions", methods=["POST"])
     @requires_auth(config, ["read:messages"])
     async def add_notification_subscription(token_payload: UserData):
         request_data = await request.data
@@ -1648,12 +1707,12 @@ def create_app(config: SAHConfig) -> Quart:
             "subId": sub["id"],
         }
 
-    # Endpoint: PATCH /notifications
+    # Endpoint: PATCH /push_subscriptions/<sub_id>
     # Description: Add a new PushSubscription to the database (for push
     #              notifications).
     # Parameters: None.
     # Authorization: read:messages.
-    @app.route("/notifications/<sub_id>", methods=["PATCH"])
+    @app.route("/push_subscriptions/<sub_id>", methods=["PATCH"])
     @requires_auth(config, ["read:messages"])
     async def update_notification_subscription(token_payload: UserData, sub_id: int):
         request_data = await request.data

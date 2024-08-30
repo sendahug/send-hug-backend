@@ -33,8 +33,8 @@ For full instructions check the [`backend README`](./backend/README.md)
 21. [POST /filters](#post-filters)
 22. [DELETE /filters/<filter_id>](#delete-filtersfilter_id)
 23. [GET /notifications](#get-notifications)
-24. [POST /notifications](#post-notifications)
-25. [PATCH /notifications](#patch-notificationssub_id)
+24. [POST /push_subscriptions](#post-push_subscriptions)
+25. [PATCH /push_subscriptions](#patch-npush_subscriptions)
 
 **NOTE**: All sample curl requests are done via user 4; for your own tests, change the user ID and the user's display name.
 
@@ -1080,7 +1080,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 ```
 
-### POST /notifications
+### POST /push_subscriptions
 **Description**: Adds a new PushSubscription to the subscriptions database.
 
 **Handler Function**: add_notification_subscription.
@@ -1107,7 +1107,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 ```
 
-### PATCH /notifications/<sub_id>
+### PATCH /push_subscriptions/<sub_id>
 **Description**: Updates the details of a PushSubscription in the subscriptions table.
 
 **Handler Function**: update_notification_subscription.
