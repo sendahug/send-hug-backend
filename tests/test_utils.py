@@ -25,6 +25,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from typing import Generator
+
 import pytest
 
 from utils.filter import WordFilter
@@ -37,7 +39,7 @@ from utils.validator import ValidationError, Validator
 
 
 @pytest.fixture(scope="class")
-def test_validator():
+def test_validator() -> Generator[Validator, None, None]:
     yield Validator(
         {
             "post": {"max": 480, "min": 1},
@@ -50,7 +52,7 @@ def test_validator():
 
 # Push notification tests
 # =====================================================
-def test_generate_push_data():
+def test_generate_push_data() -> None:
     base_data: RawPushData = {"type": "hug", "text": "Meow"}
     push_data = generate_push_data(base_data)
 
@@ -109,7 +111,9 @@ def test_generate_vapid_claims():
         ),
     ],
 )
-def test_validator_errors(test_validator, text, obj_type, error_str):
+def test_validator_errors(
+    test_validator: Validator, text: str, obj_type: str, error_str: str
+) -> None:
     with pytest.raises(ValidationError) as exc:
         test_validator.check_length(data=text, obj_type=obj_type)
 
@@ -117,7 +121,7 @@ def test_validator_errors(test_validator, text, obj_type, error_str):
 
 
 @pytest.mark.parametrize("text, obj_type", [("hi", "Post"), ("hello", "post text")])
-def test_just_right(test_validator, text, obj_type):
+def test_just_right(test_validator: Validator, text: str, obj_type: str) -> None:
     res = test_validator.check_length(data=text, obj_type=obj_type)
     assert res is True
 
@@ -133,7 +137,13 @@ def test_just_right(test_validator, text, obj_type):
         ("h", "user ID", "user ID", "Integer"),
     ],
 )
-def test_incorrect_type(test_validator, data, obj_type, item_in_error, type_in_error):
+def test_incorrect_type(
+    test_validator: Validator,
+    data: int | str,
+    obj_type: str,
+    item_in_error: str,
+    type_in_error: str,
+) -> None:
     with pytest.raises(ValidationError) as exc:
         test_validator.check_type(data=data, obj_type=obj_type)
 
@@ -154,14 +164,16 @@ def test_incorrect_type(test_validator, data, obj_type, item_in_error, type_in_e
         (3, "user ID"),
     ],
 )
-def test_correct_type(test_validator, data, obj_type):
+def test_correct_type(
+    test_validator: Validator, data: int | str, obj_type: str
+) -> None:
     res = test_validator.check_type(data=data, obj_type=obj_type)
     assert res is True
 
 
 # Validator tests
 # =====================================================
-def test_wordfilter_blacklisted():
+def test_wordfilter_blacklisted() -> None:
     word_filter = WordFilter()
     blacklisted_result = word_filter.blacklisted("hi there", filtered_words=["hi"])
 
@@ -172,7 +184,7 @@ def test_wordfilter_blacklisted():
     assert blacklisted_result.badword_indexes[0].index == 0
 
 
-def test_wordfilter_multiple_filters():
+def test_wordfilter_multiple_filters() -> None:
     word_filter = WordFilter()
     blacklisted_result = word_filter.blacklisted(
         "hi there", filtered_words=["hi", "bye"]
@@ -185,7 +197,7 @@ def test_wordfilter_multiple_filters():
     assert blacklisted_result.badword_indexes[0].index == 0
 
 
-def test_wordfilter_multiple_filters_in_string():
+def test_wordfilter_multiple_filters_in_string() -> None:
     word_filter = WordFilter()
     blacklisted_result = word_filter.blacklisted(
         "hello how are you", filtered_words=["how", "you"]

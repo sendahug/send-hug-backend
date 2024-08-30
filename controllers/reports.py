@@ -10,7 +10,7 @@ from config import sah_config
 from .common import DATETIME_PATTERN, validator
 from models import Post, Report, User
 
-reports_endpoints = Blueprint("posts", __name__)
+reports_endpoints = Blueprint("reports", __name__)
 
 
 # Endpoint: GET /reports

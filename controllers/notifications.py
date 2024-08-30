@@ -10,7 +10,7 @@ from config import sah_config
 
 from models import Notification, NotificationSub, User
 
-notifications_endpoints = Blueprint("posts", __name__)
+notifications_endpoints = Blueprint("notifications", __name__)
 
 
 # Endpoint: GET /notifications

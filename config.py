@@ -27,6 +27,7 @@
 
 import json
 import os
+from pathlib import Path
 from typing import TypedDict
 
 from firebase_admin import initialize_app  # type: ignore
@@ -35,10 +36,24 @@ from sqlalchemy import URL
 
 from models.db import SendADatabase
 
-FIREBASE_CREDENTIALS_FILE = os.environ.get("FIREBASE_CREDENTIALS_FILE", "")
+HOME = Path(os.environ.get("HOME", ""))
+SAH_HOME = Path(os.environ.get("SAH_HOME", HOME / "git" / "send-hug-backend"))
+SECRETS_PATH = SAH_HOME / ".secrets"
+FIREBASE_CREDENTIALS_FILE = Path(
+    os.environ.get(
+        "FIREBASE_CREDENTIALS_FILE",
+        SECRETS_PATH / "platform_firebase_credentials" / "latest.json",
+    )
+)
+DB_CREDENTIALS_PATH = Path(
+    os.environ.get(
+        "DB_CREDENTIALS_PATH", SECRETS_PATH / "db_development_creds" / "latest.json"
+    )
+)
+# TODO: depcrate the below once we update docs with how to use
+# db_development_creds/latest.json for development
 DATABASE_USERNAME = os.environ.get("DATABASE_USERNAME", "")
 DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD", "")
-DB_CREDENTIALS_PATH = os.environ.get("DB_CREDENTIALS_PATH", "")
 
 
 class DatabaseCredentialsFile(TypedDict):
@@ -54,15 +69,22 @@ class SAHConfig:
     Configuration class for the Send A Hug backend.
     """
 
-    def __init__(self, credentials_path: str, override_db_name: str | None = None):
+    def __init__(
+        self,
+        credentials_path: Path,
+        override_db_name: str | None = None,
+        init_firestore: bool = True,
+    ):
         credentials = self._get_credentials_json(credentials_path=credentials_path)
         self.database_url = self.get_db_url(
             credentials=credentials, override_db_name=override_db_name
         )
         self.db = SendADatabase(database_url=self.database_url)
-        self.firebase_app = initialize_app(
-            credential=Certificate(FIREBASE_CREDENTIALS_FILE)
-        )
+
+        if init_firestore:
+            self.firebase_app = initialize_app(
+                credential=Certificate(FIREBASE_CREDENTIALS_FILE)
+            )
 
     def get_db_url(
         self, credentials: DatabaseCredentialsFile, override_db_name: str | None = None
@@ -83,7 +105,7 @@ class SAHConfig:
             database=override_db_name or credentials["db_name"],
         )
 
-    def _get_credentials_json(self, credentials_path: str) -> DatabaseCredentialsFile:
+    def _get_credentials_json(self, credentials_path: Path) -> DatabaseCredentialsFile:
         """
         Fetches the database credentials to construct the db URL.
 
@@ -101,6 +123,8 @@ class SAHConfig:
 
         # If the default file doesn't exist, it means we're in local mode
         # so set the details to localhost
+        # TODO: should switch this to some dev creds json file so it follows the same
+        # pattern as staging / prod
         except FileNotFoundError:
             return {
                 "username": DATABASE_USERNAME,

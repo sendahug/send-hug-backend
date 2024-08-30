@@ -8,7 +8,7 @@ from alembic import context
 # from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 
-from app import config as app_config
+from create_app import sah_config
 
 from models.common import BaseModel
 
@@ -29,7 +29,7 @@ logger = getLogger("alembic.env")
 # target_metadata = mymodel.Base.metadata
 alembic_config.set_main_option(
     "sqlalchemy.url",
-    app_config.database_url.render_as_string(hide_password=False).replace("%", "%%"),
+    sah_config.database_url.render_as_string(hide_password=False).replace("%", "%%"),
 )
 target_metadata = BaseModel.metadata
 
@@ -91,7 +91,7 @@ async def run_async_migrations() -> None:
     #         if script.upgrade_ops.is_empty():
     #             directives[:] = []
 
-    connectable = app_config.db.engine
+    connectable = sah_config.db.engine
     # TODO: figure out why below doesn't work
     # connectable = async_engine_from_config(
     #     alembic_config.get_section(alembic_config.config_ini_section, {}),

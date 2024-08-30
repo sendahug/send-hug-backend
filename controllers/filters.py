@@ -9,7 +9,7 @@ from config import sah_config
 from .common import validator
 from models import Filter
 
-filters_endpoints = Blueprint("posts", __name__)
+filters_endpoints = Blueprint("filters", __name__)
 
 
 # Endpoint: GET /filters

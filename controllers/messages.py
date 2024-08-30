@@ -17,7 +17,7 @@ from .common import (
 from models import Message, Notification, Thread
 from utils.push_notifications import RawPushData
 
-messages_endpoints = Blueprint("posts", __name__)
+messages_endpoints = Blueprint("messages", __name__)
 
 
 # Endpoint: GET /messages

@@ -12,7 +12,7 @@ from .common import send_push_notification, validator
 from models import BLOCKED_USER_ROLE_ID, Notification, Post, User
 from utils.push_notifications import RawPushData
 
-users_endpoints = Blueprint("posts", __name__)
+users_endpoints = Blueprint("users", __name__)
 
 
 # Endpoint: GET /users/<type>
