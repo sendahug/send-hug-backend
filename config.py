@@ -73,7 +73,6 @@ class SAHConfig:
         self,
         credentials_path: Path,
         override_db_name: str | None = None,
-        init_firestore: bool = True,
     ):
         credentials = self._get_credentials_json(credentials_path=credentials_path)
         self.database_url = self.get_db_url(
@@ -81,7 +80,7 @@ class SAHConfig:
         )
         self.db = SendADatabase(database_url=self.database_url)
 
-        if init_firestore:
+        if not override_db_name:
             self.firebase_app = initialize_app(
                 credential=Certificate(FIREBASE_CREDENTIALS_FILE)
             )
@@ -135,4 +134,9 @@ class SAHConfig:
             }
 
 
-sah_config = SAHConfig(credentials_path=DB_CREDENTIALS_PATH)
+if os.environ.get("PYTEST_VERSION"):
+    sah_config = SAHConfig(
+        credentials_path=Path("test.json"), override_db_name="test_sah"
+    )
+else:
+    sah_config = SAHConfig(credentials_path=DB_CREDENTIALS_PATH)

@@ -64,7 +64,6 @@ def test_config(session_mocker: MockerFixture) -> Generator[SAHConfig, None, Non
     yield SAHConfig(
         credentials_path=Path("test.json"),
         override_db_name="test_sah",
-        init_firestore=False,
     )
 
 
@@ -75,7 +74,8 @@ def app_client(
     """Get the test client for the test app"""
     # NO NEED TO PATCH THE ENTIRE CONFIG, JUST THE DB
     # https://github.com/FenestraHoldings/solis-api/blob/staging/tests/conftest.py#L189
-    mocker.patch("create_app.sah_config", return_value=test_config)
+    # mocker.patch("create_app.sah_config", return_value=test_config)
+    # mocker.patch("controllers.root.sah_config", return_value=test_config)
     app = create_app()
 
     yield app.test_client()
@@ -123,11 +123,19 @@ async def test_db(db: SendADatabase, mocker: MockerFixture):
             session_factory=db.session_factory, scopefunc=current_task
         )
 
+        # async_mock = AsyncMock()
+
         await update_sequences(db)
 
         await db.session.begin_nested()
         mocker.patch("pywebpush.webpush")
         mocker.patch("controllers.common.webpush")
+
+        # mocker.patch.object(connection, "begin", new=connection.begin_nested)
+        # mocker.patch.object(session, "commit", new=session.flush)
+        # mocker.patch("config.sah_config.db.session", side_effect=async_mock)
+
+        # async_mock.return_value = db.session
 
         yield db
 
