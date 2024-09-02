@@ -76,6 +76,7 @@ def app_client(
     # https://github.com/FenestraHoldings/solis-api/blob/staging/tests/conftest.py#L189
     # mocker.patch("create_app.sah_config", return_value=test_config)
     # mocker.patch("controllers.root.sah_config", return_value=test_config)
+    # mocker.patch("config.get_db_credentials_path", return_value=Path("test.json"))
     app = create_app()
 
     yield app.test_client()
@@ -134,6 +135,7 @@ async def test_db(db: SendADatabase, mocker: MockerFixture):
         # mocker.patch.object(connection, "begin", new=connection.begin_nested)
         # mocker.patch.object(session, "commit", new=session.flush)
         # mocker.patch("config.sah_config.db.session", side_effect=async_mock)
+        # mocker.patch("config.get_db_credentials_path", return_value=Path("test.json"))
 
         # async_mock.return_value = db.session
 

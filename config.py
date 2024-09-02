@@ -30,7 +30,7 @@ import os
 from pathlib import Path
 from typing import TypedDict
 
-from firebase_admin import initialize_app  # type: ignore
+from firebase_admin import _apps, get_app, initialize_app  # type: ignore
 from firebase_admin.credentials import Certificate  # type: ignore
 from sqlalchemy import URL
 
@@ -45,15 +45,19 @@ FIREBASE_CREDENTIALS_FILE = Path(
         SECRETS_PATH / "platform_firebase_credentials" / "latest.json",
     )
 )
-DB_CREDENTIALS_PATH = Path(
-    os.environ.get(
-        "DB_CREDENTIALS_PATH", SECRETS_PATH / "db_development_creds" / "latest.json"
-    )
-)
+
 # TODO: depcrate the below once we update docs with how to use
 # db_development_creds/latest.json for development
 DATABASE_USERNAME = os.environ.get("DATABASE_USERNAME", "")
 DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD", "")
+
+
+def get_db_credentials_path() -> Path:
+    return Path(
+        os.environ.get(
+            "DB_CREDENTIALS_PATH", SECRETS_PATH / "db_development_creds" / "latest.json"
+        )
+    )
 
 
 class DatabaseCredentialsFile(TypedDict):
@@ -80,10 +84,13 @@ class SAHConfig:
         )
         self.db = SendADatabase(database_url=self.database_url)
 
-        if not override_db_name:
+        # if self.firebase_app is None:
+        if not _apps:
             self.firebase_app = initialize_app(
                 credential=Certificate(FIREBASE_CREDENTIALS_FILE)
             )
+        else:
+            self.firebase_app = get_app()
 
     def get_db_url(
         self, credentials: DatabaseCredentialsFile, override_db_name: str | None = None
@@ -134,9 +141,10 @@ class SAHConfig:
             }
 
 
+# TODO: should be able to do this with a mock but can't currently get it to work
 if os.environ.get("PYTEST_VERSION"):
     sah_config = SAHConfig(
         credentials_path=Path("test.json"), override_db_name="test_sah"
     )
 else:
-    sah_config = SAHConfig(credentials_path=DB_CREDENTIALS_PATH)
+    sah_config = SAHConfig(credentials_path=get_db_credentials_path())
