@@ -35,7 +35,7 @@ import pytest
 # -------------------------------------------------------
 # Attempt to get user notifications without auth header
 @pytest.mark.asyncio(scope="session")
-async def test_get_notifications_no_auth(app_client, test_db, user_headers):
+async def test_get_notifications_no_auth(app_client, test_db, user_headers) -> None:
     response = await app_client.get("/notifications")
     response_data = await response.get_json()
 

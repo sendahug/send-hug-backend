@@ -1,9 +1,11 @@
 from asyncio import current_task
 from datetime import datetime
+from pathlib import Path
+from typing import Generator
 
-from firebase_admin import initialize_app  # type: ignore
 import pytest
 from pytest_mock import MockerFixture
+from quart.typing import TestClientProtocol
 from sqlalchemy.ext.asyncio import async_scoped_session, async_sessionmaker
 
 from config import SAHConfig
@@ -20,6 +22,7 @@ def user_headers(session_mocker: MockerFixture):
     Sets the headers for each of the users and mocks
     the verify_id_token function from Firebase.
     """
+
     roles = ["user", "moderator", "admin", "blocked"]
     user_headers: dict[str, dict[str, str]] = {}
 
@@ -51,19 +54,30 @@ def user_headers(session_mocker: MockerFixture):
 
 
 @pytest.fixture(scope="session")
-def test_config(session_mocker: MockerFixture):
+def test_config(session_mocker: MockerFixture) -> Generator[SAHConfig, None, None]:
     """Set up the config"""
+
     # TODO: We should at least make sure that this works with
     # an actual key.
-    session_mocker.patch("config.initialize_app", return_value=initialize_app())
-    session_mocker.patch("config.Certificate")
-    yield SAHConfig(credentials_path="test.json", override_db_name="test_sah")
+    # session_mocker.patch("config.initialize_app", return_value=initialize_app())
+    # session_mocker.patch("config.Certificate")
+    yield SAHConfig(
+        credentials_path=Path("test.json"),
+        override_db_name="test_sah",
+    )
 
 
 @pytest.fixture(scope="function")
-def app_client(test_config: SAHConfig):
+def app_client(
+    test_config: SAHConfig, mocker: MockerFixture
+) -> Generator[TestClientProtocol, None, None]:
     """Get the test client for the test app"""
-    app = create_app(config=test_config)
+    # NO NEED TO PATCH THE ENTIRE CONFIG, JUST THE DB
+    # https://github.com/FenestraHoldings/solis-api/blob/staging/tests/conftest.py#L189
+    # mocker.patch("create_app.sah_config", return_value=test_config)
+    # mocker.patch("controllers.root.sah_config", return_value=test_config)
+    app = create_app()
+
     yield app.test_client()
 
 
@@ -109,11 +123,19 @@ async def test_db(db: SendADatabase, mocker: MockerFixture):
             session_factory=db.session_factory, scopefunc=current_task
         )
 
+        # async_mock = AsyncMock()
+
         await update_sequences(db)
 
         await db.session.begin_nested()
         mocker.patch("pywebpush.webpush")
-        mocker.patch("create_app.webpush")
+        mocker.patch("controllers.common.webpush")
+
+        # mocker.patch.object(connection, "begin", new=connection.begin_nested)
+        # mocker.patch.object(session, "commit", new=session.flush)
+        # mocker.patch("config.sah_config.db.session", side_effect=async_mock)
+
+        # async_mock.return_value = db.session
 
         yield db
 
@@ -151,7 +173,7 @@ def dummy_users_data():
 
 
 @pytest.fixture
-def dummy_request_data():
+def dummy_request_data() -> dict:
     """Dummy POST/PATCH request data for the various endpoints."""
     # Item Samples
     request_data = {
@@ -236,7 +258,7 @@ def dummy_request_data():
 
 
 @pytest.fixture
-def db_helpers_dummy_data():
+def db_helpers_dummy_data() -> dict:
     """Dummy data for test_db_helpers"""
     dummy_data = {
         "DATETIME_PATTERN": DATETIME_PATTERN,
