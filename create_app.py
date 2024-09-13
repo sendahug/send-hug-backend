@@ -1584,12 +1584,22 @@ def create_app(config: SAHConfig) -> Quart:
     @requires_auth(config, ["read:messages"])
     async def get_latest_notifications(token_payload: UserData):
         current_page = request.args.get("page", 1, type=int)
+        read_status = request.args.get("readStatus", None)
+
+        get_query = (
+            select(Notification)
+            .order_by(Notification.date.desc())
+            .filter(Notification.for_id == token_payload["id"])
+        )
+
+        if read_status == "true":
+            get_query = get_query.filter(Notification.read == true())
+        elif read_status == "false":
+            get_query = get_query.filter(Notification.read == false())
 
         # Gets all notifications
         notifications = await config.db.paginate(
-            query=select(Notification)
-            .order_by(Notification.date.desc())
-            .filter(Notification.for_id == token_payload["id"]),
+            query=get_query,
             current_page=current_page,
             per_page=20,
         )
@@ -1597,7 +1607,12 @@ def create_app(config: SAHConfig) -> Quart:
         new_notifications_count = await config.db.session.scalar(
             select(func.count())
             .select_from(Notification)
-            .where(Notification.read.is_(false()))
+            .where(
+                and_(
+                    Notification.read == false(),
+                    Notification.for_id == token_payload["id"],
+                )
+            )
         )
 
         return jsonify(
@@ -1609,6 +1624,7 @@ def create_app(config: SAHConfig) -> Quart:
                 # endpoints, but it really should be camel case
                 "current_page": int(current_page),
                 "total_pages": notifications.total_pages,
+                "totalItems": notifications.total_items,
             }
         )
 
@@ -1621,7 +1637,10 @@ def create_app(config: SAHConfig) -> Quart:
     async def update_notifications(token_payload: UserData):
         request_data = json.loads(await request.data)
 
-        if not request_data.get("notification_ids") or not request_data.get("read"):
+        if (
+            not request_data.get("notification_ids")
+            or request_data.get("read", None) is None
+        ):
             abort(400)
 
         if request_data["notification_ids"] == "all":
@@ -1635,8 +1654,10 @@ def create_app(config: SAHConfig) -> Quart:
 
             existing_notifications = await config.db.session.scalars(
                 select(Notification.id).where(
-                    and_(Notification.id.in_(notification_ids)),
-                    Notification.for_id == token_payload["id"],
+                    and_(
+                        Notification.id.in_(notification_ids),
+                        Notification.for_id == token_payload["id"],
+                    ),
                 )
             )
 
