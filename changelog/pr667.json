@@ -1,0 +1,29 @@
+{
+  "pr_number": 667,
+  "changes": [
+    {
+      "change": "Features",
+      "description": "Added a `read` column to the notifications' table to allow setting individual notifications' read status."
+    },
+    {
+      "change": "Changes",
+      "description": "The users' `last_notifications_read` attribute no longer impacts the notifications' fetch. Previously, the app relied on that date to fetch notifications only from that date onwards; now, we return all notifications regardless of when a user last checked their notifications, so it's no longer needed."
+    },
+    {
+      "change": "Features",
+      "description": "The GET /notifications endpoint now returns both read and unread notifications. The endpoint also allows filtering by the read status of a notification (e.g., see only unread notifications), as well as fetching multiple pages of notifications."
+    },
+    {
+      "change": "Breaking Changes",
+      "description": "The query parameter for silent/non-silent notifications refresh was removed. Instead, users now get all their notifications, regardless of whether or not they were read."
+    },
+    {
+      "change": "Features",
+      "description": "Added an endpoint for updating the read status of a group of notifications. This allows users to set the read status of either a group of notifications or all notifications depending on their choice."
+    },
+    {
+      "change": "Breaking Changes",
+      "description": "The paths for the push subscription related endpoint have been changed to better reflect the resource being accessed. Instead of `POST /notifications` and `PATCH /notifications/<sub_id>`, the updated endpoints are `POST /push_subscriptions` and `PATCH /push_subscriptions/<sub_id>`, respectively."
+    }
+  ]
+}
