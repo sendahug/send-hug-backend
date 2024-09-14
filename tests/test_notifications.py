@@ -79,6 +79,27 @@ async def test_get_notifications(
     assert response_data["total_pages"] == total_pages
 
 
+@pytest.mark.parametrize(
+    "notification_count, read_status",
+    [
+        (10, "true"),
+        (18, "false"),
+    ],
+)
+@pytest.mark.asyncio(scope="session")
+async def test_get_notifications_read_status(
+    app_client, test_db, user_headers, notification_count, read_status
+):
+    response = await app_client.get(
+        f"/notifications?readStatus={read_status}", headers=user_headers["admin"]
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert len(response_data["notifications"]) == notification_count
+
+
 # Update Notifications Route Tests ('/notifications', PATCH)
 # -------------------------------------------------------
 # Attempt to update notifications without auth header
