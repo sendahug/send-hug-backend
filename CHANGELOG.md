@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### 2024-09-15
+
+#### Features
+
+- Added a `read` column to the notifications' table to allow setting individual notifications' read status. ([#667](https://github.com/sendahug/send-hug-backend/pull/667))
+- The GET /notifications endpoint now returns both read and unread notifications. The endpoint also allows filtering by the read status of a notification (e.g., see only unread notifications), as well as fetching multiple pages of notifications. ([#667](https://github.com/sendahug/send-hug-backend/pull/667))
+- Added an endpoint for updating the read status of a group of notifications. This allows users to set the read status of either a group of notifications or all notifications depending on their choice. ([#667](https://github.com/sendahug/send-hug-backend/pull/667))
+
+#### Changes
+
+- The users' `last_notifications_read` attribute no longer impacts the notifications' fetch. Previously, the app relied on that date to fetch notifications only from that date onwards; now, we return all notifications regardless of when a user last checked their notifications, so it's no longer needed. ([#667](https://github.com/sendahug/send-hug-backend/pull/667))
+
+#### Breaking Changes
+
+- The query parameter for silent/non-silent notifications refresh was removed. Instead, users now get all their notifications, regardless of whether or not they were read. ([#667](https://github.com/sendahug/send-hug-backend/pull/667))
+- The paths for the push subscription related endpoint have been changed to better reflect the resource being accessed. Instead of `POST /notifications` and `PATCH /notifications/<sub_id>`, the updated endpoints are `POST /push_subscriptions` and `PATCH /push_subscriptions/<sub_id>`, respectively. ([#667](https://github.com/sendahug/send-hug-backend/pull/667))
+
 ### 2024-08-11
 
 #### Chores
