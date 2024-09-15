@@ -33,8 +33,8 @@ For full instructions check the [`backend README`](./backend/README.md)
 21. [POST /filters](#post-filters)
 22. [DELETE /filters/<filter_id>](#delete-filtersfilter_id)
 23. [GET /notifications](#get-notifications)
-24. [POST /notifications](#post-notifications)
-25. [PATCH /notifications](#patch-notificationssub_id)
+24. [POST /push_subscriptions](#post-push_subscriptions)
+25. [PATCH /push_subscriptions](#patch-npush_subscriptions)
 
 **NOTE**: All sample curl requests are done via user 4; for your own tests, change the user ID and the user's display name.
 
@@ -344,7 +344,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Request Arguments**:
   - type (string) - The type of posts to fetch.
-  - page (number) - An option query parameter indicating the current page.
+  - page (number) - An optional query parameter indicating the current page.
 
 **Required Data**: None.
 
@@ -1057,7 +1057,8 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Handler Function**: get_latest_notifications.
 
-**Request Arguments**: None.
+**Request Arguments**:
+  - page (number) - An optional query parameter indicating the current page.
 
 **Required Data**: None.
 
@@ -1066,10 +1067,11 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Returns**: An object containing:
   - Success (Boolean) - a success value.
   - notifications (List) - a list containing all user notifications
+  - current_page (Int) - the current page number
+  - total_pages (Int) - the total number of pages
 
 **Expected Errors**:
-  - 404 (Not Found) - In case there's no user with the given Firebase ID.
-  - 500 (Internal Server Error) - In case an error occurred while trying to update the user's 'last read' date.
+  - 500 (Internal Server Error) - In case an error occurred.
 
 **CURL Request Sample**: `curl http://127.0.0.1:5000/notifications -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
@@ -1078,7 +1080,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 ```
 
-### POST /notifications
+### POST /push_subscriptions
 **Description**: Adds a new PushSubscription to the subscriptions database.
 
 **Handler Function**: add_notification_subscription.
@@ -1105,7 +1107,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 ```
 
-### PATCH /notifications/<sub_id>
+### PATCH /push_subscriptions/<sub_id>
 **Description**: Updates the details of a PushSubscription in the subscriptions table.
 
 **Handler Function**: update_notification_subscription.

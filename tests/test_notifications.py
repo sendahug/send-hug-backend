@@ -29,13 +29,16 @@ import json
 from typing import Any
 
 import pytest
+from sqlalchemy import and_, false, select
+
+from models import Notification
 
 
 # Get New Notifications Route Tests ('/notifications', GET)
 # -------------------------------------------------------
 # Attempt to get user notifications without auth header
 @pytest.mark.asyncio(scope="session")
-async def test_get_notifications_no_auth(app_client, test_db, user_headers):
+async def test_get_notifications_no_auth(app_client, test_db):
     response = await app_client.get("/notifications")
     response_data = await response.get_json()
 
@@ -53,181 +56,167 @@ async def test_get_notifications_malformed_auth(app_client, test_db, user_header
     assert response.status_code == 401
 
 
-# Attempt to get user notifications with a user's JWT (silent refresh)
+# Attempt to get user notifications with a user's JWT
+@pytest.mark.parametrize(
+    "user, notification_count, total_pages",
+    [
+        ("user", 11, 1),
+        ("moderator", 4, 1),
+        ("admin", 20, 2),
+    ],
+)
 @pytest.mark.asyncio(scope="session")
-async def test_get_silent_notifications_as_user(
-    app_client, test_db, user_headers, dummy_users_data
+async def test_get_notifications(
+    app_client, test_db, user_headers, user, notification_count, total_pages
 ):
-    pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['firebase_id']}",
-        headers=user_headers["user"],
-    )
-    pre_user_data = json.loads(await pre_user_query.data)["user"]
-    response = await app_client.get(
-        "/notifications?silentRefresh=true", headers=user_headers["user"]
-    )
+    response = await app_client.get("/notifications", headers=user_headers[user])
     response_data = await response.get_json()
-    post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['firebase_id']}",
-        headers=user_headers["user"],
-    )
-    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert len(response_data["notifications"]) == 11
-    assert (
-        pre_user_data["last_notifications_read"]
-        == post_user_data["last_notifications_read"]
-    )
+    assert len(response_data["notifications"]) == notification_count
+    assert response_data["current_page"] == 1
+    assert response_data["total_pages"] == total_pages
 
 
-# Attempt to get user notifications with a user's JWT (non-silent refresh)
+@pytest.mark.parametrize(
+    "notification_count, read_status",
+    [
+        (10, "true"),
+        (18, "false"),
+    ],
+)
 @pytest.mark.asyncio(scope="session")
-async def test_get_non_silent_notifications_as_user(
-    app_client, test_db, user_headers, dummy_users_data
+async def test_get_notifications_read_status(
+    app_client, test_db, user_headers, notification_count, read_status
 ):
-    pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['firebase_id']}",
-        headers=user_headers["user"],
-    )
-    pre_user_data = json.loads(await pre_user_query.data)["user"]
     response = await app_client.get(
-        "/notifications?silentRefresh=false", headers=user_headers["user"]
+        f"/notifications?readStatus={read_status}", headers=user_headers["admin"]
     )
     response_data = await response.get_json()
-    post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['firebase_id']}",
-        headers=user_headers["user"],
-    )
-    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert len(response_data["notifications"]) == 11
-    assert (
-        pre_user_data["last_notifications_read"]
-        != post_user_data["last_notifications_read"]
-    )
+    assert len(response_data["notifications"]) == notification_count
 
 
-# Attempt to get user notifications with a mod's JWT (silent refresh)
+# Update Notifications Route Tests ('/notifications', PATCH)
+# -------------------------------------------------------
+# Attempt to update notifications without auth header
 @pytest.mark.asyncio(scope="session")
-async def test_get_silent_notifications_as_mod(
-    app_client, test_db, user_headers, dummy_users_data
+async def test_update_notifications_no_auth(
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
-        headers=user_headers["moderator"],
-    )
-    pre_user_data = json.loads(await pre_user_query.data)["user"]
-    response = await app_client.get(
-        "/notifications?silentRefresh=true", headers=user_headers["moderator"]
+    response = await app_client.patch(
+        "/notifications", data=json.dumps(dummy_request_data["updated_notifications"])
     )
     response_data = await response.get_json()
-    post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
-        headers=user_headers["moderator"],
+
+    assert response_data["success"] is False
+    assert response.status_code == 401
+
+
+# Attempt to update notifications with malformed auth header
+@pytest.mark.asyncio(scope="session")
+async def test_update_notifications_malformed_auth(
+    app_client, test_db, user_headers, dummy_request_data
+):
+    response = await app_client.patch(
+        "/notifications",
+        data=json.dumps(dummy_request_data["updated_notifications"]),
+        headers=user_headers["malformed"],
     )
-    post_user_data = json.loads(await post_user_query.data)["user"]
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 401
+
+
+# Attempt to update notifications with a user's JWT
+@pytest.mark.parametrize(
+    "notification_ids, user",
+    [([46, 70, 71], "user"), ([73, 80], "moderator"), ([2, 3, 4, 5], "admin")],
+)
+@pytest.mark.asyncio(scope="session")
+async def test_update_notifications(
+    app_client, test_db, user_headers, dummy_request_data, notification_ids, user
+):
+    dummy_request_data["updated_notifications"]["notification_ids"] = notification_ids
+    response = await app_client.patch(
+        "/notifications",
+        data=json.dumps(dummy_request_data["updated_notifications"]),
+        headers=user_headers[user],
+    )
+    response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert len(response_data["notifications"]) == 4
-    assert (
-        pre_user_data["last_notifications_read"]
-        == post_user_data["last_notifications_read"]
-    )
+    assert response_data["updated"] == notification_ids
+    assert response_data["read"] is True
 
 
-# Attempt to get user notifications with a mod's JWT (non-silent refresh)
+# Attempt to update notifications with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_non_silent_notifications_as_mod(
-    app_client, test_db, user_headers, dummy_users_data
+async def test_update_all_notifications_as_admin(
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
-        headers=user_headers["moderator"],
-    )
-    pre_user_data = json.loads(await pre_user_query.data)["user"]
-    response = await app_client.get(
-        "/notifications?silentRefresh=false", headers=user_headers["moderator"]
-    )
-    response_data = await response.get_json()
-    post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
-        headers=user_headers["moderator"],
-    )
-    post_user_data = json.loads(await post_user_query.data)["user"]
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert len(response_data["notifications"]) == 4
-    assert (
-        pre_user_data["last_notifications_read"]
-        != post_user_data["last_notifications_read"]
-    )
-
-
-# Attempt to get user notifications with an admin's JWT (silently)
-@pytest.mark.asyncio(scope="session")
-async def test_get_silent_notifications_as_admin(
-    app_client, test_db, user_headers, dummy_users_data
-):
-    pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
+    updated_ids = "all"
+    dummy_request_data["updated_notifications"]["notification_ids"] = updated_ids
+    response = await app_client.patch(
+        "/notifications",
+        data=json.dumps(dummy_request_data["updated_notifications"]),
         headers=user_headers["admin"],
     )
-    pre_user_data = json.loads(await pre_user_query.data)["user"]
-    response = await app_client.get(
-        "/notifications?silentRefresh=true", headers=user_headers["admin"]
-    )
     response_data = await response.get_json()
-    post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
-        headers=user_headers["admin"],
+
+    post_update = await test_db.paginate(
+        select(Notification).where(
+            and_(Notification.read == false(), Notification.for_id == 4)
+        ),
+        current_page=1,
     )
-    post_user_data = json.loads(await post_user_query.data)["user"]
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert len(response_data["notifications"]) == 9
-    assert (
-        pre_user_data["last_notifications_read"]
-        == post_user_data["last_notifications_read"]
-    )
+    assert response_data["updated"] == "all"
+    assert response_data["read"] is True
+    assert post_update.total_items == 0
 
 
-# Attempt to get user notifications with an admin's JWT (non-silently)
+# Attempt to update notifications with invalid payload
 @pytest.mark.asyncio(scope="session")
-async def test_get_non_silent_notifications_as_admin(
-    app_client, test_db, user_headers, dummy_users_data
-):
-    pre_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
+async def test_update_notifications_invalid_payload(app_client, test_db, user_headers):
+    notifications_data = {"notifications": [], "mark_me": "read"}
+    response = await app_client.patch(
+        "/notifications",
+        data=json.dumps(notifications_data),
         headers=user_headers["admin"],
-    )
-    pre_user_data = json.loads(await pre_user_query.data)["user"]
-    response = await app_client.get(
-        "/notifications?silentRefresh=false", headers=user_headers["admin"]
     )
     response_data = await response.get_json()
-    post_user_query = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
+
+    assert response_data["success"] is False
+    assert response.status_code == 400
+
+
+# Attempt to update notifications with someone else's notifications
+@pytest.mark.asyncio(scope="session")
+async def test_update_notifications_another_users_notifications(
+    app_client, test_db, user_headers, dummy_request_data
+):
+    notification_ids = [2, 3, 4, 5, 73]
+    dummy_request_data["updated_notifications"]["notification_ids"] = notification_ids
+    response = await app_client.patch(
+        "/notifications",
+        data=json.dumps(dummy_request_data["updated_notifications"]),
         headers=user_headers["admin"],
     )
-    post_user_data = json.loads(await post_user_query.data)["user"]
+    response_data = await response.get_json()
 
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert len(response_data["notifications"]) == 9
-    assert (
-        pre_user_data["last_notifications_read"]
-        != post_user_data["last_notifications_read"]
-    )
+    assert response_data["success"] is False
+    assert response.status_code == 403
 
 
-# Add New Push Subscription Route Tests ('/notifications', POST)
+# Add New Push Subscription Route Tests ('/push_subscriptions', POST)
 # -------------------------------------------------------
 # Attempt to create push subscription without auth header
 @pytest.mark.asyncio(scope="session")
@@ -235,7 +224,7 @@ async def test_post_subscription_no_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
     response = await app_client.post(
-        "/notifications", data=json.dumps(dummy_request_data["new_subscription"])
+        "/push_subscriptions", data=json.dumps(dummy_request_data["new_subscription"])
     )
     response_data = await response.get_json()
 
@@ -249,7 +238,7 @@ async def test_post_subscription_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
     response = await app_client.post(
-        "/notifications",
+        "/push_subscriptions",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["malformed"],
     )
@@ -265,7 +254,7 @@ async def test_post_subscription_as_user(
     app_client, test_db, user_headers, dummy_request_data
 ):
     response = await app_client.post(
-        "/notifications",
+        "/push_subscriptions",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
@@ -282,7 +271,7 @@ async def test_post_subscription_as_mod(
     app_client, test_db, user_headers, dummy_request_data
 ):
     response = await app_client.post(
-        "/notifications",
+        "/push_subscriptions",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["moderator"],
     )
@@ -299,7 +288,7 @@ async def test_post_subscription_as_admin(
     app_client, test_db, user_headers, dummy_request_data
 ):
     response = await app_client.post(
-        "/notifications",
+        "/push_subscriptions",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["admin"],
     )
@@ -314,7 +303,7 @@ async def test_post_subscription_as_admin(
 @pytest.mark.asyncio(scope="session")
 async def test_post_subscription_empty_data_as_admin(app_client, test_db, user_headers):
     response = await app_client.post(
-        "/notifications",
+        "/push_subscriptions",
         data=None,
         headers=user_headers["admin"],
     )
@@ -324,7 +313,7 @@ async def test_post_subscription_empty_data_as_admin(app_client, test_db, user_h
     assert response.status_code == 204
 
 
-# Update Push Subscription Route Tests ('/notifications/<sub_id>', PATCH)
+# Update Push Subscription Route Tests ('/push_subscriptions/<sub_id>', PATCH)
 # -------------------------------------------------------
 # Attempt to update push subscription without auth header
 @pytest.mark.asyncio(scope="session")
@@ -333,7 +322,7 @@ async def test_update_subscription_no_auth(
 ):
     # Create the subscription
     await app_client.post(
-        "/notifications",
+        "/push_subscriptions",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
@@ -341,7 +330,7 @@ async def test_update_subscription_no_auth(
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 1
     response = await app_client.patch(
-        "/notifications/1", data=json.dumps(dummy_request_data["new_subscription"])
+        "/push_subscriptions/1", data=json.dumps(dummy_request_data["new_subscription"])
     )
     response_data = await response.get_json()
 
@@ -356,7 +345,7 @@ async def test_update_subscription_malformed_auth(
 ):
     # Create the subscription
     await app_client.post(
-        "/notifications",
+        "/push_subscriptions",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
@@ -364,7 +353,7 @@ async def test_update_subscription_malformed_auth(
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 1
     response = await app_client.patch(
-        "/notifications/1",
+        "/push_subscriptions/1",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["malformed"],
     )
@@ -382,7 +371,7 @@ async def test_update_subscription_as_user(
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 1
     response = await app_client.patch(
-        "/notifications/1",
+        "/push_subscriptions/1",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["user"],
     )
@@ -402,7 +391,7 @@ async def test_update_subscription_as_mod(
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 2
     response = await app_client.patch(
-        "/notifications/2",
+        "/push_subscriptions/2",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["moderator"],
     )
@@ -422,7 +411,7 @@ async def test_update_subscription_as_admin(
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 3
     response = await app_client.patch(
-        "/notifications/3",
+        "/push_subscriptions/3",
         data=json.dumps(dummy_request_data["new_subscription"]),
         headers=user_headers["admin"],
     )
@@ -440,7 +429,7 @@ async def test_update_subscription_empty_data_as_admin(
     app_client, test_db, user_headers
 ):
     response = await app_client.patch(
-        "/notifications/1",
+        "/push_subscriptions/1",
         data=None,
         headers=user_headers["admin"],
     )

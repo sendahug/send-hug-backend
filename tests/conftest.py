@@ -230,6 +230,10 @@ def dummy_request_data():
             "expirationTime": None,
             "keys": {"p256dh": "fdsfd", "auth": "dfs"},
         },
+        "updated_notifications": {
+            "notification_ids": [],
+            "read": True,
+        },
     }
 
     return request_data
