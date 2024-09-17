@@ -4,7 +4,7 @@ quart-cors==0.7.0
 hypercorn==0.17.3
 asyncpg==0.29.0
 pywebpush==2.0.0
-SQLAlchemy[asyncio]==2.0.34
+SQLAlchemy[asyncio]==2.0.35
 firebase-admin==6.5.0
 setuptools>=70.0.0 # not directly required, pinned by Snyk to avoid a vulnerability
 aiohttp>= 3.9.2 # not directly required, pinned to avoid a vulnerability
