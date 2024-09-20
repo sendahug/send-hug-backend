@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### 2024-09-20
+
+#### Chores
+
+- Added a user to the test data to enable e2e tests. Since those rely on a real Firebase user, a user with a real Firebase ID (as opposed to the fake ones we use in tests) needed to be added to the test data. ([#669](https://github.com/sendahug/send-hug-backend/pull/669))
+- Deleted unneeded environment variables from the CI yaml file. The database URL variables were previously used to set up the database, but now that it's set using a credentials file, they're no longer needed and should've been removed. ([#669](https://github.com/sendahug/send-hug-backend/pull/669))
+
 ### 2024-09-15
 
 #### Features
