@@ -80,7 +80,9 @@ class SendADatabase:
         # in progress
         # it's a hack fix from https://github.com/MagicStack/asyncpg/issues/863 so
         # really should be fixed proprely at some point
-        self.engine = create_async_engine(self.database_url, poolclass=NullPool)
+        self.engine = create_async_engine(
+            self.database_url, poolclass=NullPool, echo=True
+        )
         self._create_session_factory()
         self.session = self.create_session()
 
