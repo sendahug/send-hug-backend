@@ -33,7 +33,7 @@ import pytest
 # Get Users by Type Tests ('/users/<type>', GET)
 # -------------------------------------------------------
 # Attempt to get list of users without auth header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_list_no_auth(app_client, test_db, user_headers):
     response = await app_client.get("/users/blocked")
     response_data = await response.get_json()
@@ -54,7 +54,7 @@ async def test_get_user_list_no_auth(app_client, test_db, user_headers):
         ("moderator", 403),
     ],
 )
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_list_auth_error(
     app_client, test_db, user_headers, user, error_code
 ):
@@ -66,7 +66,7 @@ async def test_get_user_list_auth_error(
 
 
 # Attempt to get list of users with admin's auth header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_list_as_admin(app_client, test_db, user_headers):
     response = await app_client.get("/users/blocked", headers=user_headers["admin"])
     response_data = await response.get_json()
@@ -77,7 +77,7 @@ async def test_get_user_list_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to get list of users with admin's auth header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_list_unsupported_type(app_client, test_db, user_headers):
     response = await app_client.get("/users/meow", headers=user_headers["admin"])
     response_data = await response.get_json()
@@ -89,7 +89,7 @@ async def test_get_user_list_unsupported_type(app_client, test_db, user_headers)
 # Get User Data Tests ('/users/all/<user_id>', GET)
 # -------------------------------------------------------
 # Attempt to get a user's data without auth header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_data_no_auth(app_client, test_db, user_headers):
     response = await app_client.get("/users/all/1")
     response_data = await response.get_json()
@@ -99,7 +99,7 @@ async def test_get_user_data_no_auth(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's data with malformed auth header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_data_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.get("/users/all/1", headers=user_headers["malformed"])
     response_data = await response.get_json()
@@ -109,7 +109,7 @@ async def test_get_user_data_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's data with a user's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_data_as_user(
     app_client, test_db, user_headers, dummy_users_data
 ):
@@ -126,7 +126,7 @@ async def test_get_user_data_as_user(
 
 
 # Attempt to get a user's data with a moderator's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_data_as_mod(
     app_client, test_db, user_headers, dummy_users_data
 ):
@@ -143,7 +143,7 @@ async def test_get_user_data_as_mod(
 
 
 # Attempt to get a user's data with an admin's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_data_as_admin(
     app_client, test_db, user_headers, dummy_users_data
 ):
@@ -160,7 +160,7 @@ async def test_get_user_data_as_admin(
 
 
 # Attempt to get a nonexistent user's data (with admin's JWT)
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_nonexistent_user_as_admin(app_client, test_db, user_headers):
     response = await app_client.get("/users/all/100", headers=user_headers["admin"])
     response_data = await response.get_json()
@@ -170,7 +170,7 @@ async def test_get_nonexistent_user_as_admin(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's data with no ID (with admin's JWT)
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_no_id_as_admin(app_client, test_db, user_headers):
     response = await app_client.get("/users/all/", headers=user_headers["admin"])
     response_data = await response.get_json()
@@ -182,7 +182,7 @@ async def test_get_user_no_id_as_admin(app_client, test_db, user_headers):
 # Create User Tests ('/users', POST)
 # -------------------------------------------------------
 # Attempt to create a user without auth header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_create_user_no_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -196,7 +196,7 @@ async def test_create_user_no_auth(
 
 
 # Attempt to create a user with malformed auth header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_create_user_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -212,7 +212,7 @@ async def test_create_user_malformed_auth(
 
 
 # Attempt to create a user with user's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_create_user_as_user(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -228,7 +228,7 @@ async def test_create_user_as_user(
 
 
 # Attempt to create a user with moderator's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_create_user_as_moderator(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -244,7 +244,7 @@ async def test_create_user_as_moderator(
 
 
 # Attempt to create a user with admin's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_create_user_as_damin(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -264,7 +264,7 @@ async def test_create_user_as_damin(
 # is done automatically, it's no longer needed, but in case of an error
 # adjusting a user's roles, it's important to make sure they still
 # can't create other users
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_create_different_user_as_new_user(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -284,7 +284,7 @@ async def test_create_different_user_as_new_user(
 # Edit User Data Tests ('/users/all/<user_id>', PATCH)
 # -------------------------------------------------------
 # Attempt to update a user's data without auth header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_user_no_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -298,7 +298,7 @@ async def test_update_user_no_auth(
 
 
 # Attempt to update a user's data with malformed auth header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_user_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -314,7 +314,7 @@ async def test_update_user_malformed_auth(
 
 
 # Attempt to update a user's data with a user's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_user_as_user(
     app_client,
     test_db,
@@ -339,7 +339,7 @@ async def test_update_user_as_user(
 
 
 # Attempt to update another user's display name with a user's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_other_users_display_name_as_user(
     app_client,
     test_db,
@@ -361,7 +361,7 @@ async def test_update_other_users_display_name_as_user(
 
 
 # Attempt to update a user's blocked state with a user's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_block_user_as_user(
     app_client,
     test_db,
@@ -384,7 +384,7 @@ async def test_update_block_user_as_user(
 
 
 # Attempt to update a user's data with a moderator's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_user_as_mod(
     app_client,
     test_db,
@@ -409,7 +409,7 @@ async def test_update_user_as_mod(
 
 
 # Attempt to update another user's display name with a moderator's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_other_users_display_name_as_mod(
     app_client,
     test_db,
@@ -431,7 +431,7 @@ async def test_update_other_users_display_name_as_mod(
 
 
 # Attempt to update a user's blocked state with a moderator's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_block_user_as_mod(
     app_client,
     test_db,
@@ -454,7 +454,7 @@ async def test_update_block_user_as_mod(
 
 
 # Attempt to update a user's data with an admin's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_user_as_admin(
     app_client,
     test_db,
@@ -479,7 +479,7 @@ async def test_update_user_as_admin(
 
 
 # Attempt to update another user's display name with an admin's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_other_user_as_admin(
     app_client,
     test_db,
@@ -504,7 +504,7 @@ async def test_update_other_user_as_admin(
 
 
 # Attempt to update a user's blocked state with an admin's JWT
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_block_user_as_admin(
     app_client,
     test_db,
@@ -528,7 +528,7 @@ async def test_update_block_user_as_admin(
 
 
 # Attempt to update another user's settings (admin's JWT)
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_user_settings_as_admin(
     app_client,
     test_db,
@@ -552,7 +552,7 @@ async def test_update_user_settings_as_admin(
 
 
 # Attempt to update a user's data with no ID (with admin's JWT)
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_no_id_user_as_admin(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -568,7 +568,7 @@ async def test_update_no_id_user_as_admin(
 
 
 # Attempt to update another user's settings (admin's JWT)
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_admin_settings_as_admin(
     app_client,
     test_db,
@@ -597,7 +597,7 @@ async def test_update_admin_settings_as_admin(
 
 
 # Attempt to update another user's settings (admin's JWT) - 0 refresh rate
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_update_admin_settings_as_admin_invalid_settings(
     app_client,
     test_db,
@@ -631,7 +631,7 @@ async def test_update_admin_settings_as_admin_invalid_settings(
 # Get User's Posts Tests ('/users/all/<user_id>/posts', GET)
 # -------------------------------------------------------
 # Attempt to get a user's posts without auth header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_posts_no_auth(app_client, test_db, user_headers):
     response = await app_client.get("/users/all/1/posts")
     response_data = await response.get_json()
@@ -641,7 +641,7 @@ async def test_get_user_posts_no_auth(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's posts with malformed auth header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_posts_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.get(
         "/users/all/1/posts", headers=user_headers["malformed"]
@@ -653,7 +653,7 @@ async def test_get_user_posts_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's posts with
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "user_id, user, total_pages, posts_num",
     [
@@ -665,7 +665,7 @@ async def test_get_user_posts_malformed_auth(app_client, test_db, user_headers):
         (5, "admin", 1, 2),
     ],
 )
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_get_user_posts(
     app_client,
     test_db,
@@ -690,7 +690,7 @@ async def test_get_user_posts(
 # Delete User's Posts Route Tests ('/users/all/<user_id>/posts', DELETE)
 # -------------------------------------------------------
 # Attempt to delete user's posts with no authorisation header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_delete_posts_no_auth(app_client, test_db, user_headers):
     response = await app_client.delete("/users/all/1/posts")
     response_data = await response.get_json()
@@ -700,7 +700,7 @@ async def test_delete_posts_no_auth(app_client, test_db, user_headers):
 
 
 # Attempt to delete user's with a malformed auth header
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_delete_posts_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.delete(
         "/users/all/1/posts", headers=user_headers["malformed"]
@@ -723,7 +723,7 @@ async def test_delete_posts_malformed_auth(app_client, test_db, user_headers):
         (4, "admin", 14),
     ],
 )
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_delete_own_posts(
     app_client, test_db, user_headers, user_id, user, deleted_post
 ):
@@ -753,7 +753,7 @@ async def test_delete_own_posts(
         (1, "moderator"),
     ],
 )
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_delete_other_users_posts_no_permission(
     app_client, test_db, user_headers, user_id, user
 ):
@@ -767,7 +767,7 @@ async def test_delete_other_users_posts_no_permission(
 
 
 # Attempt to delete another user's posts (with admin's JWT)
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_delete_other_users_posts_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete(
         "/users/all/5/posts", headers=user_headers["admin"]
@@ -780,7 +780,7 @@ async def test_delete_other_users_posts_as_admin(app_client, test_db, user_heade
 
 
 # Attempt to delete the posts of a user that doesn't exist (admin's JWT)
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_delete_nonexistent_users_posts_as_admin(
     app_client, test_db, user_headers
 ):
@@ -794,7 +794,7 @@ async def test_delete_nonexistent_users_posts_as_admin(
 
 
 # Attempt to delete the posts of a user that has no posts (admin's JWT)
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_delete_nonexistent_posts_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete(
         "/users/all/9/posts", headers=user_headers["admin"]
@@ -808,7 +808,7 @@ async def test_delete_nonexistent_posts_as_admin(app_client, test_db, user_heade
 # Send a Hug for user Tests ('/users/all/<user_id>/hugs', POST)
 # -------------------------------------------------------
 # Attempt to send hugs for a post that doesn't exist
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_user_hugs_post_no_existing(app_client, test_db, user_headers):
     response = await app_client.post(
         "/users/all/1000/hugs", headers=user_headers["admin"]
@@ -820,7 +820,7 @@ async def test_user_hugs_post_no_existing(app_client, test_db, user_headers):
 
 
 # Attempt to send hugs
-@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.asyncio
 async def test_user_hugs(app_client, test_db, user_headers):
     response = await app_client.post(
         "/users/all/1/hugs", headers=user_headers["moderator"]
