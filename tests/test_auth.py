@@ -61,7 +61,7 @@ def test_verify_jwt_error(mocker, error, error_message, test_config: SAHConfig):
     assert error_message in str(exc.value)
 
 
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_get_current_user_error(test_db: SendADatabase):
     with pytest.raises(AuthError) as exc:
         await get_current_user(
@@ -74,7 +74,7 @@ async def test_get_current_user_error(test_db: SendADatabase):
     assert "Unauthorised. User not found." in str(exc.value)
 
 
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_get_current_user(dummy_users_data, test_db: SendADatabase):
     user = await get_current_user(
         {"uid": dummy_users_data["user"]["firebase_id"]}, test_db
