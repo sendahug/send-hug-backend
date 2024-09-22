@@ -231,10 +231,30 @@ async def create_users(db: SendADatabase):
         role_id=5,
         firebase_id="twg",
     )
+    # For e2e tests
+    user_6 = User(
+        id=21,
+        received_hugs=106,
+        given_hugs=117,
+        display_name="admin",
+        login_count=55,
+        release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
+        last_notifications_read=datetime.strptime(
+            "2020-10-30 18:13:21.282054", DATETIME_PATTERN
+        ),
+        auto_refresh=True,
+        push_enabled=False,
+        refresh_rate=None,
+        icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
+        '"rbg": "#f8eee4", "item": "#f4b56a"}',
+        selected_character="kitty",
+        role_id=1,
+        firebase_id="xApCskkEtwVhZubFJbNt7u73zzs2",
+    )
 
     try:
-        db.session.add_all([user_1, user_2, user_3, user_4, user_5])
-        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 21;"))
+        db.session.add_all([user_1, user_2, user_3, user_4, user_5, user_6])
+        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 22;"))
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -1211,6 +1231,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 13:05:21.045101", DATETIME_PATTERN),
+        read=True,
     )
     notification_2 = Notification(
         id=2,
@@ -1219,6 +1240,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 13:06:14.900956", DATETIME_PATTERN),
+        read=True,
     )
     notification_3 = Notification(
         id=3,
@@ -1227,6 +1249,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 13:06:46.626559", DATETIME_PATTERN),
+        read=True,
     )
     notification_4 = Notification(
         id=4,
@@ -1235,6 +1258,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 13:14:32.762052", DATETIME_PATTERN),
+        read=True,
     )
     notification_5 = Notification(
         id=5,
@@ -1243,6 +1267,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 13:21:54.464433", DATETIME_PATTERN),
+        read=True,
     )
     notification_6 = Notification(
         id=6,
@@ -1251,6 +1276,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 18:37:35.118498", DATETIME_PATTERN),
+        read=True,
     )
     notification_7 = Notification(
         id=7,
@@ -1259,6 +1285,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-08 18:42:37.632753", DATETIME_PATTERN),
+        read=True,
     )
     notification_41 = Notification(
         id=41,
@@ -1267,6 +1294,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-14 11:30:07.354089", DATETIME_PATTERN),
+        read=True,
     )
     notification_42 = Notification(
         id=42,
@@ -1275,6 +1303,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-14 11:30:12.560007", DATETIME_PATTERN),
+        read=True,
     )
     notification_43 = Notification(
         id=43,
@@ -1283,6 +1312,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-14 11:55:51.240234", DATETIME_PATTERN),
+        read=True,
     )
     notification_46 = Notification(
         id=46,
@@ -1291,6 +1321,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-14 16:00:41.414829", DATETIME_PATTERN),
+        read=False,
     )
     notification_53 = Notification(
         id=53,
@@ -1299,6 +1330,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-20 17:32:19.808169", DATETIME_PATTERN),
+        read=False,
     )
     notification_54 = Notification(
         id=54,
@@ -1307,6 +1339,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-21 14:35:20.297422", DATETIME_PATTERN),
+        read=False,
     )
     notification_55 = Notification(
         id=55,
@@ -1315,6 +1348,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-21 14:35:34.933279", DATETIME_PATTERN),
+        read=False,
     )
     notification_58 = Notification(
         id=58,
@@ -1323,6 +1357,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 11:38:02.864273", DATETIME_PATTERN),
+        read=False,
     )
     notification_63 = Notification(
         id=63,
@@ -1331,6 +1366,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 12:18:54.286811", DATETIME_PATTERN),
+        read=False,
     )
     notification_66 = Notification(
         id=66,
@@ -1339,6 +1375,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 12:23:21.062704", DATETIME_PATTERN),
+        read=False,
     )
     notification_70 = Notification(
         id=70,
@@ -1347,6 +1384,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 13:40:25.495938", DATETIME_PATTERN),
+        read=False,
     )
     notification_71 = Notification(
         id=71,
@@ -1355,6 +1393,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 13:41:51.227895", DATETIME_PATTERN),
+        read=False,
     )
     notification_72 = Notification(
         id=72,
@@ -1363,6 +1402,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 13:42:35.797629", DATETIME_PATTERN),
+        read=False,
     )
     notification_73 = Notification(
         id=73,
@@ -1371,6 +1411,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 13:42:40.059274", DATETIME_PATTERN),
+        read=False,
     )
     notification_74 = Notification(
         id=74,
@@ -1379,6 +1420,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 13:42:44.75568", DATETIME_PATTERN),
+        read=False,
     )
     notification_75 = Notification(
         id=75,
@@ -1387,6 +1429,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 14:09:01.457204", DATETIME_PATTERN),
+        read=False,
     )
     notification_76 = Notification(
         id=76,
@@ -1395,6 +1438,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 15:01:45.393836", DATETIME_PATTERN),
+        read=False,
     )
     notification_77 = Notification(
         id=77,
@@ -1403,6 +1447,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 15:09:58.206196", DATETIME_PATTERN),
+        read=False,
     )
     notification_78 = Notification(
         id=78,
@@ -1411,6 +1456,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 15:18:49.469451", DATETIME_PATTERN),
+        read=False,
     )
     notification_79 = Notification(
         id=79,
@@ -1419,6 +1465,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-07-22 15:30:06.395028", DATETIME_PATTERN),
+        read=False,
     )
     notification_80 = Notification(
         id=80,
@@ -1427,6 +1474,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-08-10 19:40:21.244178", DATETIME_PATTERN),
+        read=False,
     )
     notification_81 = Notification(
         id=81,
@@ -1435,6 +1483,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-09-16 11:08:35.311236", DATETIME_PATTERN),
+        read=False,
     )
     notification_82 = Notification(
         id=82,
@@ -1443,6 +1492,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-30 13:36:31.188385", DATETIME_PATTERN),
+        read=False,
     )
     notification_83 = Notification(
         id=83,
@@ -1451,6 +1501,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 14:01:09.923613", DATETIME_PATTERN),
+        read=False,
     )
     notification_84 = Notification(
         id=84,
@@ -1459,6 +1510,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 14:19:46.89522", DATETIME_PATTERN),
+        read=False,
     )
     notification_85 = Notification(
         id=85,
@@ -1467,6 +1519,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 14:26:04.690362", DATETIME_PATTERN),
+        read=False,
     )
     notification_86 = Notification(
         id=86,
@@ -1475,6 +1528,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 14:44:07.598229", DATETIME_PATTERN),
+        read=False,
     )
     notification_87 = Notification(
         id=87,
@@ -1483,6 +1537,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 14:46:21.747038", DATETIME_PATTERN),
+        read=False,
     )
     notification_88 = Notification(
         id=88,
@@ -1491,6 +1546,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 14:59:11.313138", DATETIME_PATTERN),
+        read=False,
     )
     notification_89 = Notification(
         id=89,
@@ -1499,6 +1555,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 15:06:12.339448", DATETIME_PATTERN),
+        read=False,
     )
     notification_90 = Notification(
         id=90,
@@ -1507,6 +1564,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 15:07:41.99315", DATETIME_PATTERN),
+        read=False,
     )
     notification_91 = Notification(
         id=91,
@@ -1515,6 +1573,7 @@ async def create_notifications(db: SendADatabase):
         type="hug",
         text="You got a hug",
         date=datetime.strptime("2020-10-31 15:09:55.344578", DATETIME_PATTERN),
+        read=False,
     )
     notification_92 = Notification(
         id=92,
@@ -1523,6 +1582,7 @@ async def create_notifications(db: SendADatabase):
         type="message",
         text="You have a new message",
         date=datetime.strptime("2020-11-03 16:38:06.351", DATETIME_PATTERN),
+        read=False,
     )
     notification_93 = Notification(
         id=93,
@@ -1531,6 +1591,7 @@ async def create_notifications(db: SendADatabase):
         type="message",
         text="You have a new message",
         date=datetime.strptime("2020-11-03 16:48:33.213", DATETIME_PATTERN),
+        read=False,
     )
     notification_94 = Notification(
         id=94,
@@ -1539,6 +1600,7 @@ async def create_notifications(db: SendADatabase):
         type="message",
         text="You have a new message",
         date=datetime.strptime("2020-11-03 20:16:58.027", DATETIME_PATTERN),
+        read=False,
     )
     notification_95 = Notification(
         id=95,
@@ -1547,6 +1609,7 @@ async def create_notifications(db: SendADatabase):
         type="message",
         text="You have a new message",
         date=datetime.strptime("2020-11-03 20:21:30.972", DATETIME_PATTERN),
+        read=False,
     )
 
     try:
