@@ -60,6 +60,7 @@ class UserData(TypedDict):
     pushEnabled: bool
     last_notifications_read: datetime | None
     firebaseId: str
+    email_verified: bool
 
 
 # Authentication Error
@@ -221,6 +222,7 @@ def requires_auth(config: SAHConfig, permission=[""]):
                     "pushEnabled": current_user["pushEnabled"],
                     "last_notifications_read": current_user["last_notifications_read"],
                     "firebaseId": current_user["firebaseId"],
+                    "email_verified": payload["email_verified"],
                 }
                 check_user_permissions(permission, current_user)
 

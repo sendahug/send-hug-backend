@@ -122,10 +122,15 @@ async def create_roles(db: SendADatabase):
         )
         permissions: Sequence[Permission] = permissions_scalars.all()
 
+        # admin
         role_1.permissions = [*permissions[0:11]]
+        # moderator
         role_2.permissions = [*permissions[2:4], *permissions[5:8], *permissions[9:13]]
+        # user
         role_3.permissions = [permissions[2], *permissions[5:8], *permissions[9:14]]
-        role_4.permissions = [permissions[2], *permissions[5:7], *permissions[9:]]
+        # new user
+        role_4.permissions = [permissions[7], *permissions[9:]]
+        # blocked user
         role_5.permissions = [
             permissions[2],
             permissions[5],
@@ -158,6 +163,7 @@ async def create_users(db: SendADatabase):
         selected_character="kitty",
         role_id=3,
         firebase_id="abcd",
+        email_verified=True,
     )
     user_2 = User(
         id=4,
@@ -177,6 +183,7 @@ async def create_users(db: SendADatabase):
         selected_character="kitty",
         role_id=1,
         firebase_id="ijkl",
+        email_verified=True,
     )
     user_3 = User(
         id=5,
@@ -194,6 +201,7 @@ async def create_users(db: SendADatabase):
         selected_character="kitty",
         role_id=2,
         firebase_id="efgh",
+        email_verified=True,
     )
     user_4 = User(
         id=9,
@@ -211,6 +219,7 @@ async def create_users(db: SendADatabase):
         selected_character="kitty",
         role_id=1,
         firebase_id="zxy",
+        email_verified=True,
     )
     user_5 = User(
         id=20,
@@ -230,6 +239,7 @@ async def create_users(db: SendADatabase):
         selected_character="kitty",
         role_id=5,
         firebase_id="twg",
+        email_verified=True,
     )
 
     try:

@@ -100,6 +100,7 @@ class User(BaseModel):
     )
     firebase_id: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
     firebase_id_uq = UniqueConstraint("firebase_id", name="firebase_id_uq")
+    email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     reports = relationship(
         "Report", back_populates="user", foreign_keys="Report.user_id"
     )
