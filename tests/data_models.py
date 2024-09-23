@@ -241,10 +241,30 @@ async def create_users(db: SendADatabase):
         firebase_id="twg",
         email_verified=True,
     )
+    # For e2e tests
+    user_6 = User(
+        id=21,
+        received_hugs=106,
+        given_hugs=117,
+        display_name="admin",
+        login_count=55,
+        release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
+        last_notifications_read=datetime.strptime(
+            "2020-10-30 18:13:21.282054", DATETIME_PATTERN
+        ),
+        auto_refresh=True,
+        push_enabled=False,
+        refresh_rate=None,
+        icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
+        '"rbg": "#f8eee4", "item": "#f4b56a"}',
+        selected_character="kitty",
+        role_id=1,
+        firebase_id="xApCskkEtwVhZubFJbNt7u73zzs2",
+    )
 
     try:
-        db.session.add_all([user_1, user_2, user_3, user_4, user_5])
-        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 21;"))
+        db.session.add_all([user_1, user_2, user_3, user_4, user_5, user_6])
+        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 22;"))
         await db.session.commit()
     finally:
         await db.session.remove()

@@ -37,7 +37,7 @@ from models import Notification
 # Get New Notifications Route Tests ('/notifications', GET)
 # -------------------------------------------------------
 # Attempt to get user notifications without auth header
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_get_notifications_no_auth(app_client, test_db):
     response = await app_client.get("/notifications")
     response_data = await response.get_json()
@@ -47,7 +47,7 @@ async def test_get_notifications_no_auth(app_client, test_db):
 
 
 # Attempt to get user notifications with malformed auth header
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_get_notifications_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.get("/notifications", headers=user_headers["malformed"])
     response_data = await response.get_json()
@@ -65,7 +65,7 @@ async def test_get_notifications_malformed_auth(app_client, test_db, user_header
         ("admin", 20, 2),
     ],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_get_notifications(
     app_client, test_db, user_headers, user, notification_count, total_pages
 ):
@@ -86,7 +86,7 @@ async def test_get_notifications(
         (18, "false"),
     ],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_get_notifications_read_status(
     app_client, test_db, user_headers, notification_count, read_status
 ):
@@ -103,7 +103,7 @@ async def test_get_notifications_read_status(
 # Update Notifications Route Tests ('/notifications', PATCH)
 # -------------------------------------------------------
 # Attempt to update notifications without auth header
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_update_notifications_no_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -117,7 +117,7 @@ async def test_update_notifications_no_auth(
 
 
 # Attempt to update notifications with malformed auth header
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_update_notifications_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -137,7 +137,7 @@ async def test_update_notifications_malformed_auth(
     "notification_ids, user",
     [([46, 70, 71], "user"), ([73, 80], "moderator"), ([2, 3, 4, 5], "admin")],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_update_notifications(
     app_client, test_db, user_headers, dummy_request_data, notification_ids, user
 ):
@@ -156,7 +156,7 @@ async def test_update_notifications(
 
 
 # Attempt to update notifications with an admin's JWT
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_update_all_notifications_as_admin(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -184,7 +184,7 @@ async def test_update_all_notifications_as_admin(
 
 
 # Attempt to update notifications with invalid payload
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_update_notifications_invalid_payload(app_client, test_db, user_headers):
     notifications_data = {"notifications": [], "mark_me": "read"}
     response = await app_client.patch(
@@ -199,7 +199,7 @@ async def test_update_notifications_invalid_payload(app_client, test_db, user_he
 
 
 # Attempt to update notifications with someone else's notifications
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_update_notifications_another_users_notifications(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -219,7 +219,7 @@ async def test_update_notifications_another_users_notifications(
 # Add New Push Subscription Route Tests ('/push_subscriptions', POST)
 # -------------------------------------------------------
 # Attempt to create push subscription without auth header
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_post_subscription_no_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -233,7 +233,7 @@ async def test_post_subscription_no_auth(
 
 
 # Attempt to create push subscription with malformed auth header
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_post_subscription_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -249,7 +249,7 @@ async def test_post_subscription_malformed_auth(
 
 
 # Attempt to create push subscription with a user's JWT
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_post_subscription_as_user(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -266,7 +266,7 @@ async def test_post_subscription_as_user(
 
 
 # Attempt to create push subscription with a moderator's JWT
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_post_subscription_as_mod(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -283,7 +283,7 @@ async def test_post_subscription_as_mod(
 
 
 # Attempt to create push subscription with an admin's JWT
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_post_subscription_as_admin(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -300,7 +300,7 @@ async def test_post_subscription_as_admin(
 
 
 # Attempt to create push subscription with an admin's JWT
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_post_subscription_empty_data_as_admin(app_client, test_db, user_headers):
     response = await app_client.post(
         "/push_subscriptions",
@@ -316,7 +316,7 @@ async def test_post_subscription_empty_data_as_admin(app_client, test_db, user_h
 # Update Push Subscription Route Tests ('/push_subscriptions/<sub_id>', PATCH)
 # -------------------------------------------------------
 # Attempt to update push subscription without auth header
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_update_subscription_no_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -339,7 +339,7 @@ async def test_update_subscription_no_auth(
 
 
 # Attempt to update push subscription with malformed auth header
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_update_subscription_malformed_auth(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -364,7 +364,7 @@ async def test_update_subscription_malformed_auth(
 
 
 # Attempt to update push subscription with a user's JWT
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_update_subscription_as_user(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -384,7 +384,7 @@ async def test_update_subscription_as_user(
 
 
 # Attempt to create push subscription with a moderator's JWT
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_update_subscription_as_mod(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -404,7 +404,7 @@ async def test_update_subscription_as_mod(
 
 
 # Attempt to create push subscription with an admin's JWT
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_update_subscription_as_admin(
     app_client, test_db, user_headers, dummy_request_data
 ):
@@ -424,7 +424,7 @@ async def test_update_subscription_as_admin(
 
 
 # Attempt to create push subscription with an admin's JWT
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio
 async def test_update_subscription_empty_data_as_admin(
     app_client, test_db, user_headers
 ):

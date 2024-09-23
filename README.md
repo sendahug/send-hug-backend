@@ -117,25 +117,6 @@ dropdb test_sah && createdb test_sah
 pytest
 ```
 
-## Hosting
-
-The project was hosted live on Heroku (we're currently looking at alternatives, due to Heroku removing their free tier). If you want to clone and host your own version, you can do so by using the following guide (the following commands are for Heroku, but they can be adjusted depending on your host):
-
-  1. Create a Heroku account (skip this step if you already have an account).
-  2. Install the Heroku command line interface.
-  3. In your Terminal, enter `heroku login`. This triggers logging in via the CLI.
-  4. Enter `heroku create <APP_NAME>` (with your own app name). If successful, Heroku returns the live version's URL (will be referred to as <LIVE_URL>) and the Git repo link (will be referred to as <GIT_URL>).
-  5. Enter `heroku addons:create heroku-postgresql:hobby-dev --app <APP_NAME>`. This creates a Postgres database for your app. Change 'hobby-dev' to another tier if you want to use the app with a paid tier (depending on your needs; for more information check the [Heroku guide](https://devcenter.heroku.com/articles/heroku-postgres-plans)).
-  6. Make sure you're in the top directory (FSND-capstone). In your terminal, enter `git remote add heroku-server <GIT_URL>`.
-  7. Enter `git heroku-server master`. This triggers the app build. If successful, you'll get a 'Verifying deploy... done.' message.
-  8. Add the following environment variables (via CLI or via the Heroku website):
-    - DATABASE_URL - the URL of the database in production.
-    - FRONTEND - set with your own frontend URL (necessary for setting up CORS!)
-    - PRIVATE_KEY - The private VAPID key (required for sending push notifications).
-    - FIREBASE_CREDENTIALS_FILE - The location of the JSON key for the Firebase service account.
-  9. Enter `alembic upgrade head` to trigger database migrations and bring your live database up to date.
-  10. All done! Now you can visit your <GIT_URL> to see the live app.
-
 ## Known Issues
 
 There are no current issues at the time.
