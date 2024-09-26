@@ -166,4 +166,5 @@ class User(BaseModel):
             ),
             "posts": self.post_count,
             "firebaseId": self.firebase_id,
+            "emailVerified": self.email_verified,
         }
