@@ -761,6 +761,15 @@ def create_app(config: SAHConfig) -> Quart:
         if "iconColours" in updated_user:
             user_to_update.icon_colours = json.dumps(updated_user["iconColours"])
 
+        # If the user clicked the "verify email" link, get the value from the
+        # token payload. It should be true
+        if "emailVerified" in updated_user:
+            user_to_update.email_verified = token_payload["email_verified"]
+
+            # If they verified their email and their current role is new user, update it
+            if token_payload["email_verified"] and user_to_update.role_id == 4:
+                user_to_update.role_id = 3  # user
+
         # Try to update it in the database
         updated = await config.db.update_object(obj=user_to_update)
 
