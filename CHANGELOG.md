@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### 2024-09-27
+
+#### Features
+
+- Added an `email_verified` attribute to users. This attribute is set based on the `email_verified` attribute in the Firebase token to ensure only users who verified their emeil address with Firebase can be set as such in our internal database. ([#671](https://github.com/sendahug/send-hug-backend/pull/671))
+- Added a new process for switching users from the `New User` role to the `User` role. When creating their account, users are given the `New User` role, which has limited capabilities. Once they verify their email address with Firebase and our system is updated, the `email_verified` flag is updated to True and their role is updated to be a regular user, with full capabilities. This ensures only real accounts can be used for interacting with the app. ([#671](https://github.com/sendahug/send-hug-backend/pull/671))
+
 ### 2024-09-20
 
 #### Chores
