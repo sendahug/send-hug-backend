@@ -338,6 +338,27 @@ async def test_update_user_as_user(
     assert updated["displayName"] == user["displayName"]
 
 
+# Attempt to update a user's verified status
+@pytest.mark.asyncio
+async def test_update_user_verified_status(
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+):
+    response = await app_client.patch(
+        f"/users/all/{dummy_users_data['user']['internal']}",
+        headers=user_headers["user"],
+        data=json.dumps({"emailVerified": True}),
+    )
+    response_data = await response.get_json()
+    updated = response_data["updated"]
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert updated["emailVerified"] is True
+
+
 # Attempt to update another user's display name with a user's JWT
 @pytest.mark.asyncio
 async def test_update_other_users_display_name_as_user(
@@ -626,6 +647,28 @@ async def test_update_admin_settings_as_admin_invalid_settings(
     assert response_data["success"] is False
     assert response.status_code == 422
     assert get_response_data["user"]["refreshRate"] == 20
+
+
+# Attempt to update a user's verified status and role
+@pytest.mark.asyncio
+async def test_update_user_verified_status_and_role(
+    app_client,
+    test_db,
+    user_headers,
+    dummy_users_data,
+):
+    response = await app_client.patch(
+        f"/users/all/{dummy_users_data['new']['internal']}",
+        headers=user_headers["newUser"],
+        data=json.dumps({"emailVerified": True}),
+    )
+    response_data = await response.get_json()
+    updated = response_data["updated"]
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert updated["emailVerified"] is True
+    assert updated["role"]["id"] == 3
 
 
 # Get User's Posts Tests ('/users/all/<user_id>/posts', GET)
