@@ -304,12 +304,10 @@ class SendADatabase:
             abort(500, str(err))
 
     @overload
-    async def update_multiple_objects_with_dml(self, update_stmts: Update):
-        ...
+    async def update_multiple_objects_with_dml(self, update_stmts: Update): ...
 
     @overload
-    async def update_multiple_objects_with_dml(self, update_stmts: list[Update]):
-        ...
+    async def update_multiple_objects_with_dml(self, update_stmts: list[Update]): ...
 
     async def update_multiple_objects_with_dml(self, update_stmts):
         """

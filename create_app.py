@@ -577,6 +577,7 @@ def create_app(config: SAHConfig) -> Quart:
     @app.route("/users/all/<user_id>")
     @requires_auth(config, ["read:user"])
     async def get_user_data(token_payload: UserData, user_id: int | str):
+        print(token_payload["firebaseId"])
         # Try to convert it to a number; if it's a number, it's a
         # regular ID, so try to find the user with that ID
         try:
@@ -1145,7 +1146,7 @@ def create_app(config: SAHConfig) -> Quart:
             await config.db.delete_object(delete_item)
         # Otherwise, just update the appropriate deleted property
         else:
-            if type(delete_item) == Thread:
+            if type(delete_item) is Thread:
                 # For each message that wasn't deleted by the other user, the
                 # value of for_deleted/from_deleted (depending on which of the users
                 # it is) is updated to True
