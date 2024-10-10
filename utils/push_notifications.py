@@ -1,6 +1,7 @@
 """
 Push notifications related methods.
 """
+
 from datetime import datetime, timedelta
 
 # MIT License

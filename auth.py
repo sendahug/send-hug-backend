@@ -206,6 +206,7 @@ def requires_auth(config: SAHConfig, permission=[""]):
         async def wrapper(*args, **kwargs):
             token = get_auth_header()
             payload = validate_token(token, config.firebase_app)
+            # payload = {"email_verified": True, "uid": "xApCskkEtwVhZubFJbNt7u73zzs2"}
 
             # To create a new user, we just need to check for a valid
             # firebase user.
