@@ -28,6 +28,7 @@
 from asyncio import current_task
 import logging
 import math
+import os
 from typing import Sequence, Type, TypeVar, cast, overload
 
 from quart import Quart, abort
@@ -75,14 +76,7 @@ class SendADatabase:
         # Temporary second variable
         self.database_url = database_url
         self.default_per_page = default_per_page
-        # we set poolclass to make tests work, otherwise we get:
-        # sqlalchemy.exc.InterfaceError: cannot perform operation: another operation is
-        # in progress
-        # it's a hack fix from https://github.com/MagicStack/asyncpg/issues/863 so
-        # really should be fixed proprely at some point
-        self.engine = create_async_engine(
-            self.database_url,  # echo=True  # poolclass=NullPool,
-        )
+        self.engine = create_async_engine(self.database_url)  # , echo=True)
         self._create_session_factory()
         self.session = self.create_session()
 
@@ -96,7 +90,10 @@ class SendADatabase:
         app.config["SQLALCHEMY_DATABASE_URI"] = self.database_url
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
         self.app = app
-        self.app.teardown_appcontext(self._remove_session)
+        if not os.environ.get("PYTEST_VERSION", False):
+            # if we're testing, we don't need to remove the session as the test_db
+            # fixture does that for us
+            self.app.teardown_appcontext(self._remove_session)
 
     def _create_session_factory(self):
         """
@@ -118,8 +115,7 @@ class SendADatabase:
 
     async def _remove_session(self, exception: BaseException | None):
         """ """
-        pass
-        # await self.session.remove()
+        await self.session.remove()
 
     def set_default_per_page(self, per_page: int):
         """
