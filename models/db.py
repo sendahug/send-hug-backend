@@ -31,7 +31,7 @@ import math
 from typing import Sequence, Type, TypeVar, cast, overload
 
 from quart import Quart, abort
-from sqlalchemy import URL, Delete, NullPool, Select, Update, func, select
+from sqlalchemy import URL, Delete, Select, Update, func, select  # ,NullPool
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -81,7 +81,7 @@ class SendADatabase:
         # it's a hack fix from https://github.com/MagicStack/asyncpg/issues/863 so
         # really should be fixed proprely at some point
         self.engine = create_async_engine(
-            self.database_url, poolclass=NullPool, echo=True
+            self.database_url,  # echo=True  # poolclass=NullPool,
         )
         self._create_session_factory()
         self.session = self.create_session()
@@ -118,7 +118,8 @@ class SendADatabase:
 
     async def _remove_session(self, exception: BaseException | None):
         """ """
-        await self.session.remove()
+        pass
+        # await self.session.remove()
 
     def set_default_per_page(self, per_page: int):
         """

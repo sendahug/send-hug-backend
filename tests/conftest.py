@@ -1,7 +1,7 @@
 from asyncio import current_task
 from datetime import datetime
 from pathlib import Path
-from typing import Generator
+from typing import AsyncGenerator, Generator
 
 import pytest
 from pytest_mock import MockerFixture
@@ -72,18 +72,17 @@ def app_client(
     test_config: SAHConfig, mocker: MockerFixture
 ) -> Generator[TestClientProtocol, None, None]:
     """Get the test client for the test app"""
-    # NO NEED TO PATCH THE ENTIRE CONFIG, JUST THE DB
-    # https://github.com/FenestraHoldings/solis-api/blob/staging/tests/conftest.py#L189
-    # mocker.patch("create_app.sah_config", return_value=test_config)
-    # mocker.patch("controllers.root.sah_config", return_value=test_config)
-    # mocker.patch("config.get_db_credentials_path", return_value=Path("test.json"))
+
+    # mocker.patch("create_app.sah_config", AsyncMock())
+    # mocker.patch("controllers.root.sah_config", AsyncMock())
+
     app = create_app()
 
     yield app.test_client()
 
 
 @pytest.fixture(scope="session")
-async def db(test_config: SAHConfig):
+async def db(test_config: SAHConfig) -> AsyncGenerator[SendADatabase, None]:
     """Creates the database and inserts the test data."""
     try:
         async with test_config.db.engine.begin() as conn:
@@ -102,7 +101,9 @@ async def db(test_config: SAHConfig):
 
 
 @pytest.fixture(scope="function")
-async def test_db(db: SendADatabase, mocker: MockerFixture):
+async def test_db(
+    db: SendADatabase, mocker: MockerFixture
+) -> AsyncGenerator[SendADatabase, None]:
     """
     Generates the session to use in tests. Once tests are done, rolls
     back the transaction and closes the session. Also updates the values

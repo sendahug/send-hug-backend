@@ -141,10 +141,4 @@ class SAHConfig:
             }
 
 
-# TODO: should be able to do this with a mock but can't currently get it to work
-if os.environ.get("PYTEST_VERSION"):
-    sah_config = SAHConfig(
-        credentials_path=Path("test.json"), override_db_name="test_sah"
-    )
-else:
-    sah_config = SAHConfig(credentials_path=get_db_credentials_path())
+sah_config = SAHConfig(credentials_path=get_db_credentials_path())

@@ -58,7 +58,7 @@ async def add_filter(token_payload: UserData) -> Response:
 
     # Try to add the word to the filters list
     filter = Filter(filter=new_filter.lower())
-    # breakpoint()  # testing tests from here
+
     added = await sah_config.db.add_object(filter)
 
     return jsonify({"success": True, "added": added})
