@@ -34,7 +34,11 @@ import pytest
 # -------------------------------------------------------
 # Attempt to get filters without auth header
 @pytest.mark.asyncio(scope="session")
-async def test_get_filters_no_auth(app_client, test_db):
+async def test_get_filters_no_auth(app_client, test_db, mocker):
+    mocker.patch(
+        "controllers.filters.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get("/filters")
     response_data = await response.get_json()
 
@@ -56,8 +60,12 @@ async def test_get_filters_no_auth(app_client, test_db):
 )
 @pytest.mark.asyncio(scope="session")
 async def test_get_filters_auth_error(
-    app_client, test_db, user_headers, user, status_code
+    app_client, test_db, user_headers, user, status_code, mocker
 ):
+    mocker.patch(
+        "controllers.filters.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get("/filters", headers=user_headers[user])
     response_data = await response.get_json()
 
@@ -67,7 +75,11 @@ async def test_get_filters_auth_error(
 
 # Attempt to get filters with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_filters_as_admin(app_client, test_db, user_headers):
+async def test_get_filters_as_admin(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.filters.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get("/filters", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -81,7 +93,11 @@ async def test_get_filters_as_admin(app_client, test_db, user_headers):
 # -------------------------------------------------------
 # Attempt to create a filter without auth header
 @pytest.mark.asyncio(scope="session")
-async def test_create_filters_no_auth(app_client, test_db, user_headers):
+async def test_create_filters_no_auth(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.filters.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.post("/filters", data=json.dumps({"word": "sample"}))
     response_data = await response.get_json()
 
@@ -103,8 +119,12 @@ async def test_create_filters_no_auth(app_client, test_db, user_headers):
 )
 @pytest.mark.asyncio(scope="session")
 async def test_create_filters_auth_error(
-    app_client, test_db, user_headers, user, status_code
+    app_client, test_db, user_headers, user, status_code, mocker
 ):
+    mocker.patch(
+        "controllers.filters.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.post(
         "/filters",
         headers=user_headers[user],
@@ -118,7 +138,11 @@ async def test_create_filters_auth_error(
 
 # Attempt to create a filter with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_create_filters_as_admin(app_client, test_db, user_headers):
+async def test_create_filters_as_admin(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.filters.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.post(
         "/filters", headers=user_headers["admin"], data=json.dumps({"word": "sample"})
     )
@@ -132,7 +156,13 @@ async def test_create_filters_as_admin(app_client, test_db, user_headers):
 
 # Attempt to create a filter with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_create_duplicate_filters_as_admin(app_client, test_db, user_headers):
+async def test_create_duplicate_filters_as_admin(
+    app_client, test_db, user_headers, mocker
+):
+    mocker.patch(
+        "controllers.filters.sah_config.db.session", new_callable=test_db.session
+    )
+
     filter = {"word": "sample"}
     await app_client.post(
         "/filters", headers=user_headers["admin"], data=json.dumps(filter)
@@ -150,7 +180,11 @@ async def test_create_duplicate_filters_as_admin(app_client, test_db, user_heade
 # -------------------------------------------------------
 # Attempt to delete a filter without auth header
 @pytest.mark.asyncio(scope="session")
-async def test_delete_filters_no_auth(app_client, test_db, user_headers):
+async def test_delete_filters_no_auth(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.filters.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete("/filters/1")
     response_data = await response.get_json()
 
@@ -172,8 +206,12 @@ async def test_delete_filters_no_auth(app_client, test_db, user_headers):
 )
 @pytest.mark.asyncio(scope="session")
 async def test_delete_filters_auth_error(
-    app_client, test_db, user_headers, user, status_code
+    app_client, test_db, user_headers, user, status_code, mocker
 ):
+    mocker.patch(
+        "controllers.filters.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete("/filters/1", headers=user_headers[user])
     response_data = await response.get_json()
 
@@ -183,7 +221,11 @@ async def test_delete_filters_auth_error(
 
 # Attempt to delete a filter with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_delete_filters_as_admin(app_client, test_db, user_headers):
+async def test_delete_filters_as_admin(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.filters.sah_config.db.session", new_callable=test_db.session
+    )
+
     # Delete the filter
     response = await app_client.delete("/filters/2", headers=user_headers["admin"])
     response_data = await response.get_json()
@@ -196,7 +238,13 @@ async def test_delete_filters_as_admin(app_client, test_db, user_headers):
 
 # Attempt to delete a filter that doesn't exist with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_delete_nonexistent_filters_as_admin(app_client, test_db, user_headers):
+async def test_delete_nonexistent_filters_as_admin(
+    app_client, test_db, user_headers, mocker
+):
+    mocker.patch(
+        "controllers.filters.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete("/filters/100", headers=user_headers["admin"])
     response_data = await response.get_json()
 
