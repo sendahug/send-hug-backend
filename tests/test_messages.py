@@ -34,7 +34,11 @@ import pytest
 # -------------------------------------------------------
 # Attempt to get a user's messages without auth header
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_messages_no_auth(app_client, test_db, user_headers):
+async def test_get_user_messages_no_auth(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get("/messages")
     response_data = await response.get_json()
 
@@ -44,7 +48,13 @@ async def test_get_user_messages_no_auth(app_client, test_db, user_headers):
 
 # Attempt to get a user's messages with malformed auth header
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_messages_malformed_auth(app_client, test_db, user_headers):
+async def test_get_user_messages_malformed_auth(
+    app_client, test_db, user_headers, mocker
+):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get("/messages", headers=user_headers["malformed"])
     response_data = await response.get_json()
 
@@ -54,7 +64,11 @@ async def test_get_user_messages_malformed_auth(app_client, test_db, user_header
 
 # Attempt to get a user's inbox with a user's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_inbox_as_user(app_client, test_db, user_headers):
+async def test_get_user_inbox_as_user(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get(
         "/messages",
         headers=user_headers["user"],
@@ -70,7 +84,11 @@ async def test_get_user_inbox_as_user(app_client, test_db, user_headers):
 
 # Attempt to get a user's outbox with a user's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_outbox_as_user(app_client, test_db, user_headers):
+async def test_get_user_outbox_as_user(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get(
         "/messages?type=outbox",
         headers=user_headers["user"],
@@ -86,7 +104,11 @@ async def test_get_user_outbox_as_user(app_client, test_db, user_headers):
 
 # Attempt to get a user's threads mailbox with a user's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_threads_as_user(app_client, test_db, user_headers):
+async def test_get_user_threads_as_user(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get(
         "/messages?type=threads",
         headers=user_headers["user"],
@@ -102,7 +124,11 @@ async def test_get_user_threads_as_user(app_client, test_db, user_headers):
 
 # Attempt to get a user's inbox with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_inbox_as_mod(app_client, test_db, user_headers):
+async def test_get_user_inbox_as_mod(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get(
         "/messages",
         headers=user_headers["moderator"],
@@ -118,7 +144,11 @@ async def test_get_user_inbox_as_mod(app_client, test_db, user_headers):
 
 # Attempt to get a user's outbox with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_outbox_as_mod(app_client, test_db, user_headers):
+async def test_get_user_outbox_as_mod(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get(
         "/messages?type=outbox",
         headers=user_headers["moderator"],
@@ -134,7 +164,11 @@ async def test_get_user_outbox_as_mod(app_client, test_db, user_headers):
 
 # Attempt to get a user's threads mailbox with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_threads_as_mod(app_client, test_db, user_headers):
+async def test_get_user_threads_as_mod(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get(
         "/messages?type=threads",
         headers=user_headers["moderator"],
@@ -150,7 +184,11 @@ async def test_get_user_threads_as_mod(app_client, test_db, user_headers):
 
 # Attempt to get a user's inbox with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_inbox_as_admin(app_client, test_db, user_headers):
+async def test_get_user_inbox_as_admin(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get(
         "/messages",
         headers=user_headers["admin"],
@@ -166,7 +204,11 @@ async def test_get_user_inbox_as_admin(app_client, test_db, user_headers):
 
 # Attempt to get a user's outbox with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_outbox_as_admin(app_client, test_db, user_headers):
+async def test_get_user_outbox_as_admin(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get(
         "/messages?type=outbox",
         headers=user_headers["admin"],
@@ -182,7 +224,11 @@ async def test_get_user_outbox_as_admin(app_client, test_db, user_headers):
 
 # Attempt to get a user's threads mailbox with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_user_threads_as_admin(app_client, test_db, user_headers):
+async def test_get_user_threads_as_admin(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get(
         "/messages?type=threads",
         headers=user_headers["admin"],
@@ -198,7 +244,11 @@ async def test_get_user_threads_as_admin(app_client, test_db, user_headers):
 
 # Attempt to get other users' messaging thread (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
-async def get_other_users_thread_as_admin(app_client, test_db, user_headers):
+async def get_other_users_thread_as_admin(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get(
         "/messages?type=thread&threadID=2",
         headers=user_headers["admin"],
@@ -212,8 +262,12 @@ async def get_other_users_thread_as_admin(app_client, test_db, user_headers):
 # Attempt to get other users' messaging thread (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def get_nonexistent_thread_as_admin(
-    app_client, test_db, user_headers, dummy_users_data
+    app_client, test_db, user_headers, dummy_users_data, mocker
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.get(
         "/messages?type=thread&threadID=200",
         headers=user_headers["admin"],
@@ -226,8 +280,12 @@ async def get_nonexistent_thread_as_admin(
 
 @pytest.mark.asyncio(scope="session")
 async def test_threads_message_count_shows_user_count(
-    app_client, test_db, user_headers, dummy_users_data
+    app_client, test_db, user_headers, dummy_users_data, mocker
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     admin_response = await app_client.get(
         "/messages?type=threads",
         headers=user_headers["admin"],
@@ -255,8 +313,12 @@ async def test_threads_message_count_shows_user_count(
 # Attempt to create a message with no authorisation header
 @pytest.mark.asyncio(scope="session")
 async def test_send_message_no_auth(
-    app_client, test_db, user_headers, dummy_request_data
+    app_client, test_db, user_headers, dummy_request_data, mocker
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.post(
         "/messages", data=json.dumps(dummy_request_data["new_message"])
     )
@@ -269,8 +331,12 @@ async def test_send_message_no_auth(
 # Attempt to create a message with a malformed auth header
 @pytest.mark.asyncio(scope="session")
 async def test_send_message_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data
+    app_client, test_db, user_headers, dummy_request_data, mocker
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.post(
         "/messages",
         headers=user_headers["malformed"],
@@ -290,7 +356,12 @@ async def test_send_message_as_user(
     user_headers,
     dummy_users_data,
     dummy_request_data,
+    mocker,
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     message = dummy_request_data["new_message"]
     message["fromId"] = int(dummy_users_data["user"]["internal"])
     message["forId"] = dummy_users_data["moderator"]["internal"]
@@ -314,7 +385,12 @@ async def test_send_message_from_another_user(
     user_headers,
     dummy_users_data,
     dummy_request_data,
+    mocker,
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     message = dummy_request_data["new_message"]
     message["fromId"] = int(dummy_users_data["admin"]["internal"])
     message["forId"] = dummy_users_data["moderator"]["internal"]
@@ -337,7 +413,12 @@ async def test_send_message_as_mod(
     user_headers,
     dummy_users_data,
     dummy_request_data,
+    mocker,
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     message = dummy_request_data["new_message"]
     message["fromId"] = int(dummy_users_data["moderator"]["internal"])
     message["forId"] = dummy_users_data["admin"]["internal"]
@@ -360,7 +441,12 @@ async def test_send_message_as_admin(
     user_headers,
     dummy_users_data,
     dummy_request_data,
+    mocker,
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     message = dummy_request_data["new_message"]
     message["fromId"] = int(dummy_users_data["admin"]["internal"])
     message["forId"] = dummy_users_data["moderator"]["internal"]
@@ -383,7 +469,12 @@ async def test_send_message_existing_thread_as_user(
     user_headers,
     dummy_users_data,
     dummy_request_data,
+    mocker,
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     message = dummy_request_data["new_message"]
     message["fromId"] = int(dummy_users_data["blocked"]["internal"])
     message["forId"] = dummy_users_data["admin"]["internal"]
@@ -411,7 +502,12 @@ async def test_send_message_create_thread(
     user_headers,
     dummy_users_data,
     dummy_request_data,
+    mocker,
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     message = {**dummy_request_data["new_message"]}
     message["fromId"] = int(dummy_users_data["admin"]["internal"])
     message["forId"] = 9
@@ -437,7 +533,11 @@ async def test_send_message_create_thread(
 # -------------------------------------------------------
 # Attempt to delete a message with no authorisation header
 @pytest.mark.asyncio(scope="session")
-async def test_delete_message_no_auth(app_client, test_db, user_headers):
+async def test_delete_message_no_auth(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete("/messages/inbox/1")
     response_data = await response.get_json()
 
@@ -447,7 +547,11 @@ async def test_delete_message_no_auth(app_client, test_db, user_headers):
 
 # Attempt to delete a message with a malformed auth header
 @pytest.mark.asyncio(scope="session")
-async def test_delete_message_malformed_auth(app_client, test_db, user_headers):
+async def test_delete_message_malformed_auth(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/inbox/1", headers=user_headers["malformed"]
     )
@@ -459,7 +563,11 @@ async def test_delete_message_malformed_auth(app_client, test_db, user_headers):
 
 # Attempt to delete a message with a user's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_delete_message_as_user(app_client, test_db, user_headers):
+async def test_delete_message_as_user(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/inbox/3", headers=user_headers["user"]
     )
@@ -473,8 +581,12 @@ async def test_delete_message_as_user(app_client, test_db, user_headers):
 # Attempt to delete another user's message (with a user's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_delete_message_from_another_user_as_user(
-    app_client, test_db, user_headers
+    app_client, test_db, user_headers, mocker
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/inbox/7", headers=user_headers["user"]
     )
@@ -486,7 +598,11 @@ async def test_delete_message_from_another_user_as_user(
 
 # Attempt to delete a thread with a user's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_delete_thread_as_user(app_client, test_db, user_headers):
+async def test_delete_thread_as_user(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/threads/2", headers=user_headers["user"]
     )
@@ -505,7 +621,11 @@ async def test_delete_thread_as_user(app_client, test_db, user_headers):
 
 # Attempt to delete a message with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_delete_message_as_mod(app_client, test_db, user_headers):
+async def test_delete_message_as_mod(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/inbox/5", headers=user_headers["moderator"]
     )
@@ -519,8 +639,12 @@ async def test_delete_message_as_mod(app_client, test_db, user_headers):
 # Attempt to delete another user's message (with a moderator's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_delete_message_from_another_user_as_mod(
-    app_client, test_db, user_headers
+    app_client, test_db, user_headers, mocker
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/outbox/9", headers=user_headers["moderator"]
     )
@@ -532,7 +656,11 @@ async def test_delete_message_from_another_user_as_mod(
 
 # Attempt to delete a message with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_delete_message_as_admin(app_client, test_db, user_headers):
+async def test_delete_message_as_admin(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/outbox/10", headers=user_headers["admin"]
     )
@@ -546,8 +674,12 @@ async def test_delete_message_as_admin(app_client, test_db, user_headers):
 # Attempt to delete another user's message (with an admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_delete_message_from_another_user_as_admin(
-    app_client, test_db, user_headers
+    app_client, test_db, user_headers, mocker
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/outbox/3", headers=user_headers["admin"]
     )
@@ -559,7 +691,13 @@ async def test_delete_message_from_another_user_as_admin(
 
 # Attempt to delete a user's message with no mailbox (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
-async def test_delete_no_id_user_message_as_admin(app_client, test_db, user_headers):
+async def test_delete_no_id_user_message_as_admin(
+    app_client, test_db, user_headers, mocker
+):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete("/messages/", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -570,8 +708,12 @@ async def test_delete_no_id_user_message_as_admin(app_client, test_db, user_head
 # Attempt to delete a nonexistent user's message (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_delete_nonexistent_user_message_as_admin(
-    app_client, test_db, user_headers
+    app_client, test_db, user_headers, mocker
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/inbox/100", headers=user_headers["admin"]
     )
@@ -583,7 +725,13 @@ async def test_delete_nonexistent_user_message_as_admin(
 
 # Attempt to delete a message without ID
 @pytest.mark.asyncio(scope="session")
-async def test_delete_message_without_id_admin(app_client, test_db, user_headers):
+async def test_delete_message_without_id_admin(
+    app_client, test_db, user_headers, mocker
+):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/inbox/", headers=user_headers["admin"]
     )
@@ -597,7 +745,11 @@ async def test_delete_message_without_id_admin(app_client, test_db, user_headers
 # -------------------------------------------------------
 # Attempt to empty mailbox without auth header
 @pytest.mark.asyncio(scope="session")
-async def test_empty_mailbox_no_auth(app_client, test_db, user_headers):
+async def test_empty_mailbox_no_auth(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete("/messages/inbox")
     response_data = await response.get_json()
 
@@ -607,7 +759,11 @@ async def test_empty_mailbox_no_auth(app_client, test_db, user_headers):
 
 # Attempt to empty mailbox with malformed auth header
 @pytest.mark.asyncio(scope="session")
-async def test_empty_mailbox_malformed_auth(app_client, test_db, user_headers):
+async def test_empty_mailbox_malformed_auth(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/inbox", headers=user_headers["malformed"]
     )
@@ -620,8 +776,12 @@ async def test_empty_mailbox_malformed_auth(app_client, test_db, user_headers):
 # Attempt to empty user's inbox (user JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_empty_mailbox_as_user(
-    app_client, test_db, user_headers, dummy_users_data
+    app_client, test_db, user_headers, dummy_users_data, mocker
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/inbox",
         headers=user_headers["user"],
@@ -645,8 +805,12 @@ async def test_empty_mailbox_as_user(
 # Attempt to empty user's outbox (moderator's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_empty_mailbox_as_mod(
-    app_client, test_db, user_headers, dummy_users_data
+    app_client, test_db, user_headers, dummy_users_data, mocker
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/outbox",
         headers=user_headers["moderator"],
@@ -662,8 +826,12 @@ async def test_empty_mailbox_as_mod(
 # Attempt to empty user's threads mailbox (admin's JWT)
 @pytest.mark.asyncio(scope="session")
 async def test_empty_mailbox_as_admin(
-    app_client, test_db, user_headers, dummy_users_data
+    app_client, test_db, user_headers, dummy_users_data, mocker
 ):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete(
         "/messages/threads",
         headers=user_headers["admin"],
@@ -678,7 +846,11 @@ async def test_empty_mailbox_as_admin(
 
 # Attempt to empty user mailbox without user type
 @pytest.mark.asyncio(scope="session")
-async def test_empty_mailbox_type_as_admin(app_client, test_db, user_headers):
+async def test_empty_mailbox_type_as_admin(app_client, test_db, user_headers, mocker):
+    mocker.patch(
+        "controllers.messages.sah_config.db.session", new_callable=test_db.session
+    )
+
     response = await app_client.delete("/messages/", headers=user_headers["admin"])
     response_data = await response.get_json()
 

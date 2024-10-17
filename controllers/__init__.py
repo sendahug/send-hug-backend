@@ -6,6 +6,7 @@ from .notifications import notifications_endpoints
 from .posts import posts_endpoints
 from .reports import reports_endpoints
 from .root import root_endpoints
+from .users import users_endpoints
 
 routers: list[Blueprint] = [
     filters_endpoints,
@@ -14,4 +15,5 @@ routers: list[Blueprint] = [
     posts_endpoints,
     reports_endpoints,
     root_endpoints,
+    users_endpoints,
 ]
