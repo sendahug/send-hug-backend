@@ -321,7 +321,6 @@ async def test_update_user_as_user(
     user_headers,
     dummy_users_data,
     dummy_request_data,
-    mocker,
 ):
     user = dummy_request_data["updated_user"]
     user["id"] = dummy_users_data["user"]["internal"]
@@ -347,7 +346,6 @@ async def test_update_other_users_display_name_as_user(
     user_headers,
     dummy_users_data,
     dummy_request_data,
-    mocker,
 ):
     user = dummy_request_data["updated_display"]
     user["id"] = dummy_users_data["moderator"]["internal"]
@@ -370,7 +368,6 @@ async def test_update_block_user_as_user(
     user_headers,
     dummy_users_data,
     dummy_request_data,
-    mocker,
 ):
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["user"]["internal"]
@@ -394,7 +391,6 @@ async def test_update_user_as_mod(
     user_headers,
     dummy_users_data,
     dummy_request_data,
-    mocker,
 ):
     user = dummy_request_data["updated_user"]
     user["id"] = dummy_users_data["moderator"]["internal"]
@@ -420,7 +416,6 @@ async def test_update_other_users_display_name_as_mod(
     user_headers,
     dummy_users_data,
     dummy_request_data,
-    mocker,
 ):
     user = dummy_request_data["updated_display"]
     user["id"] = dummy_users_data["admin"]["internal"]
@@ -443,7 +438,6 @@ async def test_update_block_user_as_mod(
     user_headers,
     dummy_users_data,
     dummy_request_data,
-    mocker,
 ):
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["moderator"]["internal"]
@@ -467,7 +461,6 @@ async def test_update_user_as_admin(
     user_headers,
     dummy_users_data,
     dummy_request_data,
-    mocker,
 ):
     user = dummy_request_data["updated_user"]
     user["id"] = dummy_users_data["admin"]["internal"]
@@ -493,7 +486,6 @@ async def test_update_other_user_as_admin(
     user_headers,
     dummy_users_data,
     dummy_request_data,
-    mocker,
 ):
     user = dummy_request_data["updated_display"]
     user["id"] = dummy_users_data["user"]["internal"]
@@ -519,7 +511,6 @@ async def test_update_block_user_as_admin(
     user_headers,
     dummy_users_data,
     dummy_request_data,
-    mocker,
 ):
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["user"]["internal"]
@@ -544,7 +535,6 @@ async def test_update_user_settings_as_admin(
     user_headers,
     dummy_users_data,
     dummy_request_data,
-    mocker,
 ):
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["user"]["internal"]
@@ -585,7 +575,6 @@ async def test_update_admin_settings_as_admin(
     user_headers,
     dummy_users_data,
     dummy_request_data,
-    mocker,
 ):
     user = {**dummy_request_data["updated_unblock_user"]}
     user["id"] = dummy_users_data["admin"]["internal"]
@@ -615,7 +604,6 @@ async def test_update_admin_settings_as_admin_invalid_settings(
     user_headers,
     dummy_users_data,
     dummy_request_data,
-    mocker,
 ):
     user = {**dummy_request_data["updated_unblock_user"]}
     user["id"] = dummy_users_data["admin"]["internal"]
@@ -685,7 +673,6 @@ async def test_get_user_posts(
     user,
     total_pages,
     posts_num,
-    mocker,
 ):
     response = await app_client.get(
         f"/users/all/{user_id}/posts", headers=user_headers[user]

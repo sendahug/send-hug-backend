@@ -487,7 +487,6 @@ async def test_delete_message_from_another_user_as_user(
 # Attempt to delete a thread with a user's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_delete_thread_as_user(app_client, test_db, user_headers):
-    print(test_db.session)
     response = await app_client.delete(
         "/messages/threads/2", headers=user_headers["user"]
     )

@@ -126,7 +126,6 @@ async def test_send_report_as_user(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -152,7 +151,6 @@ async def test_send_report_as_mod(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -178,7 +176,6 @@ async def test_send_report_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -204,7 +201,6 @@ async def test_send_malformed_report_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -228,7 +224,6 @@ async def test_send_report_as_another_user(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -252,7 +247,6 @@ async def test_send_report_nonexistent_post_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -275,7 +269,6 @@ async def test_send_user_report_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_user_report"]
     report["userID"] = 1
@@ -300,7 +293,6 @@ async def test_send_user_report_nonexistent_user_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_user_report"]
     report["userID"] = 100
@@ -354,7 +346,6 @@ async def test_update_report_as_user(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -377,7 +368,6 @@ async def test_update_report_as_mod(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_report"]
     report["userID"] = 4
@@ -400,7 +390,6 @@ async def test_update_report_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_report"]
     report["id"] = 36
@@ -428,7 +417,6 @@ async def test_update_user_report_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_user_report"]
     report["id"] = 35
@@ -456,7 +444,6 @@ async def test_update_no_id_report_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_report"]
     report["id"] = 36
@@ -482,7 +469,6 @@ async def test_update_nonexistent_report_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
     report = dummy_request_data["new_report"]
     report["id"] = 36
