@@ -2,7 +2,7 @@ alembic==1.13.3
 quart==0.19.6
 quart-cors==0.7.0
 hypercorn==0.17.3
-asyncpg==0.29.0
+asyncpg==0.30.0
 pywebpush==2.0.1
 SQLAlchemy[asyncio]==2.0.36
 firebase-admin==6.5.0
