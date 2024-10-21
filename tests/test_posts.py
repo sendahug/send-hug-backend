@@ -34,13 +34,7 @@ import pytest
 # -------------------------------------------------------
 # Attempt to create a post without auth header
 @pytest.mark.asyncio(scope="session")
-async def test_send_post_no_auth(
-    app_client, test_db, user_headers, dummy_request_data, mocker
-):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_send_post_no_auth(app_client, test_db, user_headers, dummy_request_data):
     response = await app_client.post(
         "/posts", data=json.dumps(dummy_request_data["new_post"])
     )
@@ -53,12 +47,8 @@ async def test_send_post_no_auth(
 # Attempt to create a post with a malformed auth header
 @pytest.mark.asyncio(scope="session")
 async def test_send_post_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.post(
         "/posts",
         headers=user_headers["malformed"],
@@ -78,12 +68,7 @@ async def test_send_post_as_user(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
     response = await app_client.post(
@@ -105,12 +90,7 @@ async def test_send_post_as_mod(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["moderator"]["internal"]
     response = await app_client.post(
@@ -132,12 +112,7 @@ async def test_send_post_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["admin"]["internal"]
     response = await app_client.post(
@@ -159,12 +134,7 @@ async def test_send_post_as_blocked(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["blocked"]["internal"]
     response = await app_client.post(
@@ -185,12 +155,7 @@ async def test_send_post_as_another_user(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["new_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
     response = await app_client.post(
@@ -208,12 +173,8 @@ async def test_send_post_as_another_user(
 # Attempt to update a post with no authorisation header
 @pytest.mark.asyncio(scope="session")
 async def test_update_post_no_auth(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.patch(
         "/posts/4", data=json.dumps(dummy_request_data["updated_post"])
     )
@@ -226,12 +187,8 @@ async def test_update_post_no_auth(
 # Attempt to update a post with a malformed auth header
 @pytest.mark.asyncio(scope="session")
 async def test_update_post_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.patch(
         "/posts/4",
         headers=user_headers["malformed"],
@@ -251,12 +208,7 @@ async def test_update_own_post_as_user(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
@@ -279,12 +231,7 @@ async def test_update_other_users_post_as_user(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["moderator"]["internal"]
     post["givenHugs"] = 1
@@ -305,12 +252,7 @@ async def test_update_own_post_as_mod(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["moderator"]["internal"]
     post["givenHugs"] = 1
@@ -333,12 +275,7 @@ async def test_update_other_users_post_as_mod(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
@@ -361,12 +298,7 @@ async def test_update_own_post_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["admin"]["internal"]
     post["givenHugs"] = 2
@@ -389,12 +321,7 @@ async def test_update_other_users_post_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
@@ -417,12 +344,7 @@ async def test_update_other_users_post_report_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["report_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
     post["givenHugs"] = 2
@@ -445,12 +367,7 @@ async def test_update_nonexistent_post_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
     response = await app_client.patch(
@@ -470,12 +387,7 @@ async def test_update_post_no_id_as_admin(
     user_headers,
     dummy_request_data,
     dummy_users_data,
-    mocker,
 ):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
     post = dummy_request_data["updated_post"]
     post["userId"] = dummy_users_data["user"]["internal"]
     response = await app_client.patch(
@@ -491,13 +403,7 @@ async def test_update_post_no_id_as_admin(
 # -------------------------------------------------------
 # Attempt to send hugs for post you already sent hugs for
 @pytest.mark.asyncio(scope="session")
-async def test_post_hugs_given_duplicate_hugs(
-    app_client, test_db, user_headers, mocker
-):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_post_hugs_given_duplicate_hugs(app_client, test_db, user_headers):
     response = await app_client.post(
         "/posts/1/hugs", headers=user_headers["admin"], data=json.dumps({})
     )
@@ -509,11 +415,7 @@ async def test_post_hugs_given_duplicate_hugs(
 
 # Attempt to send hugs for a post that doesn't exist
 @pytest.mark.asyncio(scope="session")
-async def test_post_hugs_post_no_existing(app_client, test_db, user_headers, mocker):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_post_hugs_post_no_existing(app_client, test_db, user_headers):
     response = await app_client.post(
         "/posts/1000/hugs", headers=user_headers["admin"], data=json.dumps({})
     )
@@ -525,11 +427,7 @@ async def test_post_hugs_post_no_existing(app_client, test_db, user_headers, moc
 
 # Attempt to send hugs
 @pytest.mark.asyncio(scope="session")
-async def test_post_hugs(app_client, test_db, user_headers, mocker):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_post_hugs(app_client, test_db, user_headers):
     response = await app_client.post(
         "/posts/1/hugs", headers=user_headers["moderator"], data=json.dumps({})
     )
@@ -542,11 +440,7 @@ async def test_post_hugs(app_client, test_db, user_headers, mocker):
 
 # Attempt to send a hug and a message
 @pytest.mark.asyncio(scope="session")
-async def test_post_hugs_with_message(app_client, test_db, user_headers, mocker):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_post_hugs_with_message(app_client, test_db, user_headers):
     response = await app_client.post(
         "/posts/1/hugs",
         headers=user_headers["moderator"],
@@ -573,11 +467,7 @@ async def test_post_hugs_with_message(app_client, test_db, user_headers, mocker)
 # -------------------------------------------------------
 # Attempt to delete a post with no authorisation header
 @pytest.mark.asyncio(scope="session")
-async def test_delete_post_no_auth(app_client, test_db, user_headers, mocker):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_delete_post_no_auth(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/3")
     response_data = await response.get_json()
 
@@ -587,11 +477,7 @@ async def test_delete_post_no_auth(app_client, test_db, user_headers, mocker):
 
 # Attempt to delete a post with a malformed auth header
 @pytest.mark.asyncio(scope="session")
-async def test_delete_post_malformed_auth(app_client, test_db, user_headers, mocker):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_delete_post_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/3", headers=user_headers["malformed"])
     response_data = await response.get_json()
 
@@ -612,13 +498,7 @@ async def test_delete_post_malformed_auth(app_client, test_db, user_headers, moc
     ],
 )
 @pytest.mark.asyncio(scope="session")
-async def test_delete_own_post(
-    app_client, test_db, user_headers, post_id, user, mocker
-):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_delete_own_post(app_client, test_db, user_headers, post_id, user):
     response = await app_client.delete(f"/posts/{post_id}", headers=user_headers[user])
     response_data = await response.get_json()
 
@@ -629,13 +509,7 @@ async def test_delete_own_post(
 
 # Attempt to delete another user's post (with user's JWT)
 @pytest.mark.asyncio(scope="session")
-async def test_delete_other_users_post_as_user(
-    app_client, test_db, user_headers, mocker
-):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_delete_other_users_post_as_user(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/12", headers=user_headers["user"])
     response_data = await response.get_json()
 
@@ -645,13 +519,7 @@ async def test_delete_other_users_post_as_user(
 
 # Attempt to delete another user's post (with moderator's JWT)
 @pytest.mark.asyncio(scope="session")
-async def test_delete_other_users_post_as_mod(
-    app_client, test_db, user_headers, mocker
-):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_delete_other_users_post_as_mod(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/25", headers=user_headers["moderator"])
     response_data = await response.get_json()
 
@@ -661,13 +529,7 @@ async def test_delete_other_users_post_as_mod(
 
 # Attempt to delete another user's post (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
-async def test_delete_other_users_post_as_admin(
-    app_client, test_db, user_headers, mocker
-):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_delete_other_users_post_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/1", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -678,13 +540,7 @@ async def test_delete_other_users_post_as_admin(
 
 # Attempt to delete a post that doesn't exist (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
-async def test_delete_nonexistent_post_as_admin(
-    app_client, test_db, user_headers, mocker
-):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_delete_nonexistent_post_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/100", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -694,11 +550,7 @@ async def test_delete_nonexistent_post_as_admin(
 
 # Attempt to delete a post without post ID (with admin's JWT)
 @pytest.mark.asyncio(scope="session")
-async def test_delete_post_no_id_as_admin(app_client, test_db, user_headers, mocker):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_delete_post_no_id_as_admin(app_client, test_db, user_headers):
     response = await app_client.delete("/posts/", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -717,11 +569,7 @@ async def test_delete_post_no_id_as_admin(app_client, test_db, user_headers, moc
     ],
 )
 @pytest.mark.asyncio(scope="session")
-async def test_get_full_posts_page_1(app_client, test_db, post_type, mocker):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_get_full_posts_page_1(app_client, test_db, post_type):
     response = await app_client.get(f"/posts/{post_type}")
     response_data = await response.get_json()
 
@@ -740,11 +588,7 @@ async def test_get_full_posts_page_1(app_client, test_db, post_type, mocker):
     ],
 )
 @pytest.mark.asyncio(scope="session")
-async def test_get_full_posts_page_2(app_client, test_db, post_type, mocker):
-    mocker.patch(
-        "controllers.posts.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_get_full_posts_page_2(app_client, test_db, post_type):
     response = await app_client.get(f"/posts/{post_type}?page=2")
     response_data = await response.get_json()
 

@@ -1,5 +1,6 @@
 from asyncio import current_task
 from datetime import datetime
+from os import listdir, path
 from pathlib import Path
 from typing import AsyncGenerator, Generator
 
@@ -124,6 +125,23 @@ async def test_db(
         db.session = async_scoped_session(
             session_factory=db.session_factory, scopefunc=current_task
         )
+
+        def get_scoped_session():
+            return async_scoped_session(
+                session_factory=db.session_factory, scopefunc=current_task
+            )
+
+        # Surely there's a better way to do this
+        controllers = listdir(path.join(path.dirname(__file__), "../controllers"))
+        non_controllers = ["__init__.py", "common.py", "__pycache__"]
+        for controller in controllers:
+            if controller in non_controllers:
+                continue
+
+            mocker.patch(
+                f"controllers.{controller[:-3]}.sah_config.db.session",
+                new_callable=get_scoped_session,
+            )
 
         # async_mock = AsyncMock()
 

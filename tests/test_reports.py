@@ -34,11 +34,7 @@ import pytest
 # -------------------------------------------------------
 # Attempt to get open reports without auth header
 @pytest.mark.asyncio(scope="session")
-async def test_get_open_reports_no_auth(app_client, test_db, user_headers, mocker):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_get_open_reports_no_auth(app_client, test_db, user_headers):
     response = await app_client.get("/reports")
     response_data = await response.get_json()
 
@@ -48,13 +44,7 @@ async def test_get_open_reports_no_auth(app_client, test_db, user_headers, mocke
 
 # Attempt to get open reports with malformed auth header
 @pytest.mark.asyncio(scope="session")
-async def test_get_open_reports_malformed_auth(
-    app_client, test_db, user_headers, mocker
-):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_get_open_reports_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.get("/reports", headers=user_headers["malformed"])
     response_data = await response.get_json()
 
@@ -64,11 +54,7 @@ async def test_get_open_reports_malformed_auth(
 
 # Attempt to get open reports with a user's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_open_reports_as_user(app_client, test_db, user_headers, mocker):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_get_open_reports_as_user(app_client, test_db, user_headers):
     response = await app_client.get("/reports", headers=user_headers["user"])
     response_data = await response.get_json()
 
@@ -78,11 +64,7 @@ async def test_get_open_reports_as_user(app_client, test_db, user_headers, mocke
 
 #  Attempt to get open reports with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_open_reports_as_mod(app_client, test_db, user_headers, mocker):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_get_open_reports_as_mod(app_client, test_db, user_headers):
     response = await app_client.get("/reports", headers=user_headers["moderator"])
     response_data = await response.get_json()
 
@@ -92,11 +74,7 @@ async def test_get_open_reports_as_mod(app_client, test_db, user_headers, mocker
 
 # Attempt to get open reports with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_get_open_reports_as_admin(app_client, test_db, user_headers, mocker):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_get_open_reports_as_admin(app_client, test_db, user_headers):
     response = await app_client.get("/reports", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -113,12 +91,8 @@ async def test_get_open_reports_as_admin(app_client, test_db, user_headers, mock
 # Attempt to create a report with no authorisation header
 @pytest.mark.asyncio(scope="session")
 async def test_send_report_no_auth(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.post(
         "/reports", data=json.dumps(dummy_request_data["new_report"])
     )
@@ -131,12 +105,8 @@ async def test_send_report_no_auth(
 # Attempt to create a report with a malformed auth header
 @pytest.mark.asyncio(scope="session")
 async def test_send_report_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.post(
         "/reports",
         headers=user_headers["malformed"],
@@ -158,10 +128,6 @@ async def test_send_report_as_user(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
@@ -188,10 +154,6 @@ async def test_send_report_as_mod(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
@@ -218,10 +180,6 @@ async def test_send_report_as_admin(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
@@ -248,10 +206,6 @@ async def test_send_malformed_report_as_admin(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = None
@@ -276,10 +230,6 @@ async def test_send_report_as_another_user(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
@@ -304,10 +254,6 @@ async def test_send_report_nonexistent_post_as_admin(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 1000
@@ -331,10 +277,6 @@ async def test_send_user_report_as_admin(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_user_report"]
     report["userID"] = 1
     report["reporter"] = dummy_users_data["admin"]["internal"]
@@ -360,10 +302,6 @@ async def test_send_user_report_nonexistent_user_as_admin(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_user_report"]
     report["userID"] = 100
     report["reporter"] = dummy_users_data["admin"]["internal"]
@@ -381,12 +319,8 @@ async def test_send_user_report_nonexistent_user_as_admin(
 # Attempt to update a report with no authorisation header
 @pytest.mark.asyncio(scope="session")
 async def test_update_report_no_auth(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.patch(
         "/reports/36", data=json.dumps(dummy_request_data["new_report"])
     )
@@ -399,12 +333,8 @@ async def test_update_report_no_auth(
 # Attempt to update a report with a malformed auth header
 @pytest.mark.asyncio(scope="session")
 async def test_update_report_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.patch(
         "/reports/36",
         headers=user_headers["malformed"],
@@ -426,10 +356,6 @@ async def test_update_report_as_user(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
@@ -453,10 +379,6 @@ async def test_update_report_as_mod(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_report"]
     report["userID"] = 4
     report["postID"] = 25
@@ -480,10 +402,6 @@ async def test_update_report_as_admin(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_report"]
     report["id"] = 36
     report["userID"] = 4
@@ -512,10 +430,6 @@ async def test_update_user_report_as_admin(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_user_report"]
     report["id"] = 35
     report["userID"] = 5
@@ -544,10 +458,6 @@ async def test_update_no_id_report_as_admin(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_report"]
     report["id"] = 36
     report["userID"] = 4
@@ -574,10 +484,6 @@ async def test_update_nonexistent_report_as_admin(
     dummy_users_data,
     mocker,
 ):
-    mocker.patch(
-        "controllers.reports.sah_config.db.session", new_callable=test_db.session
-    )
-
     report = dummy_request_data["new_report"]
     report["id"] = 36
     report["userID"] = 4

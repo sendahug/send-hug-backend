@@ -35,13 +35,7 @@ import pytest
 # -------------------------------------------------------
 # Attempt to get user notifications without auth header
 @pytest.mark.asyncio(scope="session")
-async def test_get_notifications_no_auth(
-    app_client, test_db, user_headers, mocker
-) -> None:
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_get_notifications_no_auth(app_client, test_db, user_headers) -> None:
     response = await app_client.get("/notifications")
     response_data = await response.get_json()
 
@@ -51,13 +45,7 @@ async def test_get_notifications_no_auth(
 
 # Attempt to get user notifications with malformed auth header
 @pytest.mark.asyncio(scope="session")
-async def test_get_notifications_malformed_auth(
-    app_client, test_db, user_headers, mocker
-):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_get_notifications_malformed_auth(app_client, test_db, user_headers):
     response = await app_client.get("/notifications", headers=user_headers["malformed"])
     response_data = await response.get_json()
 
@@ -68,12 +56,8 @@ async def test_get_notifications_malformed_auth(
 # Attempt to get user notifications with a user's JWT (silent refresh)
 @pytest.mark.asyncio(scope="session")
 async def test_get_silent_notifications_as_user(
-    app_client, test_db, user_headers, dummy_users_data, mocker
+    app_client, test_db, user_headers, dummy_users_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['user']['firebase_id']}",
         headers=user_headers["user"],
@@ -101,12 +85,8 @@ async def test_get_silent_notifications_as_user(
 # Attempt to get user notifications with a user's JWT (non-silent refresh)
 @pytest.mark.asyncio(scope="session")
 async def test_get_non_silent_notifications_as_user(
-    app_client, test_db, user_headers, dummy_users_data, mocker
+    app_client, test_db, user_headers, dummy_users_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['user']['firebase_id']}",
         headers=user_headers["user"],
@@ -134,12 +114,8 @@ async def test_get_non_silent_notifications_as_user(
 # Attempt to get user notifications with a mod's JWT (silent refresh)
 @pytest.mark.asyncio(scope="session")
 async def test_get_silent_notifications_as_mod(
-    app_client, test_db, user_headers, dummy_users_data, mocker
+    app_client, test_db, user_headers, dummy_users_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
         headers=user_headers["moderator"],
@@ -167,12 +143,8 @@ async def test_get_silent_notifications_as_mod(
 # Attempt to get user notifications with a mod's JWT (non-silent refresh)
 @pytest.mark.asyncio(scope="session")
 async def test_get_non_silent_notifications_as_mod(
-    app_client, test_db, user_headers, dummy_users_data, mocker
+    app_client, test_db, user_headers, dummy_users_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
         headers=user_headers["moderator"],
@@ -200,12 +172,8 @@ async def test_get_non_silent_notifications_as_mod(
 # Attempt to get user notifications with an admin's JWT (silently)
 @pytest.mark.asyncio(scope="session")
 async def test_get_silent_notifications_as_admin(
-    app_client, test_db, user_headers, dummy_users_data, mocker
+    app_client, test_db, user_headers, dummy_users_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['admin']['firebase_id']}",
         headers=user_headers["admin"],
@@ -233,12 +201,8 @@ async def test_get_silent_notifications_as_admin(
 # Attempt to get user notifications with an admin's JWT (non-silently)
 @pytest.mark.asyncio(scope="session")
 async def test_get_non_silent_notifications_as_admin(
-    app_client, test_db, user_headers, dummy_users_data, mocker
+    app_client, test_db, user_headers, dummy_users_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     pre_user_query = await app_client.get(
         f"/users/all/{dummy_users_data['admin']['firebase_id']}",
         headers=user_headers["admin"],
@@ -268,12 +232,8 @@ async def test_get_non_silent_notifications_as_admin(
 # Attempt to create push subscription without auth header
 @pytest.mark.asyncio(scope="session")
 async def test_post_subscription_no_auth(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.post(
         "/notifications", data=json.dumps(dummy_request_data["new_subscription"])
     )
@@ -286,12 +246,8 @@ async def test_post_subscription_no_auth(
 # Attempt to create push subscription with malformed auth header
 @pytest.mark.asyncio(scope="session")
 async def test_post_subscription_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
@@ -306,12 +262,8 @@ async def test_post_subscription_malformed_auth(
 # Attempt to create push subscription with a user's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_post_subscription_as_user(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
@@ -327,12 +279,8 @@ async def test_post_subscription_as_user(
 # Attempt to create push subscription with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_post_subscription_as_mod(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
@@ -348,12 +296,8 @@ async def test_post_subscription_as_mod(
 # Attempt to create push subscription with an admin's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_post_subscription_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.post(
         "/notifications",
         data=json.dumps(dummy_request_data["new_subscription"]),
@@ -368,13 +312,7 @@ async def test_post_subscription_as_admin(
 
 # Attempt to create push subscription with an admin's JWT
 @pytest.mark.asyncio(scope="session")
-async def test_post_subscription_empty_data_as_admin(
-    app_client, test_db, user_headers, mocker
-):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
+async def test_post_subscription_empty_data_as_admin(app_client, test_db, user_headers):
     response = await app_client.post(
         "/notifications",
         data=None,
@@ -391,12 +329,8 @@ async def test_post_subscription_empty_data_as_admin(
 # Attempt to update push subscription without auth header
 @pytest.mark.asyncio(scope="session")
 async def test_update_subscription_no_auth(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     # Create the subscription
     await app_client.post(
         "/notifications",
@@ -418,12 +352,8 @@ async def test_update_subscription_no_auth(
 # Attempt to update push subscription with malformed auth header
 @pytest.mark.asyncio(scope="session")
 async def test_update_subscription_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     # Create the subscription
     await app_client.post(
         "/notifications",
@@ -447,12 +377,8 @@ async def test_update_subscription_malformed_auth(
 # Attempt to update push subscription with a user's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_subscription_as_user(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 1
     response = await app_client.patch(
@@ -471,12 +397,8 @@ async def test_update_subscription_as_user(
 # Attempt to create push subscription with a moderator's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_subscription_as_mod(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 2
     response = await app_client.patch(
@@ -495,12 +417,8 @@ async def test_update_subscription_as_mod(
 # Attempt to create push subscription with an admin's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_subscription_as_admin(
-    app_client, test_db, user_headers, dummy_request_data, mocker
+    app_client, test_db, user_headers, dummy_request_data
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 3
     response = await app_client.patch(
@@ -519,12 +437,8 @@ async def test_update_subscription_as_admin(
 # Attempt to create push subscription with an admin's JWT
 @pytest.mark.asyncio(scope="session")
 async def test_update_subscription_empty_data_as_admin(
-    app_client, test_db, user_headers, mocker
+    app_client, test_db, user_headers
 ):
-    mocker.patch(
-        "controllers.notifications.sah_config.db.session", new_callable=test_db.session
-    )
-
     response = await app_client.patch(
         "/notifications/1",
         data=None,
