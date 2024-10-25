@@ -1054,6 +1054,70 @@ def create_app(config: SAHConfig) -> Quart:
 
         return jsonify({"success": True, "message": sent_message[0]})
 
+    # Endpoint: PATCH /messages
+    # Description: Updates a message's read/unread status.
+    # Parameters: None.
+    # Authorization: patch:messages.
+    @app.route("/messages", methods=["PATCH"])
+    @requires_auth(config, ["patch:message"])
+    async def update_messagex(token_payload: UserData):
+        request_data = json.loads(await request.data)
+
+        if (
+            not request_data.get("message_ids")
+            or request_data.get("read", None) is None
+        ):
+            abort(400)
+
+        if request_data["message_ids"] == "all":
+            update_query = (
+                update(Message)
+                .where(Message.for_id == token_payload["id"])
+                .values(read=request_data["read"])
+            )
+        else:
+            message_ids: list[int] = request_data["message_ids"]
+
+            existing_messages = await config.db.session.scalars(
+                select(Message.id).where(
+                    and_(
+                        Message.id.in_(message_ids),
+                        Message.for_id == token_payload["id"],
+                    ),
+                )
+            )
+
+            # Make sure the user has permission to see all the notifications
+            if len(list(existing_messages)) != len(message_ids):
+                raise AuthError(
+                    {
+                        "code": 403,
+                        "description": "You do not have permission to update some "
+                        "of the provided notifications. Ensure all notifications "
+                        "are meant for you and try again.",
+                    },
+                    403,
+                )
+
+            update_query = (
+                update(Message)
+                .where(
+                    and_(
+                        Message.id.in_(message_ids),
+                        Message.for_id == token_payload["id"],
+                    )
+                )
+                .values(read=request_data["read"])
+            )
+
+        await config.db.update_multiple_objects_with_dml(update_stmts=update_query)
+
+        return {
+            "success": True,
+            "updated": request_data["message_ids"],
+            "read": request_data["read"],
+        }
+
     # Endpoint: DELETE /messages/<mailbox_type>/<item_id>
     # Description: Deletes a message/thread from the database.
     # Parameters: mailbox_type - the type of message to delete.
