@@ -956,6 +956,7 @@ def create_app(config: SAHConfig) -> Quart:
             messages = await config.db.paginate(
                 messages_query.order_by(desc(Message.date)),
                 current_page=page,
+                current_user_id=token_payload["id"],
             )
 
             # formats each message in the list
@@ -1026,6 +1027,8 @@ def create_app(config: SAHConfig) -> Quart:
             text=message_data["messageText"],
             date=datetime.strptime(message_data["date"], DATETIME_PATTERN),
             thread=thread_id,
+            for_read=False,
+            from_read=True,
         )
 
         # Create a notification for the user getting the message
