@@ -81,7 +81,7 @@ class Message(BaseModel):
     thread_details: Mapped["Thread"] = relationship("Thread", back_populates="messages")
     from_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     for_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    from_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    from_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     for_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # mapped_column Properties
     from_name = column_property(
