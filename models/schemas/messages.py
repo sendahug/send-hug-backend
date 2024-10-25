@@ -81,6 +81,8 @@ class Message(BaseModel):
     thread_details: Mapped["Thread"] = relationship("Thread", back_populates="messages")
     from_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     for_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    from_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    for_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # mapped_column Properties
     from_name = column_property(
         select(User.display_name).where(User.id == from_id).scalar_subquery()
@@ -104,6 +106,17 @@ class Message(BaseModel):
     # Format method
     # Responsible for returning a JSON object
     def format(self, **kwargs) -> DumpedModel:
+        current_user_read: bool
+
+        match (kwargs.get("current_user_id")):
+            case self.for_id:
+                current_user_read = self.for_read
+            case self.from_id:
+                current_user_read = self.from_read
+            # Shouldn't ever happen but just to be on the safe side
+            case None:
+                current_user_read = False
+
         return {
             "id": self.id,
             "fromId": self.from_id,
@@ -129,6 +142,7 @@ class Message(BaseModel):
             "messageText": self.text,
             "date": self.date,
             "threadID": self.thread,
+            "read": current_user_read,
         }
 
 
