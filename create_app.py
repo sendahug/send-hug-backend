@@ -1294,9 +1294,12 @@ def create_app(config: SAHConfig) -> Quart:
             # thus okay to delete completely) from messages that weren't
             # (so that these will only be deleted for one user rather than
             # for both)
-            # delete_stmt = delete(Message).where(
-            #     and_(Message.for_id == user_id, Message.from_deleted == true())
-            # )
+            delete_stmt = delete(Message).where(
+                and_(
+                    Message.for_id == token_payload["id"],
+                    Message.from_deleted == true(),
+                )
+            )
 
             # For each message that wasn't deleted by the other user, the
             # value of for_deleted (indicating whether the user the message
