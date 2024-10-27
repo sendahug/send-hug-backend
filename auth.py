@@ -60,6 +60,7 @@ class UserData(TypedDict):
     pushEnabled: bool
     last_notifications_read: datetime | None
     firebaseId: str
+    email_verified: bool
 
 
 # Authentication Error
@@ -205,6 +206,7 @@ def requires_auth(config: SAHConfig, permission=[""]):
         async def wrapper(*args, **kwargs):
             token = get_auth_header()
             payload = validate_token(token, config.firebase_app)
+            # payload = {"email_verified": True, "uid": "xApCskkEtwVhZubFJbNt7u73zzs2"}
 
             # To create a new user, we just need to check for a valid
             # firebase user.
@@ -221,6 +223,7 @@ def requires_auth(config: SAHConfig, permission=[""]):
                     "pushEnabled": current_user["pushEnabled"],
                     "last_notifications_read": current_user["last_notifications_read"],
                     "firebaseId": current_user["firebaseId"],
+                    "email_verified": payload["email_verified"],
                 }
                 check_user_permissions(permission, current_user)
 

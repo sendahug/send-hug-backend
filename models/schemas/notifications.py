@@ -27,7 +27,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, select
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, select
 from sqlalchemy.orm import Mapped, column_property, mapped_column
 
 from models.common import BaseModel, DumpedModel
@@ -51,6 +51,7 @@ class Notification(BaseModel):
     type: Mapped[str] = mapped_column(String(), nullable=False)
     text: Mapped[str] = mapped_column(String(), nullable=False)
     date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # Column properties
     from_name = column_property(
         select(User.display_name).where(User.id == from_id).scalar_subquery()
@@ -70,6 +71,7 @@ class Notification(BaseModel):
             "type": self.type,
             "text": self.text,
             "date": self.date,
+            "read": self.read,
         }
 
 

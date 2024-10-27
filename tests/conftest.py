@@ -23,8 +23,7 @@ def user_headers(session_mocker: MockerFixture):
     Sets the headers for each of the users and mocks
     the verify_id_token function from Firebase.
     """
-
-    roles = ["user", "moderator", "admin", "blocked"]
+    roles = ["user", "moderator", "admin", "blocked", "newUser"]
     user_headers: dict[str, dict[str, str]] = {}
 
     for role in roles:
@@ -40,14 +39,16 @@ def user_headers(session_mocker: MockerFixture):
     }
 
     def verify_token(token, app):
-        if "user" in token:
-            return {"uid": "abcd"}
+        if "newUser" in token:
+            return {"uid": "123456", "email_verified": True}
+        elif "user" in token:
+            return {"uid": "abcd", "email_verified": True}
         elif "moderator" in token:
-            return {"uid": "efgh"}
+            return {"uid": "efgh", "email_verified": False}
         elif "blocked" in token:
-            return {"uid": "twg"}
+            return {"uid": "twg", "email_verified": False}
         else:
-            return {"uid": "ijkl"}
+            return {"uid": "ijkl", "email_verified": False}
 
     session_mocker.patch("auth.verify_id_token", new=verify_token)
 
@@ -188,6 +189,7 @@ def dummy_users_data():
             "firebase_id": "ijkl",
         },
         "blocked": {"internal": "20", "firebase_id": "twg"},
+        "new": {"internal": "22", "firebase_id": "123456"},
     }
 
     return user_data
@@ -272,6 +274,10 @@ def dummy_request_data() -> dict:
             "endpoint": "https://fcm.googleapis.com/fcm/send/epyhl2GD",
             "expirationTime": None,
             "keys": {"p256dh": "fdsfd", "auth": "dfs"},
+        },
+        "updated_notifications": {
+            "notification_ids": [],
+            "read": True,
         },
     }
 

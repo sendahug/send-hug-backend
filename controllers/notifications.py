@@ -1,14 +1,13 @@
-from datetime import datetime
 import json
-from typing import Sequence, cast
+from typing import cast
 
-from quart import Blueprint, Response, jsonify, request
-from sqlalchemy import Text, select
+from quart import Blueprint, Response, abort, jsonify, request
+from sqlalchemy import Text, and_, false, func, select, true, update
 
-from auth import UserData, requires_auth
+from auth import AuthError, UserData, requires_auth
 from config import sah_config
 
-from models import Notification, NotificationSub, User
+from models import Notification, NotificationSub
 
 notifications_endpoints = Blueprint("notifications", __name__)
 
@@ -19,49 +18,124 @@ notifications_endpoints = Blueprint("notifications", __name__)
 # Authorization: read:messages.
 @notifications_endpoints.route("/notifications")
 @requires_auth(sah_config, ["read:messages"])
-async def get_latest_notifications(token_payload: UserData) -> Response:
-    silent_refresh = request.args.get("silentRefresh", True)
-    user: User = await sah_config.db.one_or_404(
-        item_id=token_payload["id"],
-        item_type=User,
-    )
+async def get_latest_notifications(token_payload: UserData):
+    current_page = request.args.get("page", 1, type=int)
+    read_status = request.args.get("readStatus", None)
 
-    user_id = user.id
-    last_read = user.last_notifications_read
-
-    # If there's no last_read date, it means the user never checked
-    # their notifications, so set it to the time this feature was added
-    if last_read is None:
-        last_read = datetime(2020, 7, 1, 12, 00)
-
-    # Gets all new notifications
-    notifications_scalars = await sah_config.db.session.scalars(
+    get_query = (
         select(Notification)
-        .filter(Notification.for_id == user_id)
-        .filter(Notification.date > last_read)
-        .order_by(Notification.date)
+        .order_by(Notification.date.desc())
+        .filter(Notification.for_id == token_payload["id"])
     )
-    notifications: Sequence[Notification] = notifications_scalars.all()
 
-    formatted_notifications = [notification.format() for notification in notifications]
+    if read_status == "true":
+        get_query = get_query.filter(Notification.read == true())
+    elif read_status == "false":
+        get_query = get_query.filter(Notification.read == false())
 
-    # Updates the user's 'last read' time only if this fetch was
-    # triggered by the user (meaning, they're looking at the
-    # notifications tab right now).
-    if silent_refresh == "false":
-        # Update the user's last-read date
-        user.last_notifications_read = datetime.now()
-        await sah_config.db.update_object(obj=user)
+    # Gets all notifications
+    notifications = await sah_config.db.paginate(
+        query=get_query,
+        current_page=current_page,
+        per_page=20,
+    )
 
-    return jsonify({"success": True, "notifications": formatted_notifications})
+    new_notifications_count = await sah_config.db.session.scalar(
+        select(func.count())
+        .select_from(Notification)
+        .where(
+            and_(
+                Notification.read == false(),
+                Notification.for_id == token_payload["id"],
+            )
+        )
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "notifications": notifications.resource,
+            "newCount": new_notifications_count,
+            # TODO: Left these in snake case for consistency with the other
+            # endpoints, but it really should be camel case
+            "current_page": int(current_page),
+            "total_pages": notifications.total_pages,
+            "totalItems": notifications.total_items,
+        }
+    )
 
 
-# Endpoint: POST /notifications
+# Endpoint: PATCH /notifications
+# Description: Updates one or more notifications' read status.
+# Parameters: None.
+# Authorization: read:messages.
+@notifications_endpoints.route("/notifications", methods=["PATCH"])
+@requires_auth(sah_config, ["read:messages"])
+async def update_notifications(token_payload: UserData):
+    request_data = json.loads(await request.data)
+
+    if (
+        not request_data.get("notification_ids")
+        or request_data.get("read", None) is None
+    ):
+        abort(400)
+
+    if request_data["notification_ids"] == "all":
+        update_query = (
+            update(Notification)
+            .where(Notification.for_id == token_payload["id"])
+            .values(read=request_data["read"])
+        )
+    else:
+        notification_ids: list[int] = request_data["notification_ids"]
+
+        existing_notifications = await sah_config.db.session.scalars(
+            select(Notification.id).where(
+                and_(
+                    Notification.id.in_(notification_ids),
+                    Notification.for_id == token_payload["id"],
+                ),
+            )
+        )
+
+        # Make sure the user has permission to see all the notifications
+        if len(list(existing_notifications)) != len(notification_ids):
+            raise AuthError(
+                {
+                    "code": 403,
+                    "description": "You do not have permission to update some "
+                    "of the provided notifications. Ensure all notifications "
+                    "are meant for you and try again.",
+                },
+                403,
+            )
+
+        update_query = (
+            update(Notification)
+            .where(
+                and_(
+                    Notification.id.in_(notification_ids),
+                    Notification.for_id == token_payload["id"],
+                )
+            )
+            .values(read=request_data["read"])
+        )
+
+    await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_query)
+
+    return {
+        "success": True,
+        "updated": request_data["notification_ids"],
+        "read": request_data["read"],
+    }
+
+
+# Endpoint: POST /push_subscriptions
 # Description: Add a new PushSubscription to the database (for push
 #              notifications).
 # Parameters: None.
 # Authorization: read:messages.
-@notifications_endpoints.route("/notifications", methods=["POST"])
+@notifications_endpoints.route("/push_subscriptions", methods=["POST"])
 @requires_auth(sah_config, ["read:messages"])
 async def add_notification_subscription(token_payload: UserData) -> Response:
     request_data = await request.data

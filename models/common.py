@@ -53,5 +53,4 @@ class PaginationResult:
 class CoreSAHModel(Protocol[HugModelType]):
     id: Mapped[int]
 
-    def format(self, **kwargs) -> DumpedModel:
-        ...
+    def format(self, **kwargs) -> DumpedModel: ...
