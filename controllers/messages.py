@@ -270,7 +270,7 @@ async def delete_thread(  # TODO: This should be renamed to delete_message
         await sah_config.db.delete_object(delete_item)
     # Otherwise, just update the appropriate deleted property
     else:
-        if isinstance(delete_item, Message):
+        if isinstance(delete_item, Thread):
             # For each message that wasn't deleted by the other user, the
             # value of for_deleted/from_deleted (depending on which of the users
             # it is) is updated to True
