@@ -62,7 +62,7 @@ def test_config(session_mocker: MockerFixture) -> Generator[SAHConfig, None, Non
     # TODO: We should at least make sure that this works with
     # an actual key.
     # session_mocker.patch("config.initialize_app", return_value=initialize_app())
-    # session_mocker.patch("config.Certificate")
+    session_mocker.patch("config.Certificate")
     yield SAHConfig(
         credentials_path=Path("test.json"),
         override_db_name="test_sah",
@@ -132,7 +132,8 @@ async def test_db(
                 session_factory=db.session_factory, scopefunc=current_task
             )
 
-        # Surely there's a better way to do this
+        # Mock the session for all controllers
+        # TODO: Surely there's a better way to do this
         controllers = listdir(path.join(path.dirname(__file__), "../controllers"))
         non_controllers = ["__init__.py", "common.py", "__pycache__"]
         for controller in controllers:
@@ -144,20 +145,11 @@ async def test_db(
                 new_callable=get_scoped_session,
             )
 
-        # async_mock = AsyncMock()
-
         await update_sequences(db)
 
         await db.session.begin_nested()
         mocker.patch("pywebpush.webpush")
         mocker.patch("controllers.common.webpush")
-
-        # mocker.patch.object(connection, "begin", new=connection.begin_nested)
-        # mocker.patch.object(session, "commit", new=session.flush)
-        # mocker.patch("config.sah_config.db.session", side_effect=async_mock)
-        # mocker.patch("config.get_db_credentials_path", return_value=Path("test.json"))
-
-        # async_mock.return_value = db.session
 
         yield db
 
