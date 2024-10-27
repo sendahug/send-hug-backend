@@ -9,7 +9,7 @@ from pytest_mock import MockerFixture
 from quart.typing import TestClientProtocol
 from sqlalchemy.ext.asyncio import async_scoped_session, async_sessionmaker
 
-from config import SAHConfig
+from config.sah_config import SAHConfig
 from create_app import create_app
 from tests.data_models import DATETIME_PATTERN, create_data, update_sequences
 

@@ -5,7 +5,7 @@ from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import Text, and_, false, func, select, true, update
 
 from auth import AuthError, UserData, requires_auth
-from config import sah_config
+from config.config import sah_config
 
 from models import Notification, NotificationSub
 

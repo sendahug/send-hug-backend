@@ -39,7 +39,7 @@ from firebase_admin.auth import (  # type: ignore
 from quart import request
 from sqlalchemy import select
 
-from config import SAHConfig
+from config.sah_config import SAHConfig
 
 from models import SendADatabase
 from models.schemas.users import User

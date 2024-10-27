@@ -34,7 +34,7 @@ from firebase_admin.auth import (  # type: ignore
 import pytest
 
 from auth import AuthError, check_user_permissions, get_current_user, validate_token
-from config import SAHConfig
+from config.sah_config import SAHConfig
 
 from models import SendADatabase
 

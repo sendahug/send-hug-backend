@@ -6,7 +6,7 @@ from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import delete, func, select, true
 
 from auth import AuthError, UserData, requires_auth
-from config import sah_config
+from config.config import sah_config
 
 from .common import send_push_notification, validator
 from models import BLOCKED_USER_ROLE_ID, Notification, Post, User

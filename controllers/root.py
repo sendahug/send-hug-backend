@@ -4,7 +4,7 @@ from typing import Any, Sequence
 from quart import Blueprint, Response, jsonify, request
 from sqlalchemy import desc, false, select
 
-from config import sah_config
+from config.config import sah_config
 
 from .common import validator
 from models import Post, User

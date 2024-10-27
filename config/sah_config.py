@@ -145,6 +145,3 @@ class SAHConfig:
                 "port": 5432,
                 "db_name": "sendahug",
             }
-
-
-sah_config = SAHConfig(credentials_path=get_db_credentials_path())
