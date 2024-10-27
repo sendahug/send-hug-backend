@@ -169,12 +169,12 @@ async def add_notification_subscription(token_payload: UserData) -> Response:
     )
 
 
-# Endpoint: PATCH /notifications
-# Description: Add a new PushSubscription to the database (for push
+# Endpoint: PATCH /push_subscriptions/<sub_id>
+# Description: Update a PushSubscription in the database (for push
 #              notifications).
 # Parameters: None.
 # Authorization: read:messages.
-@notifications_endpoints.route("/notifications/<sub_id>", methods=["PATCH"])
+@notifications_endpoints.route("/push_subscriptions/<sub_id>", methods=["PATCH"])
 @requires_auth(sah_config, ["read:messages"])
 async def update_notification_subscription(
     token_payload: UserData, sub_id: int
