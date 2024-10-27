@@ -1125,7 +1125,7 @@ def create_app(config: SAHConfig) -> Quart:
     # Authorization: delete:messages.
     @app.route("/messages/<mailbox_type>/<item_id>", methods=["DELETE"])
     @requires_auth(config, ["delete:messages"])
-    async def delete_thread(  # TODO: This should be renamed to delete_message
+    async def delete_message(
         token_payload: UserData,
         mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
         item_id: int,
