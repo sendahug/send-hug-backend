@@ -86,11 +86,17 @@ class SAHConfig:
 
         # if self.firebase_app is None:
         if not _apps:
-            self.firebase_app = initialize_app(
-                credential=Certificate(FIREBASE_CREDENTIALS_FILE)
-            )
-        else:
-            self.firebase_app = get_app()
+            credential: Certificate | None = None
+            if not os.environ.get("PYTEST_VERSION", False):
+                # if we're testing, we don't need a credential
+                # TODO: We should at least make sure that this works with
+                # an actual key.
+                credential = Certificate(FIREBASE_CREDENTIALS_FILE)
+
+            self.firebase_app = initialize_app(credential=credential)
+            return
+
+        self.firebase_app = get_app()
 
     def get_db_url(
         self, credentials: DatabaseCredentialsFile, override_db_name: str | None = None

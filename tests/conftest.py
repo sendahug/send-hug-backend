@@ -59,10 +59,6 @@ def user_headers(session_mocker: MockerFixture):
 def test_config(session_mocker: MockerFixture) -> Generator[SAHConfig, None, None]:
     """Set up the config"""
 
-    # TODO: We should at least make sure that this works with
-    # an actual key.
-    # session_mocker.patch("config.initialize_app", return_value=initialize_app())
-    session_mocker.patch("config.Certificate")
     yield SAHConfig(
         credentials_path=Path("test.json"),
         override_db_name="test_sah",
@@ -74,9 +70,6 @@ def app_client(
     test_config: SAHConfig, mocker: MockerFixture
 ) -> Generator[TestClientProtocol, None, None]:
     """Get the test client for the test app"""
-
-    # mocker.patch("create_app.sah_config", AsyncMock())
-    # mocker.patch("controllers.root.sah_config", AsyncMock())
 
     app = create_app()
 
