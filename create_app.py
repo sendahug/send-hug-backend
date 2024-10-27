@@ -1312,7 +1312,6 @@ def create_app(config: SAHConfig) -> Quart:
                 .values(for_deleted=true())
             )
 
-            # config.db.delete_multiple_objects(delete_stmt=delete_stmt)
             await config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
 
         # If the user is trying to clear their outbox
