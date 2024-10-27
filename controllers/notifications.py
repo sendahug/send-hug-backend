@@ -18,7 +18,7 @@ notifications_endpoints = Blueprint("notifications", __name__)
 # Authorization: read:messages.
 @notifications_endpoints.route("/notifications")
 @requires_auth(sah_config, ["read:messages"])
-async def get_latest_notifications(token_payload: UserData):
+async def get_latest_notifications(token_payload: UserData) -> Response:
     current_page = request.args.get("page", 1, type=int)
     read_status = request.args.get("readStatus", None)
 
@@ -71,7 +71,7 @@ async def get_latest_notifications(token_payload: UserData):
 # Authorization: read:messages.
 @notifications_endpoints.route("/notifications", methods=["PATCH"])
 @requires_auth(sah_config, ["read:messages"])
-async def update_notifications(token_payload: UserData):
+async def update_notifications(token_payload: UserData) -> Response:
     request_data = json.loads(await request.data)
 
     if (
@@ -123,11 +123,13 @@ async def update_notifications(token_payload: UserData):
 
     await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_query)
 
-    return {
-        "success": True,
-        "updated": request_data["notification_ids"],
-        "read": request_data["read"],
-    }
+    return jsonify(
+        {
+            "success": True,
+            "updated": request_data["notification_ids"],
+            "read": request_data["read"],
+        }
+    )
 
 
 # Endpoint: POST /push_subscriptions

@@ -246,7 +246,7 @@ async def delete_post(token_payload: UserData, post_id: int) -> Response:
             raise AuthError(
                 {
                     "code": 403,
-                    "description": "You do not have permission to delete " "this post.",
+                    "description": "You do not have permission to delete this post.",
                 },
                 403,
             )
