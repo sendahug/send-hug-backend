@@ -1190,17 +1190,12 @@ def create_app(config: SAHConfig) -> Quart:
             else:
                 delete_item.from_deleted = True
 
-        # Check the type of item and which user deleted the message/thread
+        # Check the type of item and which user deleted the message
+        # We don't delete threads anymore - it doesn't make sense to
         if (
             type(delete_item) is Message
             and delete_item.for_deleted
             and delete_item.from_deleted
-        ):
-            delete_message = True
-        elif (
-            type(delete_item) is Thread
-            and delete_item.user1_deleted
-            and delete_item.user2_deleted
         ):
             delete_message = True
         else:
