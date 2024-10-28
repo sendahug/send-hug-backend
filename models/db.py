@@ -28,7 +28,6 @@
 from asyncio import current_task
 import logging
 import math
-import os
 from typing import Sequence, Type, TypeVar, cast, overload
 
 from quart import Quart, abort
@@ -90,10 +89,7 @@ class SendADatabase:
         app.config["SQLALCHEMY_DATABASE_URI"] = self.database_url
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
         self.app = app
-        if not os.environ.get("PYTEST_VERSION", False):
-            # if we're testing, we don't need to remove the session as the test_db
-            # fixture does that for us
-            self.app.teardown_appcontext(self._remove_session)
+        self.app.teardown_appcontext(self._remove_session)
 
     def _create_session_factory(self):
         """
