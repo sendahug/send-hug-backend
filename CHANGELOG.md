@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2024-10-28
+
+#### Chores
+
+- Deleted all the sub-dependencies pinned by Snyk from the main requirements.txt file. Those were added because Snyk ran its testing in Python 3.7, which restricted the 'latest' version number for those packages. Since we're using 3.11, we can use the latest version, so that none of these packages are vulnerable, which makes the pins unnecessary. ([#686](https://github.com/sendahug/send-hug-backend/pull/686))
+
 ### 2024-09-27
 
 #### Features
