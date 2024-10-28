@@ -60,6 +60,10 @@ def get_db_credentials_path() -> Path:
     )
 
 
+def get_certificate() -> Certificate:
+    return Certificate(FIREBASE_CREDENTIALS_FILE)
+
+
 class DatabaseCredentialsFile(TypedDict):
     username: str
     password: str
@@ -86,16 +90,7 @@ class SAHConfig:
 
         # if self.firebase_app is None:
         if not _apps:
-            # credential: Certificate | None = None
-            # if not os.environ.get("PYTEST_VERSION", False):
-            #     # if we're testing, we don't need a credential
-            #     # TODO: We should at least make sure that this works with
-            #     # an actual key.
-            #     credential = Certificate(FIREBASE_CREDENTIALS_FILE)
-
-            self.firebase_app = initialize_app(
-                credential=Certificate(FIREBASE_CREDENTIALS_FILE)
-            )
+            self.firebase_app = initialize_app(credential=get_certificate())
             return
 
         self.firebase_app = get_app()

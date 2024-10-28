@@ -11,7 +11,6 @@ from quart.typing import TestClientProtocol
 from sqlalchemy.ext.asyncio import async_scoped_session, async_sessionmaker
 
 from config.sah_config import SAHConfig
-from create_app import create_app
 from tests.data_models import DATETIME_PATTERN, create_data, update_sequences
 
 from models import SendADatabase
@@ -57,9 +56,12 @@ def user_headers(session_mocker: MockerFixture):
 
 
 @pytest.fixture(scope="session")
-def test_config(session_mocker: MockerFixture) -> Generator[SAHConfig, None, None]:
+def test_config(
+    session_mocker: MockerFixture,  # , mocker: MockerFixture
+) -> Generator[SAHConfig, None, None]:
     """Set up the config"""
 
+    session_mocker.patch("config.sah_config.get_certificate", return_value=None)
     yield SAHConfig(
         credentials_path=Path("test.json"),
         override_db_name="test_sah",
@@ -71,6 +73,9 @@ def app_client(
     test_config: SAHConfig, mocker: MockerFixture
 ) -> Generator[TestClientProtocol, None, None]:
     """Get the test client for the test app"""
+    # we import here as we need to mock the firebase certficate because CircleCI
+    # does not have access to the firebase credentials file
+    from create_app import create_app
 
     app = create_app()
 
