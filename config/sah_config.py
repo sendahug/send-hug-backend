@@ -30,7 +30,7 @@ import os
 from pathlib import Path
 from typing import TypedDict
 
-from firebase_admin import _apps, get_app, initialize_app  # type: ignore
+from firebase_admin import initialize_app  # type: ignore
 from firebase_admin.credentials import Certificate  # type: ignore
 from sqlalchemy import URL
 
@@ -87,13 +87,7 @@ class SAHConfig:
             credentials=credentials, override_db_name=override_db_name
         )
         self.db = SendADatabase(database_url=self.database_url)
-
-        # if self.firebase_app is None:
-        if not _apps:
-            self.firebase_app = initialize_app(credential=get_certificate())
-            return
-
-        self.firebase_app = get_app()
+        self.firebase_app = initialize_app(credential=get_certificate())
 
     def get_db_url(
         self, credentials: DatabaseCredentialsFile, override_db_name: str | None = None
