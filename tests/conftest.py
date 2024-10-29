@@ -59,8 +59,18 @@ def user_headers(session_mocker: MockerFixture):
     return user_headers
 
 
+@pytest.fixture(scope="session")
+def certificate_mocker(
+    session_mocker: MockerFixture,
+) -> None:
+    """Mocks the get_certificate helper"""
+    session_mocker.patch("config.sah_config.get_certificate", return_value=None)
+
+
 @pytest.fixture(scope="function")
-def app_client(mocker: MockerFixture) -> Generator[TestClientProtocol, None, None]:
+def app_client(
+    certificate_mocker, mocker: MockerFixture
+) -> Generator[TestClientProtocol, None, None]:
     """Get the test client for the test app"""
     # we import here as we need to mock the firebase certficate because CircleCI
     # does not have access to the firebase credentials file
