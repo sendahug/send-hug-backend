@@ -3,8 +3,8 @@ import json
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import select
 
-from app import sah_config
 from auth import UserData, requires_auth
+from config.config import sah_config
 
 from .common import validator
 from models import Filter

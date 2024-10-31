@@ -4,8 +4,8 @@ from typing import Literal, cast
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import desc, false, select
 
-from app import sah_config
 from auth import AuthError, UserData, requires_auth
+from config.config import sah_config
 
 from .common import (
     DATETIME_PATTERN,

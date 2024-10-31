@@ -6,7 +6,7 @@ from pywebpush import WebPushException, webpush  # type: ignore
 from quart import current_app
 from sqlalchemy import and_, or_, select
 
-from app import sah_config
+from config.config import sah_config
 
 from models import Filter, NotificationSub, Thread
 from utils.push_notifications import (

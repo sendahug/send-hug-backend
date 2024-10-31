@@ -30,8 +30,8 @@ import os
 from quart import Quart, Response, jsonify
 from quart_cors import cors
 
-from app import sah_config
 from auth import AuthError
+from config.config import sah_config
 from controllers import routers
 
 from utils.validator import ValidationError

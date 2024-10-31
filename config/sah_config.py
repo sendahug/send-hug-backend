@@ -46,7 +46,7 @@ FIREBASE_CREDENTIALS_FILE = Path(
     )
 )
 
-# TODO: depcrate the below once we update docs with how to use
+# TODO: deprecate the below once we update docs with how to use
 # db_development_creds/latest.json for development
 DATABASE_USERNAME = os.environ.get("DATABASE_USERNAME", "")
 DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD", "")
