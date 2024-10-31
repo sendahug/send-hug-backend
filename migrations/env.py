@@ -8,7 +8,7 @@ from alembic import context
 # from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 
-from create_app import sah_config
+from app import sah_config
 
 from models.common import BaseModel
 

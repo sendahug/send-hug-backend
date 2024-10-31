@@ -25,7 +25,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from config.sah_config import SAHConfig, get_db_credentials_path
 from create_app import create_app
+
+sah_config = SAHConfig(credentials_path=get_db_credentials_path())
 
 app = create_app()
 

@@ -31,7 +31,7 @@ import math
 from typing import Sequence, Type, TypeVar, cast, overload
 
 from quart import Quart, abort
-from sqlalchemy import URL, Delete, Select, Update, func, select  # ,NullPool
+from sqlalchemy import URL, Delete, Select, Update, func, select
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -75,7 +75,7 @@ class SendADatabase:
         # Temporary second variable
         self.database_url = database_url
         self.default_per_page = default_per_page
-        self.engine = create_async_engine(self.database_url)  # , echo=True)
+        self.engine = create_async_engine(self.database_url)
         self._create_session_factory()
         self.session = self.create_session()
 
