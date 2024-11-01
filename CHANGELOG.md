@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### 2024-11-01
+
+#### Changes
+
+- Moved the configuration of the app into a separate file to allow easier testing and prevent circular imports. ([#661](https://github.com/sendahug/send-hug-backend/pull/661))
+
+#### Chores
+
+- Split the create_app function into separate controller files as it was getting large and unwieldy to maintain. ([#661](https://github.com/sendahug/send-hug-backend/pull/661))
+
 ### 2024-10-28
 
 #### Chores
