@@ -25,9 +25,31 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from create_app import create_app
+import os
+from pathlib import Path
 
-app = create_app()
+from config.sah_config import SAHConfig
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+HOME = Path(os.environ.get("HOME", ""))
+SAH_HOME = Path(os.environ.get("SAH_HOME", HOME / "git" / "send-hug-backend"))
+SECRETS_PATH = SAH_HOME / ".secrets"
+FIREBASE_CREDENTIALS_FILE = Path(
+    os.environ.get(
+        "FIREBASE_CREDENTIALS_FILE",
+        SECRETS_PATH / "platform_firebase_credentials" / "latest.json",
+    )
+)
+
+
+def get_db_credentials_path() -> Path:
+    return Path(
+        os.environ.get(
+            "DB_CREDENTIALS_PATH", SECRETS_PATH / "db_development_creds" / "latest.json"
+        )
+    )
+
+
+sah_config = SAHConfig(
+    credentials_path=get_db_credentials_path(),
+    certificate_path=FIREBASE_CREDENTIALS_FILE,
+)

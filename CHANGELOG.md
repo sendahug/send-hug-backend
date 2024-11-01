@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### 2024-11-01
+
+#### Changes
+
+- Moved the configuration of the app into a separate file to allow easier testing and prevent circular imports. ([#661](https://github.com/sendahug/send-hug-backend/pull/661))
+
+#### Chores
+
+- Split the create_app function into separate controller files as it was getting large and unwieldy to maintain. ([#661](https://github.com/sendahug/send-hug-backend/pull/661))
+
+### 2024-10-28
+
+#### Chores
+
+- Deleted all the sub-dependencies pinned by Snyk from the main requirements.txt file. Those were added because Snyk ran its testing in Python 3.7, which restricted the 'latest' version number for those packages. Since we're using 3.11, we can use the latest version, so that none of these packages are vulnerable, which makes the pins unnecessary. ([#686](https://github.com/sendahug/send-hug-backend/pull/686))
+
 ### 2024-09-27
 
 #### Features
