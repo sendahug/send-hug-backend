@@ -36,32 +36,14 @@ from sqlalchemy import URL
 
 from models.db import SendADatabase
 
-HOME = Path(os.environ.get("HOME", ""))
-SAH_HOME = Path(os.environ.get("SAH_HOME", HOME / "git" / "send-hug-backend"))
-SECRETS_PATH = SAH_HOME / ".secrets"
-FIREBASE_CREDENTIALS_FILE = Path(
-    os.environ.get(
-        "FIREBASE_CREDENTIALS_FILE",
-        SECRETS_PATH / "platform_firebase_credentials" / "latest.json",
-    )
-)
-
 # TODO: deprecate the below once we update docs with how to use
 # db_development_creds/latest.json for development
 DATABASE_USERNAME = os.environ.get("DATABASE_USERNAME", "")
 DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD", "")
 
 
-def get_db_credentials_path() -> Path:
-    return Path(
-        os.environ.get(
-            "DB_CREDENTIALS_PATH", SECRETS_PATH / "db_development_creds" / "latest.json"
-        )
-    )
-
-
-def get_certificate() -> Certificate:
-    return Certificate(FIREBASE_CREDENTIALS_FILE)
+def get_certificate(firebase_credentials_file: Path) -> Certificate:
+    return Certificate(firebase_credentials_file)
 
 
 class DatabaseCredentialsFile(TypedDict):
@@ -80,6 +62,7 @@ class SAHConfig:
     def __init__(
         self,
         credentials_path: Path,
+        certificate_path: Path,
         override_db_name: str | None = None,
     ):
         credentials = self._get_credentials_json(credentials_path=credentials_path)
@@ -87,7 +70,7 @@ class SAHConfig:
             credentials=credentials, override_db_name=override_db_name
         )
         self.db = SendADatabase(database_url=self.database_url)
-        self.firebase_app = initialize_app(credential=get_certificate())
+        self.firebase_app = initialize_app(credential=get_certificate(certificate_path))
 
     def get_db_url(
         self, credentials: DatabaseCredentialsFile, override_db_name: str | None = None
