@@ -25,6 +25,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from firebase_admin import get_app  # type: ignore
 from firebase_admin.auth import (  # type: ignore
     ExpiredIdTokenError,
     InvalidIdTokenError,
@@ -34,7 +35,6 @@ from firebase_admin.auth import (  # type: ignore
 import pytest
 
 from auth import AuthError, check_user_permissions, get_current_user, validate_token
-from config import SAHConfig
 
 from models import SendADatabase
 
@@ -52,11 +52,11 @@ from models import SendADatabase
         (TokenSignError, "Unauthorised. Your token is invalid. Error: "),
     ],
 )
-def test_verify_jwt_error(mocker, error, error_message, test_config: SAHConfig):
+def test_verify_jwt_error(mocker, error, error_message):
     mocker.patch("auth.verify_id_token", side_effect=error)
 
     with pytest.raises(AuthError) as exc:
-        validate_token(token="hi", app=test_config.firebase_app)
+        validate_token(token="hi", app=get_app())
 
     assert error_message in str(exc.value)
 

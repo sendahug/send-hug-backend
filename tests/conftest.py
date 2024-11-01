@@ -1,17 +1,24 @@
 from asyncio import current_task
 from datetime import datetime
+import os
+from os import listdir, path
+from typing import AsyncGenerator, Generator
 
-from firebase_admin import initialize_app  # type: ignore
 import pytest
 from pytest_mock import MockerFixture
+from quart.typing import TestClientProtocol
+from sqlalchemy import URL
 from sqlalchemy.ext.asyncio import async_scoped_session, async_sessionmaker
 
-from config import SAHConfig
-from create_app import create_app
 from tests.data_models import DATETIME_PATTERN, create_data, update_sequences
 
 from models import SendADatabase
 from models.common import BaseModel
+
+# TODO: depcrate the below once we update docs with how to use
+# db_development_creds/latest.json for development
+DATABASE_USERNAME = os.environ.get("DATABASE_USERNAME", "")
+DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD", "")
 
 
 @pytest.fixture(scope="session")
@@ -53,43 +60,61 @@ def user_headers(session_mocker: MockerFixture):
 
 
 @pytest.fixture(scope="session")
-def test_config(session_mocker: MockerFixture):
-    """Set up the config"""
-    # TODO: We should at least make sure that this works with
-    # an actual key.
-    session_mocker.patch("config.initialize_app", return_value=initialize_app())
-    session_mocker.patch("config.Certificate")
-    yield SAHConfig(credentials_path="test.json", override_db_name="test_sah")
+def certificate_mocker(
+    session_mocker: MockerFixture,
+) -> None:
+    """Mocks the get_certificate helper"""
+    session_mocker.patch("config.sah_config.get_certificate", return_value=None)
 
 
 @pytest.fixture(scope="function")
-def app_client(test_config: SAHConfig):
+def app_client(
+    certificate_mocker, mocker: MockerFixture
+) -> Generator[TestClientProtocol, None, None]:
     """Get the test client for the test app"""
-    app = create_app(config=test_config)
+    # we import here as we need to mock the firebase certficate because CircleCI
+    # does not have access to the firebase credentials file
+    from create_app import create_app
+
+    app = create_app()
+
     yield app.test_client()
 
 
 @pytest.fixture(scope="session")
-async def db(test_config: SAHConfig):
+async def db() -> AsyncGenerator[SendADatabase, None]:
     """Creates the database and inserts the test data."""
+    db = SendADatabase(
+        database_url=URL.create(
+            drivername="postgresql+asyncpg",
+            username=DATABASE_USERNAME,
+            password=DATABASE_PASSWORD,
+            host="localhost",
+            port=5432,
+            database="test_sah",
+        )
+    )
+
     try:
-        async with test_config.db.engine.begin() as conn:
+        async with db.engine.begin() as conn:
             await conn.run_sync(BaseModel.metadata.drop_all)
             await conn.run_sync(BaseModel.metadata.create_all)
 
-        await create_data(test_config.db)
+        await create_data(db)
 
-        await test_config.db.engine.dispose()
+        await db.engine.dispose()
 
-        yield test_config.db
+        yield db
 
     finally:
-        async with test_config.db.engine.begin() as conn:
+        async with db.engine.begin() as conn:
             await conn.run_sync(BaseModel.metadata.drop_all)
 
 
 @pytest.fixture(scope="function")
-async def test_db(db: SendADatabase, mocker: MockerFixture):
+async def test_db(
+    db: SendADatabase, mocker: MockerFixture
+) -> AsyncGenerator[SendADatabase, None]:
     """
     Generates the session to use in tests. Once tests are done, rolls
     back the transaction and closes the session. Also updates the values
@@ -111,11 +136,29 @@ async def test_db(db: SendADatabase, mocker: MockerFixture):
             session_factory=db.session_factory, scopefunc=current_task
         )
 
+        def get_scoped_session():
+            return async_scoped_session(
+                session_factory=db.session_factory, scopefunc=current_task
+            )
+
+        # Mock the session for all controllers
+        # TODO: Surely there's a better way to do this
+        controllers = listdir(path.join(path.dirname(__file__), "../controllers"))
+        non_controllers = ["__init__.py", "common.py", "__pycache__"]
+        for controller in controllers:
+            if controller in non_controllers:
+                continue
+
+            mocker.patch(
+                f"controllers.{controller[:-3]}.sah_config.db.session",
+                new_callable=get_scoped_session,
+            )
+
         await update_sequences(db)
 
         await db.session.begin_nested()
         mocker.patch("pywebpush.webpush")
-        mocker.patch("create_app.webpush")
+        mocker.patch("controllers.common.webpush")
 
         yield db
 
@@ -154,7 +197,7 @@ def dummy_users_data():
 
 
 @pytest.fixture
-def dummy_request_data():
+def dummy_request_data() -> dict:
     """Dummy POST/PATCH request data for the various endpoints."""
     # Item Samples
     request_data = {
@@ -243,7 +286,7 @@ def dummy_request_data():
 
 
 @pytest.fixture
-def db_helpers_dummy_data():
+def db_helpers_dummy_data() -> dict:
     """Dummy data for test_db_helpers"""
     dummy_data = {
         "DATETIME_PATTERN": DATETIME_PATTERN,

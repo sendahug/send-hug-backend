@@ -1,0 +1,13 @@
+{
+    "pr_number": 661,
+    "changes": [
+        {
+            "change": "Chores",
+            "description": "Split the create_app function into separate controller files as it was getting large and unwieldy to maintain."
+        },
+        {
+            "change": "Changes",
+            "description": "Moved the configuration of the app into a separate file to allow easier testing and prevent circular imports."
+        }
+    ]
+}

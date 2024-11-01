@@ -696,7 +696,6 @@ async def test_get_user_posts_malformed_auth(app_client, test_db, user_headers):
 
 
 # Attempt to get a user's posts with
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "user_id, user, total_pages, posts_num",
     [
