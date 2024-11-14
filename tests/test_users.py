@@ -28,13 +28,18 @@
 import json
 
 import pytest
+from quart.typing import TestClientProtocol
+
+from models.db import SendADatabase
 
 
 # Get Users by Type Tests ('/users/<type>', GET)
 # -------------------------------------------------------
 # Attempt to get list of users without auth header
 @pytest.mark.asyncio
-async def test_get_user_list_no_auth(app_client, test_db, user_headers):
+async def test_get_user_list_no_auth(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.get("/users/blocked")
     response_data = await response.get_json()
 
@@ -56,8 +61,12 @@ async def test_get_user_list_no_auth(app_client, test_db, user_headers):
 )
 @pytest.mark.asyncio
 async def test_get_user_list_auth_error(
-    app_client, test_db, user_headers, user, error_code
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user: str,
+    error_code: int,
+) -> None:
     response = await app_client.get("/users/blocked", headers=user_headers[user])
     response_data = await response.get_json()
 
@@ -67,7 +76,9 @@ async def test_get_user_list_auth_error(
 
 # Attempt to get list of users with admin's auth header
 @pytest.mark.asyncio
-async def test_get_user_list_as_admin(app_client, test_db, user_headers):
+async def test_get_user_list_as_admin(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.get("/users/blocked", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -78,7 +89,9 @@ async def test_get_user_list_as_admin(app_client, test_db, user_headers):
 
 # Attempt to get list of users with admin's auth header
 @pytest.mark.asyncio
-async def test_get_user_list_unsupported_type(app_client, test_db, user_headers):
+async def test_get_user_list_unsupported_type(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.get("/users/meow", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -90,7 +103,9 @@ async def test_get_user_list_unsupported_type(app_client, test_db, user_headers)
 # -------------------------------------------------------
 # Attempt to get a user's data without auth header
 @pytest.mark.asyncio
-async def test_get_user_data_no_auth(app_client, test_db, user_headers):
+async def test_get_user_data_no_auth(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.get("/users/all/1")
     response_data = await response.get_json()
 
@@ -100,7 +115,9 @@ async def test_get_user_data_no_auth(app_client, test_db, user_headers):
 
 # Attempt to get a user's data with malformed auth header
 @pytest.mark.asyncio
-async def test_get_user_data_malformed_auth(app_client, test_db, user_headers):
+async def test_get_user_data_malformed_auth(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.get("/users/all/1", headers=user_headers["malformed"])
     response_data = await response.get_json()
 
@@ -111,8 +128,11 @@ async def test_get_user_data_malformed_auth(app_client, test_db, user_headers):
 # Attempt to get a user's data with a user's JWT
 @pytest.mark.asyncio
 async def test_get_user_data_as_user(
-    app_client, test_db, user_headers, dummy_users_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+) -> None:
     response = await app_client.get(
         f"/users/all/{dummy_users_data['user']['firebase_id']}",
         headers=user_headers["user"],
@@ -128,8 +148,11 @@ async def test_get_user_data_as_user(
 # Attempt to get a user's data with a moderator's JWT
 @pytest.mark.asyncio
 async def test_get_user_data_as_mod(
-    app_client, test_db, user_headers, dummy_users_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+) -> None:
     response = await app_client.get(
         f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
         headers=user_headers["moderator"],
@@ -145,8 +168,11 @@ async def test_get_user_data_as_mod(
 # Attempt to get a user's data with an admin's JWT
 @pytest.mark.asyncio
 async def test_get_user_data_as_admin(
-    app_client, test_db, user_headers, dummy_users_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+) -> None:
     response = await app_client.get(
         f"/users/all/{dummy_users_data['admin']['firebase_id']}",
         headers=user_headers["admin"],
@@ -161,7 +187,9 @@ async def test_get_user_data_as_admin(
 
 # Attempt to get a nonexistent user's data (with admin's JWT)
 @pytest.mark.asyncio
-async def test_get_nonexistent_user_as_admin(app_client, test_db, user_headers):
+async def test_get_nonexistent_user_as_admin(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.get("/users/all/100", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -171,7 +199,9 @@ async def test_get_nonexistent_user_as_admin(app_client, test_db, user_headers):
 
 # Attempt to get a user's data with no ID (with admin's JWT)
 @pytest.mark.asyncio
-async def test_get_user_no_id_as_admin(app_client, test_db, user_headers):
+async def test_get_user_no_id_as_admin(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.get("/users/all/", headers=user_headers["admin"])
     response_data = await response.get_json()
 
@@ -184,8 +214,11 @@ async def test_get_user_no_id_as_admin(app_client, test_db, user_headers):
 # Attempt to create a user without auth header
 @pytest.mark.asyncio
 async def test_create_user_no_auth(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.post(
         "/users", data=json.dumps(dummy_request_data["new_user"])
     )
@@ -198,8 +231,11 @@ async def test_create_user_no_auth(
 # Attempt to create a user with malformed auth header
 @pytest.mark.asyncio
 async def test_create_user_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.post(
         "/users",
         headers=user_headers["malformed"],
@@ -214,8 +250,11 @@ async def test_create_user_malformed_auth(
 # Attempt to create a user with user's JWT
 @pytest.mark.asyncio
 async def test_create_user_as_user(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.post(
         "/users",
         headers=user_headers["user"],
@@ -230,8 +269,11 @@ async def test_create_user_as_user(
 # Attempt to create a user with moderator's JWT
 @pytest.mark.asyncio
 async def test_create_user_as_moderator(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.post(
         "/users",
         headers=user_headers["moderator"],
@@ -246,8 +288,11 @@ async def test_create_user_as_moderator(
 # Attempt to create a user with admin's JWT
 @pytest.mark.asyncio
 async def test_create_user_as_damin(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.post(
         "/users",
         headers=user_headers["admin"],
@@ -266,8 +311,11 @@ async def test_create_user_as_damin(
 # can't create other users
 @pytest.mark.asyncio
 async def test_create_different_user_as_new_user(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     user_to_create = {**dummy_request_data["new_user"]}
     user_to_create["firebaseId"] = "twg"
     response = await app_client.post(
@@ -286,8 +334,11 @@ async def test_create_different_user_as_new_user(
 # Attempt to update a user's data without auth header
 @pytest.mark.asyncio
 async def test_update_user_no_auth(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.patch(
         "/users/all/1", data=json.dumps(dummy_request_data["updated_user"])
     )
@@ -300,8 +351,11 @@ async def test_update_user_no_auth(
 # Attempt to update a user's data with malformed auth header
 @pytest.mark.asyncio
 async def test_update_user_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.patch(
         "/users/all/1",
         headers=user_headers["malformed"],
@@ -316,12 +370,12 @@ async def test_update_user_malformed_auth(
 # Attempt to update a user's data with a user's JWT
 @pytest.mark.asyncio
 async def test_update_user_as_user(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+    dummy_request_data: dict,
+) -> None:
     user = dummy_request_data["updated_user"]
     user["id"] = dummy_users_data["user"]["internal"]
     user["displayName"] = "user123"
@@ -341,11 +395,11 @@ async def test_update_user_as_user(
 # Attempt to update a user's verified status
 @pytest.mark.asyncio
 async def test_update_user_verified_status(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+) -> None:
     response = await app_client.patch(
         f"/users/all/{dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
@@ -362,12 +416,12 @@ async def test_update_user_verified_status(
 # Attempt to update another user's display name with a user's JWT
 @pytest.mark.asyncio
 async def test_update_other_users_display_name_as_user(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+    dummy_request_data: dict,
+) -> None:
     user = dummy_request_data["updated_display"]
     user["id"] = dummy_users_data["moderator"]["internal"]
     response = await app_client.patch(
@@ -384,12 +438,12 @@ async def test_update_other_users_display_name_as_user(
 # Attempt to update a user's blocked state with a user's JWT
 @pytest.mark.asyncio
 async def test_update_block_user_as_user(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+    dummy_request_data: dict,
+) -> None:
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["user"]["internal"]
     user["blocked"] = True
@@ -407,12 +461,12 @@ async def test_update_block_user_as_user(
 # Attempt to update a user's data with a moderator's JWT
 @pytest.mark.asyncio
 async def test_update_user_as_mod(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+    dummy_request_data: dict,
+) -> None:
     user = dummy_request_data["updated_user"]
     user["id"] = dummy_users_data["moderator"]["internal"]
     user["displayName"] = "mod"
@@ -432,12 +486,12 @@ async def test_update_user_as_mod(
 # Attempt to update another user's display name with a moderator's JWT
 @pytest.mark.asyncio
 async def test_update_other_users_display_name_as_mod(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+    dummy_request_data: dict,
+) -> None:
     user = dummy_request_data["updated_display"]
     user["id"] = dummy_users_data["admin"]["internal"]
     response = await app_client.patch(
@@ -454,12 +508,12 @@ async def test_update_other_users_display_name_as_mod(
 # Attempt to update a user's blocked state with a moderator's JWT
 @pytest.mark.asyncio
 async def test_update_block_user_as_mod(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+    dummy_request_data: dict,
+) -> None:
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["moderator"]["internal"]
     user["blocked"] = True
@@ -477,12 +531,12 @@ async def test_update_block_user_as_mod(
 # Attempt to update a user's data with an admin's JWT
 @pytest.mark.asyncio
 async def test_update_user_as_admin(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+    dummy_request_data: dict,
+) -> None:
     user = dummy_request_data["updated_user"]
     user["id"] = dummy_users_data["admin"]["internal"]
     user["displayName"] = "admin123"
@@ -502,12 +556,12 @@ async def test_update_user_as_admin(
 # Attempt to update another user's display name with an admin's JWT
 @pytest.mark.asyncio
 async def test_update_other_user_as_admin(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+    dummy_request_data: dict,
+) -> None:
     user = dummy_request_data["updated_display"]
     user["id"] = dummy_users_data["user"]["internal"]
     user["displayName"] = "hello"
@@ -527,12 +581,12 @@ async def test_update_other_user_as_admin(
 # Attempt to update a user's blocked state with an admin's JWT
 @pytest.mark.asyncio
 async def test_update_block_user_as_admin(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+    dummy_request_data: dict,
+) -> None:
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["user"]["internal"]
     response = await app_client.patch(
@@ -551,12 +605,12 @@ async def test_update_block_user_as_admin(
 # Attempt to update another user's settings (admin's JWT)
 @pytest.mark.asyncio
 async def test_update_user_settings_as_admin(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+    dummy_request_data: dict,
+) -> None:
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["user"]["internal"]
     user["autoRefresh"] = True
@@ -575,8 +629,11 @@ async def test_update_user_settings_as_admin(
 # Attempt to update a user's data with no ID (with admin's JWT)
 @pytest.mark.asyncio
 async def test_update_no_id_user_as_admin(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.patch(
         "/users/all/",
         headers=user_headers["admin"],
@@ -591,12 +648,12 @@ async def test_update_no_id_user_as_admin(
 # Attempt to update another user's settings (admin's JWT)
 @pytest.mark.asyncio
 async def test_update_admin_settings_as_admin(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+    dummy_request_data: dict,
+) -> None:
     user = {**dummy_request_data["updated_unblock_user"]}
     user["id"] = dummy_users_data["admin"]["internal"]
     user["autoRefresh"] = True
@@ -620,12 +677,12 @@ async def test_update_admin_settings_as_admin(
 # Attempt to update another user's settings (admin's JWT) - 0 refresh rate
 @pytest.mark.asyncio
 async def test_update_admin_settings_as_admin_invalid_settings(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-    dummy_request_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+    dummy_request_data: dict,
+) -> None:
     user = {**dummy_request_data["updated_unblock_user"]}
     user["id"] = dummy_users_data["admin"]["internal"]
     user["autoRefresh"] = True
@@ -652,11 +709,11 @@ async def test_update_admin_settings_as_admin_invalid_settings(
 # Attempt to update a user's verified status and role
 @pytest.mark.asyncio
 async def test_update_user_verified_status_and_role(
-    app_client,
-    test_db,
-    user_headers,
-    dummy_users_data,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+) -> None:
     response = await app_client.patch(
         f"/users/all/{dummy_users_data['new']['internal']}",
         headers=user_headers["newUser"],
@@ -675,7 +732,9 @@ async def test_update_user_verified_status_and_role(
 # -------------------------------------------------------
 # Attempt to get a user's posts without auth header
 @pytest.mark.asyncio
-async def test_get_user_posts_no_auth(app_client, test_db, user_headers):
+async def test_get_user_posts_no_auth(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.get("/users/all/1/posts")
     response_data = await response.get_json()
 
@@ -685,7 +744,9 @@ async def test_get_user_posts_no_auth(app_client, test_db, user_headers):
 
 # Attempt to get a user's posts with malformed auth header
 @pytest.mark.asyncio
-async def test_get_user_posts_malformed_auth(app_client, test_db, user_headers):
+async def test_get_user_posts_malformed_auth(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.get(
         "/users/all/1/posts", headers=user_headers["malformed"]
     )
@@ -709,14 +770,14 @@ async def test_get_user_posts_malformed_auth(app_client, test_db, user_headers):
 )
 @pytest.mark.asyncio
 async def test_get_user_posts(
-    app_client,
-    test_db,
-    user_headers,
-    user_id,
-    user,
-    total_pages,
-    posts_num,
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_id: int,
+    user: str,
+    total_pages: int,
+    posts_num: int,
+) -> None:
     response = await app_client.get(
         f"/users/all/{user_id}/posts", headers=user_headers[user]
     )
@@ -733,7 +794,9 @@ async def test_get_user_posts(
 # -------------------------------------------------------
 # Attempt to delete user's posts with no authorisation header
 @pytest.mark.asyncio
-async def test_delete_posts_no_auth(app_client, test_db, user_headers):
+async def test_delete_posts_no_auth(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.delete("/users/all/1/posts")
     response_data = await response.get_json()
 
@@ -743,7 +806,9 @@ async def test_delete_posts_no_auth(app_client, test_db, user_headers):
 
 # Attempt to delete user's with a malformed auth header
 @pytest.mark.asyncio
-async def test_delete_posts_malformed_auth(app_client, test_db, user_headers):
+async def test_delete_posts_malformed_auth(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.delete(
         "/users/all/1/posts", headers=user_headers["malformed"]
     )
@@ -767,8 +832,13 @@ async def test_delete_posts_malformed_auth(app_client, test_db, user_headers):
 )
 @pytest.mark.asyncio
 async def test_delete_own_posts(
-    app_client, test_db, user_headers, user_id, user, deleted_post
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_id: int,
+    user: str,
+    deleted_post: int,
+) -> None:
     response = await app_client.delete(
         f"/users/all/{user_id}/posts", headers=user_headers[user]
     )
@@ -797,8 +867,12 @@ async def test_delete_own_posts(
 )
 @pytest.mark.asyncio
 async def test_delete_other_users_posts_no_permission(
-    app_client, test_db, user_headers, user_id, user
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_id: int,
+    user: str,
+) -> None:
     response = await app_client.delete(
         f"/users/all/{user_id}/posts", headers=user_headers[user]
     )
@@ -810,7 +884,9 @@ async def test_delete_other_users_posts_no_permission(
 
 # Attempt to delete another user's posts (with admin's JWT)
 @pytest.mark.asyncio
-async def test_delete_other_users_posts_as_admin(app_client, test_db, user_headers):
+async def test_delete_other_users_posts_as_admin(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.delete(
         "/users/all/5/posts", headers=user_headers["admin"]
     )
@@ -824,8 +900,8 @@ async def test_delete_other_users_posts_as_admin(app_client, test_db, user_heade
 # Attempt to delete the posts of a user that doesn't exist (admin's JWT)
 @pytest.mark.asyncio
 async def test_delete_nonexistent_users_posts_as_admin(
-    app_client, test_db, user_headers
-):
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.delete(
         "/users/all/100/posts", headers=user_headers["admin"]
     )
@@ -837,7 +913,9 @@ async def test_delete_nonexistent_users_posts_as_admin(
 
 # Attempt to delete the posts of a user that has no posts (admin's JWT)
 @pytest.mark.asyncio
-async def test_delete_nonexistent_posts_as_admin(app_client, test_db, user_headers):
+async def test_delete_nonexistent_posts_as_admin(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.delete(
         "/users/all/9/posts", headers=user_headers["admin"]
     )
@@ -851,7 +929,9 @@ async def test_delete_nonexistent_posts_as_admin(app_client, test_db, user_heade
 # -------------------------------------------------------
 # Attempt to send hugs for a post that doesn't exist
 @pytest.mark.asyncio
-async def test_user_hugs_post_no_existing(app_client, test_db, user_headers):
+async def test_user_hugs_post_no_existing(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.post(
         "/users/all/1000/hugs", headers=user_headers["admin"]
     )
@@ -863,7 +943,9 @@ async def test_user_hugs_post_no_existing(app_client, test_db, user_headers):
 
 # Attempt to send hugs
 @pytest.mark.asyncio
-async def test_user_hugs(app_client, test_db, user_headers):
+async def test_user_hugs(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.post(
         "/users/all/1/hugs", headers=user_headers["moderator"]
     )
