@@ -21,7 +21,7 @@ from models.db import SendADatabase
 DATETIME_PATTERN = "%Y-%m-%d %H:%M:%S.%f"
 
 
-async def create_filters(db: SendADatabase):
+async def create_filters(db: SendADatabase) -> None:
     """Creates the filters in the test database."""
     filter_1 = Filter(id=1, filter="filtered_word_1")
     filter_2 = Filter(id=2, filter="filtered_word_2")
@@ -34,7 +34,7 @@ async def create_filters(db: SendADatabase):
         await db.session.remove()
 
 
-async def create_permissions(db: SendADatabase):
+async def create_permissions(db: SendADatabase) -> None:
     permission_1 = Permission(
         id=1, permission="block:user", description="Block or unblock a user"
     )
@@ -109,7 +109,7 @@ async def create_permissions(db: SendADatabase):
         await db.session.remove()
 
 
-async def create_roles(db: SendADatabase):
+async def create_roles(db: SendADatabase) -> None:
     role_1 = Role(id=1, name="admin")
     role_2 = Role(id=2, name="moderator")
     role_3 = Role(id=3, name="user")
@@ -145,7 +145,7 @@ async def create_roles(db: SendADatabase):
         await db.session.remove()
 
 
-async def create_users(db: SendADatabase):
+async def create_users(db: SendADatabase) -> None:
     """Creates the users in the test database."""
     user_1 = User(
         id=1,
@@ -289,7 +289,7 @@ async def create_users(db: SendADatabase):
         await db.session.remove()
 
 
-async def create_posts(db: SendADatabase):
+async def create_posts(db: SendADatabase) -> None:
     """Creates the posts in the test database."""
     post_1 = Post(
         id=1,
@@ -519,7 +519,7 @@ async def create_posts(db: SendADatabase):
         await db.session.remove()
 
 
-async def create_threads(db: SendADatabase):
+async def create_threads(db: SendADatabase) -> None:
     """Creates the threads in the test database."""
     thread_1 = Thread(id=1, user_1_id=1, user_2_id=1)
     thread_2 = Thread(id=2, user_1_id=1, user_2_id=5)
@@ -539,7 +539,7 @@ async def create_threads(db: SendADatabase):
         await db.session.remove()
 
 
-async def create_messages(db: SendADatabase):
+async def create_messages(db: SendADatabase) -> None:
     """Creates the messages in the test database."""
     message_1 = Message(
         id=5,
@@ -709,7 +709,7 @@ async def create_messages(db: SendADatabase):
         await db.session.remove()
 
 
-async def create_reports(db: SendADatabase):
+async def create_reports(db: SendADatabase) -> None:
     """Creates the reports in the test database."""
     report_1 = Report(
         id=1,
@@ -1251,7 +1251,7 @@ async def create_reports(db: SendADatabase):
         await db.session.remove()
 
 
-async def create_notifications(db: SendADatabase):
+async def create_notifications(db: SendADatabase) -> None:
     """Creates the notifications in the test database."""
     notification_1 = Notification(
         id=1,
@@ -1697,7 +1697,7 @@ async def create_notifications(db: SendADatabase):
         await db.session.remove()
 
 
-async def create_subscriptions(db: SendADatabase):
+async def create_subscriptions(db: SendADatabase) -> None:
     """Creates the push subscriptions in the database"""
     sub_1 = NotificationSub(
         id=1,
@@ -1746,7 +1746,7 @@ async def create_subscriptions(db: SendADatabase):
         await db.session.close()
 
 
-async def update_sequences(db: SendADatabase):
+async def update_sequences(db: SendADatabase) -> None:
     """Updates the values of all sequences."""
     try:
         await db.session.execute(
@@ -1772,7 +1772,7 @@ async def update_sequences(db: SendADatabase):
         await db.session.close()
 
 
-async def create_data(db: SendADatabase):
+async def create_data(db: SendADatabase) -> None:
     """Creates the data in the test database."""
     await create_filters(db)
     await create_permissions(db)

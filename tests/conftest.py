@@ -22,7 +22,7 @@ DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD", "")
 
 
 @pytest.fixture(scope="session")
-def user_headers(session_mocker: MockerFixture):
+def user_headers(session_mocker: MockerFixture) -> dict[str, dict[str, str]]:
     """
     Sets the headers for each of the users and mocks
     the verify_id_token function from Firebase.
@@ -173,7 +173,7 @@ async def test_db(
 
 
 @pytest.fixture
-def dummy_users_data():
+def dummy_users_data() -> dict[str, dict[str, str]]:
     """Get the users' dummy data for the test"""
     # Sample users data
     user_data = {

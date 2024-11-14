@@ -33,6 +33,7 @@ from firebase_admin.auth import (  # type: ignore
     TokenSignError,
 )
 import pytest
+from pytest_mock import MockerFixture
 
 from auth import AuthError, check_user_permissions, get_current_user, validate_token
 
@@ -52,7 +53,13 @@ from models import SendADatabase
         (TokenSignError, "Unauthorised. Your token is invalid. Error: "),
     ],
 )
-def test_verify_jwt_error(mocker, error, error_message):
+def test_verify_jwt_error(
+    mocker: MockerFixture,
+    error: (
+        ExpiredIdTokenError | InvalidIdTokenError | RevokedIdTokenError | TokenSignError
+    ),
+    error_message: str,
+) -> None:
     mocker.patch("auth.verify_id_token", side_effect=error)
 
     with pytest.raises(AuthError) as exc:
@@ -62,7 +69,7 @@ def test_verify_jwt_error(mocker, error, error_message):
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_error(test_db: SendADatabase):
+async def test_get_current_user_error(test_db: SendADatabase) -> None:
     with pytest.raises(AuthError) as exc:
         await get_current_user(
             {
@@ -75,7 +82,7 @@ async def test_get_current_user_error(test_db: SendADatabase):
 
 
 @pytest.mark.asyncio
-async def test_get_current_user(dummy_users_data, test_db: SendADatabase):
+async def test_get_current_user(dummy_users_data: dict, test_db: SendADatabase) -> None:
     user = await get_current_user(
         {"uid": dummy_users_data["user"]["firebase_id"]}, test_db
     )
@@ -83,7 +90,7 @@ async def test_get_current_user(dummy_users_data, test_db: SendADatabase):
     assert user["id"] == int(dummy_users_data["user"]["internal"])
 
 
-def test_check_user_permissions_one_perm():
+def test_check_user_permissions_one_perm() -> None:
     res = check_user_permissions(
         ["read:user"],
         {
@@ -97,7 +104,7 @@ def test_check_user_permissions_one_perm():
     assert res is True
 
 
-def test_check_user_permissions_two_perms():
+def test_check_user_permissions_two_perms() -> None:
     res = check_user_permissions(
         ["read:user", "read:all-users"],
         {
@@ -118,7 +125,7 @@ def test_check_user_permissions_two_perms():
         (["read:user", "read:all-users"], ["read:post", "patch:post"]),
     ],
 )
-def test_check_user_permissions_error(required_perms, user_perms):
+def test_check_user_permissions_error(required_perms, user_perms) -> None:
     with pytest.raises(AuthError) as exc:
         check_user_permissions(
             required_perms,
