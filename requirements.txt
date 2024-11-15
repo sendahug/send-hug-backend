@@ -5,4 +5,4 @@ hypercorn==0.17.3
 asyncpg==0.30.0
 pywebpush==2.0.1
 SQLAlchemy[asyncio]==2.0.36
-firebase-admin==6.5.0
+firebase-admin==6.6.0
