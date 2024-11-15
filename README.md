@@ -106,13 +106,13 @@ This project utilises Pytest for testing.
 
 Once you've completed the setup for whichever approach you've chosen, run the following commands:
 
-```
-"CREATE DATABASE test_sah;" | sudo -u postgres psql
+```sh
+cat init_test_db.sql | sudo -u postgres psql
 pytest
 ```
 
 Or, if using macOS:
-```
+```zsh
 dropdb test_sah && createdb test_sah
 pytest
 ```

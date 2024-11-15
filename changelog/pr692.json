@@ -1,0 +1,9 @@
+{
+    "pr_number": 692,
+    "changes": [
+        {
+            "change": "Chores",
+            "description": "Added type hints to all tests to improve error detection in test code."
+        }
+    ]
+}
