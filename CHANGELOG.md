@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### 2024-11-16
+
+#### Chores
+
+- Added type hints to all tests to improve error detection in test code. ([#692](https://github.com/sendahug/send-hug-backend/pull/692))
+- Added new database setup script to smooth out initial database setup for Linux developers. ([#692](https://github.com/sendahug/send-hug-backend/pull/692))
+
+#### Documentation
+
+- Updated database setup documentation for Linux developers to include new database setup script. ([#692](https://github.com/sendahug/send-hug-backend/pull/692))
+
 ### 2024-11-01
 
 #### Changes
