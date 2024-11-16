@@ -26,11 +26,12 @@
 # SOFTWARE.
 
 from datetime import datetime
+from typing import Type
 
 import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy import Update, and_, delete, select, update
-from sqlalchemy.exc import DataError, IntegrityError, OperationalError
+from sqlalchemy.exc import DatabaseError, DataError, IntegrityError, OperationalError
 from werkzeug.exceptions import HTTPException
 
 from models import SendADatabase
@@ -38,7 +39,7 @@ from models.schemas.posts import Post
 
 
 @pytest.fixture
-def posts_to_add():
+def posts_to_add() -> list[Post]:
     current_date = datetime.now()
     return [
         Post(
@@ -59,7 +60,7 @@ def posts_to_add():
 
 
 @pytest.fixture
-def invalid_post_to_add():
+def invalid_post_to_add() -> Post:
     current_date = datetime.now()
     return Post(
         user_id=100,
@@ -71,7 +72,7 @@ def invalid_post_to_add():
 
 
 @pytest.fixture
-def update_post_stmts():
+def update_post_stmts() -> list[Update]:
     return [
         update(Post).where(Post.user_id == 1).values(given_hugs=100),
         update(Post).where(Post.user_id == 4).values(given_hugs=10),
@@ -79,7 +80,7 @@ def update_post_stmts():
 
 
 @pytest.mark.asyncio
-async def test_paginate_no_error(test_db: SendADatabase):
+async def test_paginate_no_error(test_db: SendADatabase) -> None:
     query = select(Post).where(Post.given_hugs > 0)
 
     results = await test_db.paginate(query, 1, 10)
@@ -90,7 +91,9 @@ async def test_paginate_no_error(test_db: SendADatabase):
 
 
 @pytest.mark.asyncio
-async def test_paginate_with_error(mocker: MockerFixture, test_db: SendADatabase):
+async def test_paginate_with_error(
+    mocker: MockerFixture, test_db: SendADatabase
+) -> None:
     mocker.patch(
         "models.schemas.posts.Post.format", side_effect=Exception("There was an error!")
     )
@@ -104,7 +107,7 @@ async def test_paginate_with_error(mocker: MockerFixture, test_db: SendADatabase
 
 
 @pytest.mark.asyncio
-async def test_one_or_404_success(test_db: SendADatabase):
+async def test_one_or_404_success(test_db: SendADatabase) -> None:
     result = await test_db.one_or_404(1, Post)
 
     assert result.id == 1
@@ -112,7 +115,7 @@ async def test_one_or_404_success(test_db: SendADatabase):
 
 
 @pytest.mark.asyncio
-async def test_one_or_404_not_existing(test_db: SendADatabase):
+async def test_one_or_404_not_existing(test_db: SendADatabase) -> None:
     with pytest.raises(HTTPException) as exc:
         await test_db.one_or_404(100, Post)
 
@@ -120,7 +123,7 @@ async def test_one_or_404_not_existing(test_db: SendADatabase):
 
 
 @pytest.mark.asyncio
-async def test_one_or_404_error(test_db: SendADatabase):
+async def test_one_or_404_error(test_db: SendADatabase) -> None:
     with pytest.raises(HTTPException) as exc:
         await test_db.one_or_404("hi", Post)  # type: ignore
 
@@ -130,7 +133,7 @@ async def test_one_or_404_error(test_db: SendADatabase):
 
 
 @pytest.mark.asyncio
-async def test_add_no_errors(test_db: SendADatabase, posts_to_add: list[Post]):
+async def test_add_no_errors(test_db: SendADatabase, posts_to_add: list[Post]) -> None:
     post_to_add = posts_to_add[0]
     expected_return = {
         "id": 46,
@@ -148,7 +151,9 @@ async def test_add_no_errors(test_db: SendADatabase, posts_to_add: list[Post]):
 
 
 @pytest.mark.asyncio
-async def test_add_integrity_error(test_db: SendADatabase, invalid_post_to_add: Post):
+async def test_add_integrity_error(
+    test_db: SendADatabase, invalid_post_to_add: Post
+) -> None:
     with pytest.raises(HTTPException) as exc:
         await test_db.add_object(obj=invalid_post_to_add)
 
@@ -178,7 +183,9 @@ async def test_add_other_error(
 
 
 @pytest.mark.asyncio
-async def test_add_multiple_no_errors(test_db: SendADatabase, posts_to_add: list[Post]):
+async def test_add_multiple_no_errors(
+    test_db: SendADatabase, posts_to_add: list[Post]
+) -> None:
     expected_return = [
         {
             "id": 46,
@@ -208,7 +215,7 @@ async def test_add_multiple_no_errors(test_db: SendADatabase, posts_to_add: list
 @pytest.mark.asyncio
 async def test_add_multiple_integrity_error(
     test_db: SendADatabase, invalid_post_to_add: Post, posts_to_add: list[Post]
-):
+) -> None:
     with pytest.raises(HTTPException) as exc:
         await test_db.add_multiple_objects(objects=[invalid_post_to_add, *posts_to_add])
 
@@ -220,7 +227,7 @@ async def test_add_multiple_integrity_error(
 @pytest.mark.asyncio
 async def test_add_multiple_other_error(
     test_db: SendADatabase, mocker: MockerFixture, posts_to_add: list[Post]
-):
+) -> None:
     mocker.patch.object(
         test_db.session,
         "commit",
@@ -237,7 +244,7 @@ async def test_add_multiple_other_error(
 
 
 @pytest.mark.asyncio
-async def test_update_no_errors(test_db: SendADatabase, db_helpers_dummy_data):
+async def test_update_no_errors(test_db: SendADatabase, db_helpers_dummy_data) -> None:
     expected_return = db_helpers_dummy_data["updated_post"]
 
     post = await test_db.session.get(Post, 1)
@@ -254,7 +261,7 @@ async def test_update_no_errors(test_db: SendADatabase, db_helpers_dummy_data):
 
 
 @pytest.mark.asyncio
-async def test_update_integrity_error(test_db: SendADatabase):
+async def test_update_integrity_error(test_db: SendADatabase) -> None:
     post = await test_db.session.get(Post, 1)
 
     if not post:
@@ -272,7 +279,7 @@ async def test_update_integrity_error(test_db: SendADatabase):
 @pytest.mark.asyncio
 async def test_update_other_error(
     test_db: SendADatabase, mocker: MockerFixture, posts_to_add: list[Post]
-):
+) -> None:
     mocker.patch.object(
         test_db.session,
         "commit",
@@ -289,7 +296,9 @@ async def test_update_other_error(
 
 
 @pytest.mark.asyncio
-async def test_update_multiple_no_errors(test_db: SendADatabase, db_helpers_dummy_data):
+async def test_update_multiple_no_errors(
+    test_db: SendADatabase, db_helpers_dummy_data: dict
+) -> None:
     expected_return = [
         db_helpers_dummy_data["updated_post"],
         {
@@ -322,7 +331,7 @@ async def test_update_multiple_no_errors(test_db: SendADatabase, db_helpers_dumm
 
 
 @pytest.mark.asyncio
-async def test_update_multiple_error(test_db: SendADatabase):
+async def test_update_multiple_error(test_db: SendADatabase) -> None:
     posts_instances = await test_db.session.scalars(
         select(Post).filter(Post.id < 3).order_by(Post.id)
     )
@@ -348,7 +357,7 @@ async def test_update_multiple_error(test_db: SendADatabase):
 @pytest.mark.asyncio
 async def test_update_multiple_other_error(
     test_db: SendADatabase, mocker: MockerFixture, posts_to_add: list[Post]
-):
+) -> None:
     mocker.patch.object(
         test_db.session,
         "commit",
@@ -367,7 +376,7 @@ async def test_update_multiple_other_error(
 @pytest.mark.asyncio
 async def test_update_multiple_dml_one_stmt(
     test_db: SendADatabase, update_post_stmts: list[Update]
-):
+) -> None:
     await test_db.update_multiple_objects_with_dml(update_stmts=update_post_stmts[0])
 
     closed_report_posts_scalars = await test_db.session.scalars(
@@ -386,7 +395,7 @@ async def test_update_multiple_dml_one_stmt(
 @pytest.mark.asyncio
 async def test_update_multiple_dml_multiple_stmts(
     test_db: SendADatabase, update_post_stmts: list[Update]
-):
+) -> None:
     await test_db.update_multiple_objects_with_dml(update_stmts=update_post_stmts)
 
     closed_report_posts_scalars = await test_db.session.scalars(
@@ -405,7 +414,7 @@ async def test_update_multiple_dml_multiple_stmts(
 @pytest.mark.asyncio
 async def test_update_multiple_dml_integrity_error(
     test_db: SendADatabase, mocker: MockerFixture, update_post_stmts: list[Update]
-):
+) -> None:
     mocker.patch.object(
         test_db.session,
         "commit",
@@ -424,7 +433,7 @@ async def test_update_multiple_dml_integrity_error(
 @pytest.mark.asyncio
 async def test_update_multiple_dml_other_error(
     test_db: SendADatabase, mocker: MockerFixture, update_post_stmts: list[Update]
-):
+) -> None:
     mocker.patch.object(
         test_db.session,
         "commit",
@@ -453,10 +462,10 @@ async def test_delete_error(
     test_db: SendADatabase,
     mocker: MockerFixture,
     posts_to_add: list[Post],
-    error,
-    exception_code,
-    exception_error,
-):
+    error: Type[DatabaseError],
+    exception_code: str,
+    exception_error: str,
+) -> None:
     mocker.patch.object(
         test_db.session,
         "delete",
@@ -484,9 +493,9 @@ async def test_delete_error(
 async def test_delete_dml_error(
     test_db: SendADatabase,
     mocker: MockerFixture,
-    error,
-    exception_code,
-    exception_error,
+    error: Type[DatabaseError],
+    exception_code: str,
+    exception_error: str,
 ):
     mocker.patch.object(
         test_db.session,

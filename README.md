@@ -39,13 +39,15 @@ The project is open source, so feel free to use parts of the code. However, the 
       - **DB_CREDENTIALS_PATH** - The path to the credentials file.
       - **DATABASE_USERNAME** - The username to log into the database if no credentials file is set.
       - **DATABASE_PASSWORD** - The password to log into the database if no credentials file is set.
-    - **PRIVATE_VAPID_KEY** - environment variable containing your private VAPID key (required for push notifications).
-    - The frontend URI comes from an environment variable named **FRONTEND**.
-    - The firebase credentials file's location is in an environment variable called **FIREBASE_CREDENTIALS_FILE**.
+    - **PRIVATE_VAPID_KEY** - Your private VAPID key (required for push notifications).
+    - **FRONTEND** - The frontend URI.
+    - **FIREBASE_CREDENTIALS_FILE** - The firebase credentials file's location.
 8. Update your database using ```alembic upgrade head```
 9. Run Quart with:
     - ```export QUART_APP=app.py```
     - ```quart --debug run```
+
+Developers that are part of the main Send A Hug project can use the ```./get_secrets.sh``` script to download the above secrets from Google Cloud Secrets Manager to their default locations and minimise the need for setting environment variables (requires access to the Send A Hug Google Cloud Project and installation of the [`gcloud` cli](https://cloud.google.com/sdk/docs/install)).
 
 ### Users
 
@@ -106,13 +108,13 @@ This project utilises Pytest for testing.
 
 Once you've completed the setup for whichever approach you've chosen, run the following commands:
 
-```
-"CREATE DATABASE test_sah;" | sudo -u postgres psql
+```sh
+cat init_test_db.sql | sudo -u postgres psql
 pytest
 ```
 
 Or, if using macOS:
-```
+```zsh
 dropdb test_sah && createdb test_sah
 pytest
 ```

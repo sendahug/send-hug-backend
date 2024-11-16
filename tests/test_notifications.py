@@ -29,16 +29,20 @@ import json
 from typing import Any
 
 import pytest
+from quart.typing import TestClientProtocol
 from sqlalchemy import and_, false, select
 
 from models import Notification
+from models.db import SendADatabase
 
 
 # Get New Notifications Route Tests ('/notifications', GET)
 # -------------------------------------------------------
 # Attempt to get user notifications without auth header
 @pytest.mark.asyncio
-async def test_get_notifications_no_auth(app_client, test_db):
+async def test_get_notifications_no_auth(
+    app_client: TestClientProtocol, test_db: SendADatabase
+) -> None:
     response = await app_client.get("/notifications")
     response_data = await response.get_json()
 
@@ -48,7 +52,9 @@ async def test_get_notifications_no_auth(app_client, test_db):
 
 # Attempt to get user notifications with malformed auth header
 @pytest.mark.asyncio
-async def test_get_notifications_malformed_auth(app_client, test_db, user_headers):
+async def test_get_notifications_malformed_auth(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.get("/notifications", headers=user_headers["malformed"])
     response_data = await response.get_json()
 
@@ -67,8 +73,13 @@ async def test_get_notifications_malformed_auth(app_client, test_db, user_header
 )
 @pytest.mark.asyncio
 async def test_get_notifications(
-    app_client, test_db, user_headers, user, notification_count, total_pages
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user: str,
+    notification_count: int,
+    total_pages: int,
+) -> None:
     response = await app_client.get("/notifications", headers=user_headers[user])
     response_data = await response.get_json()
 
@@ -88,8 +99,12 @@ async def test_get_notifications(
 )
 @pytest.mark.asyncio
 async def test_get_notifications_read_status(
-    app_client, test_db, user_headers, notification_count, read_status
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    notification_count: int,
+    read_status: str,
+) -> None:
     response = await app_client.get(
         f"/notifications?readStatus={read_status}", headers=user_headers["admin"]
     )
@@ -105,8 +120,11 @@ async def test_get_notifications_read_status(
 # Attempt to update notifications without auth header
 @pytest.mark.asyncio
 async def test_update_notifications_no_auth(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.patch(
         "/notifications", data=json.dumps(dummy_request_data["updated_notifications"])
     )
@@ -119,8 +137,11 @@ async def test_update_notifications_no_auth(
 # Attempt to update notifications with malformed auth header
 @pytest.mark.asyncio
 async def test_update_notifications_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.patch(
         "/notifications",
         data=json.dumps(dummy_request_data["updated_notifications"]),
@@ -139,8 +160,13 @@ async def test_update_notifications_malformed_auth(
 )
 @pytest.mark.asyncio
 async def test_update_notifications(
-    app_client, test_db, user_headers, dummy_request_data, notification_ids, user
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+    notification_ids: list[int],
+    user: str,
+) -> None:
     dummy_request_data["updated_notifications"]["notification_ids"] = notification_ids
     response = await app_client.patch(
         "/notifications",
@@ -158,8 +184,11 @@ async def test_update_notifications(
 # Attempt to update notifications with an admin's JWT
 @pytest.mark.asyncio
 async def test_update_all_notifications_as_admin(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     updated_ids = "all"
     dummy_request_data["updated_notifications"]["notification_ids"] = updated_ids
     response = await app_client.patch(
@@ -185,7 +214,9 @@ async def test_update_all_notifications_as_admin(
 
 # Attempt to update notifications with invalid payload
 @pytest.mark.asyncio
-async def test_update_notifications_invalid_payload(app_client, test_db, user_headers):
+async def test_update_notifications_invalid_payload(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     notifications_data = {"notifications": [], "mark_me": "read"}
     response = await app_client.patch(
         "/notifications",
@@ -201,8 +232,11 @@ async def test_update_notifications_invalid_payload(app_client, test_db, user_he
 # Attempt to update notifications with someone else's notifications
 @pytest.mark.asyncio
 async def test_update_notifications_another_users_notifications(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     notification_ids = [2, 3, 4, 5, 73]
     dummy_request_data["updated_notifications"]["notification_ids"] = notification_ids
     response = await app_client.patch(
@@ -221,8 +255,11 @@ async def test_update_notifications_another_users_notifications(
 # Attempt to create push subscription without auth header
 @pytest.mark.asyncio
 async def test_post_subscription_no_auth(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.post(
         "/push_subscriptions", data=json.dumps(dummy_request_data["new_subscription"])
     )
@@ -235,8 +272,11 @@ async def test_post_subscription_no_auth(
 # Attempt to create push subscription with malformed auth header
 @pytest.mark.asyncio
 async def test_post_subscription_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.post(
         "/push_subscriptions",
         data=json.dumps(dummy_request_data["new_subscription"]),
@@ -251,8 +291,11 @@ async def test_post_subscription_malformed_auth(
 # Attempt to create push subscription with a user's JWT
 @pytest.mark.asyncio
 async def test_post_subscription_as_user(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.post(
         "/push_subscriptions",
         data=json.dumps(dummy_request_data["new_subscription"]),
@@ -268,8 +311,11 @@ async def test_post_subscription_as_user(
 # Attempt to create push subscription with a moderator's JWT
 @pytest.mark.asyncio
 async def test_post_subscription_as_mod(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.post(
         "/push_subscriptions",
         data=json.dumps(dummy_request_data["new_subscription"]),
@@ -285,8 +331,11 @@ async def test_post_subscription_as_mod(
 # Attempt to create push subscription with an admin's JWT
 @pytest.mark.asyncio
 async def test_post_subscription_as_admin(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     response = await app_client.post(
         "/push_subscriptions",
         data=json.dumps(dummy_request_data["new_subscription"]),
@@ -301,7 +350,9 @@ async def test_post_subscription_as_admin(
 
 # Attempt to create push subscription with an admin's JWT
 @pytest.mark.asyncio
-async def test_post_subscription_empty_data_as_admin(app_client, test_db, user_headers):
+async def test_post_subscription_empty_data_as_admin(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.post(
         "/push_subscriptions",
         data=None,
@@ -318,8 +369,11 @@ async def test_post_subscription_empty_data_as_admin(app_client, test_db, user_h
 # Attempt to update push subscription without auth header
 @pytest.mark.asyncio
 async def test_update_subscription_no_auth(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     # Create the subscription
     await app_client.post(
         "/push_subscriptions",
@@ -341,8 +395,11 @@ async def test_update_subscription_no_auth(
 # Attempt to update push subscription with malformed auth header
 @pytest.mark.asyncio
 async def test_update_subscription_malformed_auth(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     # Create the subscription
     await app_client.post(
         "/push_subscriptions",
@@ -366,8 +423,11 @@ async def test_update_subscription_malformed_auth(
 # Attempt to update push subscription with a user's JWT
 @pytest.mark.asyncio
 async def test_update_subscription_as_user(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 1
     response = await app_client.patch(
@@ -386,8 +446,11 @@ async def test_update_subscription_as_user(
 # Attempt to create push subscription with a moderator's JWT
 @pytest.mark.asyncio
 async def test_update_subscription_as_mod(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 2
     response = await app_client.patch(
@@ -406,8 +469,11 @@ async def test_update_subscription_as_mod(
 # Attempt to create push subscription with an admin's JWT
 @pytest.mark.asyncio
 async def test_update_subscription_as_admin(
-    app_client, test_db, user_headers, dummy_request_data
-):
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
     updated_subscription: dict[str, Any] = {**dummy_request_data["new_subscription"]}
     updated_subscription["id"] = 3
     response = await app_client.patch(
@@ -426,8 +492,8 @@ async def test_update_subscription_as_admin(
 # Attempt to create push subscription with an admin's JWT
 @pytest.mark.asyncio
 async def test_update_subscription_empty_data_as_admin(
-    app_client, test_db, user_headers
-):
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
     response = await app_client.patch(
         "/push_subscriptions/1",
         data=None,

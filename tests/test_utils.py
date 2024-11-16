@@ -60,7 +60,7 @@ def test_generate_push_data() -> None:
     assert push_data["body"] == "Meow"
 
 
-def test_generate_vapid_claims():
+def test_generate_vapid_claims() -> None:
     vapid_claims = generate_vapid_claims()
 
     # TODO: Add check for the expiry time
