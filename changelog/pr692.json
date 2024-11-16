@@ -4,6 +4,14 @@
         {
             "change": "Chores",
             "description": "Added type hints to all tests to improve error detection in test code."
+        },
+        {
+            "change": "Chores",
+            "description": "Added new database setup script to smooth out initial database setup for Linux developers."
+        },
+        {
+            "change": "Documentation",
+            "description": "Updated database setup documentation for Linux developers to include new database setup script."
         }
     ]
 }
