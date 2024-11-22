@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2024-11-22
+
+#### Chores
+
+- Added a GitHub Actions workflow for automatically updating the pre-commit dependencies (on a weekly schedule). ([#697](https://github.com/sendahug/send-hug-backend/pull/697))
+
 ### 2024-11-16
 
 #### Chores

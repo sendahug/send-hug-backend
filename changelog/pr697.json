@@ -1,9 +1,0 @@
-{
-  "pr_number": 697,
-  "changes": [
-    {
-      "change": "Chores",
-      "description": "Added a GitHub Actions workflow for automatically updating the pre-commit dependencies (on a weekly schedule)."
-    }
-  ]
-}
