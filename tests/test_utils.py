@@ -29,6 +29,7 @@ from typing import Generator
 
 import pytest
 
+from utils.email import send
 from utils.filter import WordFilter
 from utils.push_notifications import (
     RawPushData,
@@ -210,3 +211,17 @@ def test_wordfilter_multiple_filters_in_string() -> None:
     assert blacklisted_result.badword_indexes[0].index == 6
     assert blacklisted_result.badword_indexes[1].badword == "you"
     assert blacklisted_result.badword_indexes[1].index == 14
+
+
+# Email tests
+# =====================================================
+# @pytest.mark.skip("Not running as it sends emails")
+def test_email_send() -> None:
+    response = send(
+        to="daniel.de.sybel@gmail.com",
+        subject="Test email",
+        content="This test email rocks so hard it ground down a diamond",
+    )
+    print(response.status_code)
+    print(response.body)
+    print(response.headers)
