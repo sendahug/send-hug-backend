@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from typing import Literal
 
 from quart import Blueprint, Response, abort, jsonify, request
@@ -81,6 +82,7 @@ async def get_user_messages(token_payload: UserData) -> Response:
         messages = await sah_config.db.paginate(
             messages_query.order_by(desc(Message.date)),
             current_page=page,
+            current_user_id=token_payload["id"],
         )
 
         # formats each message in the list
@@ -152,6 +154,8 @@ async def add_message(token_payload: UserData) -> Response:
         text=message_data["messageText"],
         date=datetime.strptime(message_data["date"], DATETIME_PATTERN),
         thread=thread_id,
+        for_read=False,
+        from_read=True,
     )
 
     # Create a notification for the user getting the message
@@ -178,6 +182,68 @@ async def add_message(token_payload: UserData) -> Response:
     return jsonify({"success": True, "message": sent_message[0]})
 
 
+# Endpoint: PATCH /messages
+# Description: Updates a message's read/unread status.
+# Parameters: None.
+# Authorization: patch:messages.
+@messages_endpoints.route("/messages", methods=["PATCH"])
+@requires_auth(sah_config, ["patch:message"])
+async def update_messagex(token_payload: UserData):
+    request_data = json.loads(await request.data)
+
+    if not request_data.get("message_ids") or request_data.get("read", None) is None:
+        abort(400)
+
+    if request_data["message_ids"] == "all":
+        update_query = (
+            update(Message)
+            .where(Message.for_id == token_payload["id"])
+            .values(read=request_data["read"])
+        )
+    else:
+        message_ids: list[int] = request_data["message_ids"]
+
+        existing_messages = await sah_config.db.session.scalars(
+            select(Message.id).where(
+                and_(
+                    Message.id.in_(message_ids),
+                    Message.for_id == token_payload["id"],
+                ),
+            )
+        )
+
+        # Make sure the user has permission to see all the notifications
+        if len(list(existing_messages)) != len(message_ids):
+            raise AuthError(
+                {
+                    "code": 403,
+                    "description": "You do not have permission to update some "
+                    "of the provided notifications. Ensure all notifications "
+                    "are meant for you and try again.",
+                },
+                403,
+            )
+
+        update_query = (
+            update(Message)
+            .where(
+                and_(
+                    Message.id.in_(message_ids),
+                    Message.for_id == token_payload["id"],
+                )
+            )
+            .values(read=request_data["read"])
+        )
+
+    await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_query)
+
+    return {
+        "success": True,
+        "updated": request_data["message_ids"],
+        "read": request_data["read"],
+    }
+
+
 # Endpoint: DELETE /messages/<mailbox_type>/<item_id>
 # Description: Deletes a message/thread from the database.
 # Parameters: mailbox_type - the type of message to delete.
@@ -185,7 +251,7 @@ async def add_message(token_payload: UserData) -> Response:
 # Authorization: delete:messages.
 @messages_endpoints.route("/messages/<mailbox_type>/<item_id>", methods=["DELETE"])
 @requires_auth(sah_config, ["delete:messages"])
-async def delete_thread(  # TODO: This should be renamed to delete_message
+async def delete_message(
     token_payload: UserData,
     mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
     item_id: int,
@@ -247,17 +313,12 @@ async def delete_thread(  # TODO: This should be renamed to delete_message
         else:
             delete_item.from_deleted = True
 
-    # Check the type of item and which user deleted the message/thread
+    # Check the type of item and which user deleted the message
+    # We don't delete threads anymore - it doesn't make sense to
     if (
         type(delete_item) is Message
         and delete_item.for_deleted
         and delete_item.from_deleted
-    ):
-        delete_message = True
-    elif (
-        type(delete_item) is Thread
-        and delete_item.user1_deleted
-        and delete_item.user2_deleted
     ):
         delete_message = True
     else:
@@ -355,9 +416,9 @@ async def clear_mailbox(
         # thus okay to delete completely) from messages that weren't
         # (so that these will only be deleted for one user rather than
         # for both)
-        # delete_stmt = delete(Message).where(
-        #     and_(Message.for_id == user_id, Message.from_deleted == true())
-        # )
+        delete_stmt = delete(Message).where(
+            and_(Message.for_id == token_payload["id"], Message.from_deleted == true())
+        )
 
         # For each message that wasn't deleted by the other user, the
         # value of for_deleted (indicating whether the user the message
@@ -373,7 +434,7 @@ async def clear_mailbox(
             .values(for_deleted=true())
         )
 
-        # sah_config.db.delete_multiple_objects(delete_stmt=delete_stmt)
+        await sah_config.db.delete_multiple_objects(delete_stmt=delete_stmt)
         await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
 
     # If the user is trying to clear their outbox
