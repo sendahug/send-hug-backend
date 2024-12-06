@@ -9,6 +9,7 @@ DEFAULT_FROM = "no-reply@send-hug.com"
 
 def send(to: str, subject: str, content: str, from_email: str = DEFAULT_FROM):
     mail = Mail(Email(from_email), To(to), subject, Content("text/plain", content))
+    # No types. Le sigh https://github.com/sendgrid/sendgrid-python/issues/956
     response = SG_CLIENT.client.mail.send.post(request_body=mail.get())  # type: ignore
 
     return response
