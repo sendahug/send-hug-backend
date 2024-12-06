@@ -215,7 +215,7 @@ def test_wordfilter_multiple_filters_in_string() -> None:
 
 # Email tests
 # =====================================================
-# @pytest.mark.skip("Not running as it sends emails")
+@pytest.mark.skip("Not running as it sends emails")
 def test_email_send() -> None:
     response = send(
         to="daniel.de.sybel@gmail.com",

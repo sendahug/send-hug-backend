@@ -1,0 +1,9 @@
+{
+    "pr_number": 0,
+    "changes": [
+      {
+        "change": "Features",
+        "description": "Added the ability for the web app to send emails, providing more opportunties to stay in touch with users."
+      }
+    ]
+  }
