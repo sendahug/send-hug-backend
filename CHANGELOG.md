@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2024-12-06
+
+#### Chores
+
+- Moved the pre-commit auto-update GitHub Actions workflow to the right folder so that GitHub Actions can find and run it. ([#700](https://github.com/sendahug/send-hug-backend/pull/700))
+
 ### 2024-11-22
 
 #### Chores
