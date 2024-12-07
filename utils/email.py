@@ -4,7 +4,7 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Content, Email, Mail, To
 
 SG_CLIENT = SendGridAPIClient(api_key=os.environ.get("SENDGRID_API_KEY"))
-DEFAULT_FROM = "no-reply@send-hug.com"
+DEFAULT_FROM = "notifications@send-hug.com"
 
 
 def send(to: str, subject: str, content: str, from_email: str = DEFAULT_FROM):

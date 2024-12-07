@@ -222,6 +222,6 @@ def test_email_send() -> None:
         subject="Test email",
         content="This test email rocks so hard it ground down a diamond",
     )
-    print(response.status_code)
-    print(response.body)
-    print(response.headers)
+    assert response.status_code == 202
+    assert response.body == b""
+    assert response.headers.get_content_type() == "text/plain"
