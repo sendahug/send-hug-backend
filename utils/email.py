@@ -1,7 +1,7 @@
 import os
 
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Content, Email, Mail, To
+from sendgrid import SendGridAPIClient  # type: ignore
+from sendgrid.helpers.mail import Content, Email, Mail, To  # type: ignore
 
 SG_CLIENT = SendGridAPIClient(api_key=os.environ.get("SENDGRID_API_KEY"))
 DEFAULT_FROM = "notifications@send-hug.com"
