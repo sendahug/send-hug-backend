@@ -1,0 +1,17 @@
+{
+  "pr_number": 704,
+  "changes": [
+    {
+      "change": "Features",
+      "description": "Added new profile fields to the users' table, including email, gender and the reason for using the platform. The email is fetched directly from Firebase and allows us to contact users via email with important notifications."
+    },
+    {
+      "change": "Features",
+      "description": "Added a new preferences table to contain user preferences, as well as a set of email-related preferences, to allow users to manage their email preferences."
+    },
+    {
+      "change": "Changes",
+      "description": "Private profile fields (such as gender and email) and user preferences (such as whether push notifications are enabled or the refresh rate for notifications) are now only accessible to the logged in user. When viewing other users' data, those fields are no longer returned by the API in order to preserve users' privacy."
+    }
+  ]
+}
