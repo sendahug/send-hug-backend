@@ -91,7 +91,7 @@ class UserPreference(BaseModel):
         autoincrement=False,
     )
     selected_character: Mapped[UserIconCharacter] = mapped_column(
-        Enum(UserIconCharacter), default="kitty"
+        Enum(UserIconCharacter), default=UserIconCharacter.KITTY
     )
     user_icon_colours: Mapped[list[UserIconColour]] = relationship(
         "UserIconColour",

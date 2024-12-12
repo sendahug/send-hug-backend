@@ -15,6 +15,7 @@ from models import (
     Role,
     Thread,
     User,
+    UserPreference,
 )
 from models.db import SendADatabase
 
@@ -182,6 +183,14 @@ async def create_users(db: SendADatabase) -> None:
         firebase_id="ijkl",
         email_verified=True,
         email="user2",
+        user_preferences=UserPreference(
+            email_notifications_enabled=True,
+            message_notifications=True,
+            hugs_digest_notifications=False,
+            you_okay_notifications=True,
+            previous_interaction_notifications=False,
+            last_updated_at=datetime.now(),
+        ),
     )
     user_3 = User(
         id=5,

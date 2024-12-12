@@ -149,6 +149,7 @@ async def add_user(token_payload) -> Response:
             previous_interaction_notifications=user_data.get(
                 "previousInteractionNotifications", False
             ),
+            last_updated_at=datetime.now(),
         ),
     )
 
