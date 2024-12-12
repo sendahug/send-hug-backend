@@ -25,12 +25,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .common import BLOCKED_USER_ROLE_ID, CoreSAHModel
-from .db import SendADatabase
-from .schemas.filters import Filter
-from .schemas.messages import Message, Thread
-from .schemas.notifications import Notification, NotificationSub
-from .schemas.posts import Post
-from .schemas.reports import Report
-from .schemas.roles import Permission, Role
-from .schemas.users import User, UserIconColour, UserPreference
+from enum import Enum
+
+
+class UserIconCharacter(Enum):
+    KITTY = "kitty"
+    BEAR = "bear"
+    DOG = "dog"
+
+
+class UserIconPart(Enum):
+    CHARACTER = "character"
+    LBG = "lbg"
+    RBG = "rbg"
+    ITEM = "item"

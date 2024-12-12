@@ -44,15 +44,15 @@ def user_headers(session_mocker: MockerFixture) -> dict[str, dict[str, str]]:
 
     def verify_token(token, app):
         if "newUser" in token:
-            return {"uid": "123456", "email_verified": True}
+            return {"uid": "123456", "email_verified": True, "email": "email"}
         elif "user" in token:
-            return {"uid": "abcd", "email_verified": True}
+            return {"uid": "abcd", "email_verified": True, "email": "email"}
         elif "moderator" in token:
-            return {"uid": "efgh", "email_verified": False}
+            return {"uid": "efgh", "email_verified": False, "email": "email"}
         elif "blocked" in token:
-            return {"uid": "twg", "email_verified": False}
+            return {"uid": "twg", "email_verified": False, "email": "email"}
         else:
-            return {"uid": "ijkl", "email_verified": False}
+            return {"uid": "ijkl", "email_verified": False, "email": "email"}
 
     session_mocker.patch("auth.verify_id_token", new=verify_token)
 

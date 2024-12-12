@@ -58,9 +58,9 @@ class UserData(TypedDict):
     blocked: bool
     releaseDate: datetime | None
     pushEnabled: bool
-    last_notifications_read: datetime | None
     firebaseId: str
     email_verified: bool
+    email: str
 
 
 # Authentication Error
@@ -156,7 +156,7 @@ async def get_current_user(
             401,
         )
 
-    return current_user.format()
+    return current_user.format(current_user=current_user.id)
 
 
 def check_user_permissions(permission: list[str], current_user: dict[str, Any]) -> bool:
@@ -220,9 +220,9 @@ def requires_auth(config: SAHConfig, permission=[""]):
                     "blocked": current_user["blocked"],
                     "releaseDate": current_user["releaseDate"],
                     "pushEnabled": current_user["pushEnabled"],
-                    "last_notifications_read": current_user["last_notifications_read"],
                     "firebaseId": current_user["firebaseId"],
                     "email_verified": payload["email_verified"],
+                    "email": payload["email"],
                 }
                 check_user_permissions(permission, current_user)
 
