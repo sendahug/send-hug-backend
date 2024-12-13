@@ -164,7 +164,7 @@ async def create_users(db: SendADatabase) -> None:
         role_id=3,
         firebase_id="abcd",
         email_verified=True,
-        email="user1",
+        email="user1@user1.com",
     )
     user_2 = User(
         id=4,
@@ -182,7 +182,7 @@ async def create_users(db: SendADatabase) -> None:
         role_id=1,
         firebase_id="ijkl",
         email_verified=True,
-        email="user2",
+        email="user2@user2.com",
         user_preferences=UserPreference(
             email_notifications_enabled=True,
             message_notifications=True,
@@ -208,7 +208,7 @@ async def create_users(db: SendADatabase) -> None:
         role_id=2,
         firebase_id="efgh",
         email_verified=True,
-        email="user3",
+        email="user3@user3.com",
     )
     user_4 = User(
         id=9,
@@ -226,7 +226,7 @@ async def create_users(db: SendADatabase) -> None:
         role_id=1,
         firebase_id="zxy",
         email_verified=True,
-        email="user4",
+        email="user4@user4.com",
     )
     user_5 = User(
         id=20,
@@ -244,7 +244,7 @@ async def create_users(db: SendADatabase) -> None:
         role_id=5,
         firebase_id="twg",
         email_verified=True,
-        email="user5",
+        email="user5@user5.com",
     )
     # For e2e tests
     user_6 = User(
@@ -262,7 +262,7 @@ async def create_users(db: SendADatabase) -> None:
         selected_character="kitty",
         role_id=1,
         firebase_id="xApCskkEtwVhZubFJbNt7u73zzs2",
-        email="user6",
+        email="user6@user6.com",
     )
     user_7 = User(
         id=22,
@@ -279,7 +279,7 @@ async def create_users(db: SendADatabase) -> None:
         selected_character="kitty",
         role_id=4,
         firebase_id="123456",
-        email="user7",
+        email="user7@user7.com",
     )
 
     try:
