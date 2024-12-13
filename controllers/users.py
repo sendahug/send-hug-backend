@@ -9,7 +9,7 @@ from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
 
 from .common import send_push_notification, validator
-from models import BLOCKED_USER_ROLE_ID, Notification, Post, User
+from models import BLOCKED_USER_ROLE_ID, Notification, Post, User, UserPreference
 from utils.push_notifications import RawPushData
 
 users_endpoints = Blueprint("users", __name__)
@@ -84,7 +84,7 @@ async def get_user_data(token_payload: UserData, user_id: int | str) -> Response
     if user_data is None:
         abort(404)
 
-    formatted_user = user_data.format()
+    formatted_user = user_data.format(current_user=token_payload["id"])
 
     # If the user is currently blocked, compare their release date to
     # the current date and time.
@@ -96,7 +96,9 @@ async def get_user_data(token_payload: UserData, user_id: int | str) -> Response
             user_data.role_id = 3  # regular user
 
             # Try to update the database
-            formatted_user = await sah_config.db.update_object(user_data)
+            formatted_user = await sah_config.db.update_object(
+                user_data, current_user=token_payload["id"]
+            )
 
     return jsonify({"success": True, "user": formatted_user})
 
@@ -127,7 +129,6 @@ async def add_user(token_payload) -> Response:
 
     new_user = User(
         display_name=user_data["displayName"],
-        last_notifications_read=datetime.now(),
         login_count=0,
         auto_refresh=False,
         refresh_rate=20,
@@ -137,10 +138,25 @@ async def add_user(token_payload) -> Response:
         '"rbg":"#f8eee4","item":"#f4b56a"}',
         role_id=4,  # Set the new user role
         firebase_id=user_data["firebaseId"],
+        email=user_data["email"],
+        user_preferences=UserPreference(
+            email_notifications_enabled=user_data.get(
+                "emailNotificationsEnabled", False
+            ),
+            message_notifications=user_data.get("messageNotifications", False),
+            hugs_digest_notifications=user_data.get("hugsDigestNotifications", False),
+            you_okay_notifications=user_data.get("youOkayNotifications", False),
+            previous_interaction_notifications=user_data.get(
+                "previousInteractionNotifications", False
+            ),
+            last_updated_at=datetime.now(),
+        ),
     )
 
     # Try to add the user to the database
-    added_user = await sah_config.db.add_object(new_user)
+    added_user = await sah_config.db.add_object(
+        new_user, current_user=token_payload["id"]
+    )
 
     return jsonify({"success": True, "user": added_user})
 
@@ -260,7 +276,9 @@ async def edit_user(token_payload: UserData, user_id: int) -> Response:
             user_to_update.role_id = 3  # user
 
     # Try to update it in the database
-    updated = await sah_config.db.update_object(obj=user_to_update)
+    updated = await sah_config.db.update_object(
+        obj=user_to_update, current_user=token_payload["id"]
+    )
 
     return jsonify({"success": True, "updated": updated})
 
