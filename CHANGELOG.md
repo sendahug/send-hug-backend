@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### 2024-12-13
+
+#### Features
+
+- Added new profile fields to the users' table, including email, gender and the reason for using the platform. The email is fetched directly from Firebase and allows us to contact users via email with important notifications. ([#704](https://github.com/sendahug/send-hug-backend/pull/704))
+- Added a new preferences table to contain user preferences, as well as a set of email-related preferences, to allow users to manage their email preferences. ([#704](https://github.com/sendahug/send-hug-backend/pull/704))
+
+#### Changes
+
+- Private profile fields (such as gender and email) and user preferences (such as whether push notifications are enabled or the refresh rate for notifications) are now only accessible to the logged in user. When viewing other users' data, those fields are no longer returned by the API in order to preserve users' privacy. ([#704](https://github.com/sendahug/send-hug-backend/pull/704))
+
 ### 2024-12-06
 
 #### Chores
