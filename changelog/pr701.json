@@ -1,9 +1,13 @@
 {
-    "pr_number": 0,
-    "changes": [
-      {
-        "change": "Features",
-        "description": "Added the ability for the web app to send emails, providing more opportunties to stay in touch with users."
-      }
-    ]
-  }
+  "pr_number": 701,
+  "changes": [
+    {
+      "change": "Features",
+      "description": "Added the ability for the web app to send emails, providing more opportunties to stay in touch with users."
+    },
+    {
+      "change": "Changes",
+      "description": "Switched out send push notifications code for code that sends both push and email notifications."
+    }
+  ]
+}
