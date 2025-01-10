@@ -31,8 +31,18 @@ validator = Validator(
 )
 
 
-# Send email notification
+async def send_notifications(user_id: int, data: RawPushData) -> None:
+    """
+    Sends notifications to all available channels
+    """
+    await send_email_notification(user_id, data)
+    await send_push_notification(user_id, data)
+
+
 async def send_email_notification(user_id: int, data: RawPushData) -> None:
+    """
+    Sends email notifications via sendgrid
+    """
     user: User | None = (
         await sah_config.db.session.scalars(select(User).filter(User.id == user_id))
     ).one_or_none()
@@ -54,8 +64,11 @@ async def send_email_notification(user_id: int, data: RawPushData) -> None:
         current_app.logger.error(e)
 
 
-# Send push notification
+#
 async def send_push_notification(user_id: int, data: RawPushData) -> None:
+    """
+    Sends push notifications via vapid
+    """
     vapid_key = os.environ.get("PRIVATE_VAPID_KEY")
     notification_data = generate_push_data(data)
     vapid_claims = generate_vapid_claims()
