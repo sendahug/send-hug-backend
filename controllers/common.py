@@ -2,6 +2,7 @@ import json
 import os
 from typing import Sequence, cast
 
+from python_http_client import UnauthorizedError
 from pywebpush import WebPushException, webpush  # type: ignore
 from quart import current_app
 from sqlalchemy import and_, or_, select
@@ -9,6 +10,8 @@ from sqlalchemy import and_, or_, select
 from config.config import sah_config
 
 from models import Filter, NotificationSub, Thread
+from models.schemas.users import User
+from utils.email import generate_email_data, send
 from utils.push_notifications import (
     RawPushData,
     generate_push_data,
@@ -28,8 +31,31 @@ validator = Validator(
 )
 
 
+# Send email notification
+async def send_email_notification(user_id: int, data: RawPushData) -> None:
+    user: User | None = (
+        await sah_config.db.session.scalars(select(User).filter(User.id == user_id))
+    ).one_or_none()
+    if not (
+        user
+        and user.user_preferences
+        and user.user_preferences.email_notifications_enabled
+    ):
+        return
+
+    notification_data = generate_email_data(to=user.email, data=data)
+
+    # Try to send the email notification
+    try:
+        send(**notification_data)
+    # If there's an error, print the details
+    except UnauthorizedError as e:
+        # TODO: add more exceptions
+        current_app.logger.error(e)
+
+
 # Send push notification
-async def send_push_notification(user_id: int, data: RawPushData):
+async def send_push_notification(user_id: int, data: RawPushData) -> None:
     vapid_key = os.environ.get("PRIVATE_VAPID_KEY")
     notification_data = generate_push_data(data)
     vapid_claims = generate_vapid_claims()

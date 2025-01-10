@@ -26,13 +26,34 @@
 # SOFTWARE.
 
 import os
+from typing import TypedDict
 
 from python_http_client.client import Response
 from sendgrid import SendGridAPIClient  # type: ignore
 from sendgrid.helpers.mail import Content, Email, Mail, To  # type: ignore
 
+# TODO: move this to a common utils module and rename
+from utils.push_notifications import RawPushData
+
+EmailData = TypedDict("EmailData", {"to": str, "subject": str, "content": str})
+
 SG_CLIENT = SendGridAPIClient(api_key=os.environ.get("SENDGRID_KEY"))
 DEFAULT_FROM = "notifications@send-hug.com"
+
+
+def generate_email_data(to: str, data: RawPushData) -> EmailData:
+    """
+    Generates the email notification's data from the
+    given raw data.
+    """
+    notification_data: EmailData = {
+        "to": to,
+        "subject": f"New {data['type']}",
+        "content": data["text"],
+        # TODO: add link generation back to SAH here
+    }
+
+    return notification_data
 
 
 def send(
