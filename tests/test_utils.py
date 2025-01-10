@@ -24,12 +24,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 from typing import Generator
 
 import pytest
+from pytest_mock import MockerFixture
+from python_http_client.client import Response
 
-from utils.email import send
+from utils.email import SG_CLIENT, send
 from utils.filter import WordFilter
 from utils.push_notifications import (
     RawPushData,
@@ -216,12 +217,27 @@ def test_wordfilter_multiple_filters_in_string() -> None:
 # Email tests
 # =====================================================
 @pytest.mark.skip("Not running as it sends emails")
-def test_email_send() -> None:
-    response = send(
+def test_email_send_for_reals() -> None:
+
+    response: Response = send(
         to="tests@send-hug.com",
         subject="Test email",
         content="This test email rocks so hard it ground down a diamond",
     )
+
     assert response.status_code == 202
     assert response.body == b""
     assert response.headers.get_content_type() == "text/plain"
+
+
+def test_email_send(mocker: MockerFixture) -> None:
+    mock_client = mocker.MagicMock()
+    mock_client.mail.send.post.return_value = "Send worked!"
+    mocker.patch.object(SG_CLIENT, "client", new=mock_client)
+
+    response: Response = send(
+        to="tests@send-hug.com",
+        subject="Test email",
+        content="This test email rocks so hard it ground down a diamond",
+    )
+    assert response == "Send worked!"

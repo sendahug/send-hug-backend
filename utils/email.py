@@ -27,14 +27,17 @@
 
 import os
 
+from python_http_client.client import Response
 from sendgrid import SendGridAPIClient  # type: ignore
 from sendgrid.helpers.mail import Content, Email, Mail, To  # type: ignore
 
-SG_CLIENT = SendGridAPIClient(api_key=os.environ.get("SENDGRID_API_KEY"))
+SG_CLIENT = SendGridAPIClient(api_key=os.environ.get("SENDGRID_KEY"))
 DEFAULT_FROM = "notifications@send-hug.com"
 
 
-def send(to: str, subject: str, content: str, from_email: str = DEFAULT_FROM):
+def send(
+    to: str, subject: str, content: str, from_email: str = DEFAULT_FROM
+) -> Response:
     """
     Function that simplifies the sending of emails for use in notifications or similar
     """
