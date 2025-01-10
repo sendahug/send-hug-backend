@@ -30,7 +30,7 @@ import pytest
 from pytest_mock import MockerFixture
 from python_http_client.client import Response
 
-from utils.email import SG_CLIENT, send
+from utils.email import SG_CLIENT, generate_email_data, send
 from utils.filter import WordFilter
 from utils.push_notifications import (
     RawPushData,
@@ -216,18 +216,14 @@ def test_wordfilter_multiple_filters_in_string() -> None:
 
 # Email tests
 # =====================================================
-@pytest.mark.skip("Not running as it sends emails")
-def test_email_send_for_reals() -> None:
+def test_generate_email_data() -> None:
+    base_data: RawPushData = {"type": "hug", "text": "Meow"}
+    to = "tests@send-hug.com"
+    email_data = generate_email_data(to, base_data)
 
-    response: Response = send(
-        to="tests@send-hug.com",
-        subject="Test email",
-        content="This test email rocks so hard it ground down a diamond",
-    )
-
-    assert response.status_code == 202
-    assert response.body == b""
-    assert response.headers.get_content_type() == "text/plain"
+    assert email_data["to"] == to
+    assert email_data["subject"] == f"New {base_data['type']}"
+    assert email_data["content"] == base_data["text"]
 
 
 def test_email_send(mocker: MockerFixture) -> None:
@@ -241,3 +237,17 @@ def test_email_send(mocker: MockerFixture) -> None:
         content="This test email rocks so hard it ground down a diamond",
     )
     assert response == "Send worked!"
+
+
+@pytest.mark.skip("Not running as it sends emails")
+def test_email_send_for_reals() -> None:
+
+    response: Response = send(
+        to="tests@send-hug.com",
+        subject="Test email",
+        content="This test email rocks so hard it ground down a diamond",
+    )
+
+    assert response.status_code == 202
+    assert response.body == b""
+    assert response.headers.get_content_type() == "text/plain"
