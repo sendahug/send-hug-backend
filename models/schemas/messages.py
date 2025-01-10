@@ -74,7 +74,6 @@ class Message(BaseModel):
     date: Mapped[datetime | None] = mapped_column(DateTime)
     thread: Mapped[int] = mapped_column(
         Integer,
-        # TODO: This will fail if the thread is deleted
         ForeignKey("threads.id", onupdate="CASCADE", ondelete="CASCADE"),
         nullable=False,
     )

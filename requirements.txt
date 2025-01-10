@@ -1,6 +1,6 @@
 alembic==1.14.0
-quart==0.19.9
-quart-cors==0.7.0
+quart==0.20.0
+quart-cors==0.8.0
 hypercorn==0.17.3
 asyncpg==0.30.0
 pywebpush==2.0.3

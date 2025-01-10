@@ -77,7 +77,7 @@ async def search() -> Response:
     )
 
     # Formats the users' data
-    formatted_users = [user.format() for user in users]
+    formatted_users = [user.format(current_user=-1) for user in users]
 
     return jsonify(
         {

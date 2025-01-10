@@ -15,6 +15,7 @@ from models import (
     Role,
     Thread,
     User,
+    UserPreference,
 )
 from models.db import SendADatabase
 
@@ -154,7 +155,6 @@ async def create_users(db: SendADatabase) -> None:
         display_name="shirb",
         login_count=60,
         release_date=None,
-        last_notifications_read=None,
         auto_refresh=False,
         push_enabled=False,
         refresh_rate=0,
@@ -164,6 +164,7 @@ async def create_users(db: SendADatabase) -> None:
         role_id=3,
         firebase_id="abcd",
         email_verified=True,
+        email="user1@user1.com",
     )
     user_2 = User(
         id=4,
@@ -172,9 +173,6 @@ async def create_users(db: SendADatabase) -> None:
         display_name="user14",
         login_count=55,
         release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
-        last_notifications_read=datetime.strptime(
-            "2020-10-30 18:13:21.282054", DATETIME_PATTERN
-        ),
         auto_refresh=True,
         push_enabled=False,
         refresh_rate=None,
@@ -184,6 +182,15 @@ async def create_users(db: SendADatabase) -> None:
         role_id=1,
         firebase_id="ijkl",
         email_verified=True,
+        email="user2@user2.com",
+        user_preferences=UserPreference(
+            email_notifications_enabled=True,
+            message_notifications=True,
+            hugs_digest_notifications=False,
+            you_okay_notifications=True,
+            previous_interaction_notifications=False,
+            last_updated_at=datetime.now(),
+        ),
     )
     user_3 = User(
         id=5,
@@ -192,7 +199,6 @@ async def create_users(db: SendADatabase) -> None:
         display_name="user52",
         login_count=7,
         release_date=None,
-        last_notifications_read=None,
         auto_refresh=False,
         push_enabled=False,
         refresh_rate=0,
@@ -202,6 +208,7 @@ async def create_users(db: SendADatabase) -> None:
         role_id=2,
         firebase_id="efgh",
         email_verified=True,
+        email="user3@user3.com",
     )
     user_4 = User(
         id=9,
@@ -210,7 +217,6 @@ async def create_users(db: SendADatabase) -> None:
         display_name="user93",
         login_count=2,
         release_date=None,
-        last_notifications_read=None,
         auto_refresh=False,
         push_enabled=False,
         refresh_rate=0,
@@ -220,6 +226,7 @@ async def create_users(db: SendADatabase) -> None:
         role_id=1,
         firebase_id="zxy",
         email_verified=True,
+        email="user4@user4.com",
     )
     user_5 = User(
         id=20,
@@ -228,9 +235,6 @@ async def create_users(db: SendADatabase) -> None:
         display_name="user24",
         login_count=4,
         release_date=datetime.strptime("2120-08-11 08:33:22.473", DATETIME_PATTERN),
-        last_notifications_read=datetime.strptime(
-            "2020-11-03 20:21:13.399365", DATETIME_PATTERN
-        ),
         auto_refresh=False,
         push_enabled=False,
         refresh_rate=0,
@@ -240,6 +244,7 @@ async def create_users(db: SendADatabase) -> None:
         role_id=5,
         firebase_id="twg",
         email_verified=True,
+        email="user5@user5.com",
     )
     # For e2e tests
     user_6 = User(
@@ -249,9 +254,6 @@ async def create_users(db: SendADatabase) -> None:
         display_name="admin",
         login_count=55,
         release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
-        last_notifications_read=datetime.strptime(
-            "2020-10-30 18:13:21.282054", DATETIME_PATTERN
-        ),
         auto_refresh=True,
         push_enabled=False,
         refresh_rate=None,
@@ -260,6 +262,7 @@ async def create_users(db: SendADatabase) -> None:
         selected_character="kitty",
         role_id=1,
         firebase_id="xApCskkEtwVhZubFJbNt7u73zzs2",
+        email="user6@user6.com",
     )
     user_7 = User(
         id=22,
@@ -268,9 +271,6 @@ async def create_users(db: SendADatabase) -> None:
         display_name="newUser",
         login_count=55,
         release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
-        last_notifications_read=datetime.strptime(
-            "2020-10-30 18:13:21.282054", DATETIME_PATTERN
-        ),
         auto_refresh=False,
         push_enabled=False,
         refresh_rate=None,
@@ -279,6 +279,7 @@ async def create_users(db: SendADatabase) -> None:
         selected_character="kitty",
         role_id=4,
         firebase_id="123456",
+        email="user7@user7.com",
     )
 
     try:
