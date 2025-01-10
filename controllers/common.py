@@ -44,7 +44,9 @@ async def send_email_notification(user_id: int, data: RawPushData) -> None:
     Sends email notifications via sendgrid
     """
     user: User | None = (
-        await sah_config.db.session.scalars(select(User).filter(User.id == user_id))
+        await sah_config.db.session.scalars(
+            select(User).filter(User.id == int(user_id))
+        )
     ).one_or_none()
     if not (
         user
