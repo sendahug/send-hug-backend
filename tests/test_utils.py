@@ -223,7 +223,10 @@ def test_generate_email_data() -> None:
 
     assert email_data["to"] == to
     assert email_data["subject"] == f"New {base_data['type']}"
-    assert email_data["content"] == base_data["text"]
+    assert (
+        email_data["content"]
+        == f"{base_data['text']}\n\nhttp://localhost:3000/messages/inbox"
+    )
 
 
 def test_email_send(mocker: MockerFixture) -> None:
