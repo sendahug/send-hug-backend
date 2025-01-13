@@ -37,6 +37,7 @@ from utils.push_notifications import RawPushData
 
 EmailData = TypedDict("EmailData", {"to": str, "subject": str, "content": str})
 
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000/")
 SG_CLIENT = SendGridAPIClient(api_key=os.environ.get("SENDGRID_KEY"))
 DEFAULT_FROM = "notifications@send-hug.com"
 
@@ -49,8 +50,7 @@ def generate_email_data(to: str, data: RawPushData) -> EmailData:
     notification_data: EmailData = {
         "to": to,
         "subject": f"New {data['type']}",
-        "content": data["text"],
-        # TODO: add link generation back to SAH here
+        "content": f"{data['text']}\n\n{FRONTEND_URL}messages/inbox",
     }
 
     return notification_data
