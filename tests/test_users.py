@@ -310,7 +310,7 @@ async def test_create_user_as_damin(
 # adjusting a user's roles, it's important to make sure they still
 # can't create other users
 @pytest.mark.asyncio
-async def test_create_different_user_as_new_user(
+async def test_create_different_user_as_new_user_role_user_exists(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
     user_headers: dict,
@@ -327,6 +327,26 @@ async def test_create_different_user_as_new_user(
 
     assert response_data["success"] is False
     assert response.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_create_different_user_as_new_user(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+) -> None:
+    user_to_create = {**dummy_request_data["new_user"]}
+    user_to_create["firebaseId"] = "actualNewUser"
+    response = await app_client.post(
+        "/users",
+        headers=user_headers["actualNewUser"],
+        data=json.dumps(user_to_create),
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 200
 
 
 # Edit User Data Tests ('/users/all/<user_id>', PATCH)

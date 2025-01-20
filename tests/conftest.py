@@ -27,7 +27,7 @@ def user_headers(session_mocker: MockerFixture) -> dict[str, dict[str, str]]:
     Sets the headers for each of the users and mocks
     the verify_id_token function from Firebase.
     """
-    roles = ["user", "moderator", "admin", "blocked", "newUser"]
+    roles = ["user", "moderator", "admin", "blocked", "newUser", "actualNewUser"]
     user_headers: dict[str, dict[str, str]] = {}
 
     for role in roles:
@@ -51,6 +51,8 @@ def user_headers(session_mocker: MockerFixture) -> dict[str, dict[str, str]]:
             return {"uid": "efgh", "email_verified": False, "email": "email"}
         elif "blocked" in token:
             return {"uid": "twg", "email_verified": False, "email": "email"}
+        elif "actualNewUser" in token:
+            return {"uid": "actualNewUser", "email_verified": False, "email": "email"}
         else:
             return {"uid": "ijkl", "email_verified": False, "email": "email"}
 
