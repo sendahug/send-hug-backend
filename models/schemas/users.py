@@ -82,8 +82,8 @@ class UserIconColour(BaseModel):
     colour: Mapped[str] = mapped_column(String(7), nullable=False)
 
 
-class UserPreference(BaseModel):
-    __tablename__ = "user_preferences"
+class UserSetting(BaseModel):
+    __tablename__ = "user_settings"
     user_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
@@ -113,6 +113,8 @@ class UserPreference(BaseModel):
         Boolean, default=False
     )
     last_updated_at: Mapped[datetime] = mapped_column(DateTime)
+    gender: Mapped[str | None] = mapped_column(String(10))
+    platform_usage_reason: Mapped[str | None] = mapped_column(String(25))
 
 
 class User(BaseModel):
@@ -151,10 +153,8 @@ class User(BaseModel):
     firebase_id_uq = UniqueConstraint("firebase_id", name="firebase_id_uq")
     email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     email: Mapped[str] = mapped_column(String(75), nullable=False)
-    gender: Mapped[str | None] = mapped_column(String(10))
-    platform_usage_reason: Mapped[str | None] = mapped_column(String(25))
-    user_preferences: Mapped[UserPreference | None] = relationship(
-        "UserPreference", lazy="selectin"
+    user_settings: Mapped[UserSetting | None] = relationship(
+        "UserSetting", lazy="selectin"
     )
     reports = relationship(
         "Report", back_populates="user", foreign_keys="Report.user_id"
@@ -229,29 +229,37 @@ class User(BaseModel):
         hugs_digest_notifications: bool | None = None
         you_okay_notifications: bool | None = None
         previous_interaction_notifications: bool | None = None
+        auto_refresh: bool | None = None
+        refresh_rate: int | None = None
+        push_enabled: bool | None = None
+        gender: str | None = None
+        platform_usage_reason: str | None
 
-        if self.user_preferences:
-            email_notifications_enabled = (
-                self.user_preferences.email_notifications_enabled
-            )
-            message_notifications = self.user_preferences.message_notifications
-            hugs_digest_notifications = self.user_preferences.hugs_digest_notifications
-            you_okay_notifications = self.user_preferences.you_okay_notifications
+        if self.user_settings:
+            email_notifications_enabled = self.user_settings.email_notifications_enabled
+            message_notifications = self.user_settings.message_notifications
+            hugs_digest_notifications = self.user_settings.hugs_digest_notifications
+            you_okay_notifications = self.user_settings.you_okay_notifications
             previous_interaction_notifications = (
-                self.user_preferences.previous_interaction_notifications
+                self.user_settings.previous_interaction_notifications
             )
+            auto_refresh = self.user_settings.auto_refresh_enabled
+            refresh_rate = self.user_settings.refresh_rate
+            push_enabled = self.user_settings.push_enabled
+            gender = self.user_settings.gender
+            platform_usage_reason = self.user_settings.platform_usage_reason
 
         return {
             **base_user_details,
             "loginCount": self.login_count,
-            "autoRefresh": self.auto_refresh,
-            "refreshRate": self.refresh_rate,
-            "pushEnabled": self.push_enabled,
+            "autoRefresh": auto_refresh,
+            "refreshRate": refresh_rate,
+            "pushEnabled": push_enabled,
             "firebaseId": self.firebase_id,
             "emailVerified": self.email_verified,
             "email": self.email,
-            "gender": self.gender,
-            "platformUsageReason": self.platform_usage_reason,
+            "gender": gender,
+            "platformUsageReason": platform_usage_reason,
             "preferences": {
                 "emailNotificationsEnabled": email_notifications_enabled,
                 "messageNotifications": message_notifications,
