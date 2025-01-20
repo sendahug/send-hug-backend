@@ -35,7 +35,6 @@ else:
     Message = "Message"
 
 from datetime import datetime
-import json
 
 from sqlalchemy import (
     Boolean,
@@ -55,7 +54,7 @@ from sqlalchemy import (
     true,
 )
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Mapped, column_property, foreign, mapped_column, relationship
+from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from models.common import BaseModel, DumpedModel
 from models.schemas.enums import UserIconCharacter, UserIconPart
@@ -89,14 +88,6 @@ class UserSetting(BaseModel):
         ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
         primary_key=True,
         autoincrement=False,
-    )
-    selected_character: Mapped[UserIconCharacter] = mapped_column(
-        Enum(UserIconCharacter), default=UserIconCharacter.KITTY
-    )
-    user_icon_colours: Mapped[list[UserIconColour]] = relationship(
-        "UserIconColour",
-        lazy="selectin",
-        primaryjoin=foreign(UserIconColour.user_id) == user_id,
     )
     auto_refresh_enabled: Mapped[bool | None] = mapped_column(Boolean, default=True)
     refresh_rate: Mapped[int | None] = mapped_column(Integer, default=20)
@@ -133,14 +124,12 @@ class User(BaseModel):
         "Role", foreign_keys="User.role_id", lazy="selectin"
     )
     release_date: Mapped[datetime | None] = mapped_column(DateTime)
-    auto_refresh: Mapped[bool | None] = mapped_column(Boolean, default=True)
-    refresh_rate: Mapped[int | None] = mapped_column(Integer, default=20)
-    push_enabled: Mapped[bool | None] = mapped_column(Boolean, default=False)
-    selected_character: Mapped[str | None] = mapped_column(String(6), default="kitty")
-    icon_colours: Mapped[str | None] = mapped_column(
-        String(),
-        default='{"character":"#BA9F93", "lbg":"#e2a275",'
-        '"rbg":"#f8eee4", "item":"#f4b56a"}',
+    selected_character: Mapped[UserIconCharacter] = mapped_column(
+        Enum(UserIconCharacter), default=UserIconCharacter.KITTY
+    )
+    icon_colours: Mapped[list[UserIconColour]] = relationship(
+        "UserIconColour",
+        lazy="selectin",
     )
     posts: Mapped[list["Post"] | None] = relationship("Post", back_populates="user")
     sent_messages: Mapped[list["Message"] | None] = relationship(
@@ -192,6 +181,8 @@ class User(BaseModel):
     def format(self, **kwargs) -> DumpedModel:
         current_user = kwargs.get("current_user")
 
+        icon_colours = {item.icon_part.value: item.colour for item in self.icon_colours}
+
         base_user_details = {
             "id": self.id,
             "displayName": self.display_name,
@@ -201,12 +192,8 @@ class User(BaseModel):
             "blocked": self.blocked,
             # Temp; For compatibility with admin views
             "releaseDate": self.release_date,
-            "selectedIcon": self.selected_character,
-            "iconColours": (
-                json.loads(self.icon_colours)
-                if self.icon_colours
-                else self.icon_colours
-            ),
+            "selectedIcon": self.selected_character.value,
+            "iconColours": icon_colours,
             "posts": self.post_count,
             "role": (
                 {
