@@ -1,5 +1,4 @@
 from datetime import datetime
-import json
 from typing import Sequence
 
 from quart import Blueprint, Response, abort, jsonify, request
@@ -9,7 +8,15 @@ from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
 
 from .common import send_push_notification, validator
-from models import BLOCKED_USER_ROLE_ID, Notification, Post, User, UserPreference
+from models import (
+    BLOCKED_USER_ROLE_ID,
+    Notification,
+    Post,
+    User,
+    UserIconColour,
+    UserSetting,
+)
+from models.schemas.enums import UserIconCharacter, UserIconPart
 from utils.push_notifications import RawPushData
 
 users_endpoints = Blueprint("users", __name__)
@@ -130,16 +137,17 @@ async def add_user(token_payload) -> Response:
     new_user = User(
         display_name=user_data["displayName"],
         login_count=0,
-        auto_refresh=False,
-        refresh_rate=20,
-        push_enabled=False,
-        selected_character="kitty",
-        icon_colours='{"character":"#BA9F93","lbg":"#e2a275",'
-        '"rbg":"#f8eee4","item":"#f4b56a"}',
+        selected_character=UserIconCharacter.KITTY,
+        icon_colours=[
+            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+        ],
         role_id=4,  # Set the new user role
         firebase_id=user_data["firebaseId"],
-        email=user_data["email"],
-        user_preferences=UserPreference(
+        email=token_payload["email"],
+        user_settings=UserSetting(
             email_notifications_enabled=user_data.get(
                 "emailNotificationsEnabled", False
             ),
@@ -150,12 +158,15 @@ async def add_user(token_payload) -> Response:
                 "previousInteractionNotifications", False
             ),
             last_updated_at=datetime.now(),
+            auto_refresh_enabled=False,
+            refresh_rate=20,
+            push_enabled=False,
         ),
     )
 
     # Try to add the user to the database
     added_user = await sah_config.db.add_object(
-        new_user, current_user=token_payload["id"]
+        new_user, current_user=token_payload["uid"]
     )
 
     return jsonify({"success": True, "user": added_user})
@@ -248,23 +259,29 @@ async def edit_user(token_payload: UserData, user_id: int) -> Response:
     if updated_user.get("autoRefresh") and updated_user.get("refreshRate", 0) < 20:
         abort(422)
 
+    if not user_to_update.user_settings:
+        user_to_update.user_settings = UserSetting(last_updated_at=datetime.now())
+
     # If the user is changing their settings
-    user_to_update.auto_refresh = updated_user.get(
-        "autoRefresh", user_to_update.auto_refresh
+    user_to_update.user_settings.auto_refresh_enabled = updated_user.get(
+        "autoRefresh", user_to_update.user_settings.auto_refresh_enabled
     )
-    user_to_update.push_enabled = updated_user.get(
-        "pushEnabled", user_to_update.push_enabled
+    user_to_update.user_settings.push_enabled = updated_user.get(
+        "pushEnabled", user_to_update.user_settings.push_enabled
     )
-    user_to_update.refresh_rate = updated_user.get(
-        "refreshRate", user_to_update.refresh_rate
+    user_to_update.user_settings.refresh_rate = updated_user.get(
+        "refreshRate", user_to_update.user_settings.refresh_rate
     )
-    user_to_update.selected_character = updated_user.get(
-        "selectedIcon", user_to_update.selected_character
+    user_to_update.selected_character = UserIconCharacter(
+        updated_user.get("selectedIcon", user_to_update.selected_character.value)
     )
 
     # If the user is changing their character colours
     if "iconColours" in updated_user:
-        user_to_update.icon_colours = json.dumps(updated_user["iconColours"])
+        for icon_colour in user_to_update.icon_colours:
+            icon_colour.colour = updated_user["iconColours"][
+                icon_colour.icon_part.value
+            ]
 
     # If the user clicked the "verify email" link, get the value from the
     # token payload. It should be true
