@@ -271,7 +271,7 @@ async def create_users(db: SendADatabase) -> None:
         ),
     )
     user_5 = User(
-        id=20,
+        id=17,
         received_hugs=0,
         given_hugs=0,
         display_name="user24",
@@ -302,7 +302,7 @@ async def create_users(db: SendADatabase) -> None:
     )
     # For e2e tests
     user_6 = User(
-        id=21,
+        id=18,
         received_hugs=106,
         given_hugs=117,
         display_name="admin",
@@ -331,7 +331,7 @@ async def create_users(db: SendADatabase) -> None:
         ),
     )
     user_7 = User(
-        id=22,
+        id=19,
         received_hugs=0,
         given_hugs=0,
         display_name="newUser",
@@ -362,7 +362,7 @@ async def create_users(db: SendADatabase) -> None:
 
     try:
         db.session.add_all([user_1, user_2, user_3, user_4, user_5, user_6, user_7])
-        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 23;"))
+        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 21;"))
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -604,8 +604,8 @@ async def create_threads(db: SendADatabase) -> None:
     thread_2 = Thread(id=2, user_1_id=1, user_2_id=5)
     thread_3 = Thread(id=3, user_1_id=1, user_2_id=4)
     thread_4 = Thread(id=6, user_1_id=9, user_2_id=5)
-    thread_5 = Thread(id=7, user_1_id=20, user_2_id=4)
-    thread_6 = Thread(id=8, user_1_id=20, user_2_id=1)
+    thread_5 = Thread(id=7, user_1_id=17, user_2_id=4)
+    thread_6 = Thread(id=8, user_1_id=17, user_2_id=1)
     thread_7 = Thread(id=4, user_1_id=4, user_2_id=5)
 
     try:
@@ -712,7 +712,7 @@ async def create_messages(db: SendADatabase) -> None:
     )
     message_10 = Message(
         id=25,
-        from_id=20,
+        from_id=17,
         for_id=4,
         text="hang in there <3",
         date=datetime.strptime("2020-11-03 20:16:58.027", DATETIME_PATTERN),
@@ -732,7 +732,7 @@ async def create_messages(db: SendADatabase) -> None:
     )
     message_12 = Message(
         id=26,
-        from_id=20,
+        from_id=17,
         for_id=1,
         text="hiiii :)",
         date=datetime.strptime("2020-11-03 20:21:30.972", DATETIME_PATTERN),
@@ -1704,7 +1704,7 @@ async def create_notifications(db: SendADatabase) -> None:
     notification_94 = Notification(
         id=94,
         for_id=4,
-        from_id=20,
+        from_id=17,
         type="message",
         text="You have a new message",
         date=datetime.strptime("2020-11-03 20:16:58.027", DATETIME_PATTERN),
@@ -1713,7 +1713,7 @@ async def create_notifications(db: SendADatabase) -> None:
     notification_95 = Notification(
         id=95,
         for_id=1,
-        from_id=20,
+        from_id=17,
         type="message",
         text="You have a new message",
         date=datetime.strptime("2020-11-03 20:21:30.972", DATETIME_PATTERN),

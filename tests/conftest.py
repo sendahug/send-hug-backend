@@ -191,8 +191,8 @@ def dummy_users_data() -> dict[str, dict[str, str]]:
             "internal": "4",
             "firebase_id": "ijkl",
         },
-        "blocked": {"internal": "20", "firebase_id": "twg"},
-        "new": {"internal": "22", "firebase_id": "123456"},
+        "blocked": {"internal": "17", "firebase_id": "twg"},
+        "new": {"internal": "19", "firebase_id": "123456"},
     }
 
     return user_data

@@ -347,7 +347,7 @@ async def test_create_different_user_as_new_user(
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["user"]["id"] == 23
+    assert response_data["user"]["id"] == 21
 
 
 # Edit User Data Tests ('/users/all/<user_id>', PATCH)
