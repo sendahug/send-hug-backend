@@ -330,7 +330,7 @@ async def test_create_different_user_as_new_user_role_user_exists(
 
 
 @pytest.mark.asyncio
-async def test_create_different_user_as_new_user(
+async def test_create_user_as_new_user(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
     user_headers: dict,
@@ -737,7 +737,7 @@ async def test_update_user_verified_status_and_role(
 ) -> None:
     response = await app_client.patch(
         f"/users/all/{dummy_users_data['new']['internal']}",
-        headers=user_headers["newUser"],
+        headers=user_headers["newUserRole"],
         data=json.dumps({"emailVerified": True}),
     )
     response_data = await response.get_json()
