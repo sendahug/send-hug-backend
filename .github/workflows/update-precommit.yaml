@@ -32,9 +32,9 @@ jobs:
 
       - name: Commit & push changes
         run: |
-          echo "updates_available=$((-n '$(git status --porcelain)' && echo t) || echo f)" >> $GITHUB_OUTPUT
           if [ -n "$(git status --porcelain)" ];
           then
+            echo "updates_available=t" >> $GITHUB_OUTPUT
             git config --global user.email "sendahugcom@gmail.com"
             git config --global user.name "Send A Hug Bot"
             git checkout -b 'deps/pre_commit_${{ github.run_id }}'
