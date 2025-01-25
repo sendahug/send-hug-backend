@@ -1,9 +1,0 @@
-{
-  "pr_number": 717,
-  "changes": [
-    {
-      "change": "Chores",
-      "description": "Disabled the step that creates a PR in the update-precommit workflow when there were no dependencies updated."
-    }
-  ]
-}
