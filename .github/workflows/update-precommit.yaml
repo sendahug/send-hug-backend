@@ -31,10 +31,11 @@ jobs:
         run: pre-commit autoupdate
 
       - name: Commit & push changes
+        id: commit-changes
         run: |
           if [ -n "$(git status --porcelain)" ];
           then
-            echo "updates_available=$(echo 't')" >> $GITHUB_OUTPUT
+            echo "updates_available=t" >> $GITHUB_OUTPUT
             git config --global user.email "sendahugcom@gmail.com"
             git config --global user.name "Send A Hug Bot"
             git checkout -b 'deps/pre_commit_${{ github.run_id }}'
@@ -43,10 +44,10 @@ jobs:
             git push origin 'deps/pre_commit_${{ github.run_id }}'
           fi
 
-      - run: echo ${{ steps.changelog-check.outputs.updates_available }}
+      - run: echo ${{ steps.commit-changes.outputs.updates_available }}
 
       - uses: actions/github-script@v7
-        if: steps.changelog-check.outputs.updates_available == 't'
+        if: steps.commit-changes.outputs.updates_available == 't'
         with:
           script: |
             github.rest.pulls.create({
