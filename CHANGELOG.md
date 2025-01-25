@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2025-01-25
+
+#### Chores
+
+- Disabled the step that creates a PR in the update-precommit workflow when there were no dependencies updated. ([#717](https://github.com/sendahug/send-hug-backend/pull/717))
+
 ### 2024-12-13
 
 #### Features
