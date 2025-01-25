@@ -34,7 +34,7 @@ jobs:
         run: |
           if [ -n "$(git status --porcelain)" ];
           then
-            echo "updates_available=$((echo t))" >> $GITHUB_OUTPUT
+            echo "updates_available=$(echo 't')" >> $GITHUB_OUTPUT
             git config --global user.email "sendahugcom@gmail.com"
             git config --global user.name "Send A Hug Bot"
             git checkout -b 'deps/pre_commit_${{ github.run_id }}'
