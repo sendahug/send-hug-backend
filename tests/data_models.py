@@ -15,9 +15,11 @@ from models import (
     Role,
     Thread,
     User,
-    UserPreference,
+    UserIconColour,
+    UserSetting,
 )
 from models.db import SendADatabase
+from models.schemas.enums import UserIconCharacter, UserIconPart
 
 DATETIME_PATTERN = "%Y-%m-%d %H:%M:%S.%f"
 
@@ -155,16 +157,28 @@ async def create_users(db: SendADatabase) -> None:
         display_name="shirb",
         login_count=60,
         release_date=None,
-        auto_refresh=False,
-        push_enabled=False,
-        refresh_rate=0,
-        icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
-        '"rbg": "#f8eee4", "item": "#f4b56a"}',
-        selected_character="kitty",
+        selected_character=UserIconCharacter.KITTY,
+        icon_colours=[
+            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+        ],
         role_id=3,
         firebase_id="abcd",
         email_verified=True,
         email="user1@user1.com",
+        user_settings=UserSetting(
+            email_notifications_enabled=True,
+            message_notifications=True,
+            hugs_digest_notifications=False,
+            you_okay_notifications=True,
+            previous_interaction_notifications=False,
+            auto_refresh_enabled=False,
+            push_enabled=False,
+            refresh_rate=0,
+            last_updated_at=datetime.now(),
+        ),
     )
     user_2 = User(
         id=4,
@@ -173,22 +187,26 @@ async def create_users(db: SendADatabase) -> None:
         display_name="user14",
         login_count=55,
         release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
-        auto_refresh=True,
-        push_enabled=False,
-        refresh_rate=None,
-        icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
-        '"rbg": "#f8eee4", "item": "#f4b56a"}',
-        selected_character="kitty",
+        selected_character=UserIconCharacter.KITTY,
+        icon_colours=[
+            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+        ],
         role_id=1,
         firebase_id="ijkl",
         email_verified=True,
         email="user2@user2.com",
-        user_preferences=UserPreference(
+        user_settings=UserSetting(
             email_notifications_enabled=True,
             message_notifications=True,
             hugs_digest_notifications=False,
             you_okay_notifications=True,
             previous_interaction_notifications=False,
+            auto_refresh_enabled=True,
+            push_enabled=False,
+            refresh_rate=None,
             last_updated_at=datetime.now(),
         ),
     )
@@ -199,16 +217,28 @@ async def create_users(db: SendADatabase) -> None:
         display_name="user52",
         login_count=7,
         release_date=None,
-        auto_refresh=False,
-        push_enabled=False,
-        refresh_rate=0,
-        icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
-        '"rbg": "#f8eee4", "item": "#f4b56a"}',
-        selected_character="kitty",
+        selected_character=UserIconCharacter.KITTY,
+        icon_colours=[
+            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+        ],
         role_id=2,
         firebase_id="efgh",
         email_verified=True,
         email="user3@user3.com",
+        user_settings=UserSetting(
+            email_notifications_enabled=True,
+            message_notifications=True,
+            hugs_digest_notifications=False,
+            you_okay_notifications=True,
+            previous_interaction_notifications=False,
+            auto_refresh_enabled=False,
+            push_enabled=False,
+            refresh_rate=0,
+            last_updated_at=datetime.now(),
+        ),
     )
     user_4 = User(
         id=9,
@@ -217,74 +247,122 @@ async def create_users(db: SendADatabase) -> None:
         display_name="user93",
         login_count=2,
         release_date=None,
-        auto_refresh=False,
-        push_enabled=False,
-        refresh_rate=0,
-        icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
-        '"rbg": "#f8eee4", "item": "#f4b56a"}',
-        selected_character="kitty",
+        selected_character=UserIconCharacter.KITTY,
+        icon_colours=[
+            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+        ],
         role_id=1,
         firebase_id="zxy",
         email_verified=True,
         email="user4@user4.com",
+        user_settings=UserSetting(
+            email_notifications_enabled=True,
+            message_notifications=True,
+            hugs_digest_notifications=False,
+            you_okay_notifications=True,
+            previous_interaction_notifications=False,
+            auto_refresh_enabled=False,
+            push_enabled=False,
+            refresh_rate=0,
+            last_updated_at=datetime.now(),
+        ),
     )
     user_5 = User(
-        id=20,
+        id=17,
         received_hugs=0,
         given_hugs=0,
         display_name="user24",
         login_count=4,
         release_date=datetime.strptime("2120-08-11 08:33:22.473", DATETIME_PATTERN),
-        auto_refresh=False,
-        push_enabled=False,
-        refresh_rate=0,
-        icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
-        '"rbg": "#f8eee4", "item": "#f4b56a"}',
-        selected_character="kitty",
+        selected_character=UserIconCharacter.KITTY,
+        icon_colours=[
+            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+        ],
         role_id=5,
         firebase_id="twg",
         email_verified=True,
         email="user5@user5.com",
+        user_settings=UserSetting(
+            email_notifications_enabled=True,
+            message_notifications=True,
+            hugs_digest_notifications=False,
+            you_okay_notifications=True,
+            previous_interaction_notifications=False,
+            auto_refresh_enabled=False,
+            push_enabled=False,
+            refresh_rate=0,
+            last_updated_at=datetime.now(),
+        ),
     )
     # For e2e tests
     user_6 = User(
-        id=21,
+        id=18,
         received_hugs=106,
         given_hugs=117,
         display_name="admin",
         login_count=55,
         release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
-        auto_refresh=True,
-        push_enabled=False,
-        refresh_rate=None,
-        icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
-        '"rbg": "#f8eee4", "item": "#f4b56a"}',
-        selected_character="kitty",
+        selected_character=UserIconCharacter.KITTY,
+        icon_colours=[
+            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+        ],
         role_id=1,
         firebase_id="xApCskkEtwVhZubFJbNt7u73zzs2",
         email="user6@user6.com",
+        user_settings=UserSetting(
+            email_notifications_enabled=True,
+            message_notifications=True,
+            hugs_digest_notifications=False,
+            you_okay_notifications=True,
+            previous_interaction_notifications=False,
+            auto_refresh_enabled=True,
+            push_enabled=False,
+            refresh_rate=None,
+            last_updated_at=datetime.now(),
+        ),
     )
     user_7 = User(
-        id=22,
+        id=19,
         received_hugs=0,
         given_hugs=0,
         display_name="newUser",
         login_count=55,
         release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
-        auto_refresh=False,
-        push_enabled=False,
-        refresh_rate=None,
-        icon_colours='{"character": "#ba9f93", "lbg": "#e2a275", '
-        '"rbg": "#f8eee4", "item": "#f4b56a"}',
-        selected_character="kitty",
+        selected_character=UserIconCharacter.KITTY,
+        icon_colours=[
+            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+        ],
         role_id=4,
         firebase_id="123456",
         email="user7@user7.com",
+        user_settings=UserSetting(
+            email_notifications_enabled=True,
+            message_notifications=True,
+            hugs_digest_notifications=False,
+            you_okay_notifications=True,
+            previous_interaction_notifications=False,
+            auto_refresh_enabled=False,
+            push_enabled=False,
+            refresh_rate=None,
+            last_updated_at=datetime.now(),
+        ),
     )
 
     try:
         db.session.add_all([user_1, user_2, user_3, user_4, user_5, user_6, user_7])
-        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 23;"))
+        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 21;"))
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -526,8 +604,8 @@ async def create_threads(db: SendADatabase) -> None:
     thread_2 = Thread(id=2, user_1_id=1, user_2_id=5)
     thread_3 = Thread(id=3, user_1_id=1, user_2_id=4)
     thread_4 = Thread(id=6, user_1_id=9, user_2_id=5)
-    thread_5 = Thread(id=7, user_1_id=20, user_2_id=4)
-    thread_6 = Thread(id=8, user_1_id=20, user_2_id=1)
+    thread_5 = Thread(id=7, user_1_id=17, user_2_id=4)
+    thread_6 = Thread(id=8, user_1_id=17, user_2_id=1)
     thread_7 = Thread(id=4, user_1_id=4, user_2_id=5)
 
     try:
@@ -634,7 +712,7 @@ async def create_messages(db: SendADatabase) -> None:
     )
     message_10 = Message(
         id=25,
-        from_id=20,
+        from_id=17,
         for_id=4,
         text="hang in there <3",
         date=datetime.strptime("2020-11-03 20:16:58.027", DATETIME_PATTERN),
@@ -654,7 +732,7 @@ async def create_messages(db: SendADatabase) -> None:
     )
     message_12 = Message(
         id=26,
-        from_id=20,
+        from_id=17,
         for_id=1,
         text="hiiii :)",
         date=datetime.strptime("2020-11-03 20:21:30.972", DATETIME_PATTERN),
@@ -1626,7 +1704,7 @@ async def create_notifications(db: SendADatabase) -> None:
     notification_94 = Notification(
         id=94,
         for_id=4,
-        from_id=20,
+        from_id=17,
         type="message",
         text="You have a new message",
         date=datetime.strptime("2020-11-03 20:16:58.027", DATETIME_PATTERN),
@@ -1635,7 +1713,7 @@ async def create_notifications(db: SendADatabase) -> None:
     notification_95 = Notification(
         id=95,
         for_id=1,
-        from_id=20,
+        from_id=17,
         type="message",
         text="You have a new message",
         date=datetime.strptime("2020-11-03 20:21:30.972", DATETIME_PATTERN),

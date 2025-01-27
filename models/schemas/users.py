@@ -35,7 +35,6 @@ else:
     Message = "Message"
 
 from datetime import datetime
-import json
 
 from sqlalchemy import (
     Boolean,
@@ -55,7 +54,7 @@ from sqlalchemy import (
     true,
 )
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Mapped, column_property, foreign, mapped_column, relationship
+from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from models.common import BaseModel, DumpedModel
 from models.schemas.enums import UserIconCharacter, UserIconPart
@@ -82,21 +81,13 @@ class UserIconColour(BaseModel):
     colour: Mapped[str] = mapped_column(String(7), nullable=False)
 
 
-class UserPreference(BaseModel):
-    __tablename__ = "user_preferences"
+class UserSetting(BaseModel):
+    __tablename__ = "user_settings"
     user_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
         primary_key=True,
         autoincrement=False,
-    )
-    selected_character: Mapped[UserIconCharacter] = mapped_column(
-        Enum(UserIconCharacter), default=UserIconCharacter.KITTY
-    )
-    user_icon_colours: Mapped[list[UserIconColour]] = relationship(
-        "UserIconColour",
-        lazy="selectin",
-        primaryjoin=foreign(UserIconColour.user_id) == user_id,
     )
     auto_refresh_enabled: Mapped[bool | None] = mapped_column(Boolean, default=True)
     refresh_rate: Mapped[int | None] = mapped_column(Integer, default=20)
@@ -113,6 +104,8 @@ class UserPreference(BaseModel):
         Boolean, default=False
     )
     last_updated_at: Mapped[datetime] = mapped_column(DateTime)
+    gender: Mapped[str | None] = mapped_column(String(10))
+    platform_usage_reason: Mapped[str | None] = mapped_column(String(25))
 
 
 class User(BaseModel):
@@ -131,14 +124,12 @@ class User(BaseModel):
         "Role", foreign_keys="User.role_id", lazy="selectin"
     )
     release_date: Mapped[datetime | None] = mapped_column(DateTime)
-    auto_refresh: Mapped[bool | None] = mapped_column(Boolean, default=True)
-    refresh_rate: Mapped[int | None] = mapped_column(Integer, default=20)
-    push_enabled: Mapped[bool | None] = mapped_column(Boolean, default=False)
-    selected_character: Mapped[str | None] = mapped_column(String(6), default="kitty")
-    icon_colours: Mapped[str | None] = mapped_column(
-        String(),
-        default='{"character":"#BA9F93", "lbg":"#e2a275",'
-        '"rbg":"#f8eee4", "item":"#f4b56a"}',
+    selected_character: Mapped[UserIconCharacter] = mapped_column(
+        Enum(UserIconCharacter), default=UserIconCharacter.KITTY
+    )
+    icon_colours: Mapped[list[UserIconColour]] = relationship(
+        "UserIconColour",
+        lazy="selectin",
     )
     posts: Mapped[list["Post"] | None] = relationship("Post", back_populates="user")
     sent_messages: Mapped[list["Message"] | None] = relationship(
@@ -151,10 +142,8 @@ class User(BaseModel):
     firebase_id_uq = UniqueConstraint("firebase_id", name="firebase_id_uq")
     email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     email: Mapped[str] = mapped_column(String(75), nullable=False)
-    gender: Mapped[str | None] = mapped_column(String(10))
-    platform_usage_reason: Mapped[str | None] = mapped_column(String(25))
-    user_preferences: Mapped[UserPreference | None] = relationship(
-        "UserPreference", lazy="selectin"
+    user_settings: Mapped[UserSetting | None] = relationship(
+        "UserSetting", lazy="selectin"
     )
     reports = relationship(
         "Report", back_populates="user", foreign_keys="Report.user_id"
@@ -192,6 +181,8 @@ class User(BaseModel):
     def format(self, **kwargs) -> DumpedModel:
         current_user = kwargs.get("current_user")
 
+        icon_colours = {item.icon_part.value: item.colour for item in self.icon_colours}
+
         base_user_details = {
             "id": self.id,
             "displayName": self.display_name,
@@ -201,12 +192,8 @@ class User(BaseModel):
             "blocked": self.blocked,
             # Temp; For compatibility with admin views
             "releaseDate": self.release_date,
-            "selectedIcon": self.selected_character,
-            "iconColours": (
-                json.loads(self.icon_colours)
-                if self.icon_colours
-                else self.icon_colours
-            ),
+            "selectedIcon": self.selected_character.value,
+            "iconColours": icon_colours,
             "posts": self.post_count,
             "role": (
                 {
@@ -229,29 +216,37 @@ class User(BaseModel):
         hugs_digest_notifications: bool | None = None
         you_okay_notifications: bool | None = None
         previous_interaction_notifications: bool | None = None
+        auto_refresh: bool | None = None
+        refresh_rate: int | None = None
+        push_enabled: bool | None = None
+        gender: str | None = None
+        platform_usage_reason: str | None
 
-        if self.user_preferences:
-            email_notifications_enabled = (
-                self.user_preferences.email_notifications_enabled
-            )
-            message_notifications = self.user_preferences.message_notifications
-            hugs_digest_notifications = self.user_preferences.hugs_digest_notifications
-            you_okay_notifications = self.user_preferences.you_okay_notifications
+        if self.user_settings:
+            email_notifications_enabled = self.user_settings.email_notifications_enabled
+            message_notifications = self.user_settings.message_notifications
+            hugs_digest_notifications = self.user_settings.hugs_digest_notifications
+            you_okay_notifications = self.user_settings.you_okay_notifications
             previous_interaction_notifications = (
-                self.user_preferences.previous_interaction_notifications
+                self.user_settings.previous_interaction_notifications
             )
+            auto_refresh = self.user_settings.auto_refresh_enabled
+            refresh_rate = self.user_settings.refresh_rate
+            push_enabled = self.user_settings.push_enabled
+            gender = self.user_settings.gender
+            platform_usage_reason = self.user_settings.platform_usage_reason
 
         return {
             **base_user_details,
             "loginCount": self.login_count,
-            "autoRefresh": self.auto_refresh,
-            "refreshRate": self.refresh_rate,
-            "pushEnabled": self.push_enabled,
+            "autoRefresh": auto_refresh,
+            "refreshRate": refresh_rate,
+            "pushEnabled": push_enabled,
             "firebaseId": self.firebase_id,
             "emailVerified": self.email_verified,
             "email": self.email,
-            "gender": self.gender,
-            "platformUsageReason": self.platform_usage_reason,
+            "gender": gender,
+            "platformUsageReason": platform_usage_reason,
             "preferences": {
                 "emailNotificationsEnabled": email_notifications_enabled,
                 "messageNotifications": message_notifications,

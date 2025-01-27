@@ -1,0 +1,29 @@
+{
+  "pr_number": 715,
+  "changes": [
+    {
+      "change": "Changes",
+      "description": "Changed the User Preferences table's name to settings, to better reflect its purpose. The new table now contains everything that can be set by users, apart from details about the user's icon and colours and their display name (as those are used in various other queries)."
+    },
+    {
+      "change": "Changes",
+      "description": "Moved the user's notifications settings, platform usage reason and gender from the users' table to the new user preferences table."
+    },
+    {
+      "change": "Chores",
+      "description": "Added missing typing to the messages' and threads' models' column properties."
+    },
+    {
+      "change": "Chores",
+      "description": "Added a new user and a test for the create users (`POST /users`) endpoint."
+    },
+    {
+      "change": "Fixes",
+      "description": "The create users endpoint incorrectly attempted to fetch the new user's email from the user data, instead of from the decoded token, which broke the endpoint. The email is now fetched from the decoded token, as it should've been."
+    },
+    {
+      "change": "Fixes",
+      "description": "Fixed a bug trying when accessing the user's firebase ID in the create users endpoint. The wrong key was used to to access the ID, which made it impossible to add the new user to the database. The correct key is now used instead."
+    }
+  ]
+}
