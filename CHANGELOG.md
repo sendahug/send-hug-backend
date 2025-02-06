@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+### 2025-01-27
+
+#### Changes
+
+- Changed the User Preferences table's name to settings, to better reflect its purpose. The new table now contains everything that can be set by users, apart from details about the user's icon and colours and their display name (as those are used in various other queries). ([#715](https://github.com/sendahug/send-hug-backend/pull/715))
+- Moved the user's notifications settings, platform usage reason and gender from the users' table to the new user preferences table. ([#715](https://github.com/sendahug/send-hug-backend/pull/715))
+
+#### Fixes
+
+- The create users endpoint incorrectly attempted to fetch the new user's email from the user data, instead of from the decoded token, which broke the endpoint. The email is now fetched from the decoded token, as it should've been. ([#715](https://github.com/sendahug/send-hug-backend/pull/715))
+- Fixed a bug trying when accessing the user's firebase ID in the create users endpoint. The wrong key was used to to access the ID, which made it impossible to add the new user to the database. The correct key is now used instead. ([#715](https://github.com/sendahug/send-hug-backend/pull/715))
+
+#### Chores
+
+- Added missing typing to the messages' and threads' models' column properties. ([#715](https://github.com/sendahug/send-hug-backend/pull/715))
+- Added a new user and a test for the create users (`POST /users`) endpoint. ([#715](https://github.com/sendahug/send-hug-backend/pull/715))
+
+### 2025-01-25
+
+#### Chores
+
+- Disabled the step that creates a PR in the update-precommit workflow when there were no dependencies updated. ([#717](https://github.com/sendahug/send-hug-backend/pull/717))
+
 ### 2024-12-13
 
 #### Features

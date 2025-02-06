@@ -33,4 +33,4 @@ from .schemas.notifications import Notification, NotificationSub
 from .schemas.posts import Post
 from .schemas.reports import Report
 from .schemas.roles import Permission, Role
-from .schemas.users import User, UserIconColour, UserPreference
+from .schemas.users import User, UserIconColour, UserSetting

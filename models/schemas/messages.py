@@ -26,7 +26,6 @@
 # SOFTWARE.
 
 from datetime import datetime
-import json
 
 from sqlalchemy import (
     Boolean,
@@ -43,10 +42,11 @@ from sqlalchemy import (
     true,
 )
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
+from sqlalchemy.orm import Mapped, column_property, foreign, mapped_column, relationship
 
 from models.common import BaseModel, DumpedModel
-from models.schemas.users import User
+from models.schemas.enums import UserIconCharacter
+from models.schemas.users import User, UserIconColour
 
 
 class Message(BaseModel):
@@ -59,7 +59,15 @@ class Message(BaseModel):
         nullable=False,
     )
     from_user: Mapped["User"] = relationship(
-        "User", back_populates="sent_messages", foreign_keys="Message.from_id"
+        "User",
+        back_populates="sent_messages",
+        foreign_keys="Message.from_id",
+    )
+    from_user_colours: Mapped[list[UserIconColour]] = relationship(
+        "UserIconColour",
+        lazy="selectin",
+        primaryjoin=foreign(UserIconColour.user_id) == from_id,
+        viewonly=True,
     )
     for_id: Mapped[int] = mapped_column(
         Integer,
@@ -68,7 +76,15 @@ class Message(BaseModel):
         nullable=False,
     )
     for_user: Mapped["User"] = relationship(
-        "User", back_populates="received_messages", foreign_keys="Message.for_id"
+        "User",
+        back_populates="received_messages",
+        foreign_keys="Message.for_id",
+    )
+    for_user_colours: Mapped[list[UserIconColour]] = relationship(
+        "UserIconColour",
+        lazy="selectin",
+        primaryjoin=foreign(UserIconColour.user_id) == for_id,
+        viewonly=True,
     )
     text: Mapped[str] = mapped_column(String(480), nullable=False)
     date: Mapped[datetime | None] = mapped_column(DateTime)
@@ -81,49 +97,42 @@ class Message(BaseModel):
     from_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     for_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # mapped_column Properties
-    from_name = column_property(
+    from_name: Mapped[str] = column_property(
         select(User.display_name).where(User.id == from_id).scalar_subquery()
     )
-    from_icon = column_property(
+    from_icon: Mapped[UserIconCharacter] = column_property(
         select(User.selected_character).where(User.id == from_id).scalar_subquery()
     )
-    from_colours = column_property(
-        select(User.icon_colours).where(User.id == from_id).scalar_subquery()
-    )
-    for_name = column_property(
+    for_name: Mapped[str] = column_property(
         select(User.display_name).where(User.id == for_id).scalar_subquery()
     )
-    for_icon = column_property(
+    for_icon: Mapped[UserIconCharacter] = column_property(
         select(User.selected_character).where(User.id == for_id).scalar_subquery()
-    )
-    for_colours = column_property(
-        select(User.icon_colours).where(User.id == for_id).scalar_subquery()
     )
 
     # Format method
     # Responsible for returning a JSON object
     def format(self, **kwargs) -> DumpedModel:
+        from_icon_colours = {
+            item.icon_part.value: item.colour for item in self.from_user_colours
+        }
+        for_icon_colours = {
+            item.icon_part.value: item.colour for item in self.for_user_colours
+        }
+
         return {
             "id": self.id,
             "fromId": self.from_id,
             "from": {
                 "displayName": self.from_name,
-                "selectedIcon": self.from_icon,
-                "iconColours": (
-                    json.loads(self.from_colours)
-                    if self.from_colours
-                    else self.from_colours
-                ),
+                "selectedIcon": self.from_icon.value,
+                "iconColours": from_icon_colours,
             },
             "forId": self.for_id,
             "for": {
                 "displayName": self.for_name,
-                "selectedIcon": self.for_icon,
-                "iconColours": (
-                    json.loads(self.for_colours)
-                    if self.for_colours
-                    else self.for_colours
-                ),
+                "selectedIcon": self.for_icon.value,
+                "iconColours": for_icon_colours,
             },
             "messageText": self.text,
             "date": self.date,
@@ -141,6 +150,12 @@ class Thread(BaseModel):
         nullable=False,
     )
     user_1: Mapped["User"] = relationship("User", foreign_keys="Thread.user_1_id")
+    user1_colours: Mapped[list[UserIconColour]] = relationship(
+        "UserIconColour",
+        lazy="selectin",
+        primaryjoin=foreign(UserIconColour.user_id) == user_1_id,
+        viewonly=True,
+    )
     user_2_id: Mapped[int] = mapped_column(
         Integer,
         # TODO: This will fail if the user is deleted
@@ -148,24 +163,27 @@ class Thread(BaseModel):
         nullable=False,
     )
     user_2: Mapped["User"] = relationship("User", foreign_keys="Thread.user_2_id")
+    user2_colours: Mapped[list[UserIconColour]] = relationship(
+        "UserIconColour",
+        lazy="selectin",
+        primaryjoin=foreign(UserIconColour.user_id) == user_2_id,
+        viewonly=True,
+    )
     messages: Mapped[list["Message"]] = relationship(
         "Message", back_populates="thread_details"
     )
     # Column properties
-    latest_message_date = column_property(
+    latest_message_date: Mapped[datetime] = column_property(
         select(func.max(Message.date))
         .where(Message.thread == id)
         .group_by(Message.thread)
         .scalar_subquery()
     )
-    user1_name = column_property(
+    user1_name: Mapped[str] = column_property(
         select(User.display_name).where(User.id == user_1_id).scalar_subquery()
     )
-    user1_icon = column_property(
+    user1_icon: Mapped[UserIconCharacter] = column_property(
         select(User.selected_character).where(User.id == user_1_id).scalar_subquery()
-    )
-    user1_colours = column_property(
-        select(User.icon_colours).where(User.id == user_1_id).scalar_subquery()
     )
     user1_message_count = column_property(
         select(func.count(Message.id))
@@ -181,16 +199,13 @@ class Thread(BaseModel):
         .group_by(Message.thread)
         .scalar_subquery()
     )
-    user2_name = column_property(
+    user2_name: Mapped[str] = column_property(
         select(User.display_name).where(User.id == user_2_id).scalar_subquery()
     )
-    user2_icon = column_property(
+    user2_icon: Mapped[UserIconCharacter] = column_property(
         select(User.selected_character).where(User.id == user_2_id).scalar_subquery()
     )
-    user2_colours = column_property(
-        select(User.icon_colours).where(User.id == user_2_id).scalar_subquery()
-    )
-    user2_message_count = column_property(
+    user2_message_count: Mapped[int] = column_property(
         select(func.count(Message.id))
         .where(
             and_(
@@ -228,26 +243,25 @@ class Thread(BaseModel):
     def format(self, **kwargs) -> DumpedModel:
         current_user_id = kwargs["current_user_id"]
 
+        user1_icon_colours = {
+            item.icon_part.value: item.colour for item in self.user1_colours
+        }
+        user2_icon_colours = {
+            item.icon_part.value: item.colour for item in self.user2_colours
+        }
+
         return {
             "id": self.id,
             "user1": {
                 "displayName": self.user1_name,
-                "selectedIcon": self.user1_icon,
-                "iconColours": (
-                    json.loads(self.user1_colours)
-                    if self.user1_colours
-                    else self.user1_colours
-                ),
+                "selectedIcon": self.user1_icon.value,
+                "iconColours": user1_icon_colours,
             },
             "user1Id": self.user_1_id,
             "user2": {
                 "displayName": self.user2_name,
-                "selectedIcon": self.user2_icon,
-                "iconColours": (
-                    json.loads(self.user2_colours)
-                    if self.user2_colours
-                    else self.user2_colours
-                ),
+                "selectedIcon": self.user2_icon.value,
+                "iconColours": user2_icon_colours,
             },
             "user2Id": self.user_2_id,
             "numMessages": (

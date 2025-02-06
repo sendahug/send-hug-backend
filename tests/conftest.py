@@ -27,7 +27,7 @@ def user_headers(session_mocker: MockerFixture) -> dict[str, dict[str, str]]:
     Sets the headers for each of the users and mocks
     the verify_id_token function from Firebase.
     """
-    roles = ["user", "moderator", "admin", "blocked", "newUser"]
+    roles = ["user", "moderator", "admin", "blocked", "newUserRole", "actualNewUser"]
     user_headers: dict[str, dict[str, str]] = {}
 
     for role in roles:
@@ -43,7 +43,7 @@ def user_headers(session_mocker: MockerFixture) -> dict[str, dict[str, str]]:
     }
 
     def verify_token(token, app):
-        if "newUser" in token:
+        if "newUserRole" in token:
             return {"uid": "123456", "email_verified": True, "email": "email"}
         elif "user" in token:
             return {"uid": "abcd", "email_verified": True, "email": "email"}
@@ -51,6 +51,8 @@ def user_headers(session_mocker: MockerFixture) -> dict[str, dict[str, str]]:
             return {"uid": "efgh", "email_verified": False, "email": "email"}
         elif "blocked" in token:
             return {"uid": "twg", "email_verified": False, "email": "email"}
+        elif "actualNewUser" in token:
+            return {"uid": "actualNewUser", "email_verified": False, "email": "email"}
         else:
             return {"uid": "ijkl", "email_verified": False, "email": "email"}
 
@@ -189,8 +191,8 @@ def dummy_users_data() -> dict[str, dict[str, str]]:
             "internal": "4",
             "firebase_id": "ijkl",
         },
-        "blocked": {"internal": "20", "firebase_id": "twg"},
-        "new": {"internal": "22", "firebase_id": "123456"},
+        "blocked": {"internal": "17", "firebase_id": "twg"},
+        "new": {"internal": "19", "firebase_id": "123456"},
     }
 
     return user_data
