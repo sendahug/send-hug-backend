@@ -25,29 +25,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# import pytest
-# from pytest_mock import MockerFixture
-# from quart.typing import TestClientProtocol
+import pytest
+from pytest_mock import MockerFixture
+from quart.typing import TestClientProtocol
 
-# from controllers.common import send_email_notification
+from controllers.common import send_email_notification
 
-# from models.db import SendADatabase
-# from utils.push_notifications import RawPushData
+from models.db import SendADatabase
+from utils.push_notifications import RawPushData
 
 
-# @pytest.mark.asyncio
-# async def test_send_email_notification(
-#     app_client: TestClientProtocol, test_db: SendADatabase, mocker: MockerFixture
-# ) -> None:
-#     send_email_func = mocker.patch("controllers.common.send_email")
+@pytest.mark.asyncio
+async def test_send_email_notification(
+    app_client: TestClientProtocol, test_db: SendADatabase, mocker: MockerFixture
+) -> None:
+    send_email_func = mocker.patch("controllers.common.send_email")
 
-#     async with app_client.app.app_context():
-#         await send_email_notification(
-#             user_id=1, data=RawPushData(type="message", text="This is a test")
-#         )
+    async with app_client.app.app_context():
+        await send_email_notification(
+            user_id=1, data=RawPushData(type="message", text="This is a test")
+        )
 
-#     assert send_email_func.call_args.kwargs == {
-#         "to": "user1@user1.com",
-#         "subject": "New message",
-#         "content": "This is a test\n\nhttp://localhost:3000/messages/inbox",
-#     }
+    assert send_email_func.call_args.kwargs == {
+        "to": "user1@user1.com",
+        "subject": "New message",
+        "content": "This is a test\n\nhttp://localhost:3000/messages/inbox",
+    }
