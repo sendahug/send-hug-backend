@@ -64,7 +64,6 @@ async def send_email_notification(user_id: int, data: RawPushData) -> None:
         current_app.logger.error(e)
 
 
-#
 async def send_push_notification(user_id: int, data: RawPushData) -> None:
     """
     Sends push notifications via vapid
