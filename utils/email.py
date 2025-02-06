@@ -56,7 +56,7 @@ def generate_email_data(to: str, data: RawPushData) -> EmailData:
     return notification_data
 
 
-def send(
+def send_email(
     to: str, subject: str, content: str, from_email: str = DEFAULT_FROM
 ) -> Response:
     """

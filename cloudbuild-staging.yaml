@@ -65,7 +65,7 @@ steps:
         --update-env-vars FIREBASE_CREDENTIALS_FILE=/app/.secrets/platform_firebase_credentials/latest.json \
         --update-secrets /app/.secrets/db_${_SAH_MODE_LOWER}_creds/latest.json=db_${_SAH_MODE_LOWER}_creds:latest \
         --update-secrets /app/.secrets/platform_firebase_credentials/latest.json=platform_firebase_credentials:latest \
-        --update-secrets PRIVATE_VAPID_KEY=private_vapid_key:latest
+        --update-secrets PRIVATE_VAPID_KEY=private_vapid_key:latest \
         --update-secrets SENDGRID_KEY=sendgrid_key:latest
     secretEnv: ['_DB_HOST']
     waitFor: ['Run Migrations']

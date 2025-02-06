@@ -7,7 +7,7 @@ from sqlalchemy import delete, func, select, true
 from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
 
-from .common import send_notifications, validator
+from .common import send_push_notification, validator
 from models import (
     BLOCKED_USER_ROLE_ID,
     Notification,
@@ -412,7 +412,7 @@ async def send_hug_to_user(token_payload: UserData, user_id: int) -> Response:
 
     await sah_config.db.add_object(obj=notification)
     await sah_config.db.update_multiple_objects(objects=to_update)
-    await send_notifications(user_id=user_to_hug.id, data=push_notification)
+    await send_push_notification(user_id=user_to_hug.id, data=push_notification)
 
     return jsonify(
         {

@@ -11,7 +11,7 @@ from .common import (
     DATETIME_PATTERN,
     get_current_filters,
     get_thread_id_for_users,
-    send_notifications,
+    send_push_notification,
     validator,
 )
 from models import CoreSAHModel, Message, Notification, Post, User
@@ -207,7 +207,7 @@ async def send_hug_for_post(token_payload: UserData, post_id: int) -> Response:
     await sah_config.db.update_multiple_objects(objects=to_update)
 
     if post_author and push_notification:
-        await send_notifications(user_id=post_author.id, data=push_notification)
+        await send_push_notification(user_id=post_author.id, data=push_notification)
 
     return jsonify(
         {

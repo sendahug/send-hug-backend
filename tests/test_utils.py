@@ -30,7 +30,7 @@ import pytest
 from pytest_mock import MockerFixture
 from python_http_client.client import Response
 
-from utils.email import SG_CLIENT, generate_email_data, send
+from utils.email import SG_CLIENT, generate_email_data, send_email
 from utils.filter import WordFilter
 from utils.push_notifications import (
     RawPushData,
@@ -234,7 +234,7 @@ def test_email_send(mocker: MockerFixture) -> None:
     mock_client.mail.send.post.return_value = "Send worked!"
     mocker.patch.object(SG_CLIENT, "client", new=mock_client)
 
-    response: Response = send(
+    response: Response = send_email(
         to="tests@send-hug.com",
         subject="Test email",
         content="This test email rocks so hard it ground down a diamond",
@@ -242,10 +242,10 @@ def test_email_send(mocker: MockerFixture) -> None:
     assert response == "Send worked!"
 
 
-@pytest.mark.skip("Not running as it sends emails")
+@pytest.mark.skip("This test should only be run if the sendgrid library is updated")
 def test_email_send_for_reals() -> None:
 
-    response: Response = send(
+    response: Response = send_email(
         to="tests@send-hug.com",
         subject="Test email",
         content="This test email rocks so hard it ground down a diamond",

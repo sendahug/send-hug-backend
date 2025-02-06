@@ -7,7 +7,7 @@
     },
     {
       "change": "Changes",
-      "description": "Switched out send push notifications code for code that sends both push and email notifications."
+      "description": "Changed notifications code for new messages to send both push and email notifications."
     }
   ]
 }

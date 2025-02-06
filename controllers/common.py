@@ -11,7 +11,7 @@ from config.config import sah_config
 
 from models import Filter, NotificationSub, Thread
 from models.schemas.users import User
-from utils.email import generate_email_data, send
+from utils.email import generate_email_data, send_email
 from utils.push_notifications import (
     RawPushData,
     generate_push_data,
@@ -49,9 +49,7 @@ async def send_email_notification(user_id: int, data: RawPushData) -> None:
         )
     ).one_or_none()
     if not (
-        user
-        and user.user_preferences
-        and user.user_preferences.email_notifications_enabled
+        user and user.user_settings and user.user_settings.email_notifications_enabled
     ):
         return
 
@@ -59,7 +57,7 @@ async def send_email_notification(user_id: int, data: RawPushData) -> None:
 
     # Try to send the email notification
     try:
-        send(**notification_data)
+        send_email(**notification_data)
     # If there's an error, print the details
     except UnauthorizedError as e:
         # TODO: add more exceptions
