@@ -146,7 +146,7 @@ async def test_db(
         # Mock the session for all controllers
         # TODO: Surely there's a better way to do this
         controllers = listdir(path.join(path.dirname(__file__), "../controllers"))
-        non_controllers = ["__init__.py", "common.py", "__pycache__"]
+        non_controllers = ["__init__.py", "common", "__pycache__"]
         for controller in controllers:
             if controller in non_controllers:
                 continue
@@ -160,7 +160,7 @@ async def test_db(
 
         await db.session.begin_nested()
         mocker.patch("pywebpush.webpush")
-        mocker.patch("controllers.common.webpush")
+        mocker.patch("controllers.common.common.webpush")
 
         yield db
 
