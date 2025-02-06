@@ -6,7 +6,7 @@ from sqlalchemy import desc, false, select
 
 from config.config import sah_config
 
-from .common.common import validator
+from .common import validator
 from models import Post, User
 
 root_endpoints = Blueprint("root", __name__)

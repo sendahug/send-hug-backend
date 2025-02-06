@@ -7,7 +7,7 @@ from sqlalchemy import delete, func, select, true
 from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
 
-from .common.common import send_push_notification, validator
+from .common import send_push_notification, validator
 from models import (
     BLOCKED_USER_ROLE_ID,
     Notification,

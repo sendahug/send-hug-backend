@@ -7,7 +7,7 @@ from sqlalchemy import false, select
 from auth import UserData, requires_auth
 from config.config import sah_config
 
-from .common.common import DATETIME_PATTERN, validator
+from .common import DATETIME_PATTERN, validator
 from models import Post, Report, User
 
 reports_endpoints = Blueprint("reports", __name__)

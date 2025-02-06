@@ -29,7 +29,7 @@ import pytest
 from pytest_mock import MockerFixture
 from quart.typing import TestClientProtocol
 
-from controllers.common.common import send_email_notification
+from controllers.common import send_email_notification
 
 from models.db import SendADatabase
 from utils.push_notifications import RawPushData
@@ -39,7 +39,7 @@ from utils.push_notifications import RawPushData
 async def test_send_email_notification(
     app_client: TestClientProtocol, test_db: SendADatabase, mocker: MockerFixture
 ) -> None:
-    send_email_func = mocker.patch("controllers.common.common.send_email")
+    send_email_func = mocker.patch("controllers.common.send_email")
 
     async with app_client.app.app_context():
         await send_email_notification(

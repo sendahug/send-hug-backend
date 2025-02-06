@@ -6,7 +6,7 @@ from sqlalchemy import select
 from auth import UserData, requires_auth
 from config.config import sah_config
 
-from .common.common import validator
+from .common import validator
 from models import Filter
 
 filters_endpoints = Blueprint("filters", __name__)

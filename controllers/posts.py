@@ -7,7 +7,7 @@ from sqlalchemy import desc, false, select
 from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
 
-from .common.common import (
+from .common import (
     DATETIME_PATTERN,
     get_current_filters,
     get_thread_id_for_users,
