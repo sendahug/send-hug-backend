@@ -62,7 +62,9 @@ jobs:
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
       - run: |
           cd ..
+          pwd
           mkdir -p send-hug-backend/.secrets/platform_firebase_credentials
+          echo "$FIREBASE_TEST_ACCT_KEY"
           echo "$FIREBASE_TEST_ACCT_KEY" > send-hug-backend/.secrets/platform_firebase_credentials/latest.json
       - save_cache:
           key: deps1-{{ checksum "requirements.txt" }}
