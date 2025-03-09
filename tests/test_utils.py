@@ -240,17 +240,3 @@ def test_email_send(mocker: MockerFixture) -> None:
         content="This test email rocks so hard it ground down a diamond",
     )
     assert response == "Send worked!"
-
-
-@pytest.mark.skip("This test should only be run if the sendgrid library is updated")
-def test_email_send_for_reals() -> None:
-
-    response: Response = send_email(
-        to="tests@send-hug.com",
-        subject="Test email",
-        content="This test email rocks so hard it ground down a diamond",
-    )
-
-    assert response.status_code == 202
-    assert response.body == b""
-    assert response.headers.get_content_type() == "text/plain"
