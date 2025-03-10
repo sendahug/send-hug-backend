@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### 2025-03-10
+
+#### Features
+
+- Added the ability for the web app to send emails, providing more opportunties to stay in touch with users. ([#701](https://github.com/sendahug/send-hug-backend/pull/701))
+
+#### Changes
+
+- Changed notifications code for new messages to send both push and email notifications. ([#701](https://github.com/sendahug/send-hug-backend/pull/701))
+
 ### 2025-01-27
 
 #### Changes
