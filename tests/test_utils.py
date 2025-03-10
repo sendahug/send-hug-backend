@@ -24,11 +24,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 from typing import Generator
 
 import pytest
+from pytest_mock import MockerFixture
+from python_http_client.client import Response
 
+from utils.email import SG_CLIENT, generate_email_data, send_email
 from utils.filter import WordFilter
 from utils.push_notifications import (
     RawPushData,
@@ -210,3 +212,31 @@ def test_wordfilter_multiple_filters_in_string() -> None:
     assert blacklisted_result.badword_indexes[0].index == 6
     assert blacklisted_result.badword_indexes[1].badword == "you"
     assert blacklisted_result.badword_indexes[1].index == 14
+
+
+# Email tests
+# =====================================================
+def test_generate_email_data() -> None:
+    base_data: RawPushData = {"type": "hug", "text": "Meow"}
+    to = "tests@send-hug.com"
+    email_data = generate_email_data(to, base_data)
+
+    assert email_data["to"] == to
+    assert email_data["subject"] == f"New {base_data['type']}"
+    assert (
+        email_data["content"]
+        == f"{base_data['text']}\n\nhttp://localhost:3000/messages/inbox"
+    )
+
+
+def test_email_send(mocker: MockerFixture) -> None:
+    mock_client = mocker.MagicMock()
+    mock_client.mail.send.post.return_value = "Send worked!"
+    mocker.patch.object(SG_CLIENT, "client", new=mock_client)
+
+    response: Response = send_email(
+        to="tests@send-hug.com",
+        subject="Test email",
+        content="This test email rocks so hard it ground down a diamond",
+    )
+    assert response == "Send worked!"

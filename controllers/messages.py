@@ -11,7 +11,7 @@ from .common import (
     DATETIME_PATTERN,
     get_current_filters,
     get_thread_id_for_users,
-    send_push_notification,
+    send_notifications,
     validator,
 )
 from models import Message, Notification, Thread
@@ -173,7 +173,7 @@ async def add_message(token_payload: UserData) -> Response:
         objects=[new_message, notification]
     )
     sent_message = [item for item in added if "threadID" in item.keys()]
-    await send_push_notification(user_id=notification_for, data=push_notification)
+    await send_notifications(user_id=notification_for, data=push_notification)
 
     return jsonify({"success": True, "message": sent_message[0]})
 
