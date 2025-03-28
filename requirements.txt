@@ -5,5 +5,5 @@ hypercorn==0.17.3
 asyncpg==0.30.0
 pywebpush==2.0.3
 sendgrid==6.11.0
-SQLAlchemy[asyncio]==2.0.39
+SQLAlchemy[asyncio]==2.0.40
 firebase-admin==6.6.0
