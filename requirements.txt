@@ -1,4 +1,4 @@
-alembic==1.15.1
+alembic==1.15.2
 quart==0.20.0
 quart-cors==0.8.0
 hypercorn==0.17.3
