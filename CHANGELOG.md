@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### 2025-04-06
+
+#### Features
+
+- Added the ability to update email notifications settings using the PATCH user endpoint. ([#741](https://github.com/sendahug/send-hug-backend/pull/741))
+
+#### Changes
+
+- Removed unnecessary property checks from the POST user endpoint. Previously it was thought we'd allow customising various settings in the signup page, but the page became too cluttered to be used. As such, we decided to remove most of the settings from the signup process. ([#741](https://github.com/sendahug/send-hug-backend/pull/741))
+
 ### 2025-03-10
 
 #### Features
