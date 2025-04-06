@@ -151,12 +151,10 @@ async def add_user(token_payload) -> Response:
             email_notifications_enabled=user_data.get(
                 "emailNotificationsEnabled", False
             ),
-            message_notifications=user_data.get("messageNotifications", False),
-            hugs_digest_notifications=user_data.get("hugsDigestNotifications", False),
-            you_okay_notifications=user_data.get("youOkayNotifications", False),
-            previous_interaction_notifications=user_data.get(
-                "previousInteractionNotifications", False
-            ),
+            message_notifications=False,
+            hugs_digest_notifications=False,
+            you_okay_notifications=False,
+            previous_interaction_notifications=False,
             last_updated_at=datetime.now(),
             auto_refresh_enabled=False,
             refresh_rate=20,
@@ -243,6 +241,7 @@ async def edit_user(token_payload: UserData, user_id: int) -> Response:
         "autoRefresh" in updated_user
         or "pushEnabled" in updated_user
         or "refreshRate" in updated_user
+        or "preferences" in updated_user
     ):
         # If it's not the current user, abort
         if token_payload["id"] != user_to_update.id:
@@ -275,6 +274,51 @@ async def edit_user(token_payload: UserData, user_id: int) -> Response:
     user_to_update.selected_character = UserIconCharacter(
         updated_user.get("selectedIcon", user_to_update.selected_character.value)
     )
+
+    updated_preferences = updated_user.get("preferences", {})
+    user_to_update.user_settings.email_notifications_enabled = updated_preferences.get(
+        "emailNotificationsEnabled",
+        (
+            user_to_update.user_settings.email_notifications_enabled
+            if user_to_update.user_settings
+            else False
+        ),
+    )
+    user_to_update.user_settings.message_notifications = updated_preferences.get(
+        "messageNotifications",
+        (
+            user_to_update.user_settings.message_notifications
+            if user_to_update.user_settings
+            else False
+        ),
+    )
+    user_to_update.user_settings.hugs_digest_notifications = updated_preferences.get(
+        "hugsDigestNotifications",
+        (
+            user_to_update.user_settings.hugs_digest_notifications
+            if user_to_update.user_settings
+            else False
+        ),
+    )
+    user_to_update.user_settings.you_okay_notifications = updated_preferences.get(
+        "youOkayNotifications",
+        (
+            user_to_update.user_settings.you_okay_notifications
+            if user_to_update.user_settings
+            else False
+        ),
+    )
+    user_to_update.user_settings.previous_interaction_notifications = (
+        updated_preferences.get(
+            "previousInteractionNotifications",
+            (
+                user_to_update.user_settings.previous_interaction_notifications
+                if user_to_update.user_settings
+                else False
+            ),
+        )
+    )
+    user_to_update.user_settings.last_updated_at = datetime.now()
 
     # If the user is changing their character colours
     if "iconColours" in updated_user:
