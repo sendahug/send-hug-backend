@@ -33,14 +33,14 @@ from quart.typing import TestClientProtocol
 from models.db import SendADatabase
 
 
-# Get Users by Type Tests ('/users/<type>', GET)
+# Get Users by Type Tests ('/users', GET)
 # -------------------------------------------------------
 # Attempt to get list of users without auth header
 @pytest.mark.asyncio
 async def test_get_user_list_no_auth(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.get("/users/blocked")
+    response = await app_client.get("/users?type=blocked")
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -67,7 +67,7 @@ async def test_get_user_list_auth_error(
     user: str,
     error_code: int,
 ) -> None:
-    response = await app_client.get("/users/blocked", headers=user_headers[user])
+    response = await app_client.get("/users?type=blocked", headers=user_headers[user])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -79,7 +79,9 @@ async def test_get_user_list_auth_error(
 async def test_get_user_list_as_admin(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.get("/users/blocked", headers=user_headers["admin"])
+    response = await app_client.get(
+        "/users?type=blocked", headers=user_headers["admin"]
+    )
     response_data = await response.get_json()
 
     assert response_data["success"] is True
@@ -92,21 +94,21 @@ async def test_get_user_list_as_admin(
 async def test_get_user_list_unsupported_type(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.get("/users/meow", headers=user_headers["admin"])
+    response = await app_client.get("/users?type=meow", headers=user_headers["admin"])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 500
 
 
-# Get User Data Tests ('/users/all/<user_id>', GET)
+# Get User Data Tests ('/users/<user_id>', GET)
 # -------------------------------------------------------
 # Attempt to get a user's data without auth header
 @pytest.mark.asyncio
 async def test_get_user_data_no_auth(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.get("/users/all/1")
+    response = await app_client.get("/users/1")
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -118,7 +120,7 @@ async def test_get_user_data_no_auth(
 async def test_get_user_data_malformed_auth(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.get("/users/all/1", headers=user_headers["malformed"])
+    response = await app_client.get("/users/1", headers=user_headers["malformed"])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -134,7 +136,7 @@ async def test_get_user_data_as_user(
     dummy_users_data: dict,
 ) -> None:
     response = await app_client.get(
-        f"/users/all/{dummy_users_data['user']['firebase_id']}",
+        f"/users/{dummy_users_data['user']['firebase_id']}",
         headers=user_headers["user"],
     )
     response_data = await response.get_json()
@@ -154,7 +156,7 @@ async def test_get_user_data_as_mod(
     dummy_users_data: dict,
 ) -> None:
     response = await app_client.get(
-        f"/users/all/{dummy_users_data['moderator']['firebase_id']}",
+        f"/users/{dummy_users_data['moderator']['firebase_id']}",
         headers=user_headers["moderator"],
     )
     response_data = await response.get_json()
@@ -174,7 +176,7 @@ async def test_get_user_data_as_admin(
     dummy_users_data: dict,
 ) -> None:
     response = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['firebase_id']}",
+        f"/users/{dummy_users_data['admin']['firebase_id']}",
         headers=user_headers["admin"],
     )
     response_data = await response.get_json()
@@ -190,7 +192,7 @@ async def test_get_user_data_as_admin(
 async def test_get_nonexistent_user_as_admin(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.get("/users/all/100", headers=user_headers["admin"])
+    response = await app_client.get("/users/100", headers=user_headers["admin"])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -202,7 +204,7 @@ async def test_get_nonexistent_user_as_admin(
 async def test_get_user_no_id_as_admin(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.get("/users/all/", headers=user_headers["admin"])
+    response = await app_client.get("/users/", headers=user_headers["admin"])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -350,7 +352,7 @@ async def test_create_user_as_new_user(
     assert response_data["user"]["id"] == 21
 
 
-# Edit User Data Tests ('/users/all/<user_id>', PATCH)
+# Edit User Data Tests ('/users/<user_id>', PATCH)
 # -------------------------------------------------------
 # Attempt to update a user's data without auth header
 @pytest.mark.asyncio
@@ -361,7 +363,7 @@ async def test_update_user_no_auth(
     dummy_request_data: dict,
 ) -> None:
     response = await app_client.patch(
-        "/users/all/1", data=json.dumps(dummy_request_data["updated_user"])
+        "/users/1", data=json.dumps(dummy_request_data["updated_user"])
     )
     response_data = await response.get_json()
 
@@ -378,7 +380,7 @@ async def test_update_user_malformed_auth(
     dummy_request_data: dict,
 ) -> None:
     response = await app_client.patch(
-        "/users/all/1",
+        "/users/1",
         headers=user_headers["malformed"],
         data=json.dumps(dummy_request_data["updated_user"]),
     )
@@ -401,7 +403,7 @@ async def test_update_user_as_user(
     user["id"] = dummy_users_data["user"]["internal"]
     user["displayName"] = "user123"
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['user']['internal']}",
+        f"/users/{dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
         data=json.dumps(user),
     )
@@ -422,7 +424,7 @@ async def test_update_user_verified_status(
     dummy_users_data: dict,
 ) -> None:
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['user']['internal']}",
+        f"/users/{dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
         data=json.dumps({"emailVerified": True}),
     )
@@ -446,7 +448,7 @@ async def test_update_other_users_display_name_as_user(
     user = dummy_request_data["updated_display"]
     user["id"] = dummy_users_data["moderator"]["internal"]
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['moderator']['internal']}",
+        f"/users/{dummy_users_data['moderator']['internal']}",
         headers=user_headers["user"],
         data=json.dumps(user),
     )
@@ -469,7 +471,7 @@ async def test_update_block_user_as_user(
     user["id"] = dummy_users_data["user"]["internal"]
     user["blocked"] = True
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['user']['internal']}",
+        f"/users/{dummy_users_data['user']['internal']}",
         headers=user_headers["user"],
         data=json.dumps(user),
     )
@@ -492,7 +494,7 @@ async def test_update_user_as_mod(
     user["id"] = dummy_users_data["moderator"]["internal"]
     user["displayName"] = "mod"
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['moderator']['internal']}",
+        f"/users/{dummy_users_data['moderator']['internal']}",
         headers=user_headers["moderator"],
         data=json.dumps(user),
     )
@@ -516,7 +518,7 @@ async def test_update_other_users_display_name_as_mod(
     user = dummy_request_data["updated_display"]
     user["id"] = dummy_users_data["admin"]["internal"]
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['admin']['internal']}",
+        f"/users/{dummy_users_data['admin']['internal']}",
         headers=user_headers["moderator"],
         data=json.dumps(user),
     )
@@ -539,7 +541,7 @@ async def test_update_block_user_as_mod(
     user["id"] = dummy_users_data["moderator"]["internal"]
     user["blocked"] = True
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['moderator']['internal']}",
+        f"/users/{dummy_users_data['moderator']['internal']}",
         headers=user_headers["moderator"],
         data=json.dumps(user),
     )
@@ -562,7 +564,7 @@ async def test_update_user_as_admin(
     user["id"] = dummy_users_data["admin"]["internal"]
     user["displayName"] = "admin123"
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['admin']['internal']}",
+        f"/users/{dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
@@ -587,7 +589,7 @@ async def test_update_other_user_as_admin(
     user["id"] = dummy_users_data["user"]["internal"]
     user["displayName"] = "hello"
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['user']['internal']}",
+        f"/users/{dummy_users_data['user']['internal']}",
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
@@ -611,7 +613,7 @@ async def test_update_block_user_as_admin(
     user = dummy_request_data["updated_unblock_user"]
     user["id"] = dummy_users_data["user"]["internal"]
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['user']['internal']}",
+        f"/users/{dummy_users_data['user']['internal']}",
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
@@ -637,7 +639,7 @@ async def test_update_user_settings_as_admin(
     user["autoRefresh"] = True
     user["pushEnabled"] = True
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['user']['internal']}",
+        f"/users/{dummy_users_data['user']['internal']}",
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
@@ -656,7 +658,7 @@ async def test_update_no_id_user_as_admin(
     dummy_request_data: dict,
 ) -> None:
     response = await app_client.patch(
-        "/users/all/",
+        "/users/",
         headers=user_headers["admin"],
         data=json.dumps(dummy_request_data["updated_user"]),
     )
@@ -681,7 +683,7 @@ async def test_update_admin_settings_as_admin(
     user["pushEnabled"] = True
     user["refreshRate"] = 60
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['admin']['internal']}",
+        f"/users/{dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
@@ -710,14 +712,14 @@ async def test_update_admin_settings_as_admin_invalid_settings(
     user["pushEnabled"] = True
     user["refreshRate"] = 0
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['admin']['internal']}",
+        f"/users/{dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
         data=json.dumps(user),
     )
     response_data = await response.get_json()
 
     get_response = await app_client.get(
-        f"/users/all/{dummy_users_data['admin']['internal']}",
+        f"/users/{dummy_users_data['admin']['internal']}",
         headers=user_headers["admin"],
     )
     get_response_data = await get_response.get_json()
@@ -736,7 +738,7 @@ async def test_update_user_verified_status_and_role(
     dummy_users_data: dict,
 ) -> None:
     response = await app_client.patch(
-        f"/users/all/{dummy_users_data['new']['internal']}",
+        f"/users/{dummy_users_data['new']['internal']}",
         headers=user_headers["newUserRole"],
         data=json.dumps({"emailVerified": True}),
     )
@@ -749,14 +751,14 @@ async def test_update_user_verified_status_and_role(
     assert updated["role"]["id"] == 3
 
 
-# Get User's Posts Tests ('/users/all/<user_id>/posts', GET)
+# Get User's Posts Tests ('/users/<user_id>/posts', GET)
 # -------------------------------------------------------
 # Attempt to get a user's posts without auth header
 @pytest.mark.asyncio
 async def test_get_user_posts_no_auth(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.get("/users/all/1/posts")
+    response = await app_client.get("/users/1/posts")
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -768,9 +770,7 @@ async def test_get_user_posts_no_auth(
 async def test_get_user_posts_malformed_auth(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.get(
-        "/users/all/1/posts", headers=user_headers["malformed"]
-    )
+    response = await app_client.get("/users/1/posts", headers=user_headers["malformed"])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -800,7 +800,7 @@ async def test_get_user_posts(
     posts_num: int,
 ) -> None:
     response = await app_client.get(
-        f"/users/all/{user_id}/posts", headers=user_headers[user]
+        f"/users/{user_id}/posts", headers=user_headers[user]
     )
     response_data = await response.get_json()
 
@@ -811,14 +811,14 @@ async def test_get_user_posts(
     assert len(response_data["posts"]) == posts_num
 
 
-# Delete User's Posts Route Tests ('/users/all/<user_id>/posts', DELETE)
+# Delete User's Posts Route Tests ('/users/<user_id>/posts', DELETE)
 # -------------------------------------------------------
 # Attempt to delete user's posts with no authorisation header
 @pytest.mark.asyncio
 async def test_delete_posts_no_auth(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.delete("/users/all/1/posts")
+    response = await app_client.delete("/users/1/posts")
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -831,7 +831,7 @@ async def test_delete_posts_malformed_auth(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.delete(
-        "/users/all/1/posts", headers=user_headers["malformed"]
+        "/users/1/posts", headers=user_headers["malformed"]
     )
     response_data = await response.get_json()
 
@@ -861,12 +861,12 @@ async def test_delete_own_posts(
     deleted_post: int,
 ) -> None:
     response = await app_client.delete(
-        f"/users/all/{user_id}/posts", headers=user_headers[user]
+        f"/users/{user_id}/posts", headers=user_headers[user]
     )
     response_data = await response.get_json()
 
     get_response = await app_client.get(
-        f"/users/all/{user_id}/posts", headers=user_headers[user]
+        f"/users/{user_id}/posts", headers=user_headers[user]
     )
     get_response_data = await get_response.get_json()
 
@@ -895,7 +895,7 @@ async def test_delete_other_users_posts_no_permission(
     user: str,
 ) -> None:
     response = await app_client.delete(
-        f"/users/all/{user_id}/posts", headers=user_headers[user]
+        f"/users/{user_id}/posts", headers=user_headers[user]
     )
     response_data = await response.get_json()
 
@@ -908,9 +908,7 @@ async def test_delete_other_users_posts_no_permission(
 async def test_delete_other_users_posts_as_admin(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.delete(
-        "/users/all/5/posts", headers=user_headers["admin"]
-    )
+    response = await app_client.delete("/users/5/posts", headers=user_headers["admin"])
     response_data = await response.get_json()
 
     assert response_data["success"] is True
@@ -924,7 +922,7 @@ async def test_delete_nonexistent_users_posts_as_admin(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.delete(
-        "/users/all/100/posts", headers=user_headers["admin"]
+        "/users/100/posts", headers=user_headers["admin"]
     )
     response_data = await response.get_json()
 
@@ -937,25 +935,21 @@ async def test_delete_nonexistent_users_posts_as_admin(
 async def test_delete_nonexistent_posts_as_admin(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.delete(
-        "/users/all/9/posts", headers=user_headers["admin"]
-    )
+    response = await app_client.delete("/users/9/posts", headers=user_headers["admin"])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
 
 
-# Send a Hug for user Tests ('/users/all/<user_id>/hugs', POST)
+# Send a Hug for user Tests ('/users/<user_id>/hugs', POST)
 # -------------------------------------------------------
 # Attempt to send hugs for a post that doesn't exist
 @pytest.mark.asyncio
 async def test_user_hugs_post_no_existing(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.post(
-        "/users/all/1000/hugs", headers=user_headers["admin"]
-    )
+    response = await app_client.post("/users/1000/hugs", headers=user_headers["admin"])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -967,9 +961,7 @@ async def test_user_hugs_post_no_existing(
 async def test_user_hugs(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.post(
-        "/users/all/1/hugs", headers=user_headers["moderator"]
-    )
+    response = await app_client.post("/users/1/hugs", headers=user_headers["moderator"])
     response_data = await response.get_json()
 
     assert response_data["success"] is True
