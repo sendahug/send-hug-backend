@@ -59,6 +59,14 @@ async def send_email_notification(user_id: int, data: RawPushData) -> None:
     try:
         send_email(**notification_data)
     # If there's an error, print the details
+    except KeyError as e:
+        if e.args[0] != "email":
+            raise e
+
+        # sendgrid weirdly wipes the email if it's not valid when creating the To object
+        # leading to a KeyError when trying to send the email later
+        current_app.logger.error(f"Invalid email address: {user.email}")
+
     except UnauthorizedError as e:
         # TODO: add more exceptions
         current_app.logger.error(e)
