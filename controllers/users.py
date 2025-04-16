@@ -30,10 +30,10 @@ users_endpoints = Blueprint("users", __name__)
 @requires_auth(sah_config, ["read:admin-board"])
 async def get_users(token_payload: UserData) -> Response:
     page = request.args.get("page", 1, type=int)
-    user_type = request.args.get("type", None, type=str)
+    blocked = request.args.get("blocked", None, type=bool)
 
     # If the type of users to fetch is blocked users
-    if user_type and user_type.lower() == "blocked":
+    if blocked is True:
         # Check which users need to be unblocked
         current_date = datetime.now()
         user_scalars = await sah_config.db.session.scalars(

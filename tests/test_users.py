@@ -40,7 +40,7 @@ from models.db import SendADatabase
 async def test_get_user_list_no_auth(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.get("/users?type=blocked")
+    response = await app_client.get("/users?blocked=true")
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -67,7 +67,7 @@ async def test_get_user_list_auth_error(
     user: str,
     error_code: int,
 ) -> None:
-    response = await app_client.get("/users?type=blocked", headers=user_headers[user])
+    response = await app_client.get("/users?blocked=true", headers=user_headers[user])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -80,7 +80,7 @@ async def test_get_user_list_as_admin(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.get(
-        "/users?type=blocked", headers=user_headers["admin"]
+        "/users?blocked=true", headers=user_headers["admin"]
     )
     response_data = await response.get_json()
 
