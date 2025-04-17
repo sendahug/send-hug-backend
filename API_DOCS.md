@@ -15,13 +15,13 @@ For full instructions check the [`backend README`](./backend/README.md)
 3. [POST /posts](#post-posts)
 4. [PATCH /posts/<post_id>](#patch-postspost_id)
 5. [DELETE /posts/<post_id>](#delete-postspost_id)
-6. [GET /posts/<post_type>](#get-postspost_type)
+6. [GET /posts](#get-posts)
 7. [GET /users/<user_type>](#get-usersuser_type)
-8. [GET /users/all/<user_id>](#get-usersalluser_id)
+8. [GET /users/<user_id>](#get-usersalluser_id)
 9. [POST /users](#post-users)
-10. [PATCH /users/all/<user_id>](#patch-usersalluser_id)
-11. [GET /users/all/<user_id>/posts](#get-usersalluser_idposts)
-12. [DELETE /users/all/<user_id>/posts](#delete-usersalluser_idposts)
+10. [PATCH /users/<user_id>](#patch-usersuser_id)
+11. [GET /users/<user_id>/posts](#get-usersuser_idposts)
+12. [DELETE /users/<user_id>/posts](#delete-usersuser_idposts)
 13. [GET /messages](#get-messages)
 14. [POST /messages](#post-messages)
 15. [DELETE /messages/<mailbox_type>/<item_id>](#delete-messagesmailbox_typeitem_id)
@@ -337,7 +337,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### GET /posts/<post_type>
+### GET /posts
 **Description**: Gets the new/recent posts, depending on the type passed on. Recent posts are ordered by descending order (most recent to least recent).
 
 **Handler Function**: get_new_posts.
@@ -357,7 +357,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Expected Errors**: None.
 
-**CURL Request Sample**: `curl http://127.0.0.1:5000/posts/new` or `curl http://127.0.0.1:5000/posts/suggested`
+**CURL Request Sample**: `curl http://127.0.0.1:5000/posts?type=new` or `curl http://127.0.0.1:5000/posts?type=suggested`
 
 **Response Example:**
 1. For new posts:
@@ -460,7 +460,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### GET /users/<user_type>
+### GET /users
 **Description**: Gets a list of users by a given type (like 'blocked users') from the databsae.
 
 **Handler Function**: get_users_by_type.
@@ -480,7 +480,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 
 **Expected Errors**: None.
 
-**CURL Request Sample**: `curl http://127.0.0.1:5000/users/blocked -H 'Authorization: Bearer <YOUR_TOKEN>'`
+**CURL Request Sample**: `curl http://127.0.0.1:5000/users?type=blocked -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
@@ -491,7 +491,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### GET /users/all/<user_id>
+### GET /users/<user_id>
 **Description**: Gets a user's data from the database.
 
 **Handler Function**: get_user_data.
@@ -510,7 +510,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Expected Errors**:
   - 404 (Not Found) - In case no ID was supplied or there's no user with that ID.
 
-**CURL Request Sample**: `curl http://127.0.0.1:5000/users/all/bc7e50 -H 'Authorization: Bearer <YOUR_TOKEN>'`
+**CURL Request Sample**: `curl http://127.0.0.1:5000/users/bc7e50 -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
@@ -551,7 +551,7 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 422 (Unprocessable) - In case the user is attempting to create a user other than themselves.
   - 500 (Internal Server Error) - In case there's an error updating the user's data in the database.
 
-### PATCH /users/all/<user_id>
+### PATCH /users/<user_id>
 **Description**: Updates a user's data in the database.
 
 **Handler Function**: edit_user.
@@ -578,7 +578,7 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 404 (Not Found) - In case no ID was supplied.
   - 500 (Internal Server Error) - In case there's an error updating the user's data in the database.
 
-**CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/users/all/4 -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"displayName":"user_14", "receivedH":0, "givenH":0, "posts":2, "loginCount":2}'`
+**CURL Request Sample**: `curl -X PATCH http://127.0.0.1:5000/users/4 -H "Content-Type: application/json" -H 'Authorization: Bearer <YOUR_TOKEN>' -d '{"displayName":"user_14", "receivedH":0, "givenH":0, "posts":2, "loginCount":2}'`
 
 **Response Example:**
 ```
@@ -596,7 +596,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### GET /users/all/<user_id>/posts
+### GET /users/<user_id>/posts
 **Description**: Gets the user's posts.
 
 **Handler Function**: get_user_posts.
@@ -618,7 +618,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Expected Errors**:
   - 400 (Bad Request) - In case there's no ID supplied.
 
-**CURL Request Sample**: `curl http://127.0.0.1:5000/users/all/4/posts -H 'Authorization: Bearer <YOUR_TOKEN>'`
+**CURL Request Sample**: `curl http://127.0.0.1:5000/users/4/posts -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
@@ -638,7 +638,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### DELETE /users/all/<user_id>/posts
+### DELETE /users/<user_id>/posts
 **Description**: Deletes all of the user's posts.
 
 **Handler Function**: delete_user_posts.
@@ -660,7 +660,7 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 404 (Not Found) - In case there are no posts to delete.
   - 500 (Internal Server Error) - In case there's an issue deleting the posts.
 
-**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/users/all/4/posts -H 'Authorization: Bearer <YOUR_TOKEN>'`
+**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/users/4/posts -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```

@@ -22,17 +22,18 @@ from utils.push_notifications import RawPushData
 users_endpoints = Blueprint("users", __name__)
 
 
-# Endpoint: GET /users/<type>
+# Endpoint: GET /users
 # Description: Gets users by a given type.
-# Parameters: type - A type by which to filter the users.
+# Parameters: None.
 # Authorization: read:admin-board.
-@users_endpoints.route("/users/<type>")
+@users_endpoints.route("/users")
 @requires_auth(sah_config, ["read:admin-board"])
-async def get_users_by_type(token_payload: UserData, type: str) -> Response:
+async def get_users(token_payload: UserData) -> Response:
     page = request.args.get("page", 1, type=int)
+    blocked = request.args.get("blocked", None, type=bool)
 
     # If the type of users to fetch is blocked users
-    if type.lower() == "blocked":
+    if blocked is True:
         # Check which users need to be unblocked
         current_date = datetime.now()
         user_scalars = await sah_config.db.session.scalars(
@@ -67,11 +68,11 @@ async def get_users_by_type(token_payload: UserData, type: str) -> Response:
     )
 
 
-# Endpoint: GET /users/all/<user_id>
+# Endpoint: GET /users/<user_id>
 # Description: Gets the user's data.
 # Parameters: user_id - The user's Firebase ID / internal ID.
 # Authorization: read:user.
-@users_endpoints.route("/users/all/<user_id>")
+@users_endpoints.route("/users/<user_id>")
 @requires_auth(sah_config, ["read:user"])
 async def get_user_data(token_payload: UserData, user_id: int | str) -> Response:
     # Try to convert it to a number; if it's a number, it's a
@@ -170,11 +171,11 @@ async def add_user(token_payload) -> Response:
     return jsonify({"success": True, "user": added_user})
 
 
-# Endpoint: PATCH /users/all/<user_id>
+# Endpoint: PATCH /users/<user_id>
 # Description: Updates a user in the database.
 # Parameters: user_id - ID of the user to update.
 # Authorization: patch:user or patch:any-user.
-@users_endpoints.route("/users/all/<user_id>", methods=["PATCH"])
+@users_endpoints.route("/users/<user_id>", methods=["PATCH"])
 @requires_auth(sah_config, ["patch:user", "patch:any-user"])
 async def edit_user(token_payload: UserData, user_id: int) -> Response:
     # Check if the user ID isn't an integer; if it isn't, abort
@@ -344,11 +345,11 @@ async def edit_user(token_payload: UserData, user_id: int) -> Response:
     return jsonify({"success": True, "updated": updated})
 
 
-# Endpoint: GET /users/all/<user_id>/posts
+# Endpoint: GET /users/<user_id>/posts
 # Description: Gets a specific user's posts.
 # Parameters: user_id - whose posts to fetch.
 # Authorization: read:user.
-@users_endpoints.route("/users/all/<user_id>/posts")
+@users_endpoints.route("/users/<user_id>/posts")
 @requires_auth(sah_config, ["read:user"])
 async def get_user_posts(token_payload: UserData, user_id: int) -> Response:
     page = request.args.get("page", 1, type=int)
@@ -375,11 +376,11 @@ async def get_user_posts(token_payload: UserData, user_id: int) -> Response:
     )
 
 
-# Endpoint: DELETE /users/all/<user_id>/posts
+# Endpoint: DELETE /users/<user_id>/posts
 # Description: Deletes a specific user's posts.
 # Parameters: user_id - whose posts to delete.
 # Authorization: delete:my-post or delete:any-post
-@users_endpoints.route("/users/all/<user_id>/posts", methods=["DELETE"])
+@users_endpoints.route("/users/<user_id>/posts", methods=["DELETE"])
 @requires_auth(sah_config, ["delete:my-post", "delete:any-post"])
 async def delete_user_posts(token_payload: UserData, user_id: int) -> Response:
     validator.check_type(user_id, "User ID")
@@ -419,11 +420,11 @@ async def delete_user_posts(token_payload: UserData, user_id: int) -> Response:
     return jsonify({"success": True, "userID": int(user_id), "deleted": post_count})
 
 
-# Endpoint: POST /users/all/<user_id>/hugs
+# Endpoint: POST /users/<user_id>/hugs
 # Description: Sends a hug to a specific user.
 # Parameters: user_id - the user to send a hug to.
 # Authorization: read:user
-@users_endpoints.route("/users/all/<user_id>/hugs", methods=["POST"])
+@users_endpoints.route("/users/<user_id>/hugs", methods=["POST"])
 @requires_auth(sah_config, ["read:user"])
 async def send_hug_to_user(token_payload: UserData, user_id: int) -> Response:
     validator.check_type(user_id, "User ID")

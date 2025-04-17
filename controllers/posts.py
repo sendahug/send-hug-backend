@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, cast
+from typing import cast
 
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import desc, false, select
@@ -18,6 +18,33 @@ from models import CoreSAHModel, Message, Notification, Post, User
 from utils.push_notifications import RawPushData
 
 posts_endpoints = Blueprint("posts", __name__)
+
+
+# Endpoint: GET /posts
+# Description: Gets all posts.
+# Parameters: None
+# Authorization: None.
+@posts_endpoints.route("/posts")
+async def get_posts() -> Response:
+    page = request.args.get("page", 1, type=int)
+    posts_type = request.args.get("type", "new", type=str)
+
+    full_posts_query = select(Post).filter(Post.open_report == false())
+
+    if posts_type == "new":
+        full_posts_query = full_posts_query.order_by(desc(Post.date))
+    else:
+        full_posts_query = full_posts_query.order_by(Post.given_hugs, Post.date)
+
+    paginated_posts = await sah_config.db.paginate(full_posts_query, current_page=page)
+
+    return jsonify(
+        {
+            "success": True,
+            "posts": paginated_posts.resource,
+            "total_pages": paginated_posts.total_pages,
+        }
+    )
 
 
 # Endpoint: POST /posts
@@ -257,29 +284,3 @@ async def delete_post(token_payload: UserData, post_id: int) -> Response:
     await sah_config.db.delete_object(post_data)
 
     return jsonify({"success": True, "deleted": int(post_id)})
-
-
-# Endpoint: GET /posts/<type>
-# Description: Gets all new posts.
-# Parameters: type - Type of posts (new or suggested) to fetch.
-# Authorization: None.
-@posts_endpoints.route("/posts/<type>")
-async def get_new_posts(type: Literal["new", "suggested"]) -> Response:
-    page = request.args.get("page", 1, type=int)
-
-    full_posts_query = select(Post).filter(Post.open_report == false())
-
-    if type == "new":
-        full_posts_query = full_posts_query.order_by(desc(Post.date))
-    else:
-        full_posts_query = full_posts_query.order_by(Post.given_hugs, Post.date)
-
-    paginated_posts = await sah_config.db.paginate(full_posts_query, current_page=page)
-
-    return jsonify(
-        {
-            "success": True,
-            "posts": paginated_posts.resource,
-            "total_pages": paginated_posts.total_pages,
-        }
-    )
