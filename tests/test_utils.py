@@ -28,6 +28,7 @@ from typing import Generator
 
 import pytest
 from pytest_mock import MockerFixture
+from python_http_client import BadRequestsError
 from python_http_client.client import Response
 
 from utils.email import SG_CLIENT, generate_email_data, send_email
@@ -240,3 +241,64 @@ def test_email_send(mocker: MockerFixture) -> None:
         content="This test email rocks so hard it ground down a diamond",
     )
     assert response == "Send worked!"
+
+
+@pytest.mark.parametrize(
+    "to, subject, content, from_email, expected_exception",
+    [
+        (
+            "",
+            "Test missing 'to'",
+            "This test email rocks so hard it ground down a diamond",
+            "notifications@send-hug.com",
+            BadRequestsError,
+        ),
+        (
+            "tests@send-hug.com",
+            "",
+            "This test email rocks so hard it ground down a diamond",
+            "notifications@send-hug.com",
+            BadRequestsError,
+        ),
+        (
+            "tests@send-hug,com",
+            "Test missing content",
+            "",
+            "notifications@send-hug.com",
+            KeyError,  # bizarrely, SendGrid says email missing when content is empty
+        ),
+        (
+            "tests@send-hug,com",
+            "Test missing 'from'",
+            "This test email rocks so hard it ground down a diamond",
+            "",
+            KeyError,
+        ),
+        (
+            "invalid_email",
+            "Test invalid 'to'",
+            "This test email rocks so hard it ground down a diamond",
+            "notifications@send-hug.com",
+            KeyError,  # SendGrid wipes invalid emails so complains about missing email
+        ),
+        (
+            "tests@send-hug,com",
+            "Test invalid 'from'",
+            "This test email rocks so hard it ground down a diamond",
+            "invalid_email",
+            KeyError,  # SendGrid wipes invalid emails so complains about missing email
+        ),
+    ],
+)
+def test_email_send_error(
+    to: str,
+    subject: str,
+    content: str,
+    from_email: str,
+    expected_exception: type[Exception],
+) -> None:
+    with pytest.raises(expected_exception=expected_exception) as exc:
+        send_email(to=to, subject=subject, content=content, from_email=from_email)
+
+    if isinstance(exc.value, KeyError):
+        assert exc.value.args[0] == "email"

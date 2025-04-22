@@ -2,7 +2,7 @@ import json
 import os
 from typing import Sequence, cast
 
-from python_http_client import UnauthorizedError
+from python_http_client import BadRequestsError, UnauthorizedError
 from pywebpush import WebPushException, webpush  # type: ignore
 from quart import current_app
 from sqlalchemy import and_, or_, select
@@ -59,13 +59,22 @@ async def send_email_notification(user_id: int, data: RawPushData) -> None:
     try:
         send_email(**notification_data)
     # If there's an error, print the details
-    except KeyError as e:
-        if e.args[0] != "email":
-            raise e
+    except KeyError:
+        if notification_data["content"] == "":
+            # SendGrid seems to think that missing content means the email is missing
+            current_app.logger.error("Missing email content - no email sent")
+        else:
+            # sendgrid weirdly wipes the email if it's not valid when creating the To
+            # object leading to a KeyError when trying to send the email later
+            current_app.logger.error(f"Invalid email address: {user.email}")
 
-        # sendgrid weirdly wipes the email if it's not valid when creating the To object
-        # leading to a KeyError when trying to send the email later
-        current_app.logger.error(f"Invalid email address: {user.email}")
+    except BadRequestsError as e:
+        if notification_data["to"] == "":
+            current_app.logger.error("Missing to address - no email sent")
+        elif notification_data["subject"] == "":
+            current_app.logger.error("Missing subject - no email sent")
+        else:
+            current_app.logger.error(f"Unknown error: {e}")
 
     except UnauthorizedError as e:
         # TODO: add more exceptions
