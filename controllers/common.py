@@ -2,7 +2,7 @@ import json
 import os
 from typing import Sequence, cast
 
-from python_http_client import BadRequestsError, UnauthorizedError
+from python_http_client import UnauthorizedError
 from pywebpush import WebPushException, webpush  # type: ignore
 from quart import current_app
 from sqlalchemy import and_, or_, select
@@ -11,7 +11,14 @@ from config.config import sah_config
 
 from models import Filter, NotificationSub, Thread
 from models.schemas.users import User
-from utils.email import generate_email_data, send_email
+from utils.email import (
+    InvalidEmailToError,
+    MissingEmailContentError,
+    MissingEmailSubjectError,
+    MissingEmailToError,
+    generate_email_data,
+    send_email,
+)
 from utils.push_notifications import (
     RawPushData,
     generate_push_data,
@@ -58,26 +65,16 @@ async def send_email_notification(user_id: int, data: RawPushData) -> None:
     # Try to send the email notification
     try:
         send_email(**notification_data)
-    # If there's an error, print the details
-    except KeyError:
-        if notification_data["content"] == "":
-            # SendGrid seems to think that missing content means the email is missing
-            current_app.logger.error("Missing email content - no email sent")
-        else:
-            # sendgrid weirdly wipes the email if it's not valid when creating the To
-            # object leading to a KeyError when trying to send the email later
-            current_app.logger.error(f"Invalid email address: {user.email}")
-
-    except BadRequestsError as e:
-        if notification_data["to"] == "":
-            current_app.logger.error("Missing to address - no email sent")
-        elif notification_data["subject"] == "":
-            current_app.logger.error("Missing subject - no email sent")
-        else:
-            current_app.logger.error(f"Unknown error: {e}")
-
+    # If there's an error, log the details
+    except MissingEmailContentError:
+        current_app.logger.error("Missing email content - no email sent")
+    except InvalidEmailToError:
+        current_app.logger.error(f"Invalid email address: {user.email}")
+    except MissingEmailToError:
+        current_app.logger.error("Missing to address - no email sent")
+    except MissingEmailSubjectError:
+        current_app.logger.error("Missing subject - no email sent")
     except UnauthorizedError as e:
-        # TODO: add more exceptions
         current_app.logger.error(e)
 
 
