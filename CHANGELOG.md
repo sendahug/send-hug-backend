@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### 2025-04-17
+
+#### Breaking Changes
+
+- Changed the `/posts/<type>` endpoint's path to `/posts`. The type of posts is now passed in as a query parameter (`type`). This change was made to make the endpoint structure more consistent with the rest of the API. ([#744](https://github.com/sendahug/send-hug-backend/pull/744))
+- Removed the `/all` path fragment from the users' endpoints. The `/all` path parameter was added as a workaround to allow fetching users based on type. However, this led to inconsistency in the API design, as the users endpoints were the only ones with the added (unnecessary) path fragment. This simplifies the structure of these endpoints and makes them more consistent with the rest of the API. ([#744](https://github.com/sendahug/send-hug-backend/pull/744))
+- Changed the `/users/all` endpoint's path to `/users`. The blocked status of users is now passed in as a query parameter (`blocked`, either true or false). This change was made to make the endpoint structure more consistent with the rest of the API. ([#744](https://github.com/sendahug/send-hug-backend/pull/744))
+
 ### 2025-04-06
 
 #### Features

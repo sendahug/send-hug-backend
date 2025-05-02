@@ -617,7 +617,7 @@ async def test_delete_post_no_id_as_admin(
 async def test_get_full_posts_page_1(
     app_client: TestClientProtocol, test_db: SendADatabase, post_type: str
 ) -> None:
-    response = await app_client.get(f"/posts/{post_type}")
+    response = await app_client.get(f"/posts?type={post_type}")
     response_data = await response.get_json()
 
     assert response_data["success"] is True
@@ -638,7 +638,7 @@ async def test_get_full_posts_page_1(
 async def test_get_full_posts_page_2(
     app_client: TestClientProtocol, test_db: SendADatabase, post_type: str
 ) -> None:
-    response = await app_client.get(f"/posts/{post_type}?page=2")
+    response = await app_client.get(f"/posts?type={post_type}&page=2")
     response_data = await response.get_json()
 
     assert response_data["success"] is True
