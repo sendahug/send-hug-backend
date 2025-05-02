@@ -14,8 +14,6 @@ from models.schemas.users import User
 from utils.email import (
     InvalidEmailToError,
     MissingEmailContentError,
-    MissingEmailSubjectError,
-    MissingEmailToError,
     generate_email_data,
     send_email,
 )
@@ -70,10 +68,6 @@ async def send_email_notification(user_id: int, data: RawPushData) -> None:
         current_app.logger.error("Missing email content - no email sent")
     except InvalidEmailToError:
         current_app.logger.error(f"Invalid email address: {user.email}")
-    except MissingEmailToError:
-        current_app.logger.error("Missing to address - no email sent")
-    except MissingEmailSubjectError:
-        current_app.logger.error("Missing subject - no email sent")
     except UnauthorizedError as e:
         current_app.logger.error(e)
 

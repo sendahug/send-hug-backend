@@ -32,6 +32,7 @@ from quart.typing import TestClientProtocol
 from controllers.common import send_email_notification
 
 from models.db import SendADatabase
+from utils.email import InvalidEmailToError, MissingEmailContentError
 from utils.push_notifications import RawPushData
 
 
@@ -51,3 +52,26 @@ async def test_send_email_notification(
         "subject": "New message",
         "content": "This is a test\n\nhttp://localhost:3000/messages/inbox",
     }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "user_id, data, expected_exception",
+    [
+        (4, RawPushData(type="message", text="This is a test"), InvalidEmailToError),
+        (1, RawPushData(type="message", text=""), MissingEmailContentError),
+    ],
+)
+async def test_send_email_notification_errors(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_id: int,
+    data: RawPushData,
+    expected_exception: type[Exception],
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch("controllers.common.send_email")
+
+    async with app_client.app.app_context():
+        with pytest.raises(expected_exception):
+            await send_email_notification(user_id=user_id, data=data)
