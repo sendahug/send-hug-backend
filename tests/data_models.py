@@ -227,7 +227,7 @@ async def create_users(db: SendADatabase) -> None:
         role_id=2,
         firebase_id="efgh",
         email_verified=True,
-        email="user3@user3.com",
+        email="",
         user_settings=UserSetting(
             email_notifications_enabled=True,
             message_notifications=True,

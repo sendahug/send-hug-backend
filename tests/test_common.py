@@ -54,7 +54,7 @@ async def test_send_email_notification(
 
 
 # send_email_notification auto populates from address, subject and content
-# so only real error that can happen is an invalid to email address
+# so only real error that can happen is an invalid or missing to email address
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "user_id, data, expected_log_message",
@@ -63,6 +63,11 @@ async def test_send_email_notification(
             4,
             RawPushData(type="message", text="This is a test"),
             "Invalid email address: invalid_email",
+        ),
+        (
+            5,
+            RawPushData(type="message", text="This is a test"),
+            "Missing email address",
         ),
     ],
 )
