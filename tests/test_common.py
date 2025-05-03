@@ -32,7 +32,6 @@ from quart.typing import TestClientProtocol
 from controllers.common import send_email_notification
 
 from models.db import SendADatabase
-from utils.email import InvalidEmailToError, MissingEmailContentError
 from utils.push_notifications import RawPushData
 
 
@@ -54,12 +53,17 @@ async def test_send_email_notification(
     }
 
 
+# send_email_notification auto populates from address, subject and content
+# so only real error that can happen is an invalid to email address
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "user_id, data, expected_exception",
+    "user_id, data, expected_log_message",
     [
-        (4, RawPushData(type="message", text="This is a test"), InvalidEmailToError),
-        (1, RawPushData(type="message", text=""), MissingEmailContentError),
+        (
+            4,
+            RawPushData(type="message", text="This is a test"),
+            "Invalid email address: invalid_email",
+        ),
     ],
 )
 async def test_send_email_notification_errors(
@@ -67,11 +71,14 @@ async def test_send_email_notification_errors(
     test_db: SendADatabase,
     user_id: int,
     data: RawPushData,
-    expected_exception: type[Exception],
+    expected_log_message: str,
     mocker: MockerFixture,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
-    mocker.patch("controllers.common.send_email")
+    mocker.patch("utils.email.SG_CLIENT")
 
     async with app_client.app.app_context():
-        with pytest.raises(expected_exception):
-            await send_email_notification(user_id=user_id, data=data)
+        caplog.clear()
+        await send_email_notification(user_id=user_id, data=data)
+
+    assert expected_log_message in caplog.messages

@@ -13,7 +13,6 @@ from models import Filter, NotificationSub, Thread
 from models.schemas.users import User
 from utils.email import (
     InvalidEmailToError,
-    MissingEmailContentError,
     generate_email_data,
     send_email,
 )
@@ -59,13 +58,10 @@ async def send_email_notification(user_id: int, data: RawPushData) -> None:
         return
 
     notification_data = generate_email_data(to=user.email, data=data)
-
     # Try to send the email notification
     try:
         send_email(**notification_data)
     # If there's an error, log the details
-    except MissingEmailContentError:
-        current_app.logger.error("Missing email content - no email sent")
     except InvalidEmailToError:
         current_app.logger.error(f"Invalid email address: {user.email}")
     except UnauthorizedError as e:
