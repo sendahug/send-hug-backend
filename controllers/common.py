@@ -62,6 +62,8 @@ async def send_email_notification(user_id: int, data: RawPushData) -> None:
     try:
         send_email(**notification_data)
     # If there's an error, log the details
+    # note that generate_email_data auto populates from address, subject and content
+    # so only real error that can happen is an invalid to email address
     except InvalidEmailToError:
         current_app.logger.error(f"Invalid email address: {user.email}")
     except UnauthorizedError as e:
