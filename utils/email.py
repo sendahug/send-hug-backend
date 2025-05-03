@@ -42,6 +42,30 @@ SG_CLIENT = SendGridAPIClient(api_key=os.environ.get("SENDGRID_KEY"))
 DEFAULT_FROM = "notifications@send-hug.com"
 
 
+class MissingEmailToError(Exception):
+    pass
+
+
+class MissingEmailFromError(Exception):
+    pass
+
+
+class MissingEmailSubjectError(Exception):
+    pass
+
+
+class MissingEmailContentError(Exception):
+    pass
+
+
+class InvalidEmailToError(Exception):
+    pass
+
+
+class InvalidEmailFromError(Exception):
+    pass
+
+
 def generate_email_data(to: str, data: RawPushData) -> EmailData:
     """
     Generates the email notification's data from the
@@ -62,6 +86,22 @@ def send_email(
     """
     Function that simplifies the sending of emails for use in notifications or similar
     """
+    if not to:
+        raise MissingEmailToError("Missing email 'to' field")
+    if not from_email:
+        raise MissingEmailFromError("Missing email 'from' field")
+    if not subject:
+        raise MissingEmailSubjectError("Missing email 'subject' field")
+    if not content:
+        raise MissingEmailContentError("Missing email 'content' field")
+
+    to_address = To(to)
+    if not to_address.email:
+        raise InvalidEmailToError(f"Invalid email 'to' field: {to}")
+    from_address = Email(from_email)
+    if not from_address.email:
+        raise InvalidEmailFromError(f"Invalid email 'from' field: {from_email}")
+
     mail = Mail(Email(from_email), To(to), subject, Content("text/plain", content))
     # No types. Le sigh https://github.com/sendgrid/sendgrid-python/issues/956
     response = SG_CLIENT.client.mail.send.post(request_body=mail.get())  # type: ignore

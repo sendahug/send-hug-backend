@@ -30,7 +30,17 @@ import pytest
 from pytest_mock import MockerFixture
 from python_http_client.client import Response
 
-from utils.email import SG_CLIENT, generate_email_data, send_email
+from utils.email import (
+    SG_CLIENT,
+    InvalidEmailFromError,
+    InvalidEmailToError,
+    MissingEmailContentError,
+    MissingEmailFromError,
+    MissingEmailSubjectError,
+    MissingEmailToError,
+    generate_email_data,
+    send_email,
+)
 from utils.filter import WordFilter
 from utils.push_notifications import (
     RawPushData,
@@ -240,3 +250,66 @@ def test_email_send(mocker: MockerFixture) -> None:
         content="This test email rocks so hard it ground down a diamond",
     )
     assert response == "Send worked!"
+
+
+@pytest.mark.parametrize(
+    "to, subject, content, from_email, expected_exception",
+    [
+        (
+            "",
+            "Test missing 'to'",
+            "This test email rocks so hard it ground down a diamond",
+            "notifications@send-hug.com",
+            MissingEmailToError,
+        ),
+        (
+            "tests@send-hug.com",
+            "",
+            "This test email rocks so hard it ground down a diamond",
+            "notifications@send-hug.com",
+            MissingEmailSubjectError,
+        ),
+        (
+            "tests@send-hug,com",
+            "Test missing content",
+            "",
+            "notifications@send-hug.com",
+            MissingEmailContentError,
+        ),
+        (
+            "tests@send-hug,com",
+            "Test missing 'from'",
+            "This test email rocks so hard it ground down a diamond",
+            "",
+            MissingEmailFromError,
+        ),
+        (
+            "invalid_email",
+            "Test invalid 'to'",
+            "This test email rocks so hard it ground down a diamond",
+            "notifications@send-hug.com",
+            InvalidEmailToError,
+        ),
+        (
+            "tests@send-hug.com",
+            "Test invalid 'from'",
+            "This test email rocks so hard it ground down a diamond",
+            "invalid_email",
+            InvalidEmailFromError,
+        ),
+    ],
+)
+def test_email_send_error(
+    to: str,
+    subject: str,
+    content: str,
+    from_email: str,
+    expected_exception: type[Exception],
+    mocker: MockerFixture,
+) -> None:
+    mock_client = mocker.MagicMock()
+    mock_client.mail.send.post.return_value = "Send worked!"
+    mocker.patch.object(SG_CLIENT, "client", new=mock_client)
+
+    with pytest.raises(expected_exception=expected_exception):
+        send_email(to=to, subject=subject, content=content, from_email=from_email)

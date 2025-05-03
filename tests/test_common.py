@@ -51,3 +51,39 @@ async def test_send_email_notification(
         "subject": "New message",
         "content": "This is a test\n\nhttp://localhost:3000/messages/inbox",
     }
+
+
+# send_email_notification auto populates from address, subject and content
+# so only real error that can happen is an invalid or missing to email address
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "user_id, data, expected_log_message",
+    [
+        (
+            4,
+            RawPushData(type="message", text="This is a test"),
+            "Invalid email address: invalid_email",
+        ),
+        (
+            5,
+            RawPushData(type="message", text="This is a test"),
+            "Missing email address",
+        ),
+    ],
+)
+async def test_send_email_notification_errors(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_id: int,
+    data: RawPushData,
+    expected_log_message: str,
+    mocker: MockerFixture,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    mocker.patch("utils.email.SG_CLIENT")
+
+    async with app_client.app.app_context():
+        caplog.clear()
+        await send_email_notification(user_id=user_id, data=data)
+
+    assert expected_log_message in caplog.messages

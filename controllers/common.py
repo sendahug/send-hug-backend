@@ -11,7 +11,12 @@ from config.config import sah_config
 
 from models import Filter, NotificationSub, Thread
 from models.schemas.users import User
-from utils.email import generate_email_data, send_email
+from utils.email import (
+    InvalidEmailToError,
+    MissingEmailToError,
+    generate_email_data,
+    send_email,
+)
 from utils.push_notifications import (
     RawPushData,
     generate_push_data,
@@ -54,13 +59,17 @@ async def send_email_notification(user_id: int, data: RawPushData) -> None:
         return
 
     notification_data = generate_email_data(to=user.email, data=data)
-
     # Try to send the email notification
     try:
         send_email(**notification_data)
-    # If there's an error, print the details
+    # If there's an error, log the details
+    # note that generate_email_data auto populates from address, subject and content
+    # so only real error that can happen is an invalid or missing to email address
+    except MissingEmailToError:
+        current_app.logger.error("Missing email address")
+    except InvalidEmailToError:
+        current_app.logger.error(f"Invalid email address: {user.email}")
     except UnauthorizedError as e:
-        # TODO: add more exceptions
         current_app.logger.error(e)
 
 
