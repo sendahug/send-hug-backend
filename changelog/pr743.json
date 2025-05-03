@@ -1,9 +1,0 @@
-{
-    "pr_number": 743,
-    "changes": [
-        {
-            "change": "Fixes",
-            "description": "Added an invalid email handler to the email sending function to allow messages to still be sent if users do not have valid emails present."
-        }
-    ]
-}

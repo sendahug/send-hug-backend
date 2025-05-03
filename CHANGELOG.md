@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2025-05-03
+
+#### Fixes
+
+- Added an invalid email handler to the email sending function to allow messages to still be sent if users do not have valid emails present. ([#743](https://github.com/sendahug/send-hug-backend/pull/743))
+
 ### 2025-04-17
 
 #### Breaking Changes
