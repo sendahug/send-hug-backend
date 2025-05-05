@@ -32,7 +32,11 @@ from pytest_mock import MockerFixture
 from pywebpush import WebPushException  # type: ignore
 from quart.typing import TestClientProtocol
 
-from controllers.common import send_email_notification, send_push_notification
+from controllers.common import (
+    get_current_filters,
+    send_email_notification,
+    send_push_notification,
+)
 
 from models import NotificationSub
 from models.db import SendADatabase
@@ -154,3 +158,10 @@ async def test_send_push_notification_error(
         await send_push_notification(user_id=user_id, data=push_data)
 
     assert "push_error!" in caplog.messages[0]
+
+
+@pytest.mark.asyncio
+async def test_get_current_filters(test_db: SendADatabase):
+    filters_result = await get_current_filters()
+
+    assert filters_result == ["filtered_word_1", "filtered_word_2"]
