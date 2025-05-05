@@ -25,12 +25,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import json
+
 import pytest
 from pytest_mock import MockerFixture
+from pywebpush import WebPushException  # type: ignore
 from quart.typing import TestClientProtocol
 
-from controllers.common import send_email_notification
+from controllers.common import send_email_notification, send_push_notification
 
+from models import NotificationSub
 from models.db import SendADatabase
 from utils.push_notifications import RawPushData
 
@@ -87,3 +91,66 @@ async def test_send_email_notification_errors(
         await send_email_notification(user_id=user_id, data=data)
 
     assert expected_log_message in caplog.messages
+
+
+@pytest.mark.asyncio
+async def test_send_push_notification(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    user_id = 4
+    push_data = RawPushData(type="hug", text="User sent you a hug")
+    mock_vapid_key = "KEY"
+    mock_push_data = {"data": "data"}
+    mock_vapid_claims = {"my": "claim"}
+    monkeypatch.setenv("PRIVATE_VAPID_KEY", mock_vapid_key)
+    generate_push_data_mock = mocker.patch(
+        "controllers.common.generate_push_data", return_value=mock_push_data
+    )
+    generate_vapid_claims_mock = mocker.patch(
+        "controllers.common.generate_vapid_claims", return_value=mock_vapid_claims
+    )
+    webpush_spy = mocker.patch("controllers.common.webpush")
+
+    push_subscription = await test_db.one_or_404(item_id=3, item_type=NotificationSub)
+
+    await send_push_notification(user_id=user_id, data=push_data)
+
+    webpush_spy.assert_called_once_with(
+        subscription_info=json.loads(str(push_subscription.subscription_data)),
+        data=json.dumps(mock_push_data),
+        vapid_private_key=mock_vapid_key,
+        vapid_claims=mock_vapid_claims,
+    )
+    generate_push_data_mock.assert_called_with(push_data)
+    generate_vapid_claims_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_send_push_notification_error(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+):
+    user_id = 4
+    push_data = RawPushData(type="hug", text="User sent you a hug")
+    mock_vapid_key = "KEY"
+    mock_push_data = {"data": "data"}
+    mock_vapid_claims = {"my": "claim"}
+    mock_error = WebPushException("push_error!")
+    monkeypatch.setenv("PRIVATE_VAPID_KEY", mock_vapid_key)
+    mocker.patch("controllers.common.generate_push_data", return_value=mock_push_data)
+    mocker.patch(
+        "controllers.common.generate_vapid_claims", return_value=mock_vapid_claims
+    )
+    mocker.patch("controllers.common.webpush", side_effect=mock_error)
+
+    async with app_client.app.app_context():
+        caplog.clear()
+        await send_push_notification(user_id=user_id, data=push_data)
+
+    assert "push_error!" in caplog.messages[0]
