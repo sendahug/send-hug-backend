@@ -37,12 +37,30 @@ from controllers.common import (
     get_current_filters,
     get_thread_id_for_users,
     send_email_notification,
+    send_notifications,
     send_push_notification,
 )
 
 from models import NotificationSub
 from models.db import SendADatabase
 from utils.push_notifications import RawPushData
+
+
+@pytest.mark.asyncio
+async def test_send_notifications(mocker: MockerFixture):
+    send_email_notifications_mock = mocker.patch(
+        "controllers.common.send_email_notification"
+    )
+    send_push_notification_mock = mocker.patch(
+        "controllers.common.send_push_notification"
+    )
+    mock_user_id = 1
+    mock_push_data = RawPushData(type="message", text="hi")
+
+    await send_notifications(user_id=mock_user_id, data=mock_push_data)
+
+    send_email_notifications_mock.assert_called_once_with(mock_user_id, mock_push_data)
+    send_push_notification_mock.assert_called_once_with(mock_user_id, mock_push_data)
 
 
 @pytest.mark.asyncio
