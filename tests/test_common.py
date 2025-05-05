@@ -25,14 +25,42 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import json
+
 import pytest
 from pytest_mock import MockerFixture
+from pywebpush import WebPushException  # type: ignore
 from quart.typing import TestClientProtocol
 
-from controllers.common import send_email_notification
+from config.config import sah_config
+from controllers.common import (
+    get_current_filters,
+    get_thread_id_for_users,
+    send_email_notification,
+    send_notifications,
+    send_push_notification,
+)
 
+from models import NotificationSub
 from models.db import SendADatabase
 from utils.push_notifications import RawPushData
+
+
+@pytest.mark.asyncio
+async def test_send_notifications(mocker: MockerFixture):
+    send_email_notifications_mock = mocker.patch(
+        "controllers.common.send_email_notification"
+    )
+    send_push_notification_mock = mocker.patch(
+        "controllers.common.send_push_notification"
+    )
+    mock_user_id = 1
+    mock_push_data = RawPushData(type="message", text="hi")
+
+    await send_notifications(user_id=mock_user_id, data=mock_push_data)
+
+    send_email_notifications_mock.assert_called_once_with(mock_user_id, mock_push_data)
+    send_push_notification_mock.assert_called_once_with(mock_user_id, mock_push_data)
 
 
 @pytest.mark.asyncio
@@ -87,3 +115,99 @@ async def test_send_email_notification_errors(
         await send_email_notification(user_id=user_id, data=data)
 
     assert expected_log_message in caplog.messages
+
+
+@pytest.mark.asyncio
+async def test_send_push_notification(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    user_id = 4
+    push_data = RawPushData(type="hug", text="User sent you a hug")
+    mock_vapid_key = "KEY"
+    mock_push_data = {"data": "data"}
+    mock_vapid_claims = {"my": "claim"}
+    monkeypatch.setenv("PRIVATE_VAPID_KEY", mock_vapid_key)
+    generate_push_data_mock = mocker.patch(
+        "controllers.common.generate_push_data", return_value=mock_push_data
+    )
+    generate_vapid_claims_mock = mocker.patch(
+        "controllers.common.generate_vapid_claims", return_value=mock_vapid_claims
+    )
+    webpush_spy = mocker.patch("controllers.common.webpush")
+
+    push_subscription = await test_db.one_or_404(item_id=3, item_type=NotificationSub)
+
+    await send_push_notification(user_id=user_id, data=push_data)
+
+    webpush_spy.assert_called_once_with(
+        subscription_info=json.loads(str(push_subscription.subscription_data)),
+        data=json.dumps(mock_push_data),
+        vapid_private_key=mock_vapid_key,
+        vapid_claims=mock_vapid_claims,
+    )
+    generate_push_data_mock.assert_called_with(push_data)
+    generate_vapid_claims_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_send_push_notification_error(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+):
+    user_id = 4
+    push_data = RawPushData(type="hug", text="User sent you a hug")
+    mock_vapid_key = "KEY"
+    mock_push_data = {"data": "data"}
+    mock_vapid_claims = {"my": "claim"}
+    mock_error = WebPushException("push_error!")
+    monkeypatch.setenv("PRIVATE_VAPID_KEY", mock_vapid_key)
+    mocker.patch("controllers.common.generate_push_data", return_value=mock_push_data)
+    mocker.patch(
+        "controllers.common.generate_vapid_claims", return_value=mock_vapid_claims
+    )
+    mocker.patch("controllers.common.webpush", side_effect=mock_error)
+
+    async with app_client.app.app_context():
+        caplog.clear()
+        await send_push_notification(user_id=user_id, data=push_data)
+
+    assert "push_error!" in caplog.messages[0]
+
+
+@pytest.mark.asyncio
+async def test_get_current_filters(test_db: SendADatabase):
+    filters_result = await get_current_filters()
+
+    assert filters_result == ["filtered_word_1", "filtered_word_2"]
+
+
+@pytest.mark.asyncio
+async def test_get_thread_id_for_users_no_thread(
+    test_db: SendADatabase, mocker: MockerFixture
+):
+    add_object_spy = mocker.spy(sah_config.db, "add_object")
+    thread_id = await get_thread_id_for_users(
+        user1_id=5, user2_id=17, current_user_id=5
+    )
+
+    assert thread_id >= 9
+    add_object_spy.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_get_thread_id_for_users_thread_exists(
+    test_db: SendADatabase, mocker: MockerFixture
+):
+    add_object_spy = mocker.spy(sah_config.db, "add_object")
+    thread_id = await get_thread_id_for_users(
+        user1_id=17, user2_id=4, current_user_id=4
+    )
+
+    assert thread_id == 7
+    add_object_spy.assert_not_called()
