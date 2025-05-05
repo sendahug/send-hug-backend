@@ -32,8 +32,10 @@ from pytest_mock import MockerFixture
 from pywebpush import WebPushException  # type: ignore
 from quart.typing import TestClientProtocol
 
+from config.config import sah_config
 from controllers.common import (
     get_current_filters,
+    get_thread_id_for_users,
     send_email_notification,
     send_push_notification,
 )
@@ -165,3 +167,29 @@ async def test_get_current_filters(test_db: SendADatabase):
     filters_result = await get_current_filters()
 
     assert filters_result == ["filtered_word_1", "filtered_word_2"]
+
+
+@pytest.mark.asyncio
+async def test_get_thread_id_for_users_no_thread(
+    test_db: SendADatabase, mocker: MockerFixture
+):
+    add_object_spy = mocker.spy(sah_config.db, "add_object")
+    thread_id = await get_thread_id_for_users(
+        user1_id=5, user2_id=17, current_user_id=5
+    )
+
+    assert thread_id >= 9
+    add_object_spy.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_get_thread_id_for_users_thread_exists(
+    test_db: SendADatabase, mocker: MockerFixture
+):
+    add_object_spy = mocker.spy(sah_config.db, "add_object")
+    thread_id = await get_thread_id_for_users(
+        user1_id=17, user2_id=4, current_user_id=4
+    )
+
+    assert thread_id == 7
+    add_object_spy.assert_not_called()
