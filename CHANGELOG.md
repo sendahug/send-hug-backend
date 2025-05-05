@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2025-05-05
+
+#### Chores
+
+- Added missing unit tests for the rest of the controllers.common module (all functions except `send_email_notification`). ([#746](https://github.com/sendahug/send-hug-backend/pull/746))
+
 ### 2025-05-03
 
 #### Fixes

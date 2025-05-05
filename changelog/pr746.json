@@ -1,9 +1,0 @@
-{
-  "pr_number": 746,
-  "changes": [
-    {
-      "change": "Chores",
-      "description": "Added missing unit tests for the rest of the controllers.common module (all functions except `send_email_notification`)."
-    }
-  ]
-}
