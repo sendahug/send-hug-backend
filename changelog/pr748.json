@@ -1,0 +1,9 @@
+{
+  "pr_number": 748,
+  "changes": [
+    {
+      "change": "Chores",
+      "description": "Added the missing `permissions` key to all GitHub Actions workflows to limit the permissions used by the GitHub token."
+    }
+  ]
+}
