@@ -1,4 +1,8 @@
 name: Update Pre-Commit dependencies
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
 
 on:
   schedule:

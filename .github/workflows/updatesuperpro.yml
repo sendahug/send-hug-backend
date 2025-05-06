@@ -1,5 +1,9 @@
 # Update the superproject repo's submodules
 name: Update Superproject
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
 
 on:
   push:

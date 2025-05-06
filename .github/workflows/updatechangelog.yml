@@ -1,4 +1,8 @@
 name: Update Changelog
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
 
 on:
   push:
