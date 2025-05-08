@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2025-05-08
+
+#### Chores
+
+- Added the missing `permissions` key to all GitHub Actions workflows to limit the permissions used by the GitHub token. ([#748](https://github.com/sendahug/send-hug-backend/pull/748))
+
 ### 2025-05-05
 
 #### Chores
