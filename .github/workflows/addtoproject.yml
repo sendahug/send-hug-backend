@@ -1,4 +1,7 @@
 name: Add issues/PRs to project
+permissions:
+  issues: write
+  pull-requests: write
 
 on:
   issues:

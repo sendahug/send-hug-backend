@@ -1,5 +1,6 @@
 # Trigger CircleCI build
 name: Trigger Build
+permissions: {}
 
 # Controls when the action will run. Triggers the workflow on pull request
 # events but only for the master branch
