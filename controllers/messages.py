@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from quart import Blueprint, Response, abort, jsonify, request
+from quart import Blueprint, Response, abort, current_app, jsonify, request
 from sqlalchemy import and_, delete, desc, false, func, or_, select, true, update
 
 from auth import AuthError, UserData, requires_auth
@@ -20,98 +20,121 @@ from utils.push_notifications import RawPushData
 messages_endpoints = Blueprint("messages", __name__)
 
 
-# Endpoint: GET /messages
-# Description: Gets the user's messages.
+# Endpoint: GET /thread
+# Description: Gets the user's messages from a thread.
 # Parameters: None.
 # Authorization: read:messages.
-@messages_endpoints.route("/messages")
+@messages_endpoints.route("/thread")
 @requires_auth(sah_config, ["read:messages"])
-async def get_user_messages(token_payload: UserData) -> Response:
+async def get_thread(token_payload: UserData) -> Response:
     page = request.args.get("page", 1, type=int)
-    type = request.args.get("type", "inbox", type=str)
+    # TODO: remove "type" after frontend update
+    type = request.args.get("type", "thread", type=str)
     thread_id = request.args.get("threadID", None, type=int)
 
-    if type in ["inbox", "outbox", "thread"]:
-        messages_query = select(Message)
+    messages_query = select(Message)
 
-        # For inbox, gets all incoming messages
+    # Gets a specific thread's messages
+    if type == "thread":
+        message = await sah_config.db.session.scalar(
+            select(Thread).filter(Thread.id == thread_id)
+        )
+        # Check if there's a thread with that ID at all
+        if not message:
+            abort(404)
+
+        # If the user is trying to view a thread that belongs to other
+        # users, raise an AuthError
+        if (message.user_1_id != token_payload["id"]) and (
+            message.user_2_id != token_payload["id"]
+        ):
+            raise AuthError(
+                {
+                    "code": 403,
+                    "description": "You do not have permission "
+                    "to view another user's messages.",
+                },
+                403,
+            )
+
+        messages_query = messages_query.filter(
+            ((Message.for_id == token_payload["id"]) & (Message.for_deleted == false()))
+            | (
+                (Message.from_id == token_payload["id"])
+                & (Message.from_deleted == false())
+            )
+        ).filter(Message.thread == thread_id)
+
+    # TODO: this code can all be removed once the frontend is updated to
+    # remove the type param
+    else:
+        current_app.logger.warning("Deprecated parameter 'type' used.")
+        # For inbox, gets all incoming messages - DEPRECATED
         if type == "inbox":
             messages_query = messages_query.filter(
                 Message.for_deleted == false()
             ).filter(Message.for_id == token_payload["id"])
-        # For outbox, gets all outgoing messages
+        # For outbox, gets all outgoing messages - DEPRECATED
         elif type == "outbox":
             messages_query = messages_query.filter(
                 Message.from_deleted == false()
             ).filter(Message.from_id == token_payload["id"])
-        # Gets a specific thread's messages
         else:
-            message = await sah_config.db.session.scalar(
-                select(Thread).filter(Thread.id == thread_id)
+            # "threads" type is handled in the /threads endpoint
+            current_app.logger.error(f"Invalid type parameter: {type}.")
+            abort(400)
+
+    messages = await sah_config.db.paginate(
+        messages_query.order_by(desc(Message.date)),
+        current_page=page,
+    )
+
+    # formats each message in the list
+    formatted_messages = messages.resource
+    total_pages = messages.total_pages
+
+    return jsonify(
+        {
+            "success": True,
+            "messages": formatted_messages,
+            "current_page": int(page),
+            "total_pages": total_pages,
+        }
+    )
+
+
+# Endpoint: GET /threads
+# Description: Gets a summary of all the thread data for the user
+# Parameters: None.
+# Authorization: read:messages.
+@messages_endpoints.route("/threads")
+@requires_auth(sah_config, ["read:messages"])
+async def get_threads(token_payload: UserData) -> Response:
+    page = request.args.get("page", 1, type=int)
+
+    # Get the thread ID, and users' names and IDs
+    threads_messages = await sah_config.db.paginate(
+        select(Thread)
+        .filter(
+            or_(
+                and_(
+                    Thread.user_1_id == token_payload["id"],
+                    Thread.user1_deleted == false(),
+                ),
+                and_(
+                    Thread.user_2_id == token_payload["id"],
+                    Thread.user2_deleted == false(),
+                ),
             )
-            # Check if there's a thread with that ID at all
-            if message:
-                # If the user is trying to view a thread that belongs to other
-                # users, raise an AuthError
-                if (message.user_1_id != token_payload["id"]) and (
-                    message.user_2_id != token_payload["id"]
-                ):
-                    raise AuthError(
-                        {
-                            "code": 403,
-                            "description": "You do not have permission "
-                            "to view another user's messages.",
-                        },
-                        403,
-                    )
-            else:
-                abort(404)
-
-            messages_query = messages_query.filter(
-                (
-                    (Message.for_id == token_payload["id"])
-                    & (Message.for_deleted == false())
-                )
-                | (
-                    (Message.from_id == token_payload["id"])
-                    & (Message.from_deleted == false())
-                )
-            ).filter(Message.thread == thread_id)
-
-        messages = await sah_config.db.paginate(
-            messages_query.order_by(desc(Message.date)),
-            current_page=page,
         )
+        .order_by(Thread.id),
+        current_page=page,
+        current_user_id=token_payload["id"],
+    )
 
-        # formats each message in the list
-        formatted_messages = messages.resource
-        total_pages = messages.total_pages
-
-    # For threads, gets all threads' data
-    else:
-        # Get the thread ID, and users' names and IDs
-        threads_messages = await sah_config.db.paginate(
-            select(Thread)
-            .filter(
-                or_(
-                    and_(
-                        Thread.user_1_id == token_payload["id"],
-                        Thread.user1_deleted == false(),
-                    ),
-                    and_(
-                        Thread.user_2_id == token_payload["id"],
-                        Thread.user2_deleted == false(),
-                    ),
-                )
-            )
-            .order_by(Thread.id),
-            current_page=page,
-            current_user_id=token_payload["id"],
-        )
-
-        total_pages = threads_messages.total_pages
-        # Threads data formatting
-        formatted_messages = threads_messages.resource
+    total_pages = threads_messages.total_pages
+    # Threads data formatting
+    formatted_messages = threads_messages.resource
 
     return jsonify(
         {
