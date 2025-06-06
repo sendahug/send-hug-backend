@@ -553,7 +553,7 @@ async def clear_mailbox(
                     ),
                 )
             )
-            .values(from_deleted=true())
+            .values(from_deleted=true(), for_deleted=true())
         )
 
         await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)

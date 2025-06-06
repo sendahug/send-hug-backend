@@ -661,12 +661,14 @@ async def test_delete_nonexistent_user_message_as_admin(
 
 # Attempt to delete a message without ID
 @pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint", ["/messages/inbox/", "/message/"])
 async def test_delete_message_without_id_admin(
-    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    endpoint: str,
 ) -> None:
-    response = await app_client.delete(
-        "/messages/inbox/", headers=user_headers["admin"]
-    )
+    response = await app_client.delete(endpoint, headers=user_headers["admin"])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -677,10 +679,14 @@ async def test_delete_message_without_id_admin(
 # -------------------------------------------------------
 # Attempt to empty mailbox without auth header
 @pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint", ["/messages/inbox", "/messages/threads"])
 async def test_empty_mailbox_no_auth(
-    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    endpoint: str,
 ) -> None:
-    response = await app_client.delete("/messages/inbox")
+    response = await app_client.delete(endpoint)
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -689,12 +695,14 @@ async def test_empty_mailbox_no_auth(
 
 # Attempt to empty mailbox with malformed auth header
 @pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint", ["/messages/inbox", "/messages/threads"])
 async def test_empty_mailbox_malformed_auth(
-    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    endpoint: str,
 ) -> None:
-    response = await app_client.delete(
-        "/messages/inbox", headers=user_headers["malformed"]
-    )
+    response = await app_client.delete(endpoint, headers=user_headers["malformed"])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
@@ -703,16 +711,18 @@ async def test_empty_mailbox_malformed_auth(
 
 # Attempt to empty user's inbox (user JWT)
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "endpoint, msgs_deleted", [("/messages/inbox", 7), ("/messages/threads", 8)]
+)
 async def test_empty_mailbox_as_user(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
     user_headers: dict,
     dummy_users_data: dict,
+    endpoint: str,
+    msgs_deleted: int,
 ) -> None:
-    response = await app_client.delete(
-        "/messages/inbox",
-        headers=user_headers["user"],
-    )
+    response = await app_client.delete(endpoint, headers=user_headers["user"])
     response_data = await response.get_json()
 
     get_response = await app_client.get(
@@ -724,28 +734,30 @@ async def test_empty_mailbox_as_user(
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == 7
+    assert response_data["deleted"] == msgs_deleted
     assert response_data["userID"] == 1
     assert len(get_response_data["messages"]) == 0
 
 
 # Attempt to empty user's outbox (moderator's JWT)
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "endpoint, msgs_deleted", [("/messages/outbox", 2), ("/messages/threads", 7)]
+)
 async def test_empty_mailbox_as_mod(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
     user_headers: dict,
     dummy_users_data: dict,
+    endpoint: str,
+    msgs_deleted: int,
 ) -> None:
-    response = await app_client.delete(
-        "/messages/outbox",
-        headers=user_headers["moderator"],
-    )
+    response = await app_client.delete(endpoint, headers=user_headers["moderator"])
     response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == 2
+    assert response_data["deleted"] == msgs_deleted
     assert response_data["userID"] == 5
 
 
