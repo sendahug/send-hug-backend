@@ -363,6 +363,7 @@ async def delete_message(
     message_id: int,
 ) -> Response:
     validator.check_type(message_id, "Message ID")
+    message_id = int(message_id)  # flask typing is rubbish
 
     delete_item = await sah_config.db.one_or_404(
         item_id=message_id,
@@ -400,6 +401,7 @@ async def delete_thread(
     thread_id: int,
 ) -> Response:
     validator.check_type(thread_id, "Message ID")
+    thread_id = int(thread_id)  # flask typing is rubbish
 
     delete_item = await sah_config.db.one_or_404(
         item_id=thread_id,
@@ -408,8 +410,8 @@ async def delete_thread(
 
     # Check if the user is attempting to delete another user's threads
     if (
-        delete_item.user1_deleted != token_payload["id"]
-        and delete_item.user2_deleted != token_payload["id"]
+        delete_item.user_1_id != token_payload["id"]
+        and delete_item.user_2_id != token_payload["id"]
     ):
         raise AuthError(
             {
