@@ -848,12 +848,40 @@ async def test_empty_mailbox_as_admin(
     assert response_data["userID"] == 4
 
 
-# Attempt to empty user mailbox without user type
+# Attempt to empty user mailbox without mailbox type
 @pytest.mark.asyncio
 async def test_empty_mailbox_type_as_admin(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.delete("/messages/", headers=user_headers["admin"])
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 404
+
+
+# Attempt to empty user mailbox with invalid mailbox type
+@pytest.mark.asyncio
+async def test_empty_mailbox_invalid_type_as_admin(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
+    response = await app_client.delete(
+        "/messages/thead-the-needle", headers=user_headers["admin"]
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 400
+
+
+# Attempt to empty user mailbox with no messages
+@pytest.mark.asyncio
+async def test_empty_mailbox_no_messages(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
+    response = await app_client.delete(
+        "/messages/threads", headers=user_headers["newUserRole"]
+    )
     response_data = await response.get_json()
 
     assert response_data["success"] is False
