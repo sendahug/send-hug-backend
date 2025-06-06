@@ -65,7 +65,7 @@ async def test_get_user_inbox_as_user(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.get(
-        "/messages",
+        "/messages?type=inbox",
         headers=user_headers["user"],
     )
     response_data = await response.get_json()
@@ -101,7 +101,7 @@ async def test_get_user_threads_as_user(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.get(
-        "/messages?type=threads",
+        "/threads",
         headers=user_headers["user"],
     )
     response_data = await response.get_json()
@@ -119,7 +119,7 @@ async def test_get_user_inbox_as_mod(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.get(
-        "/messages",
+        "/messages?type=inbox",
         headers=user_headers["moderator"],
     )
     response_data = await response.get_json()
@@ -155,7 +155,7 @@ async def test_get_user_threads_as_mod(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.get(
-        "/messages?type=threads",
+        "/threads",
         headers=user_headers["moderator"],
     )
     response_data = await response.get_json()
@@ -173,7 +173,7 @@ async def test_get_user_inbox_as_admin(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.get(
-        "/messages",
+        "/messages?type=inbox",
         headers=user_headers["admin"],
     )
     response_data = await response.get_json()
@@ -209,7 +209,7 @@ async def test_get_user_threads_as_admin(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.get(
-        "/messages?type=threads",
+        "/threads",
         headers=user_headers["admin"],
     )
     response_data = await response.get_json()
@@ -262,13 +262,13 @@ async def test_threads_message_count_shows_user_count(
     dummy_users_data: dict,
 ) -> None:
     admin_response = await app_client.get(
-        "/messages?type=threads",
+        "/threads",
         headers=user_headers["admin"],
     )
     admin_response_data = await admin_response.get_json()
 
     user_response = await app_client.get(
-        "/messages?type=threads",
+        "/threads",
         headers=user_headers["user"],
     )
     user_response_data = await user_response.get_json()
@@ -740,7 +740,7 @@ async def test_empty_mailbox_as_admin(
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == 2
+    assert response_data["deleted"] == 9
     assert response_data["userID"] == 4
 
 

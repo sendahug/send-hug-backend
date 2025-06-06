@@ -489,7 +489,7 @@ async def clear_mailbox(
             )
         )
 
-    if mailbox_type not in ["inbox", "outbox"]:
+    if mailbox_type not in ["inbox", "outbox", "threads"]:
         abort(400)
 
     num_messages = await get_msgs_count(mailbox_type, token_payload["id"])
