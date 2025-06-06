@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Literal
-from warnings import deprecated
 
 from quart import Blueprint, Response, abort, current_app, jsonify, request
 from sqlalchemy import and_, delete, desc, false, func, or_, select, true, update
+from typing_extensions import deprecated
 
 from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
@@ -211,6 +211,7 @@ async def add_message(token_payload: UserData) -> Response:
 @messages_endpoints.route("/messages/<mailbox_type>/<item_id>", methods=["DELETE"])
 @requires_auth(sah_config, ["delete:messages"])
 async def delete_thread_legacy(
+    # TODO: remove once front end switches to delete_message and delete_thread endpoints
     token_payload: UserData,
     mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
     item_id: int,
@@ -394,7 +395,7 @@ async def delete_message(
 
 @messages_endpoints.route("/thread/<thread_id>", methods=["DELETE"])
 @requires_auth(sah_config, ["delete:messages"])
-async def delete__legacythread(
+async def delete_thread(
     token_payload: UserData,
     thread_id: int,
 ) -> Response:
@@ -465,27 +466,39 @@ async def delete__legacythread(
 @requires_auth(sah_config, ["delete:messages"])
 async def clear_mailbox(
     token_payload: UserData,
+    # TODO: remove "mailbox_type" after frontend update
     mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
 ) -> Response:
-    num_messages = 0
+    async def get_msgs_count(
+        # TODO: remove "mailbox_type" after frontend update
+        mailbox_type: Literal["inbox", "outbox", "thread", "threads"],
+        id: int,
+    ) -> int | None:
+        if mailbox_type == "inbox":
+            return await sah_config.db.session.scalar(
+                select(func.count(Message.id)).filter(Message.for_id == id)
+            )
+        if mailbox_type == "outbox":
+            return await sah_config.db.session.scalar(
+                select(func.count(Message.id)).filter(Message.from_id == id)
+            )
+
+        return await sah_config.db.session.scalar(
+            select(func.count(Message.id)).filter(
+                or_(Message.from_id == id, Message.for_id == id)
+            )
+        )
+
+    if mailbox_type not in ["inbox", "outbox"]:
+        abort(400)
+
+    num_messages = await get_msgs_count(mailbox_type, token_payload["id"])
+    # If there are no messages, abort
+    if not num_messages:
+        abort(404)
 
     # If the user is trying to clear their inbox
     if mailbox_type == "inbox":
-        num_messages = await sah_config.db.session.scalar(
-            select(func.count(Message.id)).filter(Message.for_id == token_payload["id"])
-        )
-        # If there are no messages, abort
-        if num_messages == 0:
-            abort(404)
-
-        # Separates messages that were deleted by the other user (and are
-        # thus okay to delete completely) from messages that weren't
-        # (so that these will only be deleted for one user rather than
-        # for both)
-        # delete_stmt = delete(Message).where(
-        #     and_(Message.for_id == user_id, Message.from_deleted == true())
-        # )
-
         # For each message that wasn't deleted by the other user, the
         # value of for_deleted (indicating whether the user the message
         # is for deleted it) is updated to True
@@ -500,31 +513,10 @@ async def clear_mailbox(
             .values(for_deleted=true())
         )
 
-        # sah_config.db.delete_multiple_objects(delete_stmt=delete_stmt)
         await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
 
     # If the user is trying to clear their outbox
-    if mailbox_type == "outbox":
-        num_messages = await sah_config.db.session.scalar(
-            select(func.count(Message.id)).filter(
-                Message.from_id == token_payload["id"]
-            )
-        )
-        # If there are no messages, abort
-        if num_messages == 0:
-            abort(404)
-
-        # Separates messages that were deleted by the other user (and are
-        # thus okay to delete completely) from messages that weren't
-        # (so that these will only be deleted for one user rather than
-        # for both)
-        delete_stmt = delete(Message).where(
-            and_(
-                Message.from_id == token_payload["id"],
-                Message.for_deleted == true(),
-            )
-        )
-
+    elif mailbox_type == "outbox":
         # For each message that wasn't deleted by the other user, the
         # value of from_deleted (indicating whether the user who wrote
         # the message deleted it) is updated to True
@@ -539,91 +531,30 @@ async def clear_mailbox(
             .values(from_deleted=true())
         )
 
-        await sah_config.db.delete_multiple_objects(delete_stmt=delete_stmt)
         await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
 
-    # If the user is trying to clear their threads mailbox
-    if mailbox_type == "threads":
-        num_messages = await sah_config.db.session.scalar(
-            select(func.count(Thread.id)).filter(
-                or_(
-                    and_(
-                        Thread.user_1_id == token_payload["id"],
-                        Thread.user1_deleted == false(),
-                    ),
-                    and_(
-                        Thread.user_2_id == token_payload["id"],
-                        Thread.user2_deleted == false(),
-                    ),
-                )
-            )
-        )
-        # If there are no messages, abort
-        if num_messages == 0:
-            abort(404)
-
-        # Fetch all the messages that need to be updated, then the threads
-        # that need to be updated
-        from_messages_stmt = (
+    # TODO: this becomes the only clause once mailbox_type is removed
+    # delete both
+    else:
+        # mark each message that was either sent from or sent to the user as deleted
+        update_stmt = (
             update(Message)
             .where(
-                and_(
-                    Message.from_id == token_payload["id"],
-                    Message.for_deleted == false(),
+                or_(
+                    and_(
+                        Message.from_id == token_payload["id"],
+                        Message.for_deleted == false(),
+                    ),
+                    and_(
+                        Message.for_id == token_payload["id"],
+                        Message.from_deleted == false(),
+                    ),
                 )
             )
             .values(from_deleted=true())
         )
 
-        for_messages_stmt = (
-            update(Message)
-            .where(
-                and_(
-                    Message.for_id == token_payload["id"],
-                    Message.from_deleted == false(),
-                )
-            )
-            .values(for_deleted=true())
-        )
-
-        update_stmts = [
-            from_messages_stmt,
-            for_messages_stmt,
-        ]
-
-        # The compile the delete statements for everything that needs to be
-        # deleted.
-        delete_messages_stmt = delete(Message).where(
-            or_(
-                and_(
-                    Message.for_id == token_payload["id"],
-                    Message.from_deleted == true(),
-                ),
-                and_(
-                    Message.from_id == token_payload["id"],
-                    Message.for_deleted == true(),
-                ),
-            )
-        )
-
-        delete_thread_legacys_stmt = delete(Thread).where(
-            or_(
-                and_(
-                    Thread.user_1_id == token_payload["id"],
-                    Thread.user2_deleted == true(),
-                ),
-                and_(
-                    Thread.user_2_id == token_payload["id"],
-                    Thread.user1_deleted == true(),
-                ),
-            )
-        )
-
-        await sah_config.db.delete_multiple_objects(delete_stmt=delete_messages_stmt)
-        await sah_config.db.delete_multiple_objects(
-            delete_stmt=delete_thread_legacys_stmt
-        )
-        await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_stmts)
+        await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
 
     return jsonify(
         {"success": True, "userID": token_payload["id"], "deleted": num_messages}
