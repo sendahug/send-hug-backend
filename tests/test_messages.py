@@ -287,6 +287,24 @@ async def test_get_nonexistent_thread_as_user(
     assert response.status_code == 404
 
 
+# Attempt to get nonexistent messaging type (with user's JWT)
+@pytest.mark.asyncio
+async def test_get_nonexistent_type_as_user(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+) -> None:
+    response = await app_client.get(
+        "/messages?type=threads&threadID=200",
+        headers=user_headers["user"],
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 400
+
+
 @pytest.mark.asyncio
 async def test_threads_message_count_shows_user_count(
     app_client: TestClientProtocol,
@@ -596,6 +614,22 @@ async def test_delete_thread_as_user(
     assert response.status_code == 200
     assert response_data["deleted"] == 2
     assert len(thread_data["messages"]) == 0
+
+
+# Attempt to delete a thread with a user's JWT
+@pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint", ["/messages/threads/6", "/thread/6"])
+async def test_delete_thread_from_another_user_as_user(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    endpoint: str,
+) -> None:
+    response = await app_client.delete(endpoint, headers=user_headers["user"])
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 403
 
 
 # Attempt to delete a message with a moderator's JWT
