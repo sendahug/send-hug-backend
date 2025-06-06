@@ -1,0 +1,9 @@
+{
+    "pr_number": 751,
+    "changes": [
+        {
+            "change": "Changes",
+            "description": "Split out messages and threads to separate endpoints as they are separate logical entities and it no longer makes sense for them to be combined."
+        }
+    ]
+}
