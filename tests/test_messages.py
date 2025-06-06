@@ -223,7 +223,7 @@ async def test_get_user_threads_as_admin(
 
 # Attempt to get other users' messaging thread (with admin's JWT)
 @pytest.mark.asyncio
-async def get_other_users_thread_as_admin(
+async def test_get_other_users_thread_as_admin(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.get(
@@ -238,7 +238,22 @@ async def get_other_users_thread_as_admin(
 
 # Attempt to get other users' messaging thread (with admin's JWT)
 @pytest.mark.asyncio
-async def get_nonexistent_thread_as_admin(
+async def test_get_other_users_thread_as_user(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
+    response = await app_client.get(
+        "/messages?threadID=6",
+        headers=user_headers["user"],
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 403
+
+
+# Attempt to get nonexistent messaging thread (with admin's JWT)
+@pytest.mark.asyncio
+async def test_get_nonexistent_thread_as_admin(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
     user_headers: dict,
@@ -247,6 +262,24 @@ async def get_nonexistent_thread_as_admin(
     response = await app_client.get(
         "/messages?type=thread&threadID=200",
         headers=user_headers["admin"],
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 404
+
+
+# Attempt to get nonexistent messaging thread (with user's JWT)
+@pytest.mark.asyncio
+async def test_get_nonexistent_thread_as_user(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_users_data: dict,
+) -> None:
+    response = await app_client.get(
+        "/messages?type=thread&threadID=200",
+        headers=user_headers["user"],
     )
     response_data = await response.get_json()
 
