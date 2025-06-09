@@ -21,7 +21,7 @@ from utils.push_notifications import RawPushData
 messages_endpoints = Blueprint("messages", __name__)
 
 
-# Endpoint: GET /thread
+# Endpoint: GET /messages
 # Description: Gets the user's messages from a thread.
 # Parameters: None.
 # Authorization: read:messages.
@@ -452,7 +452,6 @@ async def delete_thread(
     # just mark the objects for deletion - we can remove it properly via a separate
     # offline data cleaning process later (probably needs for_deleted and from_deleted
     # changed to dates rather than bools)
-    await sah_config.db.update_object(delete_item, current_user_id=token_payload["id"])
     await sah_config.db.update_multiple_objects_with_dml(
         update_stmts=[from_stmt, for_stmt]
     )
