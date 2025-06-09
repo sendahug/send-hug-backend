@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### 2025-06-09
+
+#### Chores
+
+- Updated the version of postgres in CI to match the currently used version in deployment. ([#760](https://github.com/sendahug/send-hug-backend/pull/760))
+
+#### Documentation
+
+- Updated the required version of postgres in the README to match the currently used version in deployment. ([#760](https://github.com/sendahug/send-hug-backend/pull/760))
+
 ### 2025-05-08
 
 #### Chores
