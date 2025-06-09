@@ -31,7 +31,7 @@ jobs:
           FLASK_CONFIG: testing
           DATABASE_USERNAME: postgres
           DATABASE_PASSWORD: password
-      - image: cimg/postgres:14.10
+      - image: cimg/postgres:16.8
         auth:
           username: mydockerhub-user
           password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
