@@ -346,7 +346,8 @@ class SendADatabase:
         try:
             await self.session.delete(object)
             await self.session.commit()
-            return object.id
+            # Not sure why mypy is suddenly claiming this is Mapped[int]
+            return cast(int, object.id)
         # If there's a database error
         except (DataError, IntegrityError) as err:
             await self.session.rollback()
