@@ -24,7 +24,7 @@ The project is open source, so feel free to use parts of the code. However, the 
 ### Requirements
 
 - Python 3.11+
-- Postgres 13
+- Postgres 16
 
 ### Developers
 
