@@ -61,11 +61,11 @@ async def test_get_user_messages_malformed_auth(
 
 # Attempt to get a user's inbox with a user's JWT
 @pytest.mark.asyncio
-async def test_get_user_inbox_as_user(
+async def test_get_user_thread_as_from_user(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.get(
-        "/messages?type=inbox",
+        "/messages?threadID=1",
         headers=user_headers["user"],
     )
     response_data = await response.get_json()
@@ -74,16 +74,16 @@ async def test_get_user_inbox_as_user(
     assert response.status_code == 200
     assert response_data["current_page"] == 1
     assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 5
+    assert len(response_data["messages"]) == 1
 
 
 # Attempt to get a user's outbox with a user's JWT
 @pytest.mark.asyncio
-async def test_get_user_outbox_as_user(
+async def test_get_user_thread_as_to_user(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
     response = await app_client.get(
-        "/messages?type=outbox",
+        "/messages?threadID=8",
         headers=user_headers["user"],
     )
     response_data = await response.get_json()
@@ -91,8 +91,8 @@ async def test_get_user_outbox_as_user(
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["current_page"] == 1
-    assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 2
+    assert response_data["total_pages"] == 0
+    assert len(response_data["messages"]) == 0
 
 
 # Attempt to get a user's threads mailbox with a user's JWT
@@ -113,42 +113,6 @@ async def test_get_user_threads_as_user(
     assert len(response_data["messages"]) == 3
 
 
-# Attempt to get a user's inbox with a moderator's JWT
-@pytest.mark.asyncio
-async def test_get_user_inbox_as_mod(
-    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
-) -> None:
-    response = await app_client.get(
-        "/messages?type=inbox",
-        headers=user_headers["moderator"],
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert response_data["current_page"] == 1
-    assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 5
-
-
-# Attempt to get a user's outbox with a moderator's JWT
-@pytest.mark.asyncio
-async def test_get_user_outbox_as_mod(
-    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
-) -> None:
-    response = await app_client.get(
-        "/messages?type=outbox",
-        headers=user_headers["moderator"],
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert response_data["current_page"] == 1
-    assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 1
-
-
 # Attempt to get a user's threads mailbox with a moderator's JWT
 @pytest.mark.asyncio
 async def test_get_user_threads_as_mod(
@@ -165,42 +129,6 @@ async def test_get_user_threads_as_mod(
     assert response_data["current_page"] == 1
     assert response_data["total_pages"] == 1
     assert len(response_data["messages"]) == 3
-
-
-# Attempt to get a user's inbox with an admin's JWT
-@pytest.mark.asyncio
-async def test_get_user_inbox_as_admin(
-    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
-) -> None:
-    response = await app_client.get(
-        "/messages?type=inbox",
-        headers=user_headers["admin"],
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert response_data["current_page"] == 1
-    assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 1
-
-
-# Attempt to get a user's outbox with an admin's JWT
-@pytest.mark.asyncio
-async def test_get_user_outbox_as_admin(
-    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
-) -> None:
-    response = await app_client.get(
-        "/messages?type=outbox",
-        headers=user_headers["admin"],
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is True
-    assert response.status_code == 200
-    assert response_data["current_page"] == 1
-    assert response_data["total_pages"] == 1
-    assert len(response_data["messages"]) == 4
 
 
 # Attempt to get a user's threads mailbox with an admin's JWT
@@ -221,29 +149,22 @@ async def test_get_user_threads_as_admin(
     assert len(response_data["messages"]) == 2
 
 
-# Attempt to get other users' messaging thread (with admin's JWT)
+# Attempt to get other users' messaging thread
 @pytest.mark.asyncio
-async def test_get_other_users_thread_as_admin(
-    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+@pytest.mark.parametrize(
+    "thread_id, user_type",
+    [(2, "admin"), (3, "moderator"), (6, "user")],
+)
+async def test_get_other_users_thread(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    thread_id: int,
+    user_type: str,
 ) -> None:
     response = await app_client.get(
-        "/messages?type=thread&threadID=2",
-        headers=user_headers["admin"],
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 403
-
-
-# Attempt to get other users' messaging thread (with admin's JWT)
-@pytest.mark.asyncio
-async def test_get_other_users_thread_as_user(
-    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
-) -> None:
-    response = await app_client.get(
-        "/messages?threadID=6",
-        headers=user_headers["user"],
+        f"/messages?threadID={thread_id}",
+        headers=user_headers[user_type],
     )
     response_data = await response.get_json()
 
@@ -260,7 +181,7 @@ async def test_get_nonexistent_thread_as_admin(
     dummy_users_data: dict,
 ) -> None:
     response = await app_client.get(
-        "/messages?type=thread&threadID=200",
+        "/messages?threadID=200",
         headers=user_headers["admin"],
     )
     response_data = await response.get_json()
@@ -278,31 +199,13 @@ async def test_get_nonexistent_thread_as_user(
     dummy_users_data: dict,
 ) -> None:
     response = await app_client.get(
-        "/messages?type=thread&threadID=200",
+        "/messages?threadID=200",
         headers=user_headers["user"],
     )
     response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == 404
-
-
-# Attempt to get nonexistent messaging type (with user's JWT)
-@pytest.mark.asyncio
-async def test_get_nonexistent_type_as_user(
-    app_client: TestClientProtocol,
-    test_db: SendADatabase,
-    user_headers: dict,
-    dummy_users_data: dict,
-) -> None:
-    response = await app_client.get(
-        "/messages?type=threads&threadID=200",
-        headers=user_headers["user"],
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 400
 
 
 @pytest.mark.asyncio
@@ -483,7 +386,7 @@ async def test_send_message_existing_thread_as_user(
     response_data = await response.get_json()
     response_message = response_data["message"]
     new_thread = await app_client.get(
-        "/messages?type=thread&threadID=7", headers=user_headers["blocked"]
+        "/messages?threadID=7", headers=user_headers["blocked"]
     )
     new_thread_data = await new_thread.get_json()
 
@@ -511,7 +414,7 @@ async def test_send_message_create_thread(
     response_data = await response.get_json()
     response_message = response_data["message"]
     new_thread = await app_client.get(
-        "/messages?type=thread&threadID=9",
+        "/messages?threadID=9",
         headers=user_headers["admin"],
     )
     new_thread_data = await new_thread.get_json()
@@ -530,7 +433,7 @@ async def test_send_message_create_thread(
 
 # Attempt to delete a message with no authorisation header
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/inbox/1", "/message/1"])
+@pytest.mark.parametrize("endpoint", ["/messages/1"])
 async def test_delete_message_no_auth(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -546,7 +449,7 @@ async def test_delete_message_no_auth(
 
 # Attempt to delete a message with a malformed auth header
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/inbox/1", "/message/1"])
+@pytest.mark.parametrize("endpoint", ["/messages/1"])
 async def test_delete_message_malformed_auth(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -562,7 +465,7 @@ async def test_delete_message_malformed_auth(
 
 # Attempt to delete a message with a user's JWT
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/inbox/3", "/message/3"])
+@pytest.mark.parametrize("endpoint", ["/messages/3"])
 async def test_delete_message_as_user(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -579,7 +482,7 @@ async def test_delete_message_as_user(
 
 # Attempt to delete another user's message (with a user's JWT)
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/inbox/7", "/message/16"])
+@pytest.mark.parametrize("endpoint", ["/messages/16"])
 async def test_delete_message_from_another_user_as_user(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -595,7 +498,7 @@ async def test_delete_message_from_another_user_as_user(
 
 # Attempt to delete a thread with a user's JWT
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/threads/2", "/thread/2"])
+@pytest.mark.parametrize("endpoint", ["/threads/2"])
 async def test_delete_thread_as_user(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -618,7 +521,7 @@ async def test_delete_thread_as_user(
 
 # Attempt to delete a thread with a user's JWT
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/threads/6", "/thread/6"])
+@pytest.mark.parametrize("endpoint", ["/threads/6"])
 async def test_delete_thread_from_another_user_as_user(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -634,7 +537,7 @@ async def test_delete_thread_from_another_user_as_user(
 
 # Attempt to delete a message with a moderator's JWT
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/inbox/5", "/message/5"])
+@pytest.mark.parametrize("endpoint", ["/messages/5"])
 async def test_delete_message_as_mod(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -651,7 +554,7 @@ async def test_delete_message_as_mod(
 
 # Attempt to delete another user's message (with a moderator's JWT)
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/outbox/9", "/message/9"])
+@pytest.mark.parametrize("endpoint", ["/messages/9"])
 async def test_delete_message_from_another_user_as_mod(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -667,7 +570,7 @@ async def test_delete_message_from_another_user_as_mod(
 
 # Attempt to delete a message with an admin's JWT
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/outbox/10", "/message/10"])
+@pytest.mark.parametrize("endpoint", ["/messages/10"])
 async def test_delete_message_as_admin(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -684,7 +587,7 @@ async def test_delete_message_as_admin(
 
 # Attempt to delete another user's message (with an admin's JWT)
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/outbox/3", "/message/3"])
+@pytest.mark.parametrize("endpoint", ["/messages/3"])
 async def test_delete_message_from_another_user_as_admin(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -712,7 +615,7 @@ async def test_delete_no_id_user_message_as_admin(
 
 # Attempt to delete a nonexistent user's message (with admin's JWT)
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/inbox/100", "/message/100"])
+@pytest.mark.parametrize("endpoint", ["/messages/100"])
 async def test_delete_nonexistent_user_message_as_admin(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -728,7 +631,7 @@ async def test_delete_nonexistent_user_message_as_admin(
 
 # Attempt to delete a message without ID
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/inbox/", "/message/"])
+@pytest.mark.parametrize("endpoint", ["/messages/"])
 async def test_delete_message_without_id_admin(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -746,7 +649,7 @@ async def test_delete_message_without_id_admin(
 # -------------------------------------------------------
 # Attempt to empty mailbox without auth header
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/inbox", "/messages/threads"])
+@pytest.mark.parametrize("endpoint", ["/messages"])
 async def test_empty_mailbox_no_auth(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -762,7 +665,7 @@ async def test_empty_mailbox_no_auth(
 
 # Attempt to empty mailbox with malformed auth header
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages/inbox", "/messages/threads"])
+@pytest.mark.parametrize("endpoint", ["/messages"])
 async def test_empty_mailbox_malformed_auth(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -778,9 +681,7 @@ async def test_empty_mailbox_malformed_auth(
 
 # Attempt to empty user's inbox (user JWT)
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "endpoint, msgs_deleted", [("/messages/inbox", 7), ("/messages/threads", 8)]
-)
+@pytest.mark.parametrize("endpoint, msgs_deleted", [("/messages", 8)])
 async def test_empty_mailbox_as_user(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -792,10 +693,7 @@ async def test_empty_mailbox_as_user(
     response = await app_client.delete(endpoint, headers=user_headers["user"])
     response_data = await response.get_json()
 
-    get_response = await app_client.get(
-        "/messages?type=inbox",
-        headers=user_headers["user"],
-    )
+    get_response = await app_client.get("/messages", headers=user_headers["user"])
     get_response_data = await get_response.get_json()
     print(get_response_data)
 
@@ -803,14 +701,11 @@ async def test_empty_mailbox_as_user(
     assert response.status_code == 200
     assert response_data["deleted"] == msgs_deleted
     assert response_data["userID"] == 1
-    assert len(get_response_data["messages"]) == 0
 
 
 # Attempt to empty user's outbox (moderator's JWT)
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "endpoint, msgs_deleted", [("/messages/outbox", 2), ("/messages/threads", 7)]
-)
+@pytest.mark.parametrize("endpoint, msgs_deleted", [("/messages", 7)])
 async def test_empty_mailbox_as_mod(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -836,10 +731,7 @@ async def test_empty_mailbox_as_admin(
     user_headers: dict,
     dummy_users_data: dict,
 ) -> None:
-    response = await app_client.delete(
-        "/messages/threads",
-        headers=user_headers["admin"],
-    )
+    response = await app_client.delete("/messages", headers=user_headers["admin"])
     response_data = await response.get_json()
 
     assert response_data["success"] is True
@@ -848,40 +740,12 @@ async def test_empty_mailbox_as_admin(
     assert response_data["userID"] == 4
 
 
-# Attempt to empty user mailbox without mailbox type
-@pytest.mark.asyncio
-async def test_empty_mailbox_type_as_admin(
-    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
-) -> None:
-    response = await app_client.delete("/messages/", headers=user_headers["admin"])
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 404
-
-
-# Attempt to empty user mailbox with invalid mailbox type
-@pytest.mark.asyncio
-async def test_empty_mailbox_invalid_type_as_admin(
-    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
-) -> None:
-    response = await app_client.delete(
-        "/messages/thead-the-needle", headers=user_headers["admin"]
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 400
-
-
 # Attempt to empty user mailbox with no messages
 @pytest.mark.asyncio
 async def test_empty_mailbox_no_messages(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.delete(
-        "/messages/threads", headers=user_headers["newUserRole"]
-    )
+    response = await app_client.delete("/messages", headers=user_headers["newUserRole"])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
