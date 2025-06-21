@@ -29,8 +29,6 @@ async def get_thread(token_payload: UserData) -> Response:
     page = request.args.get("page", 1, type=int)
     thread_id = request.args.get("threadID", None, type=int)
 
-    messages_query = select(Message)
-
     message = await sah_config.db.session.scalar(
         select(Thread).filter(Thread.id == thread_id)
     )
@@ -52,10 +50,17 @@ async def get_thread(token_payload: UserData) -> Response:
             403,
         )
 
-    messages_query = messages_query.filter(
-        ((Message.for_id == token_payload["id"]) & (Message.for_deleted == false()))
-        | ((Message.from_id == token_payload["id"]) & (Message.from_deleted == false()))
-    ).filter(Message.thread == thread_id)
+    messages_query = (
+        select(Message)
+        .filter(
+            ((Message.for_id == token_payload["id"]) & (Message.for_deleted == false()))
+            | (
+                (Message.from_id == token_payload["id"])
+                & (Message.from_deleted == false())
+            )
+        )
+        .filter(Message.thread == thread_id)
+    )
 
     messages = await sah_config.db.paginate(
         messages_query.order_by(desc(Message.date)),
@@ -204,10 +209,14 @@ async def delete_message(
             403,
         )
 
-    # just mark the object for deletion - we can remove it properly via a separate
-    # offline data cleaning process later (probably needs for_deleted and from_deleted
-    # changed to dates rather than bools)
+    # mark the object for deletion
     await sah_config.db.update_object(delete_item, current_user_id=token_payload["id"])
+
+    if delete_item.for_deleted and delete_item.from_deleted:
+        # If both users have deleted the message, delete it from the database
+        # it's a bit redundant to update and then delete but it will make removing the
+        # delete code easier in the future
+        await sah_config.db.delete_object(delete_item)
 
     return jsonify({"success": True, "deleted": message_id})
 
@@ -291,9 +300,8 @@ async def delete_thread(
     return jsonify({"success": True, "deleted": thread_id})
 
 
-# Endpoint: DELETE /messages/<mailbox_type>
+# Endpoint: DELETE /messages
 # Description: Clears the selected mailbox (deleting all messages in it).
-# Parameters: mailbox_type - Type of mailbox to clear.
 # Authorization: delete:messages.
 @messages_endpoints.route("/messages", methods=["DELETE"])
 @requires_auth(sah_config, ["delete:messages"])
