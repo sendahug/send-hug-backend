@@ -228,7 +228,7 @@ async def delete_thread(
     thread_id: int,
 ) -> Response:
     validator.check_type(thread_id, "Message ID")
-    thread_id = int(thread_id)  # flask typing is rubbish
+    thread_id = int(thread_id)  # flask typing is rubbishzq
 
     delete_item = await sah_config.db.one_or_404(
         item_id=thread_id,
@@ -296,6 +296,10 @@ async def delete_thread(
         )
     )
     await sah_config.db.delete_multiple_objects(delete_stmt=delete_stmt)
+
+    if delete_item.user1_deleted and delete_item.user2_deleted:
+        # If both users have deleted the thread, delete it from the database
+        await sah_config.db.delete_object(delete_item)
 
     return jsonify({"success": True, "deleted": thread_id})
 

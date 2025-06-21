@@ -4,6 +4,10 @@
         {
             "change": "Changes",
             "description": "Split out messages and threads to separate endpoints as they are separate logical entities and it no longer makes sense for them to be combined."
+        },
+        {
+            "change": "Changes",
+            "description": "Removed inbox and outbox from messages and threads endpoints as it no longer made sense for them to be separated."
         }
     ]
 }
