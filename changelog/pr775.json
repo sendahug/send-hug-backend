@@ -1,9 +1,0 @@
-{
-    "pr_number": 775,
-    "changes": [
-        {
-            "change": "Fixes",
-            "description": "Updated Debian version to latest stable version to allow platform builds to complete successfully."
-        }
-    ]
-}
