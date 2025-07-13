@@ -132,7 +132,7 @@ async def create_roles(db: SendADatabase) -> None:
         # user
         role_3.permissions = [permissions[2], *permissions[5:8], *permissions[9:14]]
         # new user
-        role_4.permissions = [permissions[7], *permissions[9:]]
+        role_4.permissions = [permissions[2], permissions[7], *permissions[9:]]
         # blocked user
         role_5.permissions = [
             permissions[2],

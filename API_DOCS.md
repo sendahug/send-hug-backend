@@ -23,18 +23,20 @@ For full instructions check the [`backend README`](./backend/README.md)
 11. [GET /users/<user_id>/posts](#get-usersuser_idposts)
 12. [DELETE /users/<user_id>/posts](#delete-usersuser_idposts)
 13. [GET /messages](#get-messages)
-14. [POST /messages](#post-messages)
-15. [DELETE /messages/<mailbox_type>/<item_id>](#delete-messagesmailbox_typeitem_id)
-16. [DELETE /messages/<mailbox_type>](#delete-messagesmailbox_type)
-17. [GET /reports](#get-reports)
-18. [POST /reports](#post-reports)
-19. [PATCH /reports/<report_id>](#patch-reportsreport_id)
-20. [GET /filters](#get-filters)
-21. [POST /filters](#post-filters)
-22. [DELETE /filters/<filter_id>](#delete-filtersfilter_id)
-23. [GET /notifications](#get-notifications)
-24. [POST /push_subscriptions](#post-push_subscriptions)
-25. [PATCH /push_subscriptions](#patch-npush_subscriptions)
+14. [GET /threads](#get-threads)
+15. [POST /messages](#post-messages)
+16. [DELETE /messages/<message_id>](#delete-messagesmessage_id)
+17. [DELETE /threads/<thread_id>](#delete-threadsthread_id)
+18. [DELETE /messages](#delete-messages)
+19. [GET /reports](#get-reports)
+20. [POST /reports](#post-reports)
+21. [PATCH /reports/<report_id>](#patch-reportsreport_id)
+22. [GET /filters](#get-filters)
+23. [POST /filters](#post-filters)
+24. [DELETE /filters/<filter_id>](#delete-filtersfilter_id)
+25. [GET /notifications](#get-notifications)
+26. [POST /push_subscriptions](#post-push_subscriptions)
+27. [PATCH /push_subscriptions](#patch-push_subscriptionssub_id)
 
 **NOTE**: All sample curl requests are done via user 4; for your own tests, change the user ID and the user's display name.
 
@@ -674,12 +676,12 @@ For full instructions check the [`backend README`](./backend/README.md)
 ### GET /messages
 **Description**: Gets the user's messages.
 
-**Handler Function**: get_user_messages.
+**Handler Function**: get_thread.
 
 **Request Arguments**:
   - userID - A query parameter indicating the User's ID.
   - page - An optional query parameter indicating the user's current page.
-  - type - An optional query parameter indicating the type of messages the user is attempting to get (inbox, outbox, threads or a specific thread's messages).
+  - threadID - An optional query parameter that filters the messages returned to those of a single thread.
 
 **Required Data**: None.
 
@@ -694,7 +696,7 @@ For full instructions check the [`backend README`](./backend/README.md)
 **Expected Errors**:
   - 400 (Bad Request) - In case no ID was supplied.
   - 403 (Forbidden) - In case the user is trying to read another user's messages.
-  - 404 (Not Found) - In case the mailbox the user is requesting doesn't exist.
+  - 404 (Not Found) - In case the thread ID the user is requesting doesn't exist.
 
 **CURL Request Sample**: `curl http://127.0.0.1:5000/messages?userID=4 -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
@@ -721,6 +723,70 @@ For full instructions check the [`backend README`](./backend/README.md)
       "id": 8,
       "messageText": "hi there :)"
     }
+  ],
+  "success": true,
+  "total_pages": 1
+}
+```
+
+### GET /threads
+**Description**: Gets a summary of the user's threads.
+
+**Handler Function**: get_threads.
+
+**Request Arguments**:
+  - userID - A query parameter indicating the User's ID.
+  - page - An optional query parameter indicating the user's current page.
+
+**Required Data**: None.
+
+**Required Permission:** 'read:messages'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - messages (List) - A paginated list containing a summary of the user's theads.
+  - current_page (number) - The user's current page.
+  - total_pages (number) - The total number of pages.
+
+**Expected Errors**:
+  - 400 (Bad Request) - In case no ID was supplied.
+  - 403 (Forbidden) - In case the user is trying to read another user's messages.
+  - 404 (Not Found) - In case the thread ID the user is requesting doesn't exist.
+
+**CURL Request Sample**: `curl http://127.0.0.1:5000/theads?userID=4 -H 'Authorization: Bearer <YOUR_TOKEN>'`
+
+**Response Example:**
+```
+{
+  "current_page": 1,
+  "messages": [
+    {
+      "id": 3,
+      "user1": {
+          "displayName": "user_14",
+          "selectedIcon": "kitty",
+          "iconColours": {
+            "character": "#BA9F93",
+            "lbg": "#e2a275",
+            "rbg": "#f8eee4",
+            "item": "#f4b56a"
+          },
+      },
+      "user1Id": 4,
+      "user2": {
+          "displayName": "user52",
+          "selectedIcon": "kitty",
+          "iconColours": {
+            "character": "#BA9F93",
+            "lbg": "#e2a275",
+            "rbg": "#f8eee4",
+            "item": "#f4b56a"
+          },
+      },
+      "user2Id": 5,
+      "numMessages": 12,
+      "latestMessage": "Mon, 08 Jun 2020 14:50:19 GMT",
+    },
   ],
   "success": true,
   "total_pages": 1
@@ -766,13 +832,12 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### DELETE /messages/<mailbox_type>/<item_id>
+### DELETE /messages/<message_id>
 **Description**: Deletes a message from the database.
 
 **Handler Function**: delete_message.
 
 **Request Arguments**:
-  - mailbox_type - the type of mailbox from which to delete the message.
   - message_id - The ID of the message to delete.
 
 **Required Data**: None.
@@ -789,7 +854,7 @@ For full instructions check the [`backend README`](./backend/README.md)
   - 405 (Method Not Allowed) - In case no ID was supplied.
   - 500 (Internal Server Error) - In case an error occurred while deleting the message from the database.
 
-**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/messages/inbox/6 -H 'Authorization: Bearer <YOUR_TOKEN>'`
+**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/messages/6 -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
@@ -799,13 +864,44 @@ For full instructions check the [`backend README`](./backend/README.md)
 }
 ```
 
-### DELETE /messages/<mailbox_type>
+### DELETE /threads/<thread_id>
+**Description**: Deletes a thread from the database.
+
+**Handler Function**: delete_thread.
+
+**Request Arguments**:
+  - thread_id - The ID of the thread to delete.
+
+**Required Data**: None.
+
+**Required Permission:** 'delete:thread'.
+
+**Returns**: An object containing:
+  - Success (Boolean) - a success value.
+  - deleted (Number) - the ID of the thread that was deleted.
+
+**Expected Errors**:
+  - 403 (Forbidden) - In case the user is trying to delete another user's thread.
+  - 404 (Not Found) - In case there's no thread with that ID.
+  - 405 (Method Not Allowed) - In case no ID was supplied.
+  - 500 (Internal Server Error) - In case an error occurred while deleting the thread from the database.
+
+**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/threads/2 -H 'Authorization: Bearer <YOUR_TOKEN>'`
+
+**Response Example:**
+```
+{
+  "deleted": "2",
+  "success": true
+}
+```
+
+### DELETE /messages
 **Description**: Clears the given mailbox (meaning, deletes all of the messages in it).
 
 **Handler Function**: clear_mailbox.
 
 **Request Arguments**:
-  - mailbox_type - the type of mailbox from which to delete the messages.
   - userID - A query parameter indicating the User's ID.
 
 **Required Data**: None.
@@ -818,12 +914,12 @@ For full instructions check the [`backend README`](./backend/README.md)
   - deleted (Number) - the number of deleted messages.
 
 **Expected Errors**:
-  - 400 (Bad Request) - In case there's no mailbox type or user ID.
+  - 400 (Bad Request) - In case there's no user ID.
   - 403 (Forbidden) - In case the user is trying to delete another user's message.
   - 404 (Not Found) - In case there are no messages in the given mailbox.
   - 500 (Internal Server Error) - In case an error occurred while deleting the messages from the database.
 
-**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/messages/inbox?userID=4 -H 'Authorization: Bearer <YOUR_TOKEN>'`
+**CURL Request Sample**: `curl -X DELETE http://127.0.0.1:5000/messages?userID=4 -H 'Authorization: Bearer <YOUR_TOKEN>'`
 
 **Response Example:**
 ```
