@@ -179,6 +179,10 @@ async def add_message(token_payload: UserData) -> Response:
     return jsonify({"success": True, "message": sent_message[0]})
 
 
+# Endpoint: DELETE /messages/<message_id>
+# Description: Deletes a message.
+# Parameters: message_id - the ID of the message to delete.
+# Authorization: delete:messages.
 @messages_endpoints.route("/messages/<message_id>", methods=["DELETE"])
 @requires_auth(sah_config, ["delete:messages"])
 async def delete_message(
@@ -221,6 +225,10 @@ async def delete_message(
     return jsonify({"success": True, "deleted": message_id})
 
 
+# Endpoint: DELETE /threads/<thread_id>
+# Description: Deletes a thread.
+# Parameters: thread_id - the ID of the thread to delete.
+# Authorization: delete:messages.
 @messages_endpoints.route("/threads/<thread_id>", methods=["DELETE"])
 @requires_auth(sah_config, ["delete:messages"])
 async def delete_thread(
@@ -304,16 +312,19 @@ async def delete_thread(
     return jsonify({"success": True, "deleted": thread_id})
 
 
-# Endpoint: DELETE /messages
-# Description: Clears the selected mailbox (deleting all messages in it).
+# Endpoint: DELETE /threads
+# Description: Deletes all threads.
 # Authorization: delete:messages.
-@messages_endpoints.route("/messages", methods=["DELETE"])
+@messages_endpoints.route("/threads", methods=["DELETE"])
 @requires_auth(sah_config, ["delete:messages"])
 async def clear_mailbox(token_payload: UserData) -> Response:
     async def get_msgs_count(id: int) -> int | None:
         return await sah_config.db.session.scalar(
-            select(func.count(Message.id)).filter(
-                or_(Message.from_id == id, Message.for_id == id)
+            select(func.count(Thread.id)).filter(
+                or_(
+                    and_(Thread.user_1_id == id, Thread.user1_deleted == false()),
+                    and_(Thread.user_2_id == id, Thread.user2_deleted == false()),
+                )
             )
         )
 

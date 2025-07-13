@@ -645,11 +645,11 @@ async def test_delete_message_without_id_admin(
     assert response.status_code == 404
 
 
-# Empty Mailbox Tests ('/messages/<mailbox>', DELETE)
+# Empty Mailbox Tests ('/threads', DELETE)
 # -------------------------------------------------------
 # Attempt to empty mailbox without auth header
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages"])
+@pytest.mark.parametrize("endpoint", ["/threads"])
 async def test_empty_mailbox_no_auth(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -665,7 +665,7 @@ async def test_empty_mailbox_no_auth(
 
 # Attempt to empty mailbox with malformed auth header
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/messages"])
+@pytest.mark.parametrize("endpoint", ["/threads"])
 async def test_empty_mailbox_malformed_auth(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -681,7 +681,7 @@ async def test_empty_mailbox_malformed_auth(
 
 # Attempt to empty user's inbox (user JWT)
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint, msgs_deleted", [("/messages", 8)])
+@pytest.mark.parametrize("endpoint, msgs_deleted", [("/threads", 3)])
 async def test_empty_mailbox_as_user(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -705,7 +705,7 @@ async def test_empty_mailbox_as_user(
 
 # Attempt to empty user's outbox (moderator's JWT)
 @pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint, msgs_deleted", [("/messages", 7)])
+@pytest.mark.parametrize("endpoint, msgs_deleted", [("/threads", 3)])
 async def test_empty_mailbox_as_mod(
     app_client: TestClientProtocol,
     test_db: SendADatabase,
@@ -731,12 +731,12 @@ async def test_empty_mailbox_as_admin(
     user_headers: dict,
     dummy_users_data: dict,
 ) -> None:
-    response = await app_client.delete("/messages", headers=user_headers["admin"])
+    response = await app_client.delete("/threads", headers=user_headers["admin"])
     response_data = await response.get_json()
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["deleted"] == 9
+    assert response_data["deleted"] == 2
     assert response_data["userID"] == 4
 
 
@@ -745,7 +745,7 @@ async def test_empty_mailbox_as_admin(
 async def test_empty_mailbox_no_messages(
     app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
 ) -> None:
-    response = await app_client.delete("/messages", headers=user_headers["newUserRole"])
+    response = await app_client.delete("/threads", headers=user_headers["newUserRole"])
     response_data = await response.get_json()
 
     assert response_data["success"] is False
