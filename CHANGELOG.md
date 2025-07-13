@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### 2025-07-13
+
+#### Breaking Changes
+
+- Split out messages and threads to separate endpoints as they are separate logical entities and it no longer makes sense for them to be combined. ([#751](https://github.com/sendahug/send-hug-backend/pull/751))
+- Removed inbox and outbox from messages and threads endpoints as it no longer made sense for them to be separated. ([#751](https://github.com/sendahug/send-hug-backend/pull/751))
+
 ### 2025-06-09
 
 #### Chores
