@@ -8,4 +8,4 @@ pytest-cov==6.2.1
 pytest-asyncio==0.26.0
 
 # additional types
-types-python-http-client==3.3.7.20240910
+types-python-http-client==3.3.7.20250708
