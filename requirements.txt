@@ -6,4 +6,4 @@ asyncpg==0.30.0
 pywebpush==2.0.3
 sendgrid==6.11.0
 SQLAlchemy[asyncio]==2.0.41
-firebase-admin==6.8.0
+firebase-admin==7.0.0
