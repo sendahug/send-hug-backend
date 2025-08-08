@@ -33,12 +33,8 @@ The project is open source, so feel free to use parts of the code. However, the 
 3. cd into backend.
 4. Run ```pip install -r requirements.txt -r dev_requirements.txt``` to install dependencies.
 5. Run ```pre-commit install``` to install and initialise pre-commit.
-6. Create a database for the app.
+6. Run ```./init_dbs.sh <type a new password here>```
 7. Set the required environment variables:
-    - The database URI is built in the config using the following environment variables:
-      - **DB_CREDENTIALS_PATH** - The path to the credentials file.
-      - **DATABASE_USERNAME** - The username to log into the database if no credentials file is set.
-      - **DATABASE_PASSWORD** - The password to log into the database if no credentials file is set.
     - **PRIVATE_VAPID_KEY** - Your private VAPID key (required for push notifications).
     - **FRONTEND** - The frontend URI.
     - **FIREBASE_CREDENTIALS_FILE** - The firebase credentials file's location.

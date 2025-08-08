@@ -115,3 +115,4 @@ tests/capstone_db
 
 .secrets/*
 !.secrets/README.md
+!.secrets/db_creds.json.example
