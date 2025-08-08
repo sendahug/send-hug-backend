@@ -29,7 +29,11 @@ async def get_posts() -> Response:
     page = request.args.get("page", 1, type=int)
     posts_type = request.args.get("type", "new", type=str)
 
-    full_posts_query = select(Post).filter(Post.open_report == false())
+    full_posts_query = (
+        select(Post)
+        .filter(Post.archived == false())
+        .filter(Post.open_report == false())
+    )
 
     if posts_type == "new":
         full_posts_query = full_posts_query.order_by(desc(Post.date))
@@ -92,6 +96,14 @@ async def edit_post(token_payload: UserData, post_id: int) -> Response:
         item_id=int(post_id),
         item_type=Post,
     )
+    if original_post.archived:
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "You cannot edit an archived post.",
+            },
+            403,
+        )
 
     # If the user's permission is 'patch my' the user can only edit
     # their own posts. If it's a user trying to edit the text
@@ -141,6 +153,14 @@ async def send_hug_for_post(token_payload: UserData, post_id: int) -> Response:
         item_id=int(post_id),
         item_type=Post,
     )
+    if original_post.archived:
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "You cannot send a hug to an archived post.",
+            },
+            403,
+        )
 
     # Gets the current user so we can update their 'sent hugs' value
     current_user: User = await sah_config.db.one_or_404(
@@ -284,3 +304,60 @@ async def delete_post(token_payload: UserData, post_id: int) -> Response:
     await sah_config.db.delete_object(post_data)
 
     return jsonify({"success": True, "deleted": int(post_id)})
+
+
+# Endpoint: PATCH /posts/archive/<post_id>
+# Description: Archives a post in the database.
+# Parameters: post_id - ID of the post to update.
+# Authorization: patch:my-post or patch:any-post.
+@posts_endpoints.route("/posts/archive/<post_id>", methods=["PATCH"])
+@requires_auth(sah_config, ["patch:my-post", "patch:any-post"])
+async def archive_post(token_payload: UserData, post_id: int) -> Response:
+    # Check if the post ID isn't an integer; if it isn't, abort
+    validator.check_type(post_id, "Post ID")
+
+    updated_post = await request.get_json()
+    original_post: Post = await sah_config.db.one_or_404(
+        item_id=int(post_id),
+        item_type=Post,
+    )
+    if original_post.archived:
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "You cannot edit an archived post.",
+            },
+            403,
+        )
+
+    # If the user's permission is 'patch my' the user can only edit
+    # their own posts. If it's a user trying to edit the text
+    # of a post that doesn't belong to them, throw an auth error
+    if (
+        "patch:my-post" in token_payload["role"]["permissions"]
+        and original_post.user_id != token_payload["id"]
+        and original_post.archived != updated_post["archived"]
+    ):
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "You do not have permission to edit this post.",
+            },
+            403,
+        )
+
+    # Otherwise, the user either attempted to edit their own post, or
+    # they're allowed to edit any post, so let them update the post
+    # If the text was changed
+    if original_post.text != updated_post["text"]:
+        validator.validate_post_or_message(
+            text=updated_post["text"],
+            type="post",
+            filtered_words=await get_current_filters(),
+        )
+        original_post.archived = updated_post["archived"]
+
+    # Try to update the database
+    updated = await sah_config.db.update_object(obj=original_post)
+
+    return jsonify({"success": True, "updated": updated})
