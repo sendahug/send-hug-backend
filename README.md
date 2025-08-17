@@ -1,7 +1,7 @@
 # Send A Hug
 
 [![CircleCI](https://circleci.com/gh/sendahug/send-hug-backend.svg?style=shield)](https://circleci.com/gh/sendahug/send-hug-backend)
-[![codecov](https://codecov.io/gh/sendahug/send-hug-backend/graph/badge.svg)](https://codecov.io/gh/sendahug/send-hug-backend)
+[![codecov](https://codecov.io/github/sendahug/send-hug-backend/graph/badge.svg)](https://codecov.io/github/sendahug/send-hug-backend)
 [![Known Vulnerabilities](https://snyk.io/test/github/sendahug/send-hug-backend/badge.svg)](https://snyk.io/test/github/sendahug/send-hug-backend)
 ![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/sendahug/send-hug-backend)
 
