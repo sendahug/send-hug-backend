@@ -1,0 +1,9 @@
+{
+  "pr_number": 793,
+  "changes": [
+    {
+      "change": "Chores",
+      "description": "Updated the URLs for the codecov badge in the README to match the updated pattern codecov uses."
+    }
+  ]
+}
