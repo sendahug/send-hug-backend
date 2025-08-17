@@ -74,7 +74,7 @@ substitutions:
   _IMAGE_NAME: 'api-staging'
   _SAH_MODE: 'STAGING'
   _SAH_MODE_LOWER: 'staging'  # very dumb but we should handle in the config object in python
-  _FRONTEND_URL: 'https://app-staging.send-hug.com/'
+  _FRONTEND_URL: 'https:\/\/send-a-hug-platform--((pr)[0-9]+)?(staging)?-[a-zA-Z0-9\-]+\.web\.app/'
 
 availableSecrets:
   secretManager:
