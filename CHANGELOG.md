@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2025-08-17
+
+#### Chores
+
+- Updated the URLs for the codecov badge in the README to match the updated pattern codecov uses. ([#793](https://github.com/sendahug/send-hug-backend/pull/793))
+
 ### 2025-07-13
 
 #### Fixes
