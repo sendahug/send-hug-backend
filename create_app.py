@@ -43,14 +43,17 @@ def create_app() -> Quart:
     sah_config.db.init_app(app=app)
     sah_config.db.set_default_per_page(per_page=5)
     # Utilities
-    cors(app)
+    app = cors(
+        app,
+        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
+        allow_origin=str(os.environ.get("FRONTEND")),
+        send_origin_wildcard=True,
+    )
 
     @app.after_request
     def after_request(response: Response):
         # CORS Setup
-        response.headers.add(
-            "Access-Control-Allow-Origin", str(os.environ.get("FRONTEND"))
-        )
         response.headers.add(
             "Access-Control-Allow-Methods",
             "GET, POST, PATCH, DELETE, OPTIONS",
