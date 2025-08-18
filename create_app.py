@@ -26,6 +26,7 @@
 # SOFTWARE.
 
 import os
+import re
 
 from quart import Quart, Response, jsonify
 from quart_cors import cors
@@ -47,7 +48,7 @@ def create_app() -> Quart:
         app,
         allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type"],
-        allow_origin=str(os.environ.get("FRONTEND")),
+        allow_origin=re.compile(str(os.environ.get("FRONTEND"))),
         send_origin_wildcard=True,
     )
 
