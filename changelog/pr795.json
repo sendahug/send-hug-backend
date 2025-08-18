@@ -1,0 +1,9 @@
+{
+  "pr_number": 795,
+  "changes": [
+    {
+      "change": "Fixes",
+      "description": "Fixed another mistake in the regex used to set the Allowed Origins CORS header in staging."
+    }
+  ]
+}
