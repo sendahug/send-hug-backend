@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### 2025-08-18
+
+#### Changes
+
+- Added the front-end preview URLs (generated automatically by Firebase when we deploy to a preview channel) to the allowed origins list in the Staging API. ([#792](https://github.com/sendahug/send-hug-backend/pull/792))
+
+#### Fixes
+
+- Fixed a bug where the CORS 'Allowed Origins' header wasn't set up correctly and allowed anyone to connect to the API. The API now correctly only allows the URL set up in the 'FRONTEND' environment variable. ([#792](https://github.com/sendahug/send-hug-backend/pull/792))
+
 ### 2025-08-17
 
 #### Chores
