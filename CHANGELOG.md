@@ -10,9 +10,10 @@
 
 #### Fixes
 
-- Fixed a bug where the CORS 'Allowed Origins' header wasn't set up correctly and allowed anyone to connect to the API. The API now correctly only allows the URL set up in the 'FRONTEND' environment variable. ([#792](https://github.com/sendahug/send-hug-backend/pull/792))
-- Fixed an error in the updated handling of allowed origin for CORS to allow using regex to define allowed origins. ([#794](https://github.com/sendahug/send-hug-backend/pull/794))
 - Fixed the way the `FRONTEND` variable is passed into the container in the staging deployment script, which broke when using regex. ([#794](https://github.com/sendahug/send-hug-backend/pull/794))
+- Fixed an error in the updated handling of allowed origin for CORS to allow using regex to define allowed origins. ([#794](https://github.com/sendahug/send-hug-backend/pull/794))
+- Fixed a bug where the CORS 'Allowed Origins' header wasn't set up correctly and allowed anyone to connect to the API. The API now correctly only allows the URL set up in the 'FRONTEND' environment variable. ([#792](https://github.com/sendahug/send-hug-backend/pull/792))
+- Fixed another mistake in the regex used to set the Allowed Origins CORS header in staging. ([#795](https://github.com/sendahug/send-hug-backend/pull/795))
 
 ### 2025-08-17
 
