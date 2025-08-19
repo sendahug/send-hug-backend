@@ -310,7 +310,7 @@ async def delete_post(token_payload: UserData, post_id: int) -> Response:
 # Description: Archives a post in the database.
 # Parameters: post_id - ID of the post to update.
 # Authorization: patch:my-post or patch:any-post.
-@posts_endpoints.route("/posts/archive/<post_id>", methods=["PATCH"])
+@posts_endpoints.route("/posts/<post_id>/archive", methods=["PATCH"])
 @requires_auth(sah_config, ["patch:my-post", "patch:any-post"])
 async def archive_post(token_payload: UserData, post_id: int) -> Response:
     # Check if the post ID isn't an integer; if it isn't, abort

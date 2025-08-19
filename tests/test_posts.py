@@ -654,7 +654,7 @@ async def test_archive_own_post_as_user(
     test_db: SendADatabase,
     user_headers: dict,
 ) -> None:
-    response = await app_client.patch("/posts/archive/4", headers=user_headers["user"])
+    response = await app_client.patch("/posts/4/archive", headers=user_headers["user"])
     response_data = await response.get_json()
     post_text = response_data["archived"]
 
