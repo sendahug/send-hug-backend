@@ -86,7 +86,7 @@ async def test_paginate_no_error(test_db: SendADatabase) -> None:
     results = await test_db.paginate(query, 1, 10)
 
     assert results.total_pages == 3
-    assert results.total_items == 21
+    assert results.total_items == 22
     assert len(results.resource) == 10
 
 
@@ -136,7 +136,7 @@ async def test_one_or_404_error(test_db: SendADatabase) -> None:
 async def test_add_no_errors(test_db: SendADatabase, posts_to_add: list[Post]) -> None:
     post_to_add = posts_to_add[0]
     expected_return = {
-        "id": 46,
+        "id": 47,
         "userId": 1,
         "user": "shirb",
         "text": "hello",
@@ -145,7 +145,6 @@ async def test_add_no_errors(test_db: SendADatabase, posts_to_add: list[Post]) -
         "sentHugs": [],
         "archived": False,
     }
-
     actual_return = await test_db.add_object(obj=post_to_add)
 
     assert expected_return == actual_return
@@ -189,7 +188,7 @@ async def test_add_multiple_no_errors(
 ) -> None:
     expected_return = [
         {
-            "id": 46,
+            "id": 47,
             "userId": 1,
             "user": "shirb",
             "text": "hello",
@@ -199,7 +198,7 @@ async def test_add_multiple_no_errors(
             "archived": False,
         },
         {
-            "id": 47,
+            "id": 48,
             "userId": 1,
             "user": "shirb",
             "text": "hello",

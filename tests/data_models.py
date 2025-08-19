@@ -562,6 +562,15 @@ async def create_posts(db: SendADatabase) -> None:
         given_hugs=0,
         sent_hugs=[],
     )
+    post_25 = Post(
+        id=46,
+        user_id=1,
+        text="test unarchive",
+        date=datetime.strptime("2025-06-01 15:17:56.294", DATETIME_PATTERN),
+        given_hugs=2,
+        sent_hugs=[4],
+        archived=True,
+    )
 
     try:
         db.session.add_all(
@@ -590,9 +599,9 @@ async def create_posts(db: SendADatabase) -> None:
                 post_22,
                 post_23,
                 post_24,
+                post_25,
             ]
         )
-        await db.session.execute(text("ALTER SEQUENCE posts_id_seq RESTART WITH 46;"))
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -1827,25 +1836,30 @@ async def create_subscriptions(db: SendADatabase) -> None:
 
 async def update_sequences(db: SendADatabase) -> None:
     """Updates the values of all sequences."""
+    tables_to_update = [
+        "permissions",
+        "filters",
+        "roles",
+        "users",
+        "posts",
+        "messages",
+        "threads",
+        "reports",
+        "notifications",
+        "subscriptions",
+    ]
     try:
-        await db.session.execute(
-            text("ALTER SEQUENCE permissions_id_seq RESTART WITH 16;")
-        )
-        await db.session.execute(text("ALTER SEQUENCE filters_id_seq RESTART WITH 3;"))
-        await db.session.execute(text("ALTER SEQUENCE roles_id_seq RESTART WITH 6;"))
-        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 21;"))
-        await db.session.execute(text("ALTER SEQUENCE posts_id_seq RESTART WITH 46;"))
-        await db.session.execute(
-            text("ALTER SEQUENCE messages_id_seq RESTART WITH 27;")
-        )
-        await db.session.execute(text("ALTER SEQUENCE threads_id_seq RESTART WITH 9;"))
-        await db.session.execute(text("ALTER SEQUENCE reports_id_seq RESTART WITH 45;"))
-        await db.session.execute(
-            text("ALTER SEQUENCE notifications_id_seq RESTART WITH 96;")
-        )
-        await db.session.execute(
-            text("ALTER SEQUENCE subscriptions_id_seq RESTART WITH 4;")
-        )
+        for table in tables_to_update:
+            await db.session.execute(
+                text(
+                    # we set the current value of the sequence to the maximum id in
+                    # the table prevents id collisions when the test data above changes
+                    # (although individual tests still beed to be updated)
+                    f"SELECT SETVAL(PG_GET_SERIAL_SEQUENCE('{table}', 'id'), MAX(id)) "
+                    f"FROM {table};"
+                )
+            )
+
         await db.session.commit()
     finally:
         await db.session.close()

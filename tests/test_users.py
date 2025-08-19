@@ -349,7 +349,7 @@ async def test_create_user_as_new_user(
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["user"]["id"] == 21
+    assert response_data["user"]["id"] == 20
 
 
 # Edit User Data Tests ('/users/<user_id>', PATCH)
@@ -844,7 +844,7 @@ async def test_delete_posts_malformed_auth(
     "user_id, user, deleted_post",
     [
         # (with same user's JWT)
-        (1, "user", 8),
+        (1, "user", 9),
         # (with same moderator's JWT)
         (5, "moderator", 2),
         # (with same admin's JWT)

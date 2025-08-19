@@ -661,3 +661,21 @@ async def test_archive_own_post_as_user(
     assert response_data["success"] is True
     assert response.status_code == 200
     assert post_text["archived"] is True
+
+
+# Attempt to update the user's post (with same user's JWT)
+@pytest.mark.asyncio
+async def test_unarchive_own_post_as_user(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+) -> None:
+    response = await app_client.patch(
+        "/posts/46/unarchive", headers=user_headers["user"]
+    )
+    response_data = await response.get_json()
+    post_text = response_data["unarchived"]
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert post_text["archived"] is False

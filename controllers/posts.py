@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import cast
 
+from pyparsing import Any
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import desc, false, select
 
@@ -306,48 +307,80 @@ async def delete_post(token_payload: UserData, post_id: int) -> Response:
     return jsonify({"success": True, "deleted": int(post_id)})
 
 
-# Endpoint: PATCH /posts/archive/<post_id>
+# Endpoint: PATCH /posts/<post_id>/archive
 # Description: Archives a post in the database.
 # Parameters: post_id - ID of the post to update.
 # Authorization: patch:my-post or patch:any-post.
 @posts_endpoints.route("/posts/<post_id>/archive", methods=["PATCH"])
 @requires_auth(sah_config, ["patch:my-post", "patch:any-post"])
 async def archive_post(token_payload: UserData, post_id: int) -> Response:
+    archived = await _toggle_archive_post(
+        user_id=token_payload["id"],
+        post_id=post_id,
+        permissions=token_payload["role"]["permissions"],
+        method="archive",
+    )
+
+    return jsonify({"success": True, "archived": archived})
+
+
+# Endpoint: PATCH /posts/<post_id>/unarchive
+# Description: Unarchives a post in the database.
+# Parameters: post_id - ID of the post to update.
+# Authorization: patch:my-post or patch:any-post.
+@posts_endpoints.route("/posts/<post_id>/unarchive", methods=["PATCH"])
+@requires_auth(sah_config, ["patch:my-post", "patch:any-post"])
+async def unarchive_post(token_payload: UserData, post_id: int) -> Response:
+    unarchived = await _toggle_archive_post(
+        user_id=token_payload["id"],
+        post_id=post_id,
+        permissions=token_payload["role"]["permissions"],
+        method="unarchive",
+    )
+
+    return jsonify({"success": True, "unarchived": unarchived})
+
+
+async def _toggle_archive_post(
+    user_id: int, post_id: int, permissions: list[str], method: str
+) -> dict[str, Any]:
     # Check if the post ID isn't an integer; if it isn't, abort
     validator.check_type(post_id, "Post ID")
     original_post: Post = await sah_config.db.one_or_404(
         item_id=int(post_id),
         item_type=Post,
     )
-    if original_post.archived:
-        raise AuthError(
-            {
-                "code": 403,
-                "description": "You cannot edit an archived post.",
-            },
-            403,
-        )
-
-    # If the user's permission is 'patch my' the user can only edit
-    # their own posts. If it's a user trying to edit the text
-    # of a post that doesn't belong to them, throw an auth error
-    if (
-        "patch:my-post" in token_payload["role"]["permissions"]
-        and original_post.user_id != token_payload["id"]
+    if (method == "archived" and original_post.archived) or (
+        method == "unarchive" and not original_post.archived
     ):
         raise AuthError(
             {
                 "code": 403,
-                "description": "You do not have permission to edit this post.",
+                "description": f"You cannot {method} an {method}d post.",
             },
             403,
         )
 
-    # Otherwise, the user either attempted to edit their own post, or
-    # they're allowed to edit any post, so let them update the post
-    original_post.archived = True
+    # If the user's permission is 'patch my' the user can only un/archive
+    # their own posts. If it's a user trying to un/archive a post that
+    # doesn't belong to them, throw an auth error
+    if "patch:my-post" in permissions and original_post.user_id != user_id:
+        raise AuthError(
+            {
+                "code": 403,
+                "description": f"You do not have permission to {method} this post.",
+            },
+            403,
+        )
+
+    # Otherwise, the user either attempted to un/archive their own post, or
+    # they're allowed to un/archive any post, so let them update the post
+    if method == "archive":
+        original_post.archived = True
+    else:
+        original_post.archived = False
 
     # Try to update the database
-    archived = await sah_config.db.update_object(obj=original_post)
+    updated_post = await sah_config.db.update_object(obj=original_post)
 
-    return jsonify({"success": True, "archived": archived})
+    return updated_post
