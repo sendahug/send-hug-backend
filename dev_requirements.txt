@@ -5,7 +5,7 @@ mypy==1.16.1
 pytest==8.4.1
 pytest-mock==3.14.1
 pytest-cov==6.2.1
-pytest-asyncio==0.26.0
+pytest-asyncio==1.1.0
 
 # additional types
 types-python-http-client==3.3.7.20250708
