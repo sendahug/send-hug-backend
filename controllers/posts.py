@@ -315,8 +315,6 @@ async def delete_post(token_payload: UserData, post_id: int) -> Response:
 async def archive_post(token_payload: UserData, post_id: int) -> Response:
     # Check if the post ID isn't an integer; if it isn't, abort
     validator.check_type(post_id, "Post ID")
-
-    updated_post = await request.get_json()
     original_post: Post = await sah_config.db.one_or_404(
         item_id=int(post_id),
         item_type=Post,
@@ -336,7 +334,6 @@ async def archive_post(token_payload: UserData, post_id: int) -> Response:
     if (
         "patch:my-post" in token_payload["role"]["permissions"]
         and original_post.user_id != token_payload["id"]
-        and original_post.archived != updated_post["archived"]
     ):
         raise AuthError(
             {
@@ -348,16 +345,9 @@ async def archive_post(token_payload: UserData, post_id: int) -> Response:
 
     # Otherwise, the user either attempted to edit their own post, or
     # they're allowed to edit any post, so let them update the post
-    # If the text was changed
-    if original_post.text != updated_post["text"]:
-        validator.validate_post_or_message(
-            text=updated_post["text"],
-            type="post",
-            filtered_words=await get_current_filters(),
-        )
-        original_post.archived = updated_post["archived"]
+    original_post.archived = True
 
     # Try to update the database
-    updated = await sah_config.db.update_object(obj=original_post)
+    archived = await sah_config.db.update_object(obj=original_post)
 
-    return jsonify({"success": True, "updated": updated})
+    return jsonify({"success": True, "archived": archived})

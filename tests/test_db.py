@@ -143,6 +143,7 @@ async def test_add_no_errors(test_db: SendADatabase, posts_to_add: list[Post]) -
         "date": post_to_add.date,
         "givenHugs": 0,
         "sentHugs": [],
+        "archived": False,
     }
 
     actual_return = await test_db.add_object(obj=post_to_add)
@@ -195,6 +196,7 @@ async def test_add_multiple_no_errors(
             "date": posts_to_add[0].date,
             "givenHugs": 0,
             "sentHugs": [],
+            "archived": False,
         },
         {
             "id": 47,
@@ -204,6 +206,7 @@ async def test_add_multiple_no_errors(
             "date": posts_to_add[1].date,
             "givenHugs": 0,
             "sentHugs": [],
+            "archived": False,
         },
     ]
 
@@ -311,6 +314,7 @@ async def test_update_multiple_no_errors(
             ),
             "givenHugs": 3,
             "sentHugs": [4],
+            "archived": False,
         },
     ]
 

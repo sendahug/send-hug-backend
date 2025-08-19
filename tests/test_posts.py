@@ -645,3 +645,19 @@ async def test_get_full_posts_page_2(
     assert response.status_code == 200
     assert len(response_data["posts"]) == 5
     assert response_data["total_pages"] == 5
+
+
+# Attempt to update the user's post (with same user's JWT)
+@pytest.mark.asyncio
+async def test_archive_own_post_as_user(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+) -> None:
+    response = await app_client.patch("/posts/archive/4", headers=user_headers["user"])
+    response_data = await response.get_json()
+    post_text = response_data["archived"]
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert post_text["archived"] is True

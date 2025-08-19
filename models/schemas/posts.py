@@ -123,4 +123,5 @@ class Post(BaseModel):
             "date": self.date,
             "givenHugs": self.given_hugs,
             "sentHugs": list(filter(None, self.sent_hugs)) if self.sent_hugs else [],
+            "archived": self.archived,
         }
