@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import cast
+from typing import Any, cast
 
-from pyparsing import Any
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import desc, false, select
 
