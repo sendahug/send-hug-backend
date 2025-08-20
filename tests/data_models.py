@@ -1,6 +1,5 @@
 from datetime import datetime
 import json
-from typing import Sequence
 
 from sqlalchemy import select, text
 
@@ -38,111 +37,152 @@ async def create_filters(db: SendADatabase) -> None:
 
 
 async def create_permissions(db: SendADatabase) -> None:
-    permission_1 = Permission(
-        id=1, permission="block:user", description="Block or unblock a user"
-    )
-    permission_2 = Permission(
-        id=2, permission="delete:any-post", description="Delete anyones post"
-    )
-    permission_3 = Permission(
-        id=3, permission="delete:messages", description="Delete my messages"
-    )
-    permission_4 = Permission(
-        id=4, permission="patch:any-post", description="Edit any post"
-    )
-    permission_5 = Permission(
-        id=5, permission="patch:any-user", description="Edit any users display name"
-    )
-    permission_6 = Permission(
-        id=6, permission="post:message", description="Create a new message"
-    )
-    permission_7 = Permission(
-        id=7, permission="post:post", description="Create a new post"
-    )
-    permission_8 = Permission(
-        id=8, permission="post:report", description="Create a new report."
-    )
-    permission_9 = Permission(
-        id=9, permission="read:admin-board", description="View admin dashboard"
-    )
-    permission_10 = Permission(
-        id=10, permission="read:messages", description="Read user messages"
-    )
-    permission_11 = Permission(
-        id=11, permission="read:user", description="Read user data"
-    )
-    permission_12 = Permission(
-        id=12, permission="delete:my-post", description="Delete my own post"
-    )
-    permission_13 = Permission(
-        id=13, permission="patch:user", description="Edit user data"
-    )
-    permission_14 = Permission(
-        id=14, permission="patch:my-post", description="Edit my post"
-    )
-    permission_15 = Permission(
-        id=15, permission="post:user", description="Create a new user"
-    )
+    permissions = [
+        Permission(
+            id=1, permission="block:user", description="Block or unblock a user"
+        ),
+        Permission(
+            id=2, permission="delete:any-post", description="Delete anyones post"
+        ),
+        Permission(
+            id=3, permission="delete:messages", description="Delete my messages"
+        ),
+        Permission(id=4, permission="patch:any-post", description="Edit any post"),
+        Permission(
+            id=5, permission="patch:any-user", description="Edit any users display name"
+        ),
+        Permission(id=6, permission="post:message", description="Create a new message"),
+        Permission(id=7, permission="post:post", description="Create a new post"),
+        Permission(id=8, permission="post:report", description="Create a new report."),
+        Permission(
+            id=9, permission="read:admin-board", description="View admin dashboard"
+        ),
+        Permission(id=10, permission="read:messages", description="Read user messages"),
+        Permission(id=11, permission="read:user", description="Read user data"),
+        Permission(
+            id=12, permission="delete:my-post", description="Delete my own post"
+        ),
+        Permission(id=13, permission="patch:user", description="Edit user data"),
+        Permission(id=14, permission="patch:my-post", description="Edit my post"),
+        Permission(id=15, permission="post:user", description="Create a new user"),
+        Permission(
+            id=16,
+            permission="archive:any-post",
+            description="Archive/unarchive anyones post",
+        ),
+        Permission(
+            id=17,
+            permission="archive:my-post",
+            description="Archive/unarchive my own post",
+        ),
+        Permission(
+            id=18,
+            permission="archive:messages",
+            description="Archive/unarchive my messages",
+        ),
+        Permission(
+            id=19, permission="archive:user", description="Archive/unarchive a user"
+        ),
+    ]
 
     try:
-        db.session.add_all(
-            [
-                permission_1,
-                permission_2,
-                permission_3,
-                permission_4,
-                permission_5,
-                permission_6,
-                permission_7,
-                permission_8,
-                permission_9,
-                permission_10,
-                permission_11,
-                permission_12,
-                permission_13,
-                permission_14,
-                permission_15,
-            ]
-        )
-        await db.session.execute(
-            text("ALTER SEQUENCE permissions_id_seq RESTART WITH 16;")
-        )
+        db.session.add_all(permissions)
         await db.session.commit()
     finally:
         await db.session.remove()
 
 
 async def create_roles(db: SendADatabase) -> None:
-    role_1 = Role(id=1, name="admin")
-    role_2 = Role(id=2, name="moderator")
-    role_3 = Role(id=3, name="user")
-    role_4 = Role(id=4, name="new user")
-    role_5 = Role(id=5, name="blocked user")
+    admin_role = Role(id=1, name="admin")
+    moderator_role = Role(id=2, name="moderator")
+    user_role = Role(id=3, name="user")
+    new_user_role = Role(id=4, name="new user")
+    blocked_user_role = Role(id=5, name="blocked user")
 
     try:
-        permissions_scalars = await db.session.scalars(
-            select(Permission).order_by(Permission.id)
-        )
-        permissions: Sequence[Permission] = permissions_scalars.all()
+        permissions_scalars = (
+            await db.session.scalars(select(Permission).order_by(Permission.id))
+        ).all()
+        permissions: dict[str, Permission] = {
+            p.permission: p for p in permissions_scalars
+        }
 
-        # admin
-        role_1.permissions = [*permissions[0:11]]
-        # moderator
-        role_2.permissions = [*permissions[2:4], *permissions[5:8], *permissions[9:13]]
-        # user
-        role_3.permissions = [permissions[2], *permissions[5:8], *permissions[9:14]]
-        # new user
-        role_4.permissions = [permissions[2], permissions[7], *permissions[9:]]
-        # blocked user
-        role_5.permissions = [
-            permissions[2],
-            permissions[5],
-            permissions[7],
-            *permissions[9:],
+        admin_role.permissions = [
+            permissions["block:user"],
+            permissions["delete:any-post"],
+            permissions["delete:messages"],
+            permissions["patch:any-post"],
+            permissions["patch:any-user"],
+            permissions["post:message"],
+            permissions["post:post"],
+            permissions["post:report"],
+            permissions["read:admin-board"],
+            permissions["read:messages"],
+            permissions["read:user"],
+            permissions["post:user"],
+            permissions["archive:any-post"],
+            permissions["archive:my-post"],
+            permissions["archive:messages"],
+            permissions["archive:user"],
+        ]
+        moderator_role.permissions = [
+            permissions["delete:messages"],
+            permissions["patch:any-post"],
+            permissions["patch:any-user"],
+            permissions["post:message"],
+            permissions["post:post"],
+            permissions["post:report"],
+            permissions["read:messages"],
+            permissions["read:user"],
+            permissions["delete:my-post"],
+            permissions["patch:user"],
+            permissions["archive:any-post"],
+            permissions["archive:my-post"],
+            permissions["archive:messages"],
+        ]
+        user_role.permissions = [
+            permissions["delete:messages"],
+            permissions["post:message"],
+            permissions["post:post"],
+            permissions["post:report"],
+            permissions["read:messages"],
+            permissions["read:user"],
+            permissions["delete:my-post"],
+            permissions["patch:user"],
+            permissions["patch:my-post"],
+            permissions["post:user"],
+            permissions["archive:my-post"],
+            permissions["archive:messages"],
+        ]
+        new_user_role.permissions = [
+            permissions["delete:messages"],
+            permissions["post:report"],
+            permissions["read:messages"],
+            permissions["read:user"],
+            permissions["delete:my-post"],
+            permissions["patch:user"],
+            permissions["patch:my-post"],
+            permissions["post:user"],
+            permissions["archive:my-post"],
+            permissions["archive:messages"],
+        ]
+        blocked_user_role.permissions = [
+            permissions["delete:messages"],
+            permissions["post:message"],
+            permissions["post:report"],
+            permissions["read:messages"],
+            permissions["read:user"],
+            permissions["delete:my-post"],
+            permissions["patch:user"],
+            permissions["patch:my-post"],
+            permissions["post:user"],
+            permissions["archive:my-post"],
+            permissions["archive:messages"],
         ]
 
-        db.session.add_all([role_1, role_2, role_3, role_4, role_5])
-        await db.session.execute(text("ALTER SEQUENCE roles_id_seq RESTART WITH 6;"))
+        db.session.add_all(
+            [admin_role, moderator_role, user_role, new_user_role, blocked_user_role]
+        )
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -362,7 +402,6 @@ async def create_users(db: SendADatabase) -> None:
 
     try:
         db.session.add_all([user_1, user_2, user_3, user_4, user_5, user_6, user_7])
-        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 21;"))
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -621,7 +660,6 @@ async def create_threads(db: SendADatabase) -> None:
         db.session.add_all(
             [thread_1, thread_2, thread_3, thread_4, thread_5, thread_6, thread_7]
         )
-        await db.session.execute(text("ALTER SEQUENCE threads_id_seq RESTART WITH 9;"))
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -788,9 +826,6 @@ async def create_messages(db: SendADatabase) -> None:
                 message_13,
                 message_14,
             ]
-        )
-        await db.session.execute(
-            text("ALTER SEQUENCE messages_id_seq RESTART WITH 27;")
         )
         await db.session.commit()
     finally:
@@ -1333,7 +1368,6 @@ async def create_reports(db: SendADatabase) -> None:
                 report_44,
             ]
         )
-        await db.session.execute(text("ALTER SEQUENCE reports_id_seq RESTART WITH 45;"))
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -1777,9 +1811,6 @@ async def create_notifications(db: SendADatabase) -> None:
                 notification_95,
             ]
         )
-        await db.session.execute(
-            text("ALTER SEQUENCE notifications_id_seq RESTART WITH 96;")
-        )
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -1826,9 +1857,6 @@ async def create_subscriptions(db: SendADatabase) -> None:
 
     try:
         db.session.add_all([sub_1, sub_2, sub_3])
-        await db.session.execute(
-            text("ALTER SEQUENCE subscriptions_id_seq RESTART WITH 4;")
-        )
         await db.session.commit()
     finally:
         await db.session.close()

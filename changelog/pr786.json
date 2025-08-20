@@ -1,0 +1,17 @@
+{
+    "pr_number": 786,
+    "changes": [
+        {
+            "change": "Features",
+            "description": "Added new archive/unarchive endpoints for posts, messages and users in order to archive and unarchive them. This allows the platform to be more mindful when 'deleting' items, offering recovery options as well as preparing a more managed way of permanently deleting items in future."
+        },
+        {
+            "change": "Chores",
+            "description": "Updated the test setup system to more easily allow the addition or removal of test data without causing database primary or unique key violations."
+        },
+        {
+            "change": "Chores",
+            "description": "Created a new set of permissions for archving items."
+        }
+    ]
+}
