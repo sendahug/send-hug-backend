@@ -349,7 +349,7 @@ async def _toggle_archive_post(
         item_id=int(post_id),
         item_type=Post,
     )
-    if (method == "archived" and original_post.archived) or (
+    if (method == "archive" and original_post.archived) or (
         method == "unarchive" and not original_post.archived
     ):
         raise AuthError(
