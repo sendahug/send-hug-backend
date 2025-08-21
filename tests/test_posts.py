@@ -396,6 +396,26 @@ async def test_update_nonexistent_post_as_admin(
     assert response.status_code == 404
 
 
+# Attempt to update an archived post
+@pytest.mark.asyncio
+async def test_update_archived_post_as_admin(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+    dummy_users_data: dict,
+) -> None:
+    post = dummy_request_data["updated_post"]
+    post["userId"] = dummy_users_data["user"]["internal"]
+    response = await app_client.patch(
+        "/posts/46", headers=user_headers["admin"], data=json.dumps(post)
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 403
+
+
 # Attempt to update a post without post ID (with admin's JWT)
 @pytest.mark.asyncio
 async def test_update_post_no_id_as_admin(
@@ -444,6 +464,20 @@ async def test_post_hugs_post_no_existing(
 
     assert response_data["success"] is False
     assert response.status_code == 404
+
+
+# Attempt to send hugs for an archived post
+@pytest.mark.asyncio
+async def test_post_hugs_post_archived(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
+    response = await app_client.post(
+        "/posts/46/hugs", headers=user_headers["admin"], data=json.dumps({})
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 403
 
 
 # Attempt to send hugs
