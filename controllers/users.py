@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Sequence
+from typing import Any, Sequence
 
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import delete, func, select, true
@@ -186,6 +186,14 @@ async def edit_user(token_payload: UserData, user_id: int) -> Response:
         item_id=int(user_id),
         item_type=User,
     )
+    if user_to_update.archived:
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "You cannot edit an archived user.",
+            },
+            403,
+        )
 
     # If there's a login count (meaning, the user is editing their own
     # data), update it
@@ -432,6 +440,15 @@ async def send_hug_to_user(token_payload: UserData, user_id: int) -> Response:
         item_id=int(user_id),
         item_type=User,
     )
+    if user_to_hug.archived:
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "You cannot send a hug to an archived user.",
+            },
+            403,
+        )
+
     # Fetch the current user to update their 'given hugs' value
     current_user: User = await sah_config.db.one_or_404(
         item_id=token_payload["id"], item_type=User
@@ -465,3 +482,64 @@ async def send_hug_to_user(token_payload: UserData, user_id: int) -> Response:
             "updated": f"Successfully sent hug to {user_to_hug.display_name}",
         }
     )
+
+
+# Endpoint: PATCH /users/<user_id>/archive
+# Description: Archives a user in the database.
+# Parameters: user_id - ID of the user to update.
+# Authorization: patch:my-user or patch:any-user.
+@users_endpoints.route("/users/<user_id>/archive", methods=["PATCH"])
+@requires_auth(sah_config, ["archive:user"])
+async def archive_user(token_payload: UserData, user_id: int) -> Response:
+    archived = await _toggle_archive_user(
+        user_id=user_id,
+        method="archive",
+    )
+
+    return jsonify({"success": True, "archived": archived})
+
+
+# Endpoint: PATCH /users/<user_id>/unarchive
+# Description: Unarchives a user in the database.
+# Parameters: user_id - ID of the user to update.
+# Authorization: archive:user.
+@users_endpoints.route("/users/<user_id>/unarchive", methods=["PATCH"])
+@requires_auth(sah_config, ["archive:user"])
+async def unarchive_user(token_payload: UserData, user_id: int) -> Response:
+    unarchived = await _toggle_archive_user(
+        user_id=user_id,
+        method="unarchive",
+    )
+
+    return jsonify({"success": True, "unarchived": unarchived})
+
+
+async def _toggle_archive_user(user_id: int, method: str) -> dict[str, Any]:
+    # Check if the user ID isn't an integer; if it isn't, abort
+    validator.check_type(user_id, "User ID")
+    original_user: User = await sah_config.db.one_or_404(
+        item_id=int(user_id),
+        item_type=User,
+    )
+    if (method == "archive" and original_user.archived) or (
+        method == "unarchive" and not original_user.archived
+    ):
+        raise AuthError(
+            {
+                "code": 403,
+                "description": f"You cannot {method} an {method}d user.",
+            },
+            403,
+        )
+
+    # Otherwise, the user either attempted to un/archive their own user, or
+    # they're allowed to un/archive any user, so let them update the user
+    if method == "archive":
+        original_user.archived = True
+    else:
+        original_user.archived = False
+
+    # Try to update the database
+    updated_user = await sah_config.db.update_object(obj=original_user)
+
+    return updated_user
