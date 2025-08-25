@@ -519,7 +519,7 @@ async def test_post_hugs_with_message(
         response_data["updated"]
         == "Successfully sent hug for post 1 and a message to user 1"
     )
-    assert len(threads_response_data["messages"]) == 3
+    assert len(threads_response_data["messages"]) == 5
 
 
 # Delete Post Route Tests ('/posts/<post_id>', DELETE)
