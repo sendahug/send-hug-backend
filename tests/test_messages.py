@@ -750,3 +750,124 @@ async def test_empty_mailbox_no_messages(
 
     assert response_data["success"] is False
     assert response.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "user_type, message_id",
+    [
+        ("user", 3),
+        ("moderator", 3),
+        # ("admin"),  # TODO: decide if admin can archive any message
+        # other user has archvived
+        ("user", 28),
+        ("moderator", 29),
+    ],
+)
+@pytest.mark.asyncio
+async def test_archive_message_succeeds(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_type: str,
+    message_id: int,
+) -> None:
+    response = await app_client.patch(
+        f"/messages/{message_id}/archive", headers=user_headers[user_type]
+    )
+    response_data = await response.get_json()
+    message_text = response_data["archived"]
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert message_text == message_id
+
+
+@pytest.mark.parametrize(
+    "user_type, message_id, expected_fail_code",
+    [
+        ("blocked", 3, 403),
+        ("newUserRole", 3, 403),
+        ("malformed", 3, 401),
+        (None, 3, 401),
+        # Already archived
+        ("user", 27, 403),
+        ("moderator", 28, 403),
+        ("user", 29, 403),
+    ],
+)
+@pytest.mark.asyncio
+async def test_archive_message_fails(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_type: str | None,
+    message_id: int,
+    expected_fail_code: int,
+) -> None:
+    response = await app_client.patch(
+        f"/messages/{message_id}/archive",
+        headers=user_headers[user_type] if user_type else None,
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == expected_fail_code
+
+
+@pytest.mark.parametrize(
+    "user_type, message_id",
+    [
+        ("moderator", 28),
+        ("user", 29),
+    ],
+)
+@pytest.mark.asyncio
+async def test_unarchive_message_succeeds(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_type: str,
+    message_id: int,
+) -> None:
+    response = await app_client.patch(
+        f"/messages/{message_id}/unarchive", headers=user_headers[user_type]
+    )
+    response_data = await response.get_json()
+    message_text = response_data["unarchived"]
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert message_text == message_id
+
+
+@pytest.mark.parametrize(
+    "user_type, message_id, expected_fail_code",
+    [
+        ("user", 3, 403),
+        ("moderator", 3, 403),
+        ("blocked", 27, 403),
+        ("newUserRole", 27, 403),
+        ("malformed", 27, 401),
+        (None, 27, 401),
+        # user has already unarchvived
+        ("user", 28, 403),
+        ("moderator", 29, 403),
+    ],
+)
+@pytest.mark.asyncio
+async def test_unarchive_message_fails(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_type: str | None,
+    message_id: int,
+    expected_fail_code: int,
+) -> None:
+    response = await app_client.patch(
+        f"/messages/{message_id}/unarchive",
+        headers=user_headers[user_type] if user_type else None,
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == expected_fail_code
