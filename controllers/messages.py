@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any, Literal
 
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import and_, delete, desc, false, func, or_, select, true, update
@@ -189,32 +190,12 @@ async def delete_message(
     token_payload: UserData,
     message_id: int,
 ) -> Response:
-    validator.check_type(message_id, "Message ID")
     message_id = int(message_id)  # flask typing is rubbish
-
-    delete_item = await sah_config.db.one_or_404(
-        item_id=message_id,
-        item_type=Message,
+    delete_item = await _toggle_archive_message(
+        user_id=token_payload["id"],
+        message_id=message_id,
+        method="delete",
     )
-
-    # check if we are deleting the from or for message
-    if delete_item.for_id == token_payload["id"]:
-        delete_item.for_deleted = True
-    elif delete_item.from_id == token_payload["id"]:
-        delete_item.from_deleted = True
-    else:
-        # The user is attempting to delete another user's messages
-        raise AuthError(
-            {
-                "code": 403,
-                "description": "You do not have permission to "
-                "delete another user's messages.",
-            },
-            403,
-        )
-
-    # mark the object for deletion
-    await sah_config.db.update_object(delete_item, current_user_id=token_payload["id"])
 
     if delete_item.for_deleted and delete_item.from_deleted:
         # If both users have deleted the message, delete it from the database
@@ -223,6 +204,104 @@ async def delete_message(
         await sah_config.db.delete_object(delete_item)
 
     return jsonify({"success": True, "deleted": message_id})
+
+
+# Endpoint: PATCH /messages/<message_id>/archive
+# Description: Archives a message.
+# Parameters: message_id - the ID of the message to archive.
+# Authorization: archive:messages.
+@messages_endpoints.route("/messages/<message_id>/archive", methods=["PATCH"])
+@requires_auth(sah_config, ["archive:messages"])
+async def archive_message(
+    token_payload: UserData,
+    message_id: int,
+) -> Response:
+    message_id = int(message_id)  # flask typing is rubbish
+    await _toggle_archive_message(
+        user_id=token_payload["id"],
+        message_id=message_id,
+        method="archive",
+    )
+
+    return jsonify({"success": True, "archived": message_id})
+
+
+# Endpoint: PATCH /messages/<message_id>/unarchive
+# Description: Unarchives a message.
+# Parameters: message_id - the ID of the message to unarchive.
+# Authorization: archive:messages.
+@messages_endpoints.route("/messages/<message_id>/unarchive", methods=["PATCH"])
+@requires_auth(sah_config, ["archive:messages"])
+async def unarchive_message(
+    token_payload: UserData,
+    message_id: int,
+) -> Response:
+    message_id = int(message_id)  # flask typing is rubbish
+    await _toggle_archive_message(
+        user_id=token_payload["id"],
+        message_id=message_id,
+        method="unarchive",
+    )
+
+    return jsonify({"success": True, "unarchived": message_id})
+
+
+async def _toggle_archive_message(
+    user_id: int, message_id: int, method: Literal["archive", "unarchive", "delete"]
+) -> Message:
+    validator.check_type(message_id, "Message ID")
+    message_id = int(message_id)  # flask typing is rubbish
+
+    archive_item = await sah_config.db.one_or_404(
+        item_id=message_id,
+        item_type=Message,
+    )
+    if archive_item.for_id != user_id and archive_item.from_id != user_id:
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "You do not have permission to "
+                f"{method} another user's messages.",
+            },
+            403,
+        )
+
+    # check if we are un/archiving/deleting the from or for message
+    if archive_item.for_id == user_id:
+        if method == "archive" and not archive_item.for_archived:
+            archive_item.for_archived = True
+        elif method == "unarchive" and archive_item.for_archived:
+            archive_item.for_archived = False
+        elif method == "delete" and not archive_item.for_deleted:
+            archive_item.for_deleted = True
+        else:
+            raise AuthError(
+                {
+                    "code": 403,
+                    "description": f"You cannot {method} an {method}d post.",
+                },
+                403,
+            )
+    elif archive_item.from_id == user_id:
+        if method == "archive" and not archive_item.from_archived:
+            archive_item.from_archived = True
+        elif method == "unarchive" and archive_item.from_archived:
+            archive_item.from_archived = False
+        elif method == "delete" and not archive_item.from_deleted:
+            archive_item.from_deleted = True
+        else:
+            raise AuthError(
+                {
+                    "code": 403,
+                    "description": f"You cannot {method} an {method}d post.",
+                },
+                403,
+            )
+
+    # mark the object for un/archival/deletion
+    await sah_config.db.update_object(archive_item, current_user_id=user_id)
+
+    return archive_item
 
 
 # Endpoint: DELETE /threads/<thread_id>
@@ -235,56 +314,11 @@ async def delete_thread(
     token_payload: UserData,
     thread_id: int,
 ) -> Response:
-    validator.check_type(thread_id, "Message ID")
-    thread_id = int(thread_id)  # flask typing is rubbishzq
-
-    delete_item = await sah_config.db.one_or_404(
-        item_id=thread_id,
-        item_type=Thread,
-    )
-
-    # Check if the user is attempting to delete another user's threads
-    if (
-        delete_item.user_1_id != token_payload["id"]
-        and delete_item.user_2_id != token_payload["id"]
-    ):
-        raise AuthError(
-            {
-                "code": 403,
-                "description": "You do not have permission to "
-                "delete another user's thread messages.",
-            },
-            403,
-        )
-
-    # For each message that wasn't deleted by the other user, the
-    # value of for_deleted/from_deleted (depending on which of the users
-    # it is) is updated to True
-    from_stmt = (
-        update(Message)
-        .where(
-            and_(
-                Message.thread == delete_item.id,
-                Message.for_id == token_payload["id"],
-                Message.from_deleted == false(),
-            )
-        )
-        .values(for_deleted=true())
-    )
-
-    for_stmt = (
-        update(Message)
-        .where(
-            and_(
-                Message.thread == delete_item.id,
-                Message.from_id == token_payload["id"],
-                Message.for_deleted == false(),
-            )
-        )
-        .values(from_deleted=true())
-    )
-    await sah_config.db.update_multiple_objects_with_dml(
-        update_stmts=[from_stmt, for_stmt]
+    thread_id = int(thread_id)  # flask typing is rubbish
+    delete_item = await _toggle_archive_thread(
+        user_id=token_payload["id"],
+        thread_id=thread_id,
+        method="delete",
     )
 
     # delete the ones that were deleted by both users
@@ -312,45 +346,118 @@ async def delete_thread(
     return jsonify({"success": True, "deleted": thread_id})
 
 
+# Endpoint: PATCH /threads/<thread_id>/archive
+# Description: Archives a thread.
+# Parameters: thread_id - the ID of the thread to archive.
+# Authorization: archive:messages.
+@messages_endpoints.route("/threads/<thread_id>/archive", methods=["PATCH"])
+@requires_auth(sah_config, ["archive:messages"])
+async def archive_thread(
+    token_payload: UserData,
+    thread_id: int,
+) -> Response:
+    thread_id = int(thread_id)  # flask typing is rubbish
+    await _toggle_archive_thread(
+        user_id=token_payload["id"],
+        thread_id=thread_id,
+        method="archive",
+    )
+
+    return jsonify({"success": True, "archived": thread_id})
+
+
+# Endpoint: PATCH /threads/<thread_id>/unarchive
+# Description: Archives a thread.
+# Parameters: thread_id - the ID of the thread to unarchive.
+# Authorization: archive:messages.
+@messages_endpoints.route("/threads/<thread_id>/unarchive", methods=["PATCH"])
+@requires_auth(sah_config, ["archive:messages"])
+async def unarchive_thread(
+    token_payload: UserData,
+    thread_id: int,
+) -> Response:
+    thread_id = int(thread_id)  # flask typing is rubbish
+    await _toggle_archive_thread(
+        user_id=token_payload["id"],
+        thread_id=thread_id,
+        method="unarchive",
+    )
+
+    return jsonify({"success": True, "unarchived": thread_id})
+
+
+async def _toggle_archive_thread(
+    user_id: int, thread_id: int, method: Literal["archive", "unarchive", "delete"]
+) -> Thread:
+    validator.check_type(thread_id, "Thread ID")
+    thread_id = int(thread_id)  # flask typing is rubbish
+
+    archive_item = await sah_config.db.one_or_404(
+        item_id=thread_id,
+        item_type=Thread,
+    )
+
+    # Check if the user is attempting to delete another user's threads
+    if archive_item.user_1_id != user_id and archive_item.user_2_id != user_id:
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "You do not have permission to "
+                f"{method} another user's thread messages.",
+            },
+            403,
+        )
+
+    for_field: dict[str, dict[str, Any]] = {
+        "archive": {"for_archived": true()},
+        "unarchive": {"for_archived": false()},
+        "delete": {"for_deleted": true()},
+    }
+    from_field: dict[str, dict[str, Any]] = {
+        "archive": {"from_archived": true()},
+        "unarchive": {"from_archived": false()},
+        "delete": {"from_deleted": true()},
+    }
+    # For each message that wasn't un/archived/deleted by the other user, the
+    # value of for_deleted/from_deleted (depending on which of the users
+    # it is) is updated to True
+    from_stmt = (
+        update(Message)
+        .where(
+            and_(
+                Message.thread == archive_item.id,
+                Message.for_id == user_id,
+            )
+        )
+        .values(for_field[method])
+    )
+
+    for_stmt = (
+        update(Message)
+        .where(
+            and_(
+                Message.thread == archive_item.id,
+                Message.from_id == user_id,
+            )
+        )
+        .values(from_field[method])
+    )
+    await sah_config.db.update_multiple_objects_with_dml(
+        update_stmts=[from_stmt, for_stmt]
+    )
+
+    return archive_item
+
+
 # Endpoint: DELETE /threads
 # Description: Deletes all threads.
 # Authorization: delete:messages.
 @messages_endpoints.route("/threads", methods=["DELETE"])
 @requires_auth(sah_config, ["delete:messages"])
 async def clear_mailbox(token_payload: UserData) -> Response:
-    async def get_msgs_count(id: int) -> int | None:
-        return await sah_config.db.session.scalar(
-            select(func.count(Thread.id)).filter(
-                or_(
-                    and_(Thread.user_1_id == id, Thread.user1_deleted == false()),
-                    and_(Thread.user_2_id == id, Thread.user2_deleted == false()),
-                )
-            )
-        )
-
-    num_messages = await get_msgs_count(token_payload["id"])
-    # If there are no messages, abort
-    if not num_messages:
-        abort(404)
-
-    # mark each message that was either sent from or sent to the user as deleted
-    update_stmt = (
-        update(Message)
-        .where(
-            or_(
-                and_(
-                    Message.from_id == token_payload["id"],
-                    Message.for_deleted == false(),
-                ),
-                and_(
-                    Message.for_id == token_payload["id"],
-                    Message.from_deleted == false(),
-                ),
-            )
-        )
-        .values(from_deleted=true(), for_deleted=true())
+    num_messages = await _toggle_archive_mailbox(
+        user_id=token_payload["id"], method="delete"
     )
-    await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
 
     delete_stmt = delete(Message).where(
         or_(
@@ -369,3 +476,90 @@ async def clear_mailbox(token_payload: UserData) -> Response:
     return jsonify(
         {"success": True, "userID": token_payload["id"], "deleted": num_messages}
     )
+
+
+# Endpoint: PATCH /threads/archive
+# Description: Archives all threads.
+# Authorization: archive:messages.
+@messages_endpoints.route("/threads/archive", methods=["PATCH"])
+@requires_auth(sah_config, ["archive:messages"])
+async def archive_mailbox(token_payload: UserData) -> Response:
+    num_messages = await _toggle_archive_mailbox(
+        user_id=token_payload["id"], method="archive"
+    )
+
+    return jsonify(
+        {"success": True, "userID": token_payload["id"], "archived": num_messages}
+    )
+
+
+# Endpoint: PATCH /threads/unarchive
+# Description: Unarchives all threads.
+# Authorization: archive:messages.
+@messages_endpoints.route("/threads/unarchive", methods=["PATCH"])
+@requires_auth(sah_config, ["archive:messages"])
+async def unarchive_mailbox(token_payload: UserData) -> Response:
+    num_messages = await _toggle_archive_mailbox(
+        user_id=token_payload["id"], method="unarchive"
+    )
+
+    return jsonify(
+        {"success": True, "userID": token_payload["id"], "unarchived": num_messages}
+    )
+
+
+async def _toggle_archive_mailbox(
+    user_id: int, method: Literal["archive", "unarchive", "delete"]
+) -> int:
+    async def get_threads_count(
+        user_id: int, method: Literal["archive", "unarchive", "delete"]
+    ) -> int | None:
+        user1_field = {
+            "archive": Thread.user1_archived,
+            "unarchive": Thread.user1_archived,
+            "delete": Thread.user1_deleted,
+        }
+        user2_field = {
+            "archive": Thread.user2_archived,
+            "unarchive": Thread.user2_archived,
+            "delete": Thread.user2_deleted,
+        }
+        return await sah_config.db.session.scalar(
+            select(func.count(Thread.id)).filter(
+                or_(
+                    and_(Thread.user_1_id == user_id, user1_field[method] == false()),
+                    and_(Thread.user_2_id == user_id, user2_field[method] == false()),
+                )
+            )
+        )
+
+    num_messages = await get_threads_count(user_id, method)
+    # If there are no messages, abort
+    if not num_messages:
+        abort(404)
+
+    for_field: dict[str, dict[str, Any]] = {
+        "archive": {"for_archived": true()},
+        "unarchive": {"for_archived": false()},
+        "delete": {"for_deleted": true()},
+    }
+    from_field: dict[str, dict[str, Any]] = {
+        "archive": {"from_archived": true()},
+        "unarchive": {"from_archived": false()},
+        "delete": {"from_deleted": true()},
+    }
+
+    # mark each message that was either sent from or sent to the user as deleted
+    update_stmt = (
+        update(Message)
+        .where(
+            or_(
+                Message.from_id == user_id,
+                Message.for_id == user_id,
+            )
+        )
+        .values(**for_field[method], **from_field[method])
+    )
+    await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
+
+    return num_messages

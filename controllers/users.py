@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any, Literal, Sequence
 
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import delete, func, select, true
@@ -514,7 +514,9 @@ async def unarchive_user(token_payload: UserData, user_id: int) -> Response:
     return jsonify({"success": True, "unarchived": unarchived})
 
 
-async def _toggle_archive_user(user_id: int, method: str) -> dict[str, Any]:
+async def _toggle_archive_user(
+    user_id: int, method: Literal["archive", "unarchive"]
+) -> dict[str, Any]:
     # Check if the user ID isn't an integer; if it isn't, abort
     validator.check_type(user_id, "User ID")
     original_user: User = await sah_config.db.one_or_404(

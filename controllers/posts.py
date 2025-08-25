@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import desc, false, select
@@ -341,7 +341,10 @@ async def unarchive_post(token_payload: UserData, post_id: int) -> Response:
 
 
 async def _toggle_archive_post(
-    user_id: int, post_id: int, permissions: list[str], method: str
+    user_id: int,
+    post_id: int,
+    permissions: list[str],
+    method: Literal["archive", "unarchive"],
 ) -> dict[str, Any]:
     # Check if the post ID isn't an integer; if it isn't, abort
     validator.check_type(post_id, "Post ID")
