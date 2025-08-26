@@ -987,3 +987,111 @@ async def test_unarchive_thread_fails(
 
     assert response_data["success"] is False
     assert response.status_code == expected_fail_code
+
+
+@pytest.mark.parametrize(
+    "user_type, user_id, messages_archived",
+    [
+        ("user", 1, 4),
+        ("moderator", 5, 3),
+        ("admin", 4, 3),
+    ],
+)
+@pytest.mark.asyncio
+async def test_archive_mailbox_succeeds(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_type: str,
+    user_id: int,
+    messages_archived: int,
+) -> None:
+    response = await app_client.patch(
+        "/threads/archive", headers=user_headers[user_type]
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert response_data["userID"] == user_id
+    assert response_data["archived"] == messages_archived
+
+
+@pytest.mark.parametrize(
+    "user_type, expected_fail_code",
+    [
+        ("newUserRole", 404),
+        ("malformed", 401),
+        (None, 401),
+    ],
+)
+@pytest.mark.asyncio
+async def test_archive_mailbox_fails(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_type: str | None,
+    expected_fail_code: int,
+) -> None:
+    response = await app_client.patch(
+        "/threads/archive",
+        headers=user_headers[user_type] if user_type else None,
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == expected_fail_code
+
+
+@pytest.mark.parametrize(
+    "user_type, user_id, messages_unarchived",
+    [
+        ("user", 1, 4),
+        ("moderator", 5, 3),
+        ("admin", 4, 3),
+    ],
+)
+@pytest.mark.asyncio
+async def test_unarchive_mailbox_succeeds(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_type: str,
+    user_id: int,
+    messages_unarchived: int,
+) -> None:
+    response = await app_client.patch(
+        "/threads/unarchive", headers=user_headers[user_type]
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert response_data["userID"] == user_id
+    assert response_data["unarchived"] == messages_unarchived
+
+
+@pytest.mark.parametrize(
+    "user_type, expected_fail_code",
+    [
+        ("newUserRole", 404),
+        ("malformed", 401),
+        (None, 401),
+    ],
+)
+@pytest.mark.asyncio
+async def test_unarchive_mailbox_fails(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_type: str | None,
+    expected_fail_code: int,
+) -> None:
+    response = await app_client.patch(
+        "/threads/unarchive",
+        headers=user_headers[user_type] if user_type else None,
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == expected_fail_code
