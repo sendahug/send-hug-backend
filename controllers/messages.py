@@ -357,13 +357,20 @@ async def archive_thread(
     thread_id: int,
 ) -> Response:
     thread_id = int(thread_id)  # flask typing is rubbish
-    await _toggle_archive_thread(
+    archive_item = await _toggle_archive_thread(
         user_id=token_payload["id"],
         thread_id=thread_id,
         method="archive",
     )
 
-    return jsonify({"success": True, "archived": thread_id})
+    return jsonify(
+        {
+            "success": True,
+            "archived": thread_id,
+            "user1Archived": archive_item.user1_archived,
+            "user2Archived": archive_item.user2_archived,
+        }
+    )
 
 
 # Endpoint: PATCH /threads/<thread_id>/unarchive
@@ -377,13 +384,20 @@ async def unarchive_thread(
     thread_id: int,
 ) -> Response:
     thread_id = int(thread_id)  # flask typing is rubbish
-    await _toggle_archive_thread(
+    archive_item = await _toggle_archive_thread(
         user_id=token_payload["id"],
         thread_id=thread_id,
         method="unarchive",
     )
 
-    return jsonify({"success": True, "unarchived": thread_id})
+    return jsonify(
+        {
+            "success": True,
+            "unarchived": thread_id,
+            "user1Archived": archive_item.user1_archived,
+            "user2Archived": archive_item.user2_archived,
+        }
+    )
 
 
 async def _toggle_archive_thread(
@@ -426,10 +440,10 @@ async def _toggle_archive_thread(
         .where(
             and_(
                 Message.thread == archive_item.id,
-                Message.for_id == user_id,
+                Message.from_id == user_id,
             )
         )
-        .values(for_field[method])
+        .values(from_field[method])
     )
 
     for_stmt = (
@@ -437,13 +451,19 @@ async def _toggle_archive_thread(
         .where(
             and_(
                 Message.thread == archive_item.id,
-                Message.from_id == user_id,
+                Message.for_id == user_id,
             )
         )
-        .values(from_field[method])
+        .values(for_field[method])
     )
     await sah_config.db.update_multiple_objects_with_dml(
         update_stmts=[from_stmt, for_stmt]
+    )
+
+    await sah_config.db.session.refresh(archive_item)
+    archive_item = await sah_config.db.one_or_404(
+        item_id=thread_id,
+        item_type=Thread,
     )
 
     return archive_item
@@ -514,21 +534,21 @@ async def _toggle_archive_mailbox(
     async def get_threads_count(
         user_id: int, method: Literal["archive", "unarchive", "delete"]
     ) -> int | None:
-        user1_field = {
-            "archive": Thread.user1_archived,
-            "unarchive": Thread.user1_archived,
-            "delete": Thread.user1_deleted,
+        user1_condition = {
+            "archive": Thread.user1_archived == false(),
+            "unarchive": Thread.user1_archived == true(),
+            "delete": Thread.user1_deleted == false(),
         }
-        user2_field = {
-            "archive": Thread.user2_archived,
-            "unarchive": Thread.user2_archived,
-            "delete": Thread.user2_deleted,
+        user2_condition = {
+            "archive": Thread.user2_archived == false(),
+            "unarchive": Thread.user2_archived == true(),
+            "delete": Thread.user2_deleted == false(),
         }
         return await sah_config.db.session.scalar(
             select(func.count(Thread.id)).filter(
                 or_(
-                    and_(Thread.user_1_id == user_id, user1_field[method] == false()),
-                    and_(Thread.user_2_id == user_id, user2_field[method] == false()),
+                    and_(Thread.user_1_id == user_id, user1_condition[method]),
+                    and_(Thread.user_2_id == user_id, user2_condition[method]),
                 )
             )
         )
@@ -549,17 +569,16 @@ async def _toggle_archive_mailbox(
         "delete": {"from_deleted": true()},
     }
 
-    # mark each message that was either sent from or sent to the user as deleted
-    update_stmt = (
+    # mark each message that was either sent from or sent to the user
+    # as deleted/un/archived
+    update_stmts = [
         update(Message)
-        .where(
-            or_(
-                Message.from_id == user_id,
-                Message.for_id == user_id,
-            )
-        )
-        .values(**for_field[method], **from_field[method])
-    )
-    await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_stmt)
+        .where(or_(Message.from_id == user_id))
+        .values(from_field[method]),
+        update(Message)
+        .where(or_(Message.for_id == user_id))
+        .values(**for_field[method]),
+    ]
+    await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_stmts)
 
     return num_messages

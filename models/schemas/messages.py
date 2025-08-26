@@ -188,14 +188,25 @@ class Thread(BaseModel):
     user1_icon: Mapped[UserIconCharacter] = column_property(
         select(User.selected_character).where(User.id == user_1_id).scalar_subquery()
     )
+    user1_total_message_count = column_property(
+        select(func.count(Message.id))
+        .where(
+            and_(
+                Message.thread == id,
+                or_(Message.for_id == user_1_id, Message.from_id == user_1_id),
+            )
+        )
+        .group_by(Message.thread)
+        .scalar_subquery()
+    )
     user1_deleted_message_count = column_property(
         select(func.count(Message.id))
         .where(
             and_(
                 Message.thread == id,
                 or_(
-                    and_(Message.for_id == user_1_id, Message.for_deleted == false()),
-                    and_(Message.from_id == user_1_id, Message.from_deleted == false()),
+                    and_(Message.for_id == user_1_id, Message.for_deleted == true()),
+                    and_(Message.from_id == user_1_id, Message.from_deleted == true()),
                 ),
             )
         )
@@ -208,21 +219,31 @@ class Thread(BaseModel):
             and_(
                 Message.thread == id,
                 or_(
-                    and_(Message.for_id == user_1_id, Message.for_archived == false()),
-                    and_(
-                        Message.from_id == user_1_id, Message.from_archived == false()
-                    ),
+                    and_(Message.for_id == user_1_id, Message.for_archived == true()),
+                    and_(Message.from_id == user_1_id, Message.from_archived == true()),
                 ),
             )
         )
         .group_by(Message.thread)
         .scalar_subquery()
     )
+
     user2_name: Mapped[str] = column_property(
         select(User.display_name).where(User.id == user_2_id).scalar_subquery()
     )
     user2_icon: Mapped[UserIconCharacter] = column_property(
         select(User.selected_character).where(User.id == user_2_id).scalar_subquery()
+    )
+    user2_total_message_count = column_property(
+        select(func.count(Message.id))
+        .where(
+            and_(
+                Message.thread == id,
+                or_(Message.for_id == user_2_id, Message.from_id == user_2_id),
+            )
+        )
+        .group_by(Message.thread)
+        .scalar_subquery()
     )
     user2_deleted_message_count: Mapped[int] = column_property(
         select(func.count(Message.id))
@@ -230,8 +251,8 @@ class Thread(BaseModel):
             and_(
                 Message.thread == id,
                 or_(
-                    and_(Message.for_id == user_2_id, Message.for_deleted == false()),
-                    and_(Message.from_id == user_2_id, Message.from_deleted == false()),
+                    and_(Message.for_id == user_2_id, Message.for_deleted == true()),
+                    and_(Message.from_id == user_2_id, Message.from_deleted == true()),
                 ),
             )
         )
@@ -244,10 +265,8 @@ class Thread(BaseModel):
             and_(
                 Message.thread == id,
                 or_(
-                    and_(Message.for_id == user_2_id, Message.for_archived == false()),
-                    and_(
-                        Message.from_id == user_2_id, Message.from_archived == false()
-                    ),
+                    and_(Message.for_id == user_2_id, Message.for_archived == true()),
+                    and_(Message.from_id == user_2_id, Message.from_archived == true()),
                 ),
             )
         )
@@ -257,51 +276,51 @@ class Thread(BaseModel):
 
     @hybrid_property
     def user1_deleted(self):
-        return (
-            self.user1_deleted_message_count == 0
-            or self.user1_deleted_message_count is None
-        )
+        return self.user1_deleted_message_count == self.user1_total_message_count
 
     @user1_deleted.inplace.expression
     @classmethod
     def _user1_deleted(cls):
-        return case((cls.user1_deleted_message_count > 0, false()), else_=true())
+        return case(
+            (cls.user1_deleted_message_count == cls.user1_total_message_count, true()),
+            else_=false(),
+        )
 
     @hybrid_property
     def user1_archived(self):
-        return (
-            self.user1_archived_message_count == 0
-            or self.user1_archived_message_count is None
-        )
+        return self.user1_archived_message_count == self.user1_total_message_count
 
     @user1_archived.inplace.expression
     @classmethod
     def _user1_archived(cls):
-        return case((cls.user1_archived_message_count > 0, false()), else_=true())
+        return case(
+            (cls.user1_archived_message_count == cls.user1_total_message_count, true()),
+            else_=false(),
+        )
 
     @hybrid_property
     def user2_deleted(self):
-        return (
-            self.user2_deleted_message_count == 0
-            or self.user2_deleted_message_count is None
-        )
+        return self.user2_deleted_message_count == self.user2_total_message_count
 
     @user2_deleted.inplace.expression
     @classmethod
     def _user2_deleted(cls):
-        return case((cls.user2_deleted_message_count > 0, false()), else_=true())
+        return case(
+            (cls.user2_deleted_message_count == cls.user2_total_message_count, true()),
+            else_=false(),
+        )
 
     @hybrid_property
     def user2_archived(self):
-        return (
-            self.user2_archived_message_count == 0
-            or self.user2_archived_message_count is None
-        )
+        return self.user2_archived_message_count == self.user2_total_message_count
 
     @user2_archived.inplace.expression
     @classmethod
     def _user2_archived(cls):
-        return case((cls.user2_archived_message_count > 0, false()), else_=true())
+        return case(
+            (cls.user2_archived_message_count == cls.user2_total_message_count, true()),
+            else_=false(),
+        )
 
     # Format method
     # Responsible for returning a JSON object
