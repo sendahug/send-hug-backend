@@ -680,18 +680,19 @@ async def create_posts(db: SendADatabase) -> None:
 
 async def create_threads(db: SendADatabase) -> None:
     """Creates the threads in the test database."""
-    thread_1 = Thread(id=1, user_1_id=1, user_2_id=1)
-    thread_2 = Thread(id=2, user_1_id=1, user_2_id=5)
-    thread_3 = Thread(id=3, user_1_id=1, user_2_id=4)
-    thread_4 = Thread(id=6, user_1_id=9, user_2_id=5)
-    thread_5 = Thread(id=7, user_1_id=17, user_2_id=4)
-    thread_6 = Thread(id=8, user_1_id=17, user_2_id=1)
-    thread_7 = Thread(id=4, user_1_id=4, user_2_id=5)
+    threads = [
+        Thread(id=1, user_1_id=1, user_2_id=1),
+        Thread(id=2, user_1_id=1, user_2_id=5),
+        Thread(id=3, user_1_id=1, user_2_id=4),
+        Thread(id=6, user_1_id=9, user_2_id=5),
+        Thread(id=7, user_1_id=17, user_2_id=4),
+        Thread(id=8, user_1_id=17, user_2_id=1),
+        Thread(id=4, user_1_id=4, user_2_id=5),
+        Thread(id=9, user_1_id=1, user_2_id=5),
+    ]
 
     try:
-        db.session.add_all(
-            [thread_1, thread_2, thread_3, thread_4, thread_5, thread_6, thread_7]
-        )
+        db.session.add_all(threads)
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -874,6 +875,18 @@ async def create_messages(db: SendADatabase) -> None:
             from_deleted=False,
             for_deleted=False,
             from_archived=False,
+            for_archived=True,
+        ),
+        Message(
+            id=30,
+            from_id=5,
+            for_id=1,
+            text="test for archived thread",
+            date=datetime.strptime("2025-08-08 14:42:02.759", DATETIME_PATTERN),
+            thread=9,
+            from_deleted=False,
+            for_deleted=False,
+            from_archived=True,
             for_archived=True,
         ),
     ]
