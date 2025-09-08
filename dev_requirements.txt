@@ -4,7 +4,7 @@ mypy==1.16.1
 
 pytest==8.4.2
 pytest-mock==3.15.0
-pytest-cov==6.2.1
+pytest-cov==6.3.0
 pytest-asyncio==1.1.0
 
 # additional types
