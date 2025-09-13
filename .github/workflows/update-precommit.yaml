@@ -48,7 +48,7 @@ jobs:
 
       - run: echo ${{ steps.commit-changes.outputs.updates_available }}
 
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         if: steps.commit-changes.outputs.updates_available == 't'
         with:
           script: |
