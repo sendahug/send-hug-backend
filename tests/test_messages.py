@@ -1099,3 +1099,48 @@ async def test_unarchive_mailbox_fails(
 
     assert response_data["success"] is False
     assert response.status_code == expected_fail_code
+
+
+@pytest.mark.asyncio
+async def test_archive_message_with_dumb_action_fails(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+) -> None:
+    response = await app_client.patch(
+        "/messages/1/archive?action=eat_my_shorts", headers=user_headers["admin"]
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_archive_thread_with_dumb_action_fails(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+) -> None:
+    response = await app_client.patch(
+        "/threads/1/archive?action=eat_my_shorts", headers=user_headers["admin"]
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_archive_mailbox_with_dumb_action_fails(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+) -> None:
+    response = await app_client.patch(
+        "/threads/archive?action=eat_my_shorts", headers=user_headers["admin"]
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 400
