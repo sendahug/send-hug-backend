@@ -517,27 +517,21 @@ async def _toggle_archive_mailbox(user_id: int, action: str) -> int:
     if not num_messages:
         abort(404)
 
-    for_field: dict[str, dict[str, Any]] = {
-        "archive": {"for_archived": true()},
-        "unarchive": {"for_archived": false()},
-        "delete": {"for_deleted": true()},
-    }
-    from_field: dict[str, dict[str, Any]] = {
-        "archive": {"from_archived": true()},
-        "unarchive": {"from_archived": false()},
-        "delete": {"from_deleted": true()},
-    }
+    update_from_stmt = update(Message).where(or_(Message.from_id == user_id))
+    update_for_stmt = update(Message).where(or_(Message.for_id == user_id))
+    if action == "archive":
+        update_from_stmt = update_from_stmt.values({"from_archived": true()})
+        update_for_stmt = update_for_stmt.values({"for_archived": true()})
+    elif action == "unarchive":
+        update_from_stmt = update_from_stmt.values({"from_archived": false()})
+        update_for_stmt = update_for_stmt.values({"for_archived": false()})
+    elif action == "delete":
+        update_from_stmt = update_from_stmt.values({"from_deleted": true()})
+        update_for_stmt = update_for_stmt.values({"for_deleted": true()})
 
     # mark each message that was either sent from or sent to the user
     # as deleted/un/archived
-    update_stmts = [
-        update(Message)
-        .where(or_(Message.from_id == user_id))
-        .values(from_field[action]),
-        update(Message)
-        .where(or_(Message.for_id == user_id))
-        .values(**for_field[action]),
-    ]
+    update_stmts = [update_from_stmt, update_for_stmt]
     await sah_config.db.update_multiple_objects_with_dml(update_stmts=update_stmts)
 
     return num_messages
