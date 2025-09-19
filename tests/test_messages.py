@@ -772,7 +772,8 @@ async def test_archive_message_succeeds(
     message_id: int,
 ) -> None:
     response = await app_client.patch(
-        f"/messages/{message_id}/archive", headers=user_headers[user_type]
+        f"/messages/{message_id}/archive?action=archive",
+        headers=user_headers[user_type],
     )
     response_data = await response.get_json()
     message_text = response_data["archived"]
@@ -805,7 +806,7 @@ async def test_archive_message_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/messages/{message_id}/archive",
+        f"/messages/{message_id}/archive?action=archive",
         headers=user_headers[user_type] if user_type else None,
     )
     response_data = await response.get_json()
@@ -830,7 +831,8 @@ async def test_unarchive_message_succeeds(
     message_id: int,
 ) -> None:
     response = await app_client.patch(
-        f"/messages/{message_id}/unarchive", headers=user_headers[user_type]
+        f"/messages/{message_id}/archive?action=unarchive",
+        headers=user_headers[user_type],
     )
     response_data = await response.get_json()
     message_text = response_data["unarchived"]
@@ -864,7 +866,7 @@ async def test_unarchive_message_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/messages/{message_id}/unarchive",
+        f"/messages/{message_id}/archive?action=unarchive",
         headers=user_headers[user_type] if user_type else None,
     )
     response_data = await response.get_json()
@@ -895,7 +897,7 @@ async def test_archive_thread_succeeds(
     user2_archived: bool,
 ) -> None:
     response = await app_client.patch(
-        f"/threads/{thread_id}/archive", headers=user_headers[user_type]
+        f"/threads/{thread_id}/archive?action=archive", headers=user_headers[user_type]
     )
     response_data = await response.get_json()
 
@@ -925,7 +927,7 @@ async def test_archive_thread_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/threads/{thread_id}/archive",
+        f"/threads/{thread_id}/archive?action=archive",
         headers=user_headers[user_type] if user_type else None,
     )
     response_data = await response.get_json()
@@ -954,7 +956,8 @@ async def test_unarchive_thread_succeeds(
     thread_id: int,
 ) -> None:
     response = await app_client.patch(
-        f"/threads/{thread_id}/unarchive", headers=user_headers[user_type]
+        f"/threads/{thread_id}/archive?action=unarchive",
+        headers=user_headers[user_type],
     )
     response_data = await response.get_json()
     thread_text = response_data["unarchived"]
@@ -983,7 +986,7 @@ async def test_unarchive_thread_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/threads/{thread_id}/unarchive",
+        f"/threads/{thread_id}/archive?action=unarchive",
         headers=user_headers[user_type] if user_type else None,
     )
     response_data = await response.get_json()
@@ -1010,7 +1013,7 @@ async def test_archive_mailbox_succeeds(
     messages_archived: int,
 ) -> None:
     response = await app_client.patch(
-        "/threads/archive", headers=user_headers[user_type]
+        "/threads/archive?action=archive", headers=user_headers[user_type]
     )
     response_data = await response.get_json()
 
@@ -1037,7 +1040,7 @@ async def test_archive_mailbox_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        "/threads/archive",
+        "/threads/archive?action=archive",
         headers=user_headers[user_type] if user_type else None,
     )
     response_data = await response.get_json()
@@ -1063,7 +1066,7 @@ async def test_unarchive_mailbox_succeeds(
     messages_unarchived: int,
 ) -> None:
     response = await app_client.patch(
-        "/threads/unarchive", headers=user_headers[user_type]
+        "/threads/archive?action=unarchive", headers=user_headers[user_type]
     )
     response_data = await response.get_json()
 
@@ -1091,7 +1094,7 @@ async def test_unarchive_mailbox_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        "/threads/unarchive",
+        "/threads/archive?action=unarchive",
         headers=user_headers[user_type] if user_type else None,
     )
     response_data = await response.get_json()
