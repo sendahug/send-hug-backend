@@ -876,14 +876,14 @@ async def test_unarchive_message_fails(
 
 
 @pytest.mark.parametrize(
-    "user_type, thread_id, user1_archived, user2_archived",
+    "user_type, thread_id, current_user_archived",
     [
-        ("user", 2, True, False),
-        ("moderator", 2, False, True),
+        ("user", 2, True),
+        ("moderator", 2, True),
         # ("admin"),  # TODO: decide if admin can archive any thread
         # already archvived succeeds since we don't check threads individually
-        ("user", 9, True, True),
-        ("moderator", 9, True, True),
+        ("user", 9, True),
+        ("moderator", 9, True),
     ],
 )
 @pytest.mark.asyncio
@@ -893,8 +893,7 @@ async def test_archive_thread_succeeds(
     user_headers: dict,
     user_type: str,
     thread_id: int,
-    user1_archived: bool,
-    user2_archived: bool,
+    current_user_archived: bool,
 ) -> None:
     response = await app_client.patch(
         f"/threads/{thread_id}/archive?action=archive", headers=user_headers[user_type]
@@ -904,8 +903,7 @@ async def test_archive_thread_succeeds(
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["archived"] == thread_id
-    assert response_data["user1Archived"] == user1_archived
-    assert response_data["user2Archived"] == user2_archived
+    assert response_data["currentUserArchived"] == current_user_archived
 
 
 @pytest.mark.parametrize(

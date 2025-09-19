@@ -363,8 +363,11 @@ async def archive_thread(
         {
             "success": True,
             f"{action}d": thread_id,
-            "user1Archived": archive_item.user1_archived,
-            "user2Archived": archive_item.user2_archived,
+            "currentUserArchived": (
+                archive_item.user1_archived
+                if token_payload["id"] == archive_item.user_1_id
+                else archive_item.user2_archived
+            ),
         }
     )
 

@@ -593,7 +593,7 @@ async def test_update_archived_user_as_admin(
     response_data = await response.get_json()
 
     assert response_data["success"] is False
-    assert response.status_code == 403
+    assert response.status_code == 422
 
 
 # Attempt to update another user's display name with an admin's JWT
@@ -989,7 +989,7 @@ async def test_user_hugs_post_archived(
     response_data = await response.get_json()
 
     assert response_data["success"] is False
-    assert response.status_code == 403
+    assert response.status_code == 422
 
 
 # Attempt to send hugs

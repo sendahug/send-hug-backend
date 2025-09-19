@@ -399,6 +399,11 @@ class Thread(BaseModel):
                 if current_user_id == self.user_1_id
                 else self.user2_message_count
             ),
+            "currentUserArchived": (
+                self.user1_archived
+                if current_user_id == self.user_1_id
+                else self.user2_archived
+            ),
             "numArchivedMessages": (
                 self.user1_archived_message_count
                 if current_user_id == self.user_1_id
