@@ -697,7 +697,7 @@ async def test_archive_post_succeeds(
     user_type: str,
 ) -> None:
     response = await app_client.patch(
-        "/posts/4/archive", headers=user_headers[user_type]
+        "/posts/4/archive?action=archive", headers=user_headers[user_type]
     )
     response_data = await response.get_json()
     post_text = response_data["archived"]
@@ -727,7 +727,7 @@ async def test_archive_post_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/posts/{post_id}/archive",
+        f"/posts/{post_id}/archive?action=archive",
         headers=user_headers[user_type] if user_type else None,
     )
     response_data = await response.get_json()
@@ -752,7 +752,7 @@ async def test_unarchive_post_succeeds(
     user_type: str,
 ) -> None:
     response = await app_client.patch(
-        "/posts/46/unarchive", headers=user_headers[user_type]
+        "/posts/46/archive?action=unarchive", headers=user_headers[user_type]
     )
     response_data = await response.get_json()
     post_text = response_data["unarchived"]
@@ -782,7 +782,7 @@ async def test_unarchive_post_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/posts/{post_id}/unarchive",
+        f"/posts/{post_id}/archive?action=unarchive",
         headers=user_headers[user_type] if user_type else None,
     )
     response_data = await response.get_json()

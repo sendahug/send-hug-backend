@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import desc, false, select
@@ -313,38 +313,29 @@ async def delete_post(token_payload: UserData, post_id: int) -> Response:
 @posts_endpoints.route("/posts/<post_id>/archive", methods=["PATCH"])
 @requires_auth(sah_config, ["patch:my-post", "patch:any-post"])
 async def archive_post(token_payload: UserData, post_id: int) -> Response:
+    action = request.args.get("action", "none", type=str)
+    if action not in ["archive", "unarchive", "delete"]:
+        abort(
+            400,
+            description="The 'action' query parameter must be specified and one of"
+            "archive, unarchive or delete.",
+        )
+
     archived = await _toggle_archive_post(
         user_id=token_payload["id"],
         post_id=post_id,
         permissions=token_payload["role"]["permissions"],
-        method="archive",
+        action=action,
     )
 
-    return jsonify({"success": True, "archived": archived})
-
-
-# Endpoint: PATCH /posts/<post_id>/unarchive
-# Description: Unarchives a post in the database.
-# Parameters: post_id - ID of the post to update.
-# Authorization: patch:my-post or patch:any-post.
-@posts_endpoints.route("/posts/<post_id>/unarchive", methods=["PATCH"])
-@requires_auth(sah_config, ["patch:my-post", "patch:any-post"])
-async def unarchive_post(token_payload: UserData, post_id: int) -> Response:
-    unarchived = await _toggle_archive_post(
-        user_id=token_payload["id"],
-        post_id=post_id,
-        permissions=token_payload["role"]["permissions"],
-        method="unarchive",
-    )
-
-    return jsonify({"success": True, "unarchived": unarchived})
+    return jsonify({"success": True, f"{action}d": archived})
 
 
 async def _toggle_archive_post(
     user_id: int,
     post_id: int,
     permissions: list[str],
-    method: Literal["archive", "unarchive"],
+    action: str,
 ) -> dict[str, Any]:
     # Check if the post ID isn't an integer; if it isn't, abort
     validator.check_type(post_id, "Post ID")
@@ -352,13 +343,13 @@ async def _toggle_archive_post(
         item_id=int(post_id),
         item_type=Post,
     )
-    if (method == "archive" and original_post.archived) or (
-        method == "unarchive" and not original_post.archived
+    if (action == "archive" and original_post.archived) or (
+        action == "unarchive" and not original_post.archived
     ):
         raise AuthError(
             {
                 "code": 403,
-                "description": f"You cannot {method} an {method}d post.",
+                "description": f"You cannot {action} an {action}d post.",
             },
             403,
         )
@@ -370,14 +361,14 @@ async def _toggle_archive_post(
         raise AuthError(
             {
                 "code": 403,
-                "description": f"You do not have permission to {method} this post.",
+                "description": f"You do not have permission to {action} this post.",
             },
             403,
         )
 
     # Otherwise, the user either attempted to un/archive their own post, or
     # they're allowed to un/archive any post, so let them update the post
-    if method == "archive":
+    if action == "archive":
         original_post.archived = True
     else:
         original_post.archived = False

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Literal, Sequence
+from typing import Any, Sequence
 
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import delete, func, select, true
@@ -491,52 +491,43 @@ async def send_hug_to_user(token_payload: UserData, user_id: int) -> Response:
 @users_endpoints.route("/users/<user_id>/archive", methods=["PATCH"])
 @requires_auth(sah_config, ["archive:user"])
 async def archive_user(token_payload: UserData, user_id: int) -> Response:
+    action = request.args.get("action", "none", type=str)
+    if action not in ["archive", "unarchive", "delete"]:
+        abort(
+            400,
+            description="The 'action' query parameter must be specified and one of"
+            "archive, unarchive or delete.",
+        )
+
     archived = await _toggle_archive_user(
         user_id=user_id,
-        method="archive",
+        action=action,
     )
 
-    return jsonify({"success": True, "archived": archived})
+    return jsonify({"success": True, f"{action}d": archived})
 
 
-# Endpoint: PATCH /users/<user_id>/unarchive
-# Description: Unarchives a user in the database.
-# Parameters: user_id - ID of the user to update.
-# Authorization: archive:user.
-@users_endpoints.route("/users/<user_id>/unarchive", methods=["PATCH"])
-@requires_auth(sah_config, ["archive:user"])
-async def unarchive_user(token_payload: UserData, user_id: int) -> Response:
-    unarchived = await _toggle_archive_user(
-        user_id=user_id,
-        method="unarchive",
-    )
-
-    return jsonify({"success": True, "unarchived": unarchived})
-
-
-async def _toggle_archive_user(
-    user_id: int, method: Literal["archive", "unarchive"]
-) -> dict[str, Any]:
+async def _toggle_archive_user(user_id: int, action: str) -> dict[str, Any]:
     # Check if the user ID isn't an integer; if it isn't, abort
     validator.check_type(user_id, "User ID")
     original_user: User = await sah_config.db.one_or_404(
         item_id=int(user_id),
         item_type=User,
     )
-    if (method == "archive" and original_user.archived) or (
-        method == "unarchive" and not original_user.archived
+    if (action == "archive" and original_user.archived) or (
+        action == "unarchive" and not original_user.archived
     ):
         raise AuthError(
             {
                 "code": 403,
-                "description": f"You cannot {method} an {method}d user.",
+                "description": f"You cannot {action} an {action}d user.",
             },
             403,
         )
 
     # Otherwise, the user either attempted to un/archive their own user, or
     # they're allowed to un/archive any user, so let them update the user
-    if method == "archive":
+    if action == "archive":
         original_user.archived = True
     else:
         original_user.archived = False
