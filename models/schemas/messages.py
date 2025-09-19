@@ -199,6 +199,28 @@ class Thread(BaseModel):
         .group_by(Message.thread)
         .scalar_subquery()
     )
+    user1_message_count = column_property(
+        select(func.count(Message.id))
+        .where(
+            and_(
+                Message.thread == id,
+                or_(
+                    and_(
+                        Message.for_id == user_1_id,
+                        Message.for_deleted == false(),
+                        Message.for_archived == false(),
+                    ),
+                    and_(
+                        Message.from_id == user_1_id,
+                        Message.from_deleted == false(),
+                        Message.from_archived == false(),
+                    ),
+                ),
+            )
+        )
+        .group_by(Message.thread)
+        .scalar_subquery()
+    )
     user1_deleted_message_count = column_property(
         select(func.count(Message.id))
         .where(
@@ -240,6 +262,28 @@ class Thread(BaseModel):
             and_(
                 Message.thread == id,
                 or_(Message.for_id == user_2_id, Message.from_id == user_2_id),
+            )
+        )
+        .group_by(Message.thread)
+        .scalar_subquery()
+    )
+    user2_message_count = column_property(
+        select(func.count(Message.id))
+        .where(
+            and_(
+                Message.thread == id,
+                or_(
+                    and_(
+                        Message.for_id == user_2_id,
+                        Message.for_deleted == false(),
+                        Message.for_archived == false(),
+                    ),
+                    and_(
+                        Message.from_id == user_2_id,
+                        Message.from_deleted == false(),
+                        Message.from_archived == false(),
+                    ),
+                ),
             )
         )
         .group_by(Message.thread)
@@ -340,18 +384,25 @@ class Thread(BaseModel):
                 "displayName": self.user1_name,
                 "selectedIcon": self.user1_icon.value,
                 "iconColours": user1_icon_colours,
+                "archived": self.user1_archived,
             },
             "user1Id": self.user_1_id,
             "user2": {
                 "displayName": self.user2_name,
                 "selectedIcon": self.user2_icon.value,
                 "iconColours": user2_icon_colours,
+                "archived": self.user2_archived,
             },
             "user2Id": self.user_2_id,
             "numMessages": (
-                self.user1_deleted_message_count
+                self.user1_message_count
                 if current_user_id == self.user_1_id
-                else self.user2_deleted_message_count
+                else self.user2_message_count
+            ),
+            "numArchivedMessages": (
+                self.user1_archived_message_count
+                if current_user_id == self.user_1_id
+                else self.user2_archived_message_count
             ),
             "latestMessage": self.latest_message_date,
         }

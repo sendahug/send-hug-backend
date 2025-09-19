@@ -791,9 +791,9 @@ async def test_archive_message_succeeds(
         ("malformed", 3, 401),
         (None, 3, 401),
         # Already archived
-        ("user", 27, 403),
-        ("moderator", 28, 403),
-        ("user", 29, 403),
+        ("user", 27, 409),
+        ("moderator", 28, 409),
+        ("user", 29, 409),
     ],
 )
 @pytest.mark.asyncio
@@ -845,15 +845,15 @@ async def test_unarchive_message_succeeds(
 @pytest.mark.parametrize(
     "user_type, message_id, expected_fail_code",
     [
-        ("user", 3, 403),
-        ("moderator", 3, 403),
+        ("user", 3, 409),
+        ("moderator", 3, 409),
         ("blocked", 27, 403),
         ("newUserRole", 27, 403),
         ("malformed", 27, 401),
         (None, 27, 401),
         # user has already unarchvived
-        ("user", 28, 403),
-        ("moderator", 29, 403),
+        ("user", 28, 409),
+        ("moderator", 29, 409),
     ],
 )
 @pytest.mark.asyncio

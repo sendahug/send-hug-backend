@@ -265,10 +265,10 @@ async def _toggle_archive_message(
         else:
             raise AuthError(
                 {
-                    "code": 403,
+                    "code": 409,
                     "description": f"You cannot {action} an {action}d post.",
                 },
-                403,
+                409,
             )
     elif archive_item.from_id == user_id:
         if action == "archive" and not archive_item.from_archived:
@@ -280,10 +280,10 @@ async def _toggle_archive_message(
         else:
             raise AuthError(
                 {
-                    "code": 403,
+                    "code": 409,
                     "description": f"You cannot {action} an {action}d post.",
                 },
-                403,
+                409,
             )
 
     # mark the object for un/archival/deletion

@@ -3,7 +3,7 @@
     "changes": [
         {
             "change": "Features",
-            "description": "Added new archive/unarchive endpoints for posts, messages and users in order to archive and unarchive them. This allows the platform to be more mindful when 'deleting' items, offering recovery options as well as providing a way of scanning items on a schedule in order to permanently delete them in future."
+            "description": "Added new archive endpoints for posts, messages and users in order to archive and unarchive them. This allows users to 'soft delete' these items, offering recovery options in case they make a mistake."
         },
         {
             "change": "Chores",

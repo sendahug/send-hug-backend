@@ -413,7 +413,7 @@ async def test_update_archived_post_as_admin(
     response_data = await response.get_json()
 
     assert response_data["success"] is False
-    assert response.status_code == 403
+    assert response.status_code == 422
 
 
 # Attempt to update a post without post ID (with admin's JWT)
@@ -477,7 +477,7 @@ async def test_post_hugs_post_archived(
     response_data = await response.get_json()
 
     assert response_data["success"] is False
-    assert response.status_code == 403
+    assert response.status_code == 422
 
 
 # Attempt to send hugs
@@ -714,7 +714,7 @@ async def test_archive_post_succeeds(
         ("newUserRole", 4, 403),
         ("malformed", 4, 401),
         (None, 4, 401),
-        ("user", 46, 403),
+        ("user", 46, 409),
     ],
 )
 @pytest.mark.asyncio
@@ -769,7 +769,7 @@ async def test_unarchive_post_succeeds(
         ("newUserRole", 46, 403),
         ("malformed", 46, 401),
         (None, 46, 401),
-        ("user", 4, 403),
+        ("user", 4, 409),
     ],
 )
 @pytest.mark.asyncio

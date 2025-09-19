@@ -99,10 +99,10 @@ async def edit_post(token_payload: UserData, post_id: int) -> Response:
     if original_post.archived:
         raise AuthError(
             {
-                "code": 403,
+                "code": 422,
                 "description": "You cannot edit an archived post.",
             },
-            403,
+            422,
         )
 
     # If the user's permission is 'patch my' the user can only edit
@@ -156,10 +156,10 @@ async def send_hug_for_post(token_payload: UserData, post_id: int) -> Response:
     if original_post.archived:
         raise AuthError(
             {
-                "code": 403,
+                "code": 422,
                 "description": "You cannot send a hug to an archived post.",
             },
-            403,
+            422,
         )
 
     # Gets the current user so we can update their 'sent hugs' value
@@ -348,10 +348,10 @@ async def _toggle_archive_post(
     ):
         raise AuthError(
             {
-                "code": 403,
+                "code": 409,
                 "description": f"You cannot {action} an {action}d post.",
             },
-            403,
+            409,
         )
 
     # If the user's permission is 'patch my' the user can only un/archive

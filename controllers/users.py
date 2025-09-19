@@ -189,10 +189,10 @@ async def edit_user(token_payload: UserData, user_id: int) -> Response:
     if user_to_update.archived:
         raise AuthError(
             {
-                "code": 403,
+                "code": 422,
                 "description": "You cannot edit an archived user.",
             },
-            403,
+            422,
         )
 
     # If there's a login count (meaning, the user is editing their own
@@ -443,10 +443,10 @@ async def send_hug_to_user(token_payload: UserData, user_id: int) -> Response:
     if user_to_hug.archived:
         raise AuthError(
             {
-                "code": 403,
+                "code": 422,
                 "description": "You cannot send a hug to an archived user.",
             },
-            403,
+            422,
         )
 
     # Fetch the current user to update their 'given hugs' value
@@ -519,10 +519,10 @@ async def _toggle_archive_user(user_id: int, action: str) -> dict[str, Any]:
     ):
         raise AuthError(
             {
-                "code": 403,
+                "code": 409,
                 "description": f"You cannot {action} an {action}d user.",
             },
-            403,
+            409,
         )
 
     # Otherwise, the user either attempted to un/archive their own user, or
