@@ -26,7 +26,7 @@
 # SOFTWARE.
 
 from dataclasses import dataclass
-from typing import Any, Protocol, TypeAlias, TypeVar
+from typing import Any, ClassVar, Protocol, TypeAlias, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped
@@ -51,6 +51,6 @@ class PaginationResult:
 
 
 class CoreSAHModel(Protocol[HugModelType]):
-    id: Mapped[int]
+    id: ClassVar[Mapped[int]]
 
     def format(self, **kwargs) -> DumpedModel: ...
