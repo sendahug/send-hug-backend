@@ -33,13 +33,19 @@ The project is open source, so feel free to use parts of the code. However, the 
 3. cd into backend.
 4. Run ```pip install -r requirements.txt -r dev_requirements.txt``` to install dependencies.
 5. Run ```pre-commit install``` to install and initialise pre-commit.
-6. Run ```./init_dbs.sh <type a new password here>```
+6. Create a database for the app. For easier setup, you can run
+    ```./init_dbs.sh <type a new password here>``` which sets up the test and dev databases and
+    required credentials files
 7. Set the required environment variables:
     - **PRIVATE_VAPID_KEY** - Your private VAPID key (required for push notifications).
     - **FRONTEND** - The frontend URI.
     - **FIREBASE_CREDENTIALS_FILE** - The firebase credentials file's location.
-8. Update your database using ```alembic upgrade head```
-9. Run Quart with:
+8. If you're not using the above `init_dbs.sh` script, you will need to set the below additional vars:
+    - **DB_CREDENTIALS_PATH** - The path to the credentials file.
+    - **DATABASE_USERNAME** - The username to log into the database if no credentials file is set.
+    - **DATABASE_PASSWORD** - The password to log into the database if no credentials file is set.
+9. Update your database using ```alembic upgrade head```
+10.  Run Quart with:
     - ```export QUART_APP=app.py```
     - ```quart --debug run```
 
