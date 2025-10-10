@@ -3,7 +3,7 @@ quart==0.20.0
 quart-cors==0.8.0
 hypercorn==0.17.3
 asyncpg==0.30.0
-pywebpush==2.0.3
+pywebpush==2.1.0
 sendgrid==6.11.0
 SQLAlchemy[asyncio]==2.0.43
 firebase-admin==7.1.0
