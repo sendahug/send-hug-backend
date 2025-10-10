@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Sequence
 
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import delete, func, select, true
@@ -7,7 +7,11 @@ from sqlalchemy import delete, func, select, true
 from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
 
-from .common import send_push_notification, validator
+from controllers.common import (
+    get_archive_action_from_body,
+    send_push_notification,
+    validator,
+)
 from models import (
     BLOCKED_USER_ROLE_ID,
     Notification,
@@ -444,7 +448,7 @@ async def send_hug_to_user(token_payload: UserData, user_id: int) -> Response:
         raise AuthError(
             {
                 "code": 422,
-                "description": "You cannot send a hug to an archived user.",
+                "description": "This user cannot receive any hugs at the moment",
             },
             422,
         )
@@ -491,39 +495,14 @@ async def send_hug_to_user(token_payload: UserData, user_id: int) -> Response:
 @users_endpoints.route("/users/<user_id>/archive", methods=["PATCH"])
 @requires_auth(sah_config, ["archive:user"])
 async def archive_user(token_payload: UserData, user_id: int) -> Response:
-    action = request.args.get("action", "none", type=str)
-    if action not in ["archive", "unarchive", "delete"]:
-        abort(
-            400,
-            description="The 'action' query parameter must be specified and one of"
-            "archive, unarchive or delete.",
-        )
+    action = await get_archive_action_from_body(await request.get_json())
 
-    archived = await _toggle_archive_user(
-        user_id=user_id,
-        action=action,
-    )
-
-    return jsonify({"success": True, f"{action}d": archived})
-
-
-async def _toggle_archive_user(user_id: int, action: str) -> dict[str, Any]:
     # Check if the user ID isn't an integer; if it isn't, abort
     validator.check_type(user_id, "User ID")
     original_user: User = await sah_config.db.one_or_404(
         item_id=int(user_id),
         item_type=User,
     )
-    if (action == "archive" and original_user.archived) or (
-        action == "unarchive" and not original_user.archived
-    ):
-        raise AuthError(
-            {
-                "code": 409,
-                "description": f"You cannot {action} an {action}d user.",
-            },
-            409,
-        )
 
     # Otherwise, the user either attempted to un/archive their own user, or
     # they're allowed to un/archive any user, so let them update the user
@@ -533,6 +512,6 @@ async def _toggle_archive_user(user_id: int, action: str) -> dict[str, Any]:
         original_user.archived = False
 
     # Try to update the database
-    updated_user = await sah_config.db.update_object(obj=original_user)
+    archived = await sah_config.db.update_object(obj=original_user)
 
-    return updated_user
+    return jsonify({"success": True, f"{action}d": archived})

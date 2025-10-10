@@ -384,14 +384,12 @@ class Thread(BaseModel):
                 "displayName": self.user1_name,
                 "selectedIcon": self.user1_icon.value,
                 "iconColours": user1_icon_colours,
-                "archived": self.user1_archived,
             },
             "user1Id": self.user_1_id,
             "user2": {
                 "displayName": self.user2_name,
                 "selectedIcon": self.user2_icon.value,
                 "iconColours": user2_icon_colours,
-                "archived": self.user2_archived,
             },
             "user2Id": self.user_2_id,
             "numMessages": (

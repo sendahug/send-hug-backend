@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Any
 
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import and_, delete, desc, false, func, or_, select, true, update
@@ -7,8 +6,10 @@ from sqlalchemy import and_, delete, desc, false, func, or_, select, true, updat
 from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
 
-from .common import (
+from controllers.common import (
     DATETIME_PATTERN,
+    ActionType,
+    get_archive_action_from_body,
     get_current_filters,
     get_thread_id_for_users,
     send_notifications,
@@ -217,13 +218,7 @@ async def archive_message(
     message_id: int,
 ) -> Response:
     message_id = int(message_id)  # flask typing is rubbish
-    action = request.args.get("action", "none", type=str)
-    if action not in ["archive", "unarchive", "delete"]:
-        abort(
-            400,
-            description="The 'action' query parameter must be specified and one of"
-            "archive, unarchive or delete.",
-        )
+    action = await get_archive_action_from_body(await request.get_json())
 
     await _toggle_archive_message(
         user_id=token_payload["id"],
@@ -235,7 +230,7 @@ async def archive_message(
 
 
 async def _toggle_archive_message(
-    user_id: int, message_id: int, action: str
+    user_id: int, message_id: int, action: ActionType
 ) -> Message:
     validator.check_type(message_id, "Message ID")
     message_id = int(message_id)  # flask typing is rubbish
@@ -256,35 +251,19 @@ async def _toggle_archive_message(
 
     # check if we are un/archiving/deleting the from or for message
     if archive_item.for_id == user_id:
-        if action == "archive" and not archive_item.for_archived:
+        if action == "archive":
             archive_item.for_archived = True
-        elif action == "unarchive" and archive_item.for_archived:
+        elif action == "unarchive":
             archive_item.for_archived = False
-        elif action == "delete" and not archive_item.for_deleted:
+        elif action == "delete":
             archive_item.for_deleted = True
-        else:
-            raise AuthError(
-                {
-                    "code": 409,
-                    "description": f"You cannot {action} an {action}d post.",
-                },
-                409,
-            )
     elif archive_item.from_id == user_id:
-        if action == "archive" and not archive_item.from_archived:
+        if action == "archive":
             archive_item.from_archived = True
-        elif action == "unarchive" and archive_item.from_archived:
+        elif action == "unarchive":
             archive_item.from_archived = False
-        elif action == "delete" and not archive_item.from_deleted:
+        elif action == "delete":
             archive_item.from_deleted = True
-        else:
-            raise AuthError(
-                {
-                    "code": 409,
-                    "description": f"You cannot {action} an {action}d post.",
-                },
-                409,
-            )
 
     # mark the object for un/archival/deletion
     await sah_config.db.update_object(archive_item, current_user_id=user_id)
@@ -345,13 +324,7 @@ async def archive_thread(
     thread_id: int,
 ) -> Response:
     thread_id = int(thread_id)  # flask typing is rubbish
-    action = request.args.get("action", "none", type=str)
-    if action not in ["archive", "unarchive", "delete"]:
-        abort(
-            400,
-            description="The 'action' query parameter must be specified and one of"
-            "archive, unarchive or delete.",
-        )
+    action = await get_archive_action_from_body(await request.get_json())
 
     archive_item = await _toggle_archive_thread(
         user_id=token_payload["id"],
@@ -372,7 +345,9 @@ async def archive_thread(
     )
 
 
-async def _toggle_archive_thread(user_id: int, thread_id: int, action: str) -> Thread:
+async def _toggle_archive_thread(
+    user_id: int, thread_id: int, action: ActionType
+) -> Thread:
     validator.check_type(thread_id, "Thread ID")
     thread_id = int(thread_id)  # flask typing is rubbish
 
@@ -392,40 +367,32 @@ async def _toggle_archive_thread(user_id: int, thread_id: int, action: str) -> T
             403,
         )
 
-    for_field: dict[str, dict[str, Any]] = {
-        "archive": {"for_archived": true()},
-        "unarchive": {"for_archived": false()},
-        "delete": {"for_deleted": true()},
-    }
-    from_field: dict[str, dict[str, Any]] = {
-        "archive": {"from_archived": true()},
-        "unarchive": {"from_archived": false()},
-        "delete": {"from_deleted": true()},
-    }
     # For each message that wasn't un/archived/deleted by the other user, the
     # value of for_deleted/from_deleted (depending on which of the users
     # it is) is updated to True
-    from_stmt = (
-        update(Message)
-        .where(
-            and_(
-                Message.thread == archive_item.id,
-                Message.from_id == user_id,
-            )
+    from_stmt = update(Message).where(
+        and_(
+            Message.thread == archive_item.id,
+            Message.from_id == user_id,
         )
-        .values(from_field[action])
+    )
+    for_stmt = update(Message).where(
+        and_(
+            Message.thread == archive_item.id,
+            Message.for_id == user_id,
+        )
     )
 
-    for_stmt = (
-        update(Message)
-        .where(
-            and_(
-                Message.thread == archive_item.id,
-                Message.for_id == user_id,
-            )
-        )
-        .values(for_field[action])
-    )
+    if action == "archive":
+        from_stmt = from_stmt.values({"from_archived": true()})
+        for_stmt = for_stmt.values({"for_archived": true()})
+    elif action == "unarchive":
+        from_stmt = from_stmt.values({"from_archived": false()})
+        for_stmt = for_stmt.values({"for_archived": false()})
+    elif action == "delete":
+        from_stmt = from_stmt.values({"from_deleted": true()})
+        for_stmt = for_stmt.values({"for_deleted": true()})
+
     await sah_config.db.update_multiple_objects_with_dml(
         update_stmts=[from_stmt, for_stmt]
     )
@@ -474,13 +441,7 @@ async def clear_mailbox(token_payload: UserData) -> Response:
 @messages_endpoints.route("/threads/archive", methods=["PATCH"])
 @requires_auth(sah_config, ["archive:messages"])
 async def archive_mailbox(token_payload: UserData) -> Response:
-    action = request.args.get("action", "none", type=str)
-    if action not in ["archive", "unarchive", "delete"]:
-        abort(
-            400,
-            description="The 'action' query parameter must be specified and one of"
-            "archive, unarchive or delete.",
-        )
+    action = await get_archive_action_from_body(await request.get_json())
 
     num_messages = await _toggle_archive_mailbox(
         user_id=token_payload["id"], action=action

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, cast
+from typing import cast
 
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import desc, false, select
@@ -7,8 +7,9 @@ from sqlalchemy import desc, false, select
 from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
 
-from .common import (
+from controllers.common import (
     DATETIME_PATTERN,
+    get_archive_action_from_body,
     get_current_filters,
     get_thread_id_for_users,
     send_push_notification,
@@ -313,51 +314,22 @@ async def delete_post(token_payload: UserData, post_id: int) -> Response:
 @posts_endpoints.route("/posts/<post_id>/archive", methods=["PATCH"])
 @requires_auth(sah_config, ["patch:my-post", "patch:any-post"])
 async def archive_post(token_payload: UserData, post_id: int) -> Response:
-    action = request.args.get("action", "none", type=str)
-    if action not in ["archive", "unarchive", "delete"]:
-        abort(
-            400,
-            description="The 'action' query parameter must be specified and one of"
-            "archive, unarchive or delete.",
-        )
+    action = get_archive_action_from_body(await request.get_json())
 
-    archived = await _toggle_archive_post(
-        user_id=token_payload["id"],
-        post_id=post_id,
-        permissions=token_payload["role"]["permissions"],
-        action=action,
-    )
-
-    return jsonify({"success": True, f"{action}d": archived})
-
-
-async def _toggle_archive_post(
-    user_id: int,
-    post_id: int,
-    permissions: list[str],
-    action: str,
-) -> dict[str, Any]:
     # Check if the post ID isn't an integer; if it isn't, abort
     validator.check_type(post_id, "Post ID")
     original_post: Post = await sah_config.db.one_or_404(
         item_id=int(post_id),
         item_type=Post,
     )
-    if (action == "archive" and original_post.archived) or (
-        action == "unarchive" and not original_post.archived
-    ):
-        raise AuthError(
-            {
-                "code": 409,
-                "description": f"You cannot {action} an {action}d post.",
-            },
-            409,
-        )
 
     # If the user's permission is 'patch my' the user can only un/archive
     # their own posts. If it's a user trying to un/archive a post that
     # doesn't belong to them, throw an auth error
-    if "patch:my-post" in permissions and original_post.user_id != user_id:
+    if (
+        "patch:my-post" in token_payload["role"]["permissions"]
+        and original_post.user_id != token_payload["id"]
+    ):
         raise AuthError(
             {
                 "code": 403,
@@ -374,6 +346,6 @@ async def _toggle_archive_post(
         original_post.archived = False
 
     # Try to update the database
-    updated_post = await sah_config.db.update_object(obj=original_post)
+    archived = await sah_config.db.update_object(obj=original_post)
 
-    return updated_post
+    return jsonify({"success": True, f"{action}d": archived})
