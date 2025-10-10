@@ -6,7 +6,6 @@ from sqlalchemy import desc, false, select
 
 from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
-
 from controllers.common import (
     DATETIME_PATTERN,
     get_archive_action_from_body,

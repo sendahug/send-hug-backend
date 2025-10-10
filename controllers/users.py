@@ -6,7 +6,6 @@ from sqlalchemy import delete, func, select, true
 
 from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
-
 from controllers.common import (
     get_archive_action_from_body,
     send_push_notification,

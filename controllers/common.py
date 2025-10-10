@@ -8,7 +8,6 @@ from quart import abort, current_app
 from sqlalchemy import and_, or_, select
 
 from config.config import sah_config
-
 from models import Filter, NotificationSub, Thread
 from models.schemas.users import User
 from utils.email import (

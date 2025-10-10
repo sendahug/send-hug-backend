@@ -3,10 +3,9 @@ import json
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import select
 
+from .common import validator
 from auth import UserData, requires_auth
 from config.config import sah_config
-
-from .common import validator
 from models import Filter
 
 filters_endpoints = Blueprint("filters", __name__)

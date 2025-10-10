@@ -40,7 +40,6 @@ from controllers.common import (
     send_notifications,
     send_push_notification,
 )
-
 from models import NotificationSub
 from models.db import SendADatabase
 from utils.push_notifications import RawPushData
