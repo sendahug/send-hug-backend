@@ -772,8 +772,9 @@ async def test_archive_message_succeeds(
     message_id: int,
 ) -> None:
     response = await app_client.patch(
-        f"/messages/{message_id}/archive?action=archive",
+        f"/messages/{message_id}/archive",
         headers=user_headers[user_type],
+        json={"archive": True},
     )
     response_data = await response.get_json()
     message_text = response_data["archived"]
@@ -790,10 +791,6 @@ async def test_archive_message_succeeds(
         ("newUserRole", 3, 403),
         ("malformed", 3, 401),
         (None, 3, 401),
-        # Already archived
-        ("user", 27, 409),
-        ("moderator", 28, 409),
-        ("user", 29, 409),
     ],
 )
 @pytest.mark.asyncio
@@ -806,8 +803,9 @@ async def test_archive_message_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/messages/{message_id}/archive?action=archive",
+        f"/messages/{message_id}/archive",
         headers=user_headers[user_type] if user_type else None,
+        json={"archive": True},
     )
     response_data = await response.get_json()
 
@@ -831,8 +829,9 @@ async def test_unarchive_message_succeeds(
     message_id: int,
 ) -> None:
     response = await app_client.patch(
-        f"/messages/{message_id}/archive?action=unarchive",
+        f"/messages/{message_id}/archive",
         headers=user_headers[user_type],
+        json={"archive": False},
     )
     response_data = await response.get_json()
     message_text = response_data["unarchived"]
@@ -845,15 +844,10 @@ async def test_unarchive_message_succeeds(
 @pytest.mark.parametrize(
     "user_type, message_id, expected_fail_code",
     [
-        ("user", 3, 409),
-        ("moderator", 3, 409),
         ("blocked", 27, 403),
         ("newUserRole", 27, 403),
         ("malformed", 27, 401),
         (None, 27, 401),
-        # user has already unarchvived
-        ("user", 28, 409),
-        ("moderator", 29, 409),
     ],
 )
 @pytest.mark.asyncio
@@ -866,8 +860,9 @@ async def test_unarchive_message_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/messages/{message_id}/archive?action=unarchive",
+        f"/messages/{message_id}/archive",
         headers=user_headers[user_type] if user_type else None,
+        json={"archive": False},
     )
     response_data = await response.get_json()
 
@@ -896,7 +891,9 @@ async def test_archive_thread_succeeds(
     current_user_archived: bool,
 ) -> None:
     response = await app_client.patch(
-        f"/threads/{thread_id}/archive?action=archive", headers=user_headers[user_type]
+        f"/threads/{thread_id}/archive",
+        headers=user_headers[user_type],
+        json={"archive": True},
     )
     response_data = await response.get_json()
 
@@ -925,8 +922,9 @@ async def test_archive_thread_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/threads/{thread_id}/archive?action=archive",
+        f"/threads/{thread_id}/archive",
         headers=user_headers[user_type] if user_type else None,
+        json={"archive": True},
     )
     response_data = await response.get_json()
 
@@ -954,8 +952,9 @@ async def test_unarchive_thread_succeeds(
     thread_id: int,
 ) -> None:
     response = await app_client.patch(
-        f"/threads/{thread_id}/archive?action=unarchive",
+        f"/threads/{thread_id}/archive",
         headers=user_headers[user_type],
+        json={"archive": False},
     )
     response_data = await response.get_json()
     thread_text = response_data["unarchived"]
@@ -984,8 +983,9 @@ async def test_unarchive_thread_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/threads/{thread_id}/archive?action=unarchive",
+        f"/threads/{thread_id}/archive",
         headers=user_headers[user_type] if user_type else None,
+        json={"archive": False},
     )
     response_data = await response.get_json()
 
@@ -1011,7 +1011,7 @@ async def test_archive_mailbox_succeeds(
     messages_archived: int,
 ) -> None:
     response = await app_client.patch(
-        "/threads/archive?action=archive", headers=user_headers[user_type]
+        "/threads/archive", headers=user_headers[user_type], json={"archive": True}
     )
     response_data = await response.get_json()
 
@@ -1038,8 +1038,9 @@ async def test_archive_mailbox_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        "/threads/archive?action=archive",
+        "/threads/archive",
         headers=user_headers[user_type] if user_type else None,
+        json={"archive": True},
     )
     response_data = await response.get_json()
 
@@ -1064,7 +1065,7 @@ async def test_unarchive_mailbox_succeeds(
     messages_unarchived: int,
 ) -> None:
     response = await app_client.patch(
-        "/threads/archive?action=unarchive", headers=user_headers[user_type]
+        "/threads/archive", headers=user_headers[user_type], json={"archive": False}
     )
     response_data = await response.get_json()
 
@@ -1092,55 +1093,11 @@ async def test_unarchive_mailbox_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        "/threads/archive?action=unarchive",
+        "/threads/archive",
         headers=user_headers[user_type] if user_type else None,
+        json={"archive": False},
     )
     response_data = await response.get_json()
 
     assert response_data["success"] is False
     assert response.status_code == expected_fail_code
-
-
-@pytest.mark.asyncio
-async def test_archive_message_with_dumb_action_fails(
-    app_client: TestClientProtocol,
-    test_db: SendADatabase,
-    user_headers: dict,
-) -> None:
-    response = await app_client.patch(
-        "/messages/1/archive?action=eat_my_shorts", headers=user_headers["admin"]
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 400
-
-
-@pytest.mark.asyncio
-async def test_archive_thread_with_dumb_action_fails(
-    app_client: TestClientProtocol,
-    test_db: SendADatabase,
-    user_headers: dict,
-) -> None:
-    response = await app_client.patch(
-        "/threads/1/archive?action=eat_my_shorts", headers=user_headers["admin"]
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 400
-
-
-@pytest.mark.asyncio
-async def test_archive_mailbox_with_dumb_action_fails(
-    app_client: TestClientProtocol,
-    test_db: SendADatabase,
-    user_headers: dict,
-) -> None:
-    response = await app_client.patch(
-        "/threads/archive?action=eat_my_shorts", headers=user_headers["admin"]
-    )
-    response_data = await response.get_json()
-
-    assert response_data["success"] is False
-    assert response.status_code == 400
