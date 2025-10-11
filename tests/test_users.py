@@ -1019,7 +1019,7 @@ async def test_archive_user_succeeds(
     user_type: str,
 ) -> None:
     response = await app_client.patch(
-        "/users/4/archive?action=archive", headers=user_headers[user_type]
+        "/users/4/archive", headers=user_headers[user_type], json={"archive": True}
     )
     response_data = await response.get_json()
     user_text = response_data["archived"]
@@ -1051,8 +1051,9 @@ async def test_archive_user_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/users/{user_id}/archive?action=archive",
+        f"/users/{user_id}/archive",
         headers=user_headers[user_type] if user_type else None,
+        json={"archive": True},
     )
     response_data = await response.get_json()
 
@@ -1074,7 +1075,7 @@ async def test_unarchive_user_succeeds(
     user_type: str,
 ) -> None:
     response = await app_client.patch(
-        "/users/20/archive?action=unarchive", headers=user_headers[user_type]
+        "/users/20/archive", headers=user_headers[user_type], json={"archive": False}
     )
     response_data = await response.get_json()
     user_text = response_data["unarchived"]
@@ -1106,8 +1107,9 @@ async def test_unarchive_user_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/users/{user_id}/archive?action=unarchive",
+        f"/users/{user_id}/archive",
         headers=user_headers[user_type] if user_type else None,
+        json={"archive": False},
     )
     response_data = await response.get_json()
 

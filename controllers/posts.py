@@ -313,7 +313,7 @@ async def delete_post(token_payload: UserData, post_id: int) -> Response:
 @posts_endpoints.route("/posts/<post_id>/archive", methods=["PATCH"])
 @requires_auth(sah_config, ["patch:my-post", "patch:any-post"])
 async def archive_post(token_payload: UserData, post_id: int) -> Response:
-    action = get_archive_action_from_body(await request.get_json())
+    action = await get_archive_action_from_body(await request.get_json())
 
     # Check if the post ID isn't an integer; if it isn't, abort
     validator.check_type(post_id, "Post ID")

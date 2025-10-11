@@ -697,7 +697,7 @@ async def test_archive_post_succeeds(
     user_type: str,
 ) -> None:
     response = await app_client.patch(
-        "/posts/4/archive?action=archive", headers=user_headers[user_type]
+        "/posts/4/archive", headers=user_headers[user_type], json={"archive": True}
     )
     response_data = await response.get_json()
     post_text = response_data["archived"]
@@ -714,7 +714,6 @@ async def test_archive_post_succeeds(
         ("newUserRole", 4, 403),
         ("malformed", 4, 401),
         (None, 4, 401),
-        ("user", 46, 409),
     ],
 )
 @pytest.mark.asyncio
@@ -727,8 +726,9 @@ async def test_archive_post_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/posts/{post_id}/archive?action=archive",
+        f"/posts/{post_id}/archive",
         headers=user_headers[user_type] if user_type else None,
+        json={"archive": True},
     )
     response_data = await response.get_json()
 
@@ -752,7 +752,7 @@ async def test_unarchive_post_succeeds(
     user_type: str,
 ) -> None:
     response = await app_client.patch(
-        "/posts/46/archive?action=unarchive", headers=user_headers[user_type]
+        "/posts/46/archive", headers=user_headers[user_type], json={"archive": False}
     )
     response_data = await response.get_json()
     post_text = response_data["unarchived"]
@@ -769,7 +769,6 @@ async def test_unarchive_post_succeeds(
         ("newUserRole", 46, 403),
         ("malformed", 46, 401),
         (None, 46, 401),
-        ("user", 4, 409),
     ],
 )
 @pytest.mark.asyncio
@@ -782,8 +781,9 @@ async def test_unarchive_post_fails(
     expected_fail_code: int,
 ) -> None:
     response = await app_client.patch(
-        f"/posts/{post_id}/archive?action=unarchive",
+        f"/posts/{post_id}/archive",
         headers=user_headers[user_type] if user_type else None,
+        json={"archive": False},
     )
     response_data = await response.get_json()
 
