@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 3
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ssh-key: ${{ secrets.BOT_SSH_KEY }}
 
