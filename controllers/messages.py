@@ -191,11 +191,16 @@ async def delete_message(
     message_id: int,
 ) -> Response:
     message_id = int(message_id)  # flask typing is rubbish
-    delete_item = await _toggle_archive_message(
+    delete_item = await _fetch_message(
         user_id=token_payload["id"],
         message_id=message_id,
-        action="delete",
     )
+
+    # check if we are deleting the from or for message
+    if delete_item.for_id == token_payload["id"]:
+        delete_item.for_deleted = True
+    elif delete_item.from_id == token_payload["id"]:
+        delete_item.from_deleted = True
 
     if delete_item.for_deleted and delete_item.from_deleted:
         # If both users have deleted the message, delete it from the database
@@ -219,55 +224,48 @@ async def archive_message(
     message_id = int(message_id)  # flask typing is rubbish
     action = await get_archive_action_from_body(await request.get_json())
 
-    await _toggle_archive_message(
+    archive_item = await _fetch_message(
         user_id=token_payload["id"],
         message_id=message_id,
-        action=action,
     )
-
-    return jsonify({"success": True, f"{action}d": message_id})
-
-
-async def _toggle_archive_message(
-    user_id: int, message_id: int, action: ActionType
-) -> Message:
-    validator.check_type(message_id, "Message ID")
-    message_id = int(message_id)  # flask typing is rubbish
-
-    archive_item = await sah_config.db.one_or_404(
-        item_id=message_id,
-        item_type=Message,
-    )
-    if archive_item.for_id != user_id and archive_item.from_id != user_id:
-        raise AuthError(
-            {
-                "code": 403,
-                "description": "You do not have permission to "
-                f"{action} another user's messages.",
-            },
-            403,
-        )
 
     # check if we are un/archiving/deleting the from or for message
-    if archive_item.for_id == user_id:
+    if archive_item.for_id == token_payload["id"]:
         if action == "archive":
             archive_item.for_archived = True
         elif action == "unarchive":
             archive_item.for_archived = False
-        elif action == "delete":
-            archive_item.for_deleted = True
-    elif archive_item.from_id == user_id:
+    elif archive_item.from_id == token_payload["id"]:
         if action == "archive":
             archive_item.from_archived = True
         elif action == "unarchive":
             archive_item.from_archived = False
-        elif action == "delete":
-            archive_item.from_deleted = True
 
     # mark the object for un/archival/deletion
-    await sah_config.db.update_object(archive_item, current_user_id=user_id)
+    await sah_config.db.update_object(archive_item, current_user_id=token_payload["id"])
 
-    return archive_item
+    return jsonify({"success": True, f"{action}d": message_id})
+
+
+async def _fetch_message(user_id: int, message_id: int) -> Message:
+    validator.check_type(message_id, "Message ID")
+    message_id = int(message_id)  # flask typing is rubbish
+
+    message_item = await sah_config.db.one_or_404(
+        item_id=message_id,
+        item_type=Message,
+    )
+    if message_item.for_id != user_id and message_item.from_id != user_id:
+        raise AuthError(
+            {
+                "code": 403,
+                "description": "You do not have permission to "
+                "alter another user's messages.",
+            },
+            403,
+        )
+
+    return message_item
 
 
 # Endpoint: DELETE /threads/<thread_id>
