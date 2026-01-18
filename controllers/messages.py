@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from quart import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import (
@@ -18,8 +19,6 @@ from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
 from controllers.common import (
     DATETIME_PATTERN,
-    ActionType,
-    get_archive_action_from_body,
     get_current_filters,
     get_thread_id_for_users,
     send_notifications,
@@ -233,7 +232,14 @@ async def archive_message(
     message_id: int,
 ) -> Response:
     message_id = int(message_id)  # flask typing is rubbish
-    action = await get_archive_action_from_body(await request.get_json())
+    data = await request.get_json()
+    archive = data.get("archive")
+    if archive is None:
+        abort(
+            400,
+            description="The 'archive' body parameter must be specified and set to"
+            "true or false.",
+        )
 
     archive_item = await _fetch_message(
         user_id=token_payload["id"],
@@ -242,20 +248,16 @@ async def archive_message(
 
     # check if we are un/archiving/deleting the from or for message
     if archive_item.for_id == token_payload["id"]:
-        if action == "archive":
-            archive_item.for_archived = True
-        elif action == "unarchive":
-            archive_item.for_archived = False
+        archive_item.for_archived = archive
     elif archive_item.from_id == token_payload["id"]:
-        if action == "archive":
-            archive_item.from_archived = True
-        elif action == "unarchive":
-            archive_item.from_archived = False
+        archive_item.from_archived = archive
 
     # mark the object for un/archival/deletion
     await sah_config.db.update_object(archive_item, current_user_id=token_payload["id"])
 
-    return jsonify({"success": True, f"{action}d": message_id})
+    return jsonify(
+        {"success": True, "archived" if archive else "unarchived": message_id}
+    )
 
 
 async def _fetch_message(user_id: int, message_id: int) -> Message:
@@ -350,8 +352,14 @@ async def archive_thread(
     thread_id: int,
 ) -> Response:
     thread_id = int(thread_id)  # flask typing is rubbish
-    action = await get_archive_action_from_body(await request.get_json())
-
+    data = await request.get_json()
+    archive = data.get("archive")
+    if archive is None:
+        abort(
+            400,
+            description="The 'archive' body parameter must be specified and set to"
+            "true or false.",
+        )
     archive_item = await _fetch_thread(user_id=token_payload["id"], thread_id=thread_id)
 
     # For each message that wasn't un/archived by the other user, the
@@ -360,10 +368,10 @@ async def archive_thread(
     from_stmt = _get_update_from_stmt(token_payload["id"], thread_id)
     for_stmt = _get_update_for_stmt(token_payload["id"], thread_id)
 
-    if action == "archive":
+    if archive:
         from_stmt = from_stmt.values({"from_archived": true()})
         for_stmt = for_stmt.values({"for_archived": true()})
-    elif action == "unarchive":
+    else:
         from_stmt = from_stmt.values({"from_archived": false()})
         for_stmt = for_stmt.values({"for_archived": false()})
 
@@ -380,7 +388,7 @@ async def archive_thread(
     return jsonify(
         {
             "success": True,
-            f"{action}d": thread_id,
+            "archived" if archive else "unarchived": thread_id,
             "currentUserArchived": (
                 archive_item.user1_archived
                 if token_payload["id"] == archive_item.user_1_id
@@ -477,16 +485,24 @@ async def clear_mailbox(token_payload: UserData) -> Response:
 @messages_endpoints.route("/threads/archive", methods=["PATCH"])
 @requires_auth(sah_config, ["archive:messages"])
 async def archive_mailbox(token_payload: UserData) -> Response:
-    action = await get_archive_action_from_body(await request.get_json())
+    data = await request.get_json()
+    archive = data.get("archive")
+    if archive is None:
+        abort(
+            400,
+            description="The 'archive' body parameter must be specified and set to"
+            "true or false.",
+        )
 
+    action = "archive" if archive else "unarchive"
     num_messages = await _get_threads_count(user_id=token_payload["id"], action=action)
 
     update_from_stmt = _get_update_from_stmt(token_payload["id"])
     update_for_stmt = _get_update_for_stmt(token_payload["id"])
-    if action == "archive":
+    if archive:
         update_from_stmt = update_from_stmt.values({"from_archived": true()})
         update_for_stmt = update_for_stmt.values({"for_archived": true()})
-    elif action == "unarchive":
+    else:
         update_from_stmt = update_from_stmt.values({"from_archived": false()})
         update_for_stmt = update_for_stmt.values({"for_archived": false()})
 
@@ -500,7 +516,9 @@ async def archive_mailbox(token_payload: UserData) -> Response:
     )
 
 
-async def _get_threads_count(user_id: int, action: ActionType) -> int:
+async def _get_threads_count(
+    user_id: int, action: Literal["archive", "unarchive", "delete"]
+) -> int:
     user1_condition = {
         "archive": Thread.user1_archived == false(),
         "unarchive": Thread.user1_archived == true(),

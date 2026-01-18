@@ -8,7 +8,6 @@ from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
 from controllers.common import (
     DATETIME_PATTERN,
-    get_archive_action_from_body,
     get_current_filters,
     get_thread_id_for_users,
     send_push_notification,
@@ -313,7 +312,14 @@ async def delete_post(token_payload: UserData, post_id: int) -> Response:
 @posts_endpoints.route("/posts/<post_id>/archive", methods=["PATCH"])
 @requires_auth(sah_config, ["patch:my-post", "patch:any-post"])
 async def archive_post(token_payload: UserData, post_id: int) -> Response:
-    action = await get_archive_action_from_body(await request.get_json())
+    data = await request.get_json()
+    archive = data.get("archive")
+    if archive is None:
+        abort(
+            400,
+            description="The 'archive' body parameter must be specified and set to"
+            "true or false.",
+        )
 
     # Check if the post ID isn't an integer; if it isn't, abort
     validator.check_type(post_id, "Post ID")
@@ -325,6 +331,7 @@ async def archive_post(token_payload: UserData, post_id: int) -> Response:
     # If the user's permission is 'patch my' the user can only un/archive
     # their own posts. If it's a user trying to un/archive a post that
     # doesn't belong to them, throw an auth error
+    action = "archive" if archive else "unarchive"
     if (
         "patch:my-post" in token_payload["role"]["permissions"]
         and original_post.user_id != token_payload["id"]
@@ -339,10 +346,7 @@ async def archive_post(token_payload: UserData, post_id: int) -> Response:
 
     # Otherwise, the user either attempted to un/archive their own post, or
     # they're allowed to un/archive any post, so let them update the post
-    if action == "archive":
-        original_post.archived = True
-    else:
-        original_post.archived = False
+    original_post.archived = archive
 
     # Try to update the database
     archived = await sah_config.db.update_object(obj=original_post)

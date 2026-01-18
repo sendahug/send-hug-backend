@@ -7,7 +7,6 @@ from sqlalchemy import delete, func, select, true
 from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
 from controllers.common import (
-    get_archive_action_from_body,
     send_push_notification,
     validator,
 )
@@ -494,7 +493,14 @@ async def send_hug_to_user(token_payload: UserData, user_id: int) -> Response:
 @users_endpoints.route("/users/<user_id>/archive", methods=["PATCH"])
 @requires_auth(sah_config, ["archive:user"])
 async def archive_user(token_payload: UserData, user_id: int) -> Response:
-    action = await get_archive_action_from_body(await request.get_json())
+    data = await request.get_json()
+    archive = data.get("archive")
+    if archive is None:
+        abort(
+            400,
+            description="The 'archive' body parameter must be specified and set to"
+            "true or false.",
+        )
 
     # Check if the user ID isn't an integer; if it isn't, abort
     validator.check_type(user_id, "User ID")
@@ -505,12 +511,9 @@ async def archive_user(token_payload: UserData, user_id: int) -> Response:
 
     # Otherwise, the user either attempted to un/archive their own user, or
     # they're allowed to un/archive any user, so let them update the user
-    if action == "archive":
-        original_user.archived = True
-    else:
-        original_user.archived = False
+    original_user.archived = archive
 
     # Try to update the database
     archived = await sah_config.db.update_object(obj=original_user)
 
-    return jsonify({"success": True, f"{action}d": archived})
+    return jsonify({"success": True, "archived" if archive else "unarchived": archived})

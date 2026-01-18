@@ -1,10 +1,10 @@
 import json
 import os
-from typing import Literal, Sequence, cast
+from typing import Sequence, cast
 
 from python_http_client import UnauthorizedError
 from pywebpush import WebPushException, webpush  # type: ignore
-from quart import abort, current_app
+from quart import current_app
 from sqlalchemy import and_, or_, select
 
 from config.config import sah_config
@@ -25,7 +25,6 @@ from utils.validator import Validator
 
 DATETIME_PATTERN = "%Y-%m-%dT%H:%M:%S.%fZ"
 
-ActionType = Literal["archive", "unarchive", "delete"]
 
 validator = Validator(
     {
@@ -145,19 +144,3 @@ async def get_thread_id_for_users(
     # If there's a thread between the users
     else:
         return thread.id
-
-
-async def get_archive_action_from_body(data: dict) -> ActionType:
-    """
-    Extracts and validates the archive action from the request body.
-    """
-    archive = data.get("archive")
-    if archive is None:
-        abort(
-            400,
-            description="The 'archive' body parameter must be specified and set to"
-            "true or false.",
-        )
-    action: ActionType = "archive" if archive else "unarchive"
-
-    return action
