@@ -8,7 +8,6 @@ from quart import current_app
 from sqlalchemy import and_, or_, select
 
 from config.config import sah_config
-
 from models import Filter, NotificationSub, Thread
 from models.schemas.users import User
 from utils.email import (
@@ -25,6 +24,7 @@ from utils.push_notifications import (
 from utils.validator import Validator
 
 DATETIME_PATTERN = "%Y-%m-%dT%H:%M:%S.%fZ"
+
 
 validator = Validator(
     {

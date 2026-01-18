@@ -38,6 +38,7 @@ else:
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     Integer,
@@ -76,10 +77,13 @@ class Post(BaseModel):
     date: Mapped[datetime | None] = mapped_column(DateTime)
     given_hugs: Mapped[int] = mapped_column(Integer, default=0)
     sent_hugs: Mapped[list[int] | None] = mapped_column(ARRAY(Integer))
+    archived: Mapped[bool] = mapped_column(Boolean, default=False)
+
     reports: Mapped[list["Report"] | None] = relationship(
         "Report",
         back_populates="post",
     )
+
     # Column properties
     open_reports_count = column_property(
         select(func.count(reports_post_table.table_valued()))
@@ -119,4 +123,5 @@ class Post(BaseModel):
             "date": self.date,
             "givenHugs": self.given_hugs,
             "sentHugs": list(filter(None, self.sent_hugs)) if self.sent_hugs else [],
+            "archived": self.archived,
         }

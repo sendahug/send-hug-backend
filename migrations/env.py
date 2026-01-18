@@ -9,7 +9,6 @@ from alembic import context
 from sqlalchemy.engine import Connection
 
 from config.config import sah_config
-
 from models.common import BaseModel
 
 # this is the Alembic Config object, which provides

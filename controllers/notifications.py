@@ -6,7 +6,6 @@ from sqlalchemy import Text, and_, false, func, select, true, update
 
 from auth import AuthError, UserData, requires_auth
 from config.config import sah_config
-
 from models import Notification, NotificationSub
 
 notifications_endpoints = Blueprint("notifications", __name__)

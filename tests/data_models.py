@@ -1,6 +1,5 @@
 from datetime import datetime
 import json
-from typing import Sequence
 
 from sqlalchemy import select, text
 
@@ -38,111 +37,152 @@ async def create_filters(db: SendADatabase) -> None:
 
 
 async def create_permissions(db: SendADatabase) -> None:
-    permission_1 = Permission(
-        id=1, permission="block:user", description="Block or unblock a user"
-    )
-    permission_2 = Permission(
-        id=2, permission="delete:any-post", description="Delete anyones post"
-    )
-    permission_3 = Permission(
-        id=3, permission="delete:messages", description="Delete my messages"
-    )
-    permission_4 = Permission(
-        id=4, permission="patch:any-post", description="Edit any post"
-    )
-    permission_5 = Permission(
-        id=5, permission="patch:any-user", description="Edit any users display name"
-    )
-    permission_6 = Permission(
-        id=6, permission="post:message", description="Create a new message"
-    )
-    permission_7 = Permission(
-        id=7, permission="post:post", description="Create a new post"
-    )
-    permission_8 = Permission(
-        id=8, permission="post:report", description="Create a new report."
-    )
-    permission_9 = Permission(
-        id=9, permission="read:admin-board", description="View admin dashboard"
-    )
-    permission_10 = Permission(
-        id=10, permission="read:messages", description="Read user messages"
-    )
-    permission_11 = Permission(
-        id=11, permission="read:user", description="Read user data"
-    )
-    permission_12 = Permission(
-        id=12, permission="delete:my-post", description="Delete my own post"
-    )
-    permission_13 = Permission(
-        id=13, permission="patch:user", description="Edit user data"
-    )
-    permission_14 = Permission(
-        id=14, permission="patch:my-post", description="Edit my post"
-    )
-    permission_15 = Permission(
-        id=15, permission="post:user", description="Create a new user"
-    )
+    permissions = [
+        Permission(
+            id=1, permission="block:user", description="Block or unblock a user"
+        ),
+        Permission(
+            id=2, permission="delete:any-post", description="Delete anyones post"
+        ),
+        Permission(
+            id=3, permission="delete:messages", description="Delete my messages"
+        ),
+        Permission(id=4, permission="patch:any-post", description="Edit any post"),
+        Permission(
+            id=5, permission="patch:any-user", description="Edit any users display name"
+        ),
+        Permission(id=6, permission="post:message", description="Create a new message"),
+        Permission(id=7, permission="post:post", description="Create a new post"),
+        Permission(id=8, permission="post:report", description="Create a new report."),
+        Permission(
+            id=9, permission="read:admin-board", description="View admin dashboard"
+        ),
+        Permission(id=10, permission="read:messages", description="Read user messages"),
+        Permission(id=11, permission="read:user", description="Read user data"),
+        Permission(
+            id=12, permission="delete:my-post", description="Delete my own post"
+        ),
+        Permission(id=13, permission="patch:user", description="Edit user data"),
+        Permission(id=14, permission="patch:my-post", description="Edit my post"),
+        Permission(id=15, permission="post:user", description="Create a new user"),
+        Permission(
+            id=16,
+            permission="archive:any-post",
+            description="Archive/unarchive anyones post",
+        ),
+        Permission(
+            id=17,
+            permission="archive:my-post",
+            description="Archive/unarchive my own post",
+        ),
+        Permission(
+            id=18,
+            permission="archive:messages",
+            description="Archive/unarchive my messages",
+        ),
+        Permission(
+            id=19, permission="archive:user", description="Archive/unarchive a user"
+        ),
+    ]
 
     try:
-        db.session.add_all(
-            [
-                permission_1,
-                permission_2,
-                permission_3,
-                permission_4,
-                permission_5,
-                permission_6,
-                permission_7,
-                permission_8,
-                permission_9,
-                permission_10,
-                permission_11,
-                permission_12,
-                permission_13,
-                permission_14,
-                permission_15,
-            ]
-        )
-        await db.session.execute(
-            text("ALTER SEQUENCE permissions_id_seq RESTART WITH 16;")
-        )
+        db.session.add_all(permissions)
         await db.session.commit()
     finally:
         await db.session.remove()
 
 
 async def create_roles(db: SendADatabase) -> None:
-    role_1 = Role(id=1, name="admin")
-    role_2 = Role(id=2, name="moderator")
-    role_3 = Role(id=3, name="user")
-    role_4 = Role(id=4, name="new user")
-    role_5 = Role(id=5, name="blocked user")
+    admin_role = Role(id=1, name="admin")
+    moderator_role = Role(id=2, name="moderator")
+    user_role = Role(id=3, name="user")
+    new_user_role = Role(id=4, name="new user")
+    blocked_user_role = Role(id=5, name="blocked user")
 
     try:
-        permissions_scalars = await db.session.scalars(
-            select(Permission).order_by(Permission.id)
-        )
-        permissions: Sequence[Permission] = permissions_scalars.all()
+        permissions_scalars = (
+            await db.session.scalars(select(Permission).order_by(Permission.id))
+        ).all()
+        permissions: dict[str, Permission] = {
+            p.permission: p for p in permissions_scalars
+        }
 
-        # admin
-        role_1.permissions = [*permissions[0:11]]
-        # moderator
-        role_2.permissions = [*permissions[2:4], *permissions[5:8], *permissions[9:13]]
-        # user
-        role_3.permissions = [permissions[2], *permissions[5:8], *permissions[9:14]]
-        # new user
-        role_4.permissions = [permissions[2], permissions[7], *permissions[9:]]
-        # blocked user
-        role_5.permissions = [
-            permissions[2],
-            permissions[5],
-            permissions[7],
-            *permissions[9:],
+        admin_role.permissions = [
+            permissions["block:user"],
+            permissions["delete:any-post"],
+            permissions["delete:messages"],
+            permissions["patch:any-post"],
+            permissions["patch:any-user"],
+            permissions["post:message"],
+            permissions["post:post"],
+            permissions["post:report"],
+            permissions["read:admin-board"],
+            permissions["read:messages"],
+            permissions["read:user"],
+            permissions["post:user"],
+            permissions["archive:any-post"],
+            permissions["archive:my-post"],
+            permissions["archive:messages"],
+            permissions["archive:user"],
+        ]
+        moderator_role.permissions = [
+            permissions["delete:messages"],
+            permissions["patch:any-post"],
+            permissions["patch:any-user"],
+            permissions["post:message"],
+            permissions["post:post"],
+            permissions["post:report"],
+            permissions["read:messages"],
+            permissions["read:user"],
+            permissions["delete:my-post"],
+            permissions["patch:user"],
+            permissions["archive:any-post"],
+            permissions["archive:my-post"],
+            permissions["archive:messages"],
+        ]
+        user_role.permissions = [
+            permissions["delete:messages"],
+            permissions["post:message"],
+            permissions["post:post"],
+            permissions["post:report"],
+            permissions["read:messages"],
+            permissions["read:user"],
+            permissions["delete:my-post"],
+            permissions["patch:user"],
+            permissions["patch:my-post"],
+            permissions["post:user"],
+            permissions["archive:my-post"],
+            permissions["archive:messages"],
+        ]
+        new_user_role.permissions = [
+            permissions["delete:messages"],
+            permissions["post:report"],
+            permissions["read:messages"],
+            permissions["read:user"],
+            permissions["delete:my-post"],
+            permissions["patch:user"],
+            permissions["patch:my-post"],
+            permissions["post:user"],
+            permissions["archive:my-post"],
+            permissions["archive:messages"],
+        ]
+        blocked_user_role.permissions = [
+            permissions["delete:messages"],
+            permissions["post:message"],
+            permissions["post:report"],
+            permissions["read:messages"],
+            permissions["read:user"],
+            permissions["delete:my-post"],
+            permissions["patch:user"],
+            permissions["patch:my-post"],
+            permissions["post:user"],
+            permissions["archive:my-post"],
+            permissions["archive:messages"],
         ]
 
-        db.session.add_all([role_1, role_2, role_3, role_4, role_5])
-        await db.session.execute(text("ALTER SEQUENCE roles_id_seq RESTART WITH 6;"))
+        db.session.add_all(
+            [admin_role, moderator_role, user_role, new_user_role, blocked_user_role]
+        )
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -150,219 +190,250 @@ async def create_roles(db: SendADatabase) -> None:
 
 async def create_users(db: SendADatabase) -> None:
     """Creates the users in the test database."""
-    user_1 = User(
-        id=1,
-        received_hugs=12,
-        given_hugs=2,
-        display_name="shirb",
-        login_count=60,
-        release_date=None,
-        selected_character=UserIconCharacter.KITTY,
-        icon_colours=[
-            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
-            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
-            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
-            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
-        ],
-        role_id=3,
-        firebase_id="abcd",
-        email_verified=True,
-        email="user1@user1.com",
-        user_settings=UserSetting(
-            email_notifications_enabled=True,
-            message_notifications=True,
-            hugs_digest_notifications=False,
-            you_okay_notifications=True,
-            previous_interaction_notifications=False,
-            auto_refresh_enabled=False,
-            push_enabled=False,
-            refresh_rate=0,
-            last_updated_at=datetime.now(),
+    users = [
+        User(
+            id=1,
+            received_hugs=12,
+            given_hugs=2,
+            display_name="shirb",
+            login_count=60,
+            release_date=None,
+            selected_character=UserIconCharacter.KITTY,
+            icon_colours=[
+                UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+                UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+                UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+                UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+            ],
+            role_id=3,
+            firebase_id="abcd",
+            email_verified=True,
+            email="user1@user1.com",
+            user_settings=UserSetting(
+                email_notifications_enabled=True,
+                message_notifications=True,
+                hugs_digest_notifications=False,
+                you_okay_notifications=True,
+                previous_interaction_notifications=False,
+                auto_refresh_enabled=False,
+                push_enabled=False,
+                refresh_rate=0,
+                last_updated_at=datetime.now(),
+            ),
         ),
-    )
-    user_2 = User(
-        id=4,
-        received_hugs=106,
-        given_hugs=117,
-        display_name="user14",
-        login_count=55,
-        release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
-        selected_character=UserIconCharacter.KITTY,
-        icon_colours=[
-            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
-            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
-            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
-            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
-        ],
-        role_id=1,
-        firebase_id="ijkl",
-        email_verified=True,
-        email="invalid_email",
-        user_settings=UserSetting(
-            email_notifications_enabled=True,
-            message_notifications=True,
-            hugs_digest_notifications=False,
-            you_okay_notifications=True,
-            previous_interaction_notifications=False,
-            auto_refresh_enabled=True,
-            push_enabled=False,
-            refresh_rate=None,
-            last_updated_at=datetime.now(),
+        User(
+            id=4,
+            received_hugs=106,
+            given_hugs=117,
+            display_name="user14",
+            login_count=55,
+            release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
+            selected_character=UserIconCharacter.KITTY,
+            icon_colours=[
+                UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+                UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+                UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+                UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+            ],
+            role_id=1,
+            firebase_id="ijkl",
+            email_verified=True,
+            email="invalid_email",
+            user_settings=UserSetting(
+                email_notifications_enabled=True,
+                message_notifications=True,
+                hugs_digest_notifications=False,
+                you_okay_notifications=True,
+                previous_interaction_notifications=False,
+                auto_refresh_enabled=True,
+                push_enabled=False,
+                refresh_rate=None,
+                last_updated_at=datetime.now(),
+            ),
         ),
-    )
-    user_3 = User(
-        id=5,
-        received_hugs=2,
-        given_hugs=0,
-        display_name="user52",
-        login_count=7,
-        release_date=None,
-        selected_character=UserIconCharacter.KITTY,
-        icon_colours=[
-            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
-            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
-            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
-            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
-        ],
-        role_id=2,
-        firebase_id="efgh",
-        email_verified=True,
-        email="",
-        user_settings=UserSetting(
-            email_notifications_enabled=True,
-            message_notifications=True,
-            hugs_digest_notifications=False,
-            you_okay_notifications=True,
-            previous_interaction_notifications=False,
-            auto_refresh_enabled=False,
-            push_enabled=False,
-            refresh_rate=0,
-            last_updated_at=datetime.now(),
+        User(
+            id=5,
+            received_hugs=2,
+            given_hugs=0,
+            display_name="user52",
+            login_count=7,
+            release_date=None,
+            selected_character=UserIconCharacter.KITTY,
+            icon_colours=[
+                UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+                UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+                UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+                UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+            ],
+            role_id=2,
+            firebase_id="efgh",
+            email_verified=True,
+            email="",
+            user_settings=UserSetting(
+                email_notifications_enabled=True,
+                message_notifications=True,
+                hugs_digest_notifications=False,
+                you_okay_notifications=True,
+                previous_interaction_notifications=False,
+                auto_refresh_enabled=False,
+                push_enabled=False,
+                refresh_rate=0,
+                last_updated_at=datetime.now(),
+            ),
         ),
-    )
-    user_4 = User(
-        id=9,
-        received_hugs=0,
-        given_hugs=1,
-        display_name="user93",
-        login_count=2,
-        release_date=None,
-        selected_character=UserIconCharacter.KITTY,
-        icon_colours=[
-            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
-            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
-            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
-            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
-        ],
-        role_id=1,
-        firebase_id="zxy",
-        email_verified=True,
-        email="user4@user4.com",
-        user_settings=UserSetting(
-            email_notifications_enabled=True,
-            message_notifications=True,
-            hugs_digest_notifications=False,
-            you_okay_notifications=True,
-            previous_interaction_notifications=False,
-            auto_refresh_enabled=False,
-            push_enabled=False,
-            refresh_rate=0,
-            last_updated_at=datetime.now(),
+        User(
+            id=9,
+            received_hugs=0,
+            given_hugs=1,
+            display_name="user93",
+            login_count=2,
+            release_date=None,
+            selected_character=UserIconCharacter.KITTY,
+            icon_colours=[
+                UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+                UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+                UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+                UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+            ],
+            role_id=1,
+            firebase_id="zxy",
+            email_verified=True,
+            email="user4@user4.com",
+            user_settings=UserSetting(
+                email_notifications_enabled=True,
+                message_notifications=True,
+                hugs_digest_notifications=False,
+                you_okay_notifications=True,
+                previous_interaction_notifications=False,
+                auto_refresh_enabled=False,
+                push_enabled=False,
+                refresh_rate=0,
+                last_updated_at=datetime.now(),
+            ),
         ),
-    )
-    user_5 = User(
-        id=17,
-        received_hugs=0,
-        given_hugs=0,
-        display_name="user24",
-        login_count=4,
-        release_date=datetime.strptime("2120-08-11 08:33:22.473", DATETIME_PATTERN),
-        selected_character=UserIconCharacter.KITTY,
-        icon_colours=[
-            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
-            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
-            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
-            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
-        ],
-        role_id=5,
-        firebase_id="twg",
-        email_verified=True,
-        email="user5@user5.com",
-        user_settings=UserSetting(
-            email_notifications_enabled=True,
-            message_notifications=True,
-            hugs_digest_notifications=False,
-            you_okay_notifications=True,
-            previous_interaction_notifications=False,
-            auto_refresh_enabled=False,
-            push_enabled=False,
-            refresh_rate=0,
-            last_updated_at=datetime.now(),
+        User(
+            id=17,
+            received_hugs=0,
+            given_hugs=0,
+            display_name="user24",
+            login_count=4,
+            release_date=datetime.strptime("2120-08-11 08:33:22.473", DATETIME_PATTERN),
+            selected_character=UserIconCharacter.KITTY,
+            icon_colours=[
+                UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+                UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+                UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+                UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+            ],
+            role_id=5,
+            firebase_id="twg",
+            email_verified=True,
+            email="user5@user5.com",
+            user_settings=UserSetting(
+                email_notifications_enabled=True,
+                message_notifications=True,
+                hugs_digest_notifications=False,
+                you_okay_notifications=True,
+                previous_interaction_notifications=False,
+                auto_refresh_enabled=False,
+                push_enabled=False,
+                refresh_rate=0,
+                last_updated_at=datetime.now(),
+            ),
         ),
-    )
-    # For e2e tests
-    user_6 = User(
-        id=18,
-        received_hugs=106,
-        given_hugs=117,
-        display_name="admin",
-        login_count=55,
-        release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
-        selected_character=UserIconCharacter.KITTY,
-        icon_colours=[
-            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
-            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
-            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
-            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
-        ],
-        role_id=1,
-        firebase_id="xApCskkEtwVhZubFJbNt7u73zzs2",
-        email="user6@user6.com",
-        user_settings=UserSetting(
-            email_notifications_enabled=True,
-            message_notifications=True,
-            hugs_digest_notifications=False,
-            you_okay_notifications=True,
-            previous_interaction_notifications=False,
-            auto_refresh_enabled=True,
-            push_enabled=False,
-            refresh_rate=None,
-            last_updated_at=datetime.now(),
+        # For e2e tests
+        User(
+            id=18,
+            received_hugs=106,
+            given_hugs=117,
+            display_name="admin",
+            login_count=55,
+            release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
+            selected_character=UserIconCharacter.KITTY,
+            icon_colours=[
+                UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+                UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+                UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+                UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+            ],
+            role_id=1,
+            firebase_id="xApCskkEtwVhZubFJbNt7u73zzs2",
+            email="user6@user6.com",
+            user_settings=UserSetting(
+                email_notifications_enabled=True,
+                message_notifications=True,
+                hugs_digest_notifications=False,
+                you_okay_notifications=True,
+                previous_interaction_notifications=False,
+                auto_refresh_enabled=True,
+                push_enabled=False,
+                refresh_rate=None,
+                last_updated_at=datetime.now(),
+            ),
         ),
-    )
-    user_7 = User(
-        id=19,
-        received_hugs=0,
-        given_hugs=0,
-        display_name="newUser",
-        login_count=55,
-        release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
-        selected_character=UserIconCharacter.KITTY,
-        icon_colours=[
-            UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
-            UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
-            UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
-            UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
-        ],
-        role_id=4,
-        firebase_id="123456",
-        email="user7@user7.com",
-        user_settings=UserSetting(
-            email_notifications_enabled=True,
-            message_notifications=True,
-            hugs_digest_notifications=False,
-            you_okay_notifications=True,
-            previous_interaction_notifications=False,
-            auto_refresh_enabled=False,
-            push_enabled=False,
-            refresh_rate=None,
-            last_updated_at=datetime.now(),
+        User(
+            id=19,
+            received_hugs=0,
+            given_hugs=0,
+            display_name="newUser",
+            login_count=55,
+            release_date=datetime.strptime("2020-10-30 18:13:21.282", DATETIME_PATTERN),
+            selected_character=UserIconCharacter.KITTY,
+            icon_colours=[
+                UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+                UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+                UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+                UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+            ],
+            role_id=4,
+            firebase_id="123456",
+            email="user7@user7.com",
+            user_settings=UserSetting(
+                email_notifications_enabled=True,
+                message_notifications=True,
+                hugs_digest_notifications=False,
+                you_okay_notifications=True,
+                previous_interaction_notifications=False,
+                auto_refresh_enabled=False,
+                push_enabled=False,
+                refresh_rate=None,
+                last_updated_at=datetime.now(),
+            ),
         ),
-    )
+        User(
+            id=20,
+            received_hugs=0,
+            given_hugs=0,
+            display_name="archivedUser",
+            login_count=55,
+            release_date=datetime.strptime("2025-10-30 18:13:21.282", DATETIME_PATTERN),
+            selected_character=UserIconCharacter.KITTY,
+            icon_colours=[
+                UserIconColour(icon_part=UserIconPart.CHARACTER, colour="#BA9F93"),
+                UserIconColour(icon_part=UserIconPart.LBG, colour="#e2a275"),
+                UserIconColour(icon_part=UserIconPart.RBG, colour="#f8eee4"),
+                UserIconColour(icon_part=UserIconPart.ITEM, colour="#f4b56a"),
+            ],
+            role_id=4,
+            firebase_id="1234567",
+            email="user8@user8.com",
+            user_settings=UserSetting(
+                email_notifications_enabled=True,
+                message_notifications=True,
+                hugs_digest_notifications=False,
+                you_okay_notifications=True,
+                previous_interaction_notifications=False,
+                auto_refresh_enabled=False,
+                push_enabled=False,
+                refresh_rate=None,
+                last_updated_at=datetime.now(),
+            ),
+            archived=True,
+        ),
+    ]
 
     try:
-        db.session.add_all([user_1, user_2, user_3, user_4, user_5, user_6, user_7])
-        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 21;"))
+        db.session.add_all(users)
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -562,6 +633,15 @@ async def create_posts(db: SendADatabase) -> None:
         given_hugs=0,
         sent_hugs=[],
     )
+    post_25 = Post(
+        id=46,
+        user_id=1,
+        text="test unarchive",
+        date=datetime.strptime("2025-06-01 15:17:56.294", DATETIME_PATTERN),
+        given_hugs=2,
+        sent_hugs=[4],
+        archived=True,
+    )
 
     try:
         db.session.add_all(
@@ -590,9 +670,9 @@ async def create_posts(db: SendADatabase) -> None:
                 post_22,
                 post_23,
                 post_24,
+                post_25,
             ]
         )
-        await db.session.execute(text("ALTER SEQUENCE posts_id_seq RESTART WITH 46;"))
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -600,19 +680,19 @@ async def create_posts(db: SendADatabase) -> None:
 
 async def create_threads(db: SendADatabase) -> None:
     """Creates the threads in the test database."""
-    thread_1 = Thread(id=1, user_1_id=1, user_2_id=1)
-    thread_2 = Thread(id=2, user_1_id=1, user_2_id=5)
-    thread_3 = Thread(id=3, user_1_id=1, user_2_id=4)
-    thread_4 = Thread(id=6, user_1_id=9, user_2_id=5)
-    thread_5 = Thread(id=7, user_1_id=17, user_2_id=4)
-    thread_6 = Thread(id=8, user_1_id=17, user_2_id=1)
-    thread_7 = Thread(id=4, user_1_id=4, user_2_id=5)
+    threads = [
+        Thread(id=1, user_1_id=1, user_2_id=1),
+        Thread(id=2, user_1_id=1, user_2_id=5),
+        Thread(id=3, user_1_id=1, user_2_id=4),
+        Thread(id=6, user_1_id=9, user_2_id=5),
+        Thread(id=7, user_1_id=17, user_2_id=4),
+        Thread(id=8, user_1_id=17, user_2_id=1),
+        Thread(id=4, user_1_id=4, user_2_id=5),
+        Thread(id=9, user_1_id=1, user_2_id=5),
+    ]
 
     try:
-        db.session.add_all(
-            [thread_1, thread_2, thread_3, thread_4, thread_5, thread_6, thread_7]
-        )
-        await db.session.execute(text("ALTER SEQUENCE threads_id_seq RESTART WITH 9;"))
+        db.session.add_all(threads)
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -620,169 +700,199 @@ async def create_threads(db: SendADatabase) -> None:
 
 async def create_messages(db: SendADatabase) -> None:
     """Creates the messages in the test database."""
-    message_1 = Message(
-        id=5,
-        from_id=4,
-        for_id=5,
-        text="hellllllllo :)",
-        date=datetime.strptime("2020-06-08 14:43:30.593", DATETIME_PATTERN),
-        thread=4,
-        from_deleted=True,
-        for_deleted=False,
-    )
-    message_2 = Message(
-        id=8,
-        from_id=5,
-        for_id=4,
-        text="hi there :)",
-        date=datetime.strptime("2020-06-08 14:50:19.006", DATETIME_PATTERN),
-        thread=4,
-        from_deleted=True,
-        for_deleted=True,
-    )
-    message_3 = Message(
-        id=1,
-        from_id=1,
-        for_id=1,
-        text="hang in there :)",
-        date=datetime.strptime("2020-06-02 10:39:56.337", DATETIME_PATTERN),
-        thread=1,
-        from_deleted=False,
-        for_deleted=False,
-    )
-    message_4 = Message(
-        id=3,
-        from_id=5,
-        for_id=1,
-        text="you'll be okay <3",
-        date=datetime.strptime("2020-06-08 14:42:02.759", DATETIME_PATTERN),
-        thread=2,
-        from_deleted=False,
-        for_deleted=False,
-    )
-    message_5 = Message(
-        id=7,
-        from_id=1,
-        for_id=5,
-        text="more testing",
-        date=datetime.strptime("2020-06-08 14:45:05.713", DATETIME_PATTERN),
-        thread=2,
-        from_deleted=False,
-        for_deleted=False,
-    )
-    message_6 = Message(
-        id=9,
-        from_id=4,
-        for_id=1,
-        text="hang in there",
-        date=datetime.strptime("2020-06-08 14:43:15.000", DATETIME_PATTERN),
-        thread=3,
-        from_deleted=False,
-        for_deleted=False,
-    )
-    message_7 = Message(
-        id=16,
-        from_id=9,
-        for_id=5,
-        text="hiiiii",
-        date=datetime.strptime("2020-06-14 14:25:37.569", DATETIME_PATTERN),
-        thread=6,
-        from_deleted=False,
-        for_deleted=False,
-    )
-    message_8 = Message(
-        id=10,
-        from_id=4,
-        for_id=1,
-        text="hi :)",
-        date=datetime.strptime("2020-06-14 14:07:37.49", DATETIME_PATTERN),
-        thread=3,
-        from_deleted=False,
-        for_deleted=True,
-    )
-    message_9 = Message(
-        id=21,
-        from_id=4,
-        for_id=1,
-        text="hi",
-        date=datetime.strptime("2020-07-06 17:33:55.712", DATETIME_PATTERN),
-        thread=3,
-        from_deleted=False,
-        for_deleted=False,
-    )
-    message_10 = Message(
-        id=25,
-        from_id=17,
-        for_id=4,
-        text="hang in there <3",
-        date=datetime.strptime("2020-11-03 20:16:58.027", DATETIME_PATTERN),
-        thread=7,
-        from_deleted=False,
-        for_deleted=False,
-    )
-    message_11 = Message(
-        id=22,
-        from_id=4,
-        for_id=1,
-        text="test",
-        date=datetime.strptime("2020-07-06 17:40:51.288", DATETIME_PATTERN),
-        thread=3,
-        from_deleted=False,
-        for_deleted=False,
-    )
-    message_12 = Message(
-        id=26,
-        from_id=17,
-        for_id=1,
-        text="hiiii :)",
-        date=datetime.strptime("2020-11-03 20:21:30.972", DATETIME_PATTERN),
-        thread=8,
-        from_deleted=True,
-        for_deleted=True,
-    )
-    message_13 = Message(
-        id=23,
-        from_id=4,
-        for_id=5,
-        text="testing thread delete",
-        date=datetime.strptime("2020-11-03 16:38:06.351", DATETIME_PATTERN),
-        thread=4,
-        from_deleted=True,
-        for_deleted=False,
-    )
-    message_14 = Message(
-        id=24,
-        from_id=4,
-        for_id=5,
-        text="test",
-        date=datetime.strptime("2020-11-03 16:48:33.213", DATETIME_PATTERN),
-        thread=4,
-        from_deleted=True,
-        for_deleted=False,
-    )
+    messages = [
+        Message(
+            id=5,
+            from_id=4,
+            for_id=5,
+            text="hellllllllo :)",
+            date=datetime.strptime("2020-06-08 14:43:30.593", DATETIME_PATTERN),
+            thread=4,
+            from_deleted=True,
+            for_deleted=False,
+        ),
+        Message(
+            id=8,
+            from_id=5,
+            for_id=4,
+            text="hi there :)",
+            date=datetime.strptime("2020-06-08 14:50:19.006", DATETIME_PATTERN),
+            thread=4,
+            from_deleted=True,
+            for_deleted=True,
+        ),
+        Message(
+            id=1,
+            from_id=1,
+            for_id=1,
+            text="hang in there :)",
+            date=datetime.strptime("2020-06-02 10:39:56.337", DATETIME_PATTERN),
+            thread=1,
+            from_deleted=False,
+            for_deleted=False,
+        ),
+        Message(
+            id=3,
+            from_id=5,
+            for_id=1,
+            text="you'll be okay <3",
+            date=datetime.strptime("2020-06-08 14:42:02.759", DATETIME_PATTERN),
+            thread=2,
+            from_deleted=False,
+            for_deleted=False,
+        ),
+        Message(
+            id=7,
+            from_id=1,
+            for_id=5,
+            text="more testing",
+            date=datetime.strptime("2020-06-08 14:45:05.713", DATETIME_PATTERN),
+            thread=2,
+            from_deleted=False,
+            for_deleted=False,
+        ),
+        Message(
+            id=9,
+            from_id=4,
+            for_id=1,
+            text="hang in there",
+            date=datetime.strptime("2020-06-08 14:43:15.000", DATETIME_PATTERN),
+            thread=3,
+            from_deleted=False,
+            for_deleted=False,
+        ),
+        Message(
+            id=16,
+            from_id=9,
+            for_id=5,
+            text="hiiiii",
+            date=datetime.strptime("2020-06-14 14:25:37.569", DATETIME_PATTERN),
+            thread=6,
+            from_deleted=False,
+            for_deleted=False,
+        ),
+        Message(
+            id=10,
+            from_id=4,
+            for_id=1,
+            text="hi :)",
+            date=datetime.strptime("2020-06-14 14:07:37.49", DATETIME_PATTERN),
+            thread=3,
+            from_deleted=False,
+            for_deleted=True,
+        ),
+        Message(
+            id=21,
+            from_id=4,
+            for_id=1,
+            text="hi",
+            date=datetime.strptime("2020-07-06 17:33:55.712", DATETIME_PATTERN),
+            thread=3,
+            from_deleted=False,
+            for_deleted=False,
+        ),
+        Message(
+            id=25,
+            from_id=17,
+            for_id=4,
+            text="hang in there <3",
+            date=datetime.strptime("2020-11-03 20:16:58.027", DATETIME_PATTERN),
+            thread=7,
+            from_deleted=False,
+            for_deleted=False,
+        ),
+        Message(
+            id=22,
+            from_id=4,
+            for_id=1,
+            text="test",
+            date=datetime.strptime("2020-07-06 17:40:51.288", DATETIME_PATTERN),
+            thread=3,
+            from_deleted=False,
+            for_deleted=False,
+        ),
+        Message(
+            id=26,
+            from_id=17,
+            for_id=1,
+            text="hiiii :)",
+            date=datetime.strptime("2020-11-03 20:21:30.972", DATETIME_PATTERN),
+            thread=8,
+            from_deleted=True,
+            for_deleted=True,
+        ),
+        Message(
+            id=23,
+            from_id=4,
+            for_id=5,
+            text="testing thread delete",
+            date=datetime.strptime("2020-11-03 16:38:06.351", DATETIME_PATTERN),
+            thread=4,
+            from_deleted=True,
+            for_deleted=False,
+        ),
+        Message(
+            id=24,
+            from_id=4,
+            for_id=5,
+            text="test",
+            date=datetime.strptime("2020-11-03 16:48:33.213", DATETIME_PATTERN),
+            thread=4,
+            from_deleted=True,
+            for_deleted=False,
+        ),
+        Message(
+            id=27,
+            from_id=5,
+            for_id=1,
+            text="test both archived message",
+            date=datetime.strptime("2025-06-08 14:42:02.759", DATETIME_PATTERN),
+            thread=2,
+            from_deleted=False,
+            for_deleted=False,
+            from_archived=True,
+            for_archived=True,
+        ),
+        Message(
+            id=28,
+            from_id=5,
+            for_id=1,
+            text="test from archived message",
+            date=datetime.strptime("2025-06-08 14:42:02.759", DATETIME_PATTERN),
+            thread=2,
+            from_deleted=False,
+            for_deleted=False,
+            from_archived=True,
+            for_archived=False,
+        ),
+        Message(
+            id=29,
+            from_id=5,
+            for_id=1,
+            text="test for archived message",
+            date=datetime.strptime("2025-06-08 14:42:02.759", DATETIME_PATTERN),
+            thread=2,
+            from_deleted=False,
+            for_deleted=False,
+            from_archived=False,
+            for_archived=True,
+        ),
+        Message(
+            id=30,
+            from_id=5,
+            for_id=1,
+            text="test for archived thread",
+            date=datetime.strptime("2025-08-08 14:42:02.759", DATETIME_PATTERN),
+            thread=9,
+            from_deleted=False,
+            for_deleted=False,
+            from_archived=True,
+            for_archived=True,
+        ),
+    ]
 
     try:
-        db.session.add_all(
-            [
-                message_1,
-                message_2,
-                message_3,
-                message_4,
-                message_5,
-                message_6,
-                message_7,
-                message_8,
-                message_9,
-                message_10,
-                message_11,
-                message_12,
-                message_13,
-                message_14,
-            ]
-        )
-        await db.session.execute(
-            text("ALTER SEQUENCE messages_id_seq RESTART WITH 27;")
-        )
+        db.session.add_all(messages)
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -1324,7 +1434,6 @@ async def create_reports(db: SendADatabase) -> None:
                 report_44,
             ]
         )
-        await db.session.execute(text("ALTER SEQUENCE reports_id_seq RESTART WITH 45;"))
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -1768,9 +1877,6 @@ async def create_notifications(db: SendADatabase) -> None:
                 notification_95,
             ]
         )
-        await db.session.execute(
-            text("ALTER SEQUENCE notifications_id_seq RESTART WITH 96;")
-        )
         await db.session.commit()
     finally:
         await db.session.remove()
@@ -1817,9 +1923,6 @@ async def create_subscriptions(db: SendADatabase) -> None:
 
     try:
         db.session.add_all([sub_1, sub_2, sub_3])
-        await db.session.execute(
-            text("ALTER SEQUENCE subscriptions_id_seq RESTART WITH 4;")
-        )
         await db.session.commit()
     finally:
         await db.session.close()
@@ -1827,25 +1930,30 @@ async def create_subscriptions(db: SendADatabase) -> None:
 
 async def update_sequences(db: SendADatabase) -> None:
     """Updates the values of all sequences."""
+    tables_to_update = [
+        "permissions",
+        "filters",
+        "roles",
+        "users",
+        "posts",
+        "messages",
+        "threads",
+        "reports",
+        "notifications",
+        "subscriptions",
+    ]
     try:
-        await db.session.execute(
-            text("ALTER SEQUENCE permissions_id_seq RESTART WITH 16;")
-        )
-        await db.session.execute(text("ALTER SEQUENCE filters_id_seq RESTART WITH 3;"))
-        await db.session.execute(text("ALTER SEQUENCE roles_id_seq RESTART WITH 6;"))
-        await db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 21;"))
-        await db.session.execute(text("ALTER SEQUENCE posts_id_seq RESTART WITH 46;"))
-        await db.session.execute(
-            text("ALTER SEQUENCE messages_id_seq RESTART WITH 27;")
-        )
-        await db.session.execute(text("ALTER SEQUENCE threads_id_seq RESTART WITH 9;"))
-        await db.session.execute(text("ALTER SEQUENCE reports_id_seq RESTART WITH 45;"))
-        await db.session.execute(
-            text("ALTER SEQUENCE notifications_id_seq RESTART WITH 96;")
-        )
-        await db.session.execute(
-            text("ALTER SEQUENCE subscriptions_id_seq RESTART WITH 4;")
-        )
+        for table in tables_to_update:
+            await db.session.execute(
+                text(
+                    # we set the current value of the sequence to the maximum id in
+                    # the table prevents id collisions when the test data above changes
+                    # (although individual tests still beed to be updated)
+                    f"SELECT SETVAL(PG_GET_SERIAL_SEQUENCE('{table}', 'id'), MAX(id)) "
+                    f"FROM {table};"
+                )
+            )
+
         await db.session.commit()
     finally:
         await db.session.close()
