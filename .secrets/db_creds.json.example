@@ -1,0 +1,7 @@
+{
+    "db_name": "sendahug",
+    "host": "localhost",
+    "password": "<INSERT_PW_HERE>",
+    "username": "sah_api_user",
+    "port": 5432
+}

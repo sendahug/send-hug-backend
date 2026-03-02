@@ -1,0 +1,9 @@
+{
+    "pr_number": 785,
+    "changes": [
+        {
+            "change": "Features",
+            "description": "Added a new database setup script to simply database setup for local development."
+        }
+    ]
+}
