@@ -7,3 +7,11 @@ pywebpush==2.1.2
 sendgrid==6.11.0
 SQLAlchemy[asyncio]==2.0.44
 firebase-admin==7.1.0
+
+# Vulnerability fixes
+# GHSA-6q48-6c7w-9gw2
+certifi>=2026.10.19
+# CVE-2026-97689
+urllib3>=2.8.0
+# CVE-2026-57585
+msgpack>=1.1.2
