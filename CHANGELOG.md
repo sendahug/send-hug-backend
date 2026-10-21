@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 2026-10-21
+
+#### Chores
+
+- Upgraded the versions of Python, Pip, certifi, urllib3 and msgpack to fix several security vulnerabilities. ([#905](https://github.com/sendahug/send-hug-backend/pull/905))
+
 ### 2025-08-18
 
 #### Changes

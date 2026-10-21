@@ -1,9 +1,0 @@
-{
-  "pr_number": 905,
-  "changes": [
-    {
-      "change": "Chores",
-      "description": "Upgraded the versions of Python, Pip, certifi, urllib3 and msgpack to fix several security vulnerabilities."
-    }
-  ]
-}
