@@ -396,6 +396,26 @@ async def test_update_nonexistent_post_as_admin(
     assert response.status_code == 404
 
 
+# Attempt to update an archived post
+@pytest.mark.asyncio
+async def test_update_archived_post_as_admin(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    dummy_request_data: dict,
+    dummy_users_data: dict,
+) -> None:
+    post = dummy_request_data["updated_post"]
+    post["userId"] = dummy_users_data["user"]["internal"]
+    response = await app_client.patch(
+        "/posts/46", headers=user_headers["admin"], data=json.dumps(post)
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 422
+
+
 # Attempt to update a post without post ID (with admin's JWT)
 @pytest.mark.asyncio
 async def test_update_post_no_id_as_admin(
@@ -446,6 +466,20 @@ async def test_post_hugs_post_no_existing(
     assert response.status_code == 404
 
 
+# Attempt to send hugs for an archived post
+@pytest.mark.asyncio
+async def test_post_hugs_post_archived(
+    app_client: TestClientProtocol, test_db: SendADatabase, user_headers: dict
+) -> None:
+    response = await app_client.post(
+        "/posts/46/hugs", headers=user_headers["admin"], data=json.dumps({})
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == 422
+
+
 # Attempt to send hugs
 @pytest.mark.asyncio
 async def test_post_hugs(
@@ -485,7 +519,7 @@ async def test_post_hugs_with_message(
         response_data["updated"]
         == "Successfully sent hug for post 1 and a message to user 1"
     )
-    assert len(threads_response_data["messages"]) == 3
+    assert len(threads_response_data["messages"]) == 5
 
 
 # Delete Post Route Tests ('/posts/<post_id>', DELETE)
@@ -645,3 +679,113 @@ async def test_get_full_posts_page_2(
     assert response.status_code == 200
     assert len(response_data["posts"]) == 5
     assert response_data["total_pages"] == 5
+
+
+@pytest.mark.parametrize(
+    "user_type",
+    [
+        ("user"),
+        ("moderator"),
+        ("admin"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_archive_post_succeeds(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_type: str,
+) -> None:
+    response = await app_client.patch(
+        "/posts/4/archive", headers=user_headers[user_type], json={"archive": True}
+    )
+    response_data = await response.get_json()
+    post_text = response_data["archived"]
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert post_text["archived"] is True
+
+
+@pytest.mark.parametrize(
+    "user_type, post_id, expected_fail_code",
+    [
+        ("blocked", 4, 403),
+        ("newUserRole", 4, 403),
+        ("malformed", 4, 401),
+        (None, 4, 401),
+    ],
+)
+@pytest.mark.asyncio
+async def test_archive_post_fails(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_type: str | None,
+    post_id: int,
+    expected_fail_code: int,
+) -> None:
+    response = await app_client.patch(
+        f"/posts/{post_id}/archive",
+        headers=user_headers[user_type] if user_type else None,
+        json={"archive": True},
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == expected_fail_code
+
+
+@pytest.mark.parametrize(
+    "user_type",
+    [
+        ("user"),
+        ("moderator"),
+        ("admin"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_unarchive_post_succeeds(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_type: str,
+) -> None:
+    response = await app_client.patch(
+        "/posts/46/archive", headers=user_headers[user_type], json={"archive": False}
+    )
+    response_data = await response.get_json()
+    post_text = response_data["unarchived"]
+
+    assert response_data["success"] is True
+    assert response.status_code == 200
+    assert post_text["archived"] is False
+
+
+@pytest.mark.parametrize(
+    "user_type, post_id, expected_fail_code",
+    [
+        ("blocked", 46, 403),
+        ("newUserRole", 46, 403),
+        ("malformed", 46, 401),
+        (None, 46, 401),
+    ],
+)
+@pytest.mark.asyncio
+async def test_unarchive_post_fails(
+    app_client: TestClientProtocol,
+    test_db: SendADatabase,
+    user_headers: dict,
+    user_type: str | None,
+    post_id: int,
+    expected_fail_code: int,
+) -> None:
+    response = await app_client.patch(
+        f"/posts/{post_id}/archive",
+        headers=user_headers[user_type] if user_type else None,
+        json={"archive": False},
+    )
+    response_data = await response.get_json()
+
+    assert response_data["success"] is False
+    assert response.status_code == expected_fail_code

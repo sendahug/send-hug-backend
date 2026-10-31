@@ -60,7 +60,7 @@ async def test_search(app_client: TestClientProtocol, test_db: SendADatabase) ->
     assert response_data["success"] is True
     assert response.status_code == 200
     assert response_data["post_results"] == 1
-    assert response_data["user_results"] == 5
+    assert response_data["user_results"] == 6
 
 
 # Run a search which returns multiple pages of results
@@ -73,7 +73,7 @@ async def test_search_multiple_pages(
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["post_results"] == 13
+    assert response_data["post_results"] == 14
     assert len(response_data["posts"]) == 5
     assert response_data["total_pages"] == 3
     assert response_data["current_page"] == 1
@@ -90,7 +90,7 @@ async def test_search_multiple_pages_page_2(
 
     assert response_data["success"] is True
     assert response.status_code == 200
-    assert response_data["post_results"] == 13
+    assert response_data["post_results"] == 14
     assert len(response_data["posts"]) == 5
     assert response_data["total_pages"] == 3
     assert response_data["current_page"] == 2

@@ -34,7 +34,6 @@ from quart_cors import cors
 from auth import AuthError
 from config.config import sah_config
 from controllers import routers
-
 from utils.validator import ValidationError
 
 

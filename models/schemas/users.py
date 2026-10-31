@@ -142,6 +142,8 @@ class User(BaseModel):
     firebase_id_uq = UniqueConstraint("firebase_id", name="firebase_id_uq")
     email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     email: Mapped[str] = mapped_column(String(75), nullable=False)
+    archived: Mapped[bool] = mapped_column(Boolean, default=False)
+
     user_settings: Mapped[UserSetting | None] = relationship(
         "UserSetting", lazy="selectin"
     )
@@ -206,6 +208,7 @@ class User(BaseModel):
                 if self.role
                 else None
             ),
+            "archived": self.archived,
         }
 
         if current_user != self.id:

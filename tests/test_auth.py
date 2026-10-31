@@ -36,7 +36,6 @@ import pytest
 from pytest_mock import MockerFixture
 
 from auth import AuthError, check_user_permissions, get_current_user, validate_token
-
 from models import SendADatabase
 
 

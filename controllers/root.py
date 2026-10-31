@@ -4,9 +4,8 @@ from typing import Any, Sequence
 from quart import Blueprint, Response, jsonify, request
 from sqlalchemy import desc, false, select
 
-from config.config import sah_config
-
 from .common import validator
+from config.config import sah_config
 from models import Post, User
 
 root_endpoints = Blueprint("root", __name__)
